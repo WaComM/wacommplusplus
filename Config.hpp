@@ -7,6 +7,7 @@
 
 #include <string>
 #include <fstream>
+#include <cstdint>
 
 #include "Utils.hpp"
 
@@ -31,6 +32,10 @@ struct config_data {
     int upperClosure;
     int lowerClosure;
     int horizontalClosure;
+    std::uint64_t randomSeed;
+    int trackingDirection;
+    int backwardDiffusion;
+    double restartCheckpoint;
 };
 
 class Config {
@@ -73,6 +78,11 @@ public:
     double Deltat() const;
     double ShoreLimit() const;
     double SedimentationVelocity() const;
+    std::uint64_t RandomSeed() const;
+    bool Backward() const;
+    bool BackwardDiffusion() const;
+    void RestartCheckpoint(double value);
+    double RestartCheckpoint() const;
 
     void SaveHistory(string value);
     string SaveHistory() const;
@@ -123,6 +133,8 @@ public:
     static const int CLOSURE_MODE_CONSTRAINT=1;
     static const int CLOSURE_MODE_KILL=2;
     static const int CLOSURE_MODE_REFLECTION=3;
+    static const int TRACKING_FORWARD=1;
+    static const int TRACKING_BACKWARD=-1;
 
 private:
     log4cplus::Logger logger;

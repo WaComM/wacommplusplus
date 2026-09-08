@@ -1,0 +1,1 @@
+{"io":{"ocean_model":"HYCOM","base_path":".","nc_inputs":["hycom.nc"],"nc_output_root":"forward-hycom"},"sources":{"active":true,"sources_file":"sources.json"},"restart":{"active":false},"physics":{"random":false,"random_seed":5489,"dti":30},"tracking":{"direction":"forward","backward_diffusion":"none"}}

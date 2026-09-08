@@ -31,7 +31,7 @@ __global__ void move(config_data *pConfigData, particle_data *pParticleData, int
     		bool random=pConfigData->random;
 		curandState state;
 		if (random){
-                	curand_init (clock64(), idx, 0, &state);
+			curand_init (pConfigData->randomSeed, pParticleData[idx].id, ocean_time_idx, &state);
 		}
 
     		// Get the integration time (default 30s)
@@ -86,7 +86,7 @@ __global__ void move(config_data *pConfigData, particle_data *pParticleData, int
             		double iF = pParticleData[idx].i - iI;
 
             		// Check if the particle is out of the domain
-            		if (jI < 0 || iI < 0 || jI >= eta_rho || iI >= xi_rho) {
+				if (jI < 0 || iI < 0 || jI >= eta_rho - 1 || iI >= xi_rho - 1) {
                 		// Set the particle health
                 		pParticleData[idx].health = -1;
 
@@ -167,14 +167,14 @@ __global__ void move(config_data *pConfigData, particle_data *pParticleData, int
             		// Perform the bilinear interpolation (3D) in order to get
             		// the akt in the particle position.
 	    		int oy_a = (-(int)s_w+1)*(eta_rho * xi_rho);
-	    		float a1 = pAkt[(ocean_time_idx * (s_rho * eta_rho * xi_rho) + kI * (eta_rho *  xi_rho) + jI * xi_rho + iI) - oy_a] * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
-            		float a2 = pAkt[(ocean_time_idx * (s_rho * eta_rho * xi_rho) + kI * (eta_rho *  xi_rho) + (jI + 1) * xi_rho + iI) - oy_a] * (1.0 - iF) * jF * (1.0 - kF);
-            		float a3 = pAkt[(ocean_time_idx * (s_rho * eta_rho * xi_rho) + kI * (eta_rho *  xi_rho) + (jI + 1) * xi_rho + (iI + 1)) - oy_a] * iF * jF * (1.0 - kF);
-            		float a4 = pAkt[(ocean_time_idx * (s_rho * eta_rho * xi_rho) + kI * (eta_rho *  xi_rho) + jI * xi_rho + (iI + 1)) - oy_a] * iF * (1.0 - jF) * (1.0 - kF);
-            		float a5 = pAkt[(ocean_time_idx * (s_rho * eta_rho * xi_rho) + (kI - 1) * (eta_rho *  xi_rho) + jI * xi_rho + iI) - oy_a] * (1.0 - iF) * (1.0 - jF) * kF;
-            		float a6 = pAkt[(ocean_time_idx * (s_rho * eta_rho * xi_rho) + (kI - 1) * (eta_rho *  xi_rho) + (jI + 1) * xi_rho + iI) - oy_a] * (1.0 - iF) * jF * kF;
-            		float a7 = pAkt[(ocean_time_idx * (s_rho * eta_rho * xi_rho) + (kI - 1) * (eta_rho *  xi_rho) + (jI + 1) * xi_rho + (iI + 1)) - oy_a] * iF * jF * kF;
-            		float a8 = pAkt[(ocean_time_idx * (s_rho * eta_rho * xi_rho) + (kI - 1) * (eta_rho *  xi_rho) + jI * xi_rho + (iI + 1)) - oy_a] * iF * (1.0 - jF) * kF;
+				float a1 = pAkt[(ocean_time_idx * (s_w * eta_rho * xi_rho) + kI * (eta_rho *  xi_rho) + jI * xi_rho + iI) - oy_a] * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
+				float a2 = pAkt[(ocean_time_idx * (s_w * eta_rho * xi_rho) + kI * (eta_rho *  xi_rho) + (jI + 1) * xi_rho + iI) - oy_a] * (1.0 - iF) * jF * (1.0 - kF);
+				float a3 = pAkt[(ocean_time_idx * (s_w * eta_rho * xi_rho) + kI * (eta_rho *  xi_rho) + (jI + 1) * xi_rho + (iI + 1)) - oy_a] * iF * jF * (1.0 - kF);
+				float a4 = pAkt[(ocean_time_idx * (s_w * eta_rho * xi_rho) + kI * (eta_rho *  xi_rho) + jI * xi_rho + (iI + 1)) - oy_a] * iF * (1.0 - jF) * (1.0 - kF);
+				float a5 = pAkt[(ocean_time_idx * (s_w * eta_rho * xi_rho) + (kI - 1) * (eta_rho *  xi_rho) + jI * xi_rho + iI) - oy_a] * (1.0 - iF) * (1.0 - jF) * kF;
+				float a6 = pAkt[(ocean_time_idx * (s_w * eta_rho * xi_rho) + (kI - 1) * (eta_rho *  xi_rho) + (jI + 1) * xi_rho + iI) - oy_a] * (1.0 - iF) * jF * kF;
+				float a7 = pAkt[(ocean_time_idx * (s_w * eta_rho * xi_rho) + (kI - 1) * (eta_rho *  xi_rho) + (jI + 1) * xi_rho + (iI + 1)) - oy_a] * iF * jF * kF;
+				float a8 = pAkt[(ocean_time_idx * (s_w * eta_rho * xi_rho) + (kI - 1) * (eta_rho *  xi_rho) + jI * xi_rho + (iI + 1)) - oy_a] * iF * (1.0 - jF) * kF;
 
             		// The AKT at the particle position.
             		float aa = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8;
@@ -262,7 +262,7 @@ __global__ void move(config_data *pConfigData, particle_data *pParticleData, int
             		int idetI=(int)(idet);
 
             		// Check if the candidate position is within the domain
-            		if (jdetI>= 0 && idetI >= 0 && jdetI<eta_rho && idetI <xi_rho) {
+				if (jdetI>= 0 && idetI >= 0 && jdetI<eta_rho - 1 && idetI <xi_rho - 1) {
                 		// Check if the candidate new particle position is on land (mask=0)
                 		if (pMask[xi_rho*jdetI+idetI] <= 0.0) {
                     			// Reflect the particle

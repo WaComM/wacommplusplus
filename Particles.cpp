@@ -8,6 +8,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <iomanip>
+#include <stdexcept>
 
 // for convenience
 using json = nlohmann::json;
@@ -89,7 +90,8 @@ void Particles::saveAsJson(const string &fileName, double particleTime, std::sha
     o << std::setw(4) << featureCollection << std::endl;
 }
 
-void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter)
+void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
+                             std::shared_ptr<Config> config)
 {
     // https://github.com/NOAA-ORR-ERD/nc_particles
     // https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/aphs04.html
@@ -97,7 +99,7 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     size_t particle_time=1;
     size_t ocean_time=1;
 
-    Array1<unsigned long> id(this->size());
+    Array1<std::uint64_t> id(this->size());
     Array2<double> lat(this->size(),particle_time);
     Array2<double> lon(this->size(),particle_time);
     Array2<double> dep(this->size(),particle_time);
@@ -173,6 +175,12 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
 
     // Open the file for read access
     netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
+
+    dataFile.putAtt("wacomm_restart_version","2");
+    dataFile.putAtt("tracking_direction",config->Backward() ? "backward" : "forward");
+    dataFile.putAtt("ocean_model",config->OceanModel());
+    dataFile.putAtt("checkpoint_time",ncDouble,particleTime);
+    dataFile.putAtt("random_seed",ncUint64,config->RandomSeed());
 
     NcDim particlesDim = dataFile.addDim("particles", this->size());
     NcDim particleTimeDim = dataFile.addDim("particle_time", particle_time);
@@ -344,48 +352,65 @@ void Particles::loadFromJson(const string &fileName) {
     std::ifstream infile(fileName);
 }
 
-void Particles::loadFromNetCDF(const string &fileName) {
+void Particles::loadFromNetCDF(const string &fileName, std::shared_ptr<Config> config) {
     LOG4CPLUS_INFO(logger,"Reading restart file: " << fileName);
     std::ifstream infile(fileName);
     
     // Open the file for read access
     netCDF::NcFile dataFile(fileName, NcFile::read);
 
+    NcGroupAtt versionAtt=dataFile.getAtt("wacomm_restart_version");
+    if (!versionAtt.isNull()) {
+        string restartDirection;
+        dataFile.getAtt("tracking_direction").getValues(restartDirection);
+        string configuredDirection=config->Backward() ? "backward" : "forward";
+        if (restartDirection != configuredDirection) {
+            throw std::runtime_error("Restart tracking direction is " + restartDirection +
+                                     " but configuration direction is " + configuredDirection);
+        }
+        NcGroupAtt checkpointAtt=dataFile.getAtt("checkpoint_time");
+        if (!checkpointAtt.isNull()) {
+            double checkpointTime;
+            checkpointAtt.getValues(&checkpointTime);
+            config->RestartCheckpoint(checkpointTime);
+        }
+    }
+
     // Retrieve the variable named "id"
     NcVar varId = dataFile.getVar("id");
     size_t size = varId.getDim(0).getSize();
-    Array1<double> Id(size);
+    Array1<std::uint64_t> Id(size);
     varId.getVar(Id());
 
     // Retrieve the variable named "i"
     NcVar varI = dataFile.getVar("i");
     Array1<double> I(size);
-    varI.getVar(I());
+    varI.getVar({0,0},{size,1},I());
 
     // Retrieve the variable named "j"
     NcVar varJ = dataFile.getVar("j");
     Array1<double> J(size);
-    varJ.getVar(J());
+    varJ.getVar({0,0},{size,1},J());
 
     // Retrieve the variable named "k"
     NcVar varK = dataFile.getVar("k");
     Array1<double> K(size);
-    varK.getVar(K());
+    varK.getVar({0,0},{size,1},K());
 
     // Retrieve the variable named "health"
     NcVar varHealth = dataFile.getVar("health");
     Array1<double> health(size);
-    varHealth.getVar(health());
+    varHealth.getVar({0,0},{size,1},health());
 
     // Retrieve the variable named "age"
     NcVar varAge = dataFile.getVar("age");
     Array1<double> age(size);
-    varAge.getVar(age());
+    varAge.getVar({0,0},{size,1},age());
 
     // Retrieve the variable named "time"
     NcVar varTime = dataFile.getVar("time");
     Array1<double> time(size);
-    varTime.getVar(time());
+    varTime.getVar({0,0},{size,1},time());
 
     for (int i=0; i<size; i++) {
         Particle particle(Id[i], K[i], J[i], I[i], health[i], age[i], time[i]);

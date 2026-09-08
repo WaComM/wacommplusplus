@@ -13,6 +13,7 @@
 #include <stdlib.h> /* getenv */
 #include <sstream>
 #include <string>
+#include <cstdint>
 
 
 
@@ -28,7 +29,7 @@
 using namespace std;
 
 struct particle_data {
-    unsigned long id;
+    std::uint64_t id;
     double k;
     double j;
     double i;
@@ -40,8 +41,8 @@ struct particle_data {
 class Particle {
     public:
         Particle() = default;
-        Particle(unsigned long id, double k, double j, double i, double health, double age, double time);
-        Particle(unsigned long id, double k, double j, double i, double time);
+        Particle(std::uint64_t id, double k, double j, double i, double health, double age, double time);
+        Particle(std::uint64_t id, double k, double j, double i, double time);
         Particle(particle_data data);
 
         ~Particle();
@@ -64,7 +65,7 @@ class Particle {
         double Age() const;
 
         double Time() const;
-        unsigned long Id() const;
+        std::uint64_t Id() const;
 
         std::string to_string() const;
 

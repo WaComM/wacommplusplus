@@ -5,6 +5,7 @@
 #include "Config.hpp"
 #include "JulianDate.hpp"
 #include <nlohmann/json.hpp>
+#include <limits>
 
 // for convenience
 using json = nlohmann::json;
@@ -108,6 +109,18 @@ void Config::setDefault() {
 
     // Generate random sources (default true. use false for model testing versus other imlementations
     _data.randomSources = true;
+
+    // Random seed (default MT19937 seed)
+    _data.randomSeed = 5489;
+
+    // Tracking direction (default forward)
+    _data.trackingDirection = Config::TRACKING_FORWARD;
+
+    // Backward diffusion is disabled by default
+    _data.backwardDiffusion = false;
+
+    // Physical restart checkpoint (not set by default)
+    _data.restartCheckpoint = std::numeric_limits<double>::quiet_NaN();
 
     // Save processed input files (default false)
     saveInput = false;
@@ -311,6 +324,16 @@ double Config::Tau0() const {
 double Config::SedimentationVelocity() const {
     return _data.sv;
 }
+
+std::uint64_t Config::RandomSeed() const { return _data.randomSeed; }
+
+bool Config::Backward() const { return _data.trackingDirection == Config::TRACKING_BACKWARD; }
+
+bool Config::BackwardDiffusion() const { return _data.backwardDiffusion; }
+
+void Config::RestartCheckpoint(double value) { _data.restartCheckpoint=value; }
+
+double Config::RestartCheckpoint() const { return _data.restartCheckpoint; }
 
 bool Config::Dry() const {
     return dry;
@@ -546,6 +569,12 @@ void Config::saveAsJson(const string &fileName) {
             { "dti", _data.dti },
             { "deltat", _data.deltat },
             { "crid", _data.crid },
+            { "random_seed", _data.randomSeed },
+    };
+
+    json tracking = {
+            { "direction", Backward() ? "backward" : "forward" },
+            { "backward_diffusion", BackwardDiffusion() ? "symmetric_stochastic" : "none" }
     };
 
     json config = {
@@ -554,6 +583,7 @@ void Config::saveAsJson(const string &fileName) {
             { "restart", restart},
             { "sources", sources},
             { "physics", physics},
+            { "tracking", tracking},
     };
 
     // write prettified JSON to another file
@@ -621,11 +651,27 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("sigma")) { _data.sigma = physics["sigma"]; }
         if (physics.contains("random")) { _data.random = physics["random"]; }
         if (physics.contains("random_sources")) { _data.randomSources = physics["random_sources"]; }
+        if (physics.contains("random_seed")) { _data.randomSeed = physics["random_seed"]; }
         if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
         if (physics.contains("shore_limit")) { _data.shoreLimit = physics["shore_limit"]; }
         if (physics.contains("upper_closure")) { _data.upperClosure = dictionary[physics["upper_closure"]]; }
         if (physics.contains("lower_closure")) { _data.lowerClosure = dictionary[physics["lower_closure"]]; }
         if (physics.contains("horizontal_closure")) { _data.horizontalClosure = dictionary[physics["horizontal_closure"]]; }
+    }
+    if (config.contains("tracking")) {
+        json tracking=config["tracking"];
+        if (tracking.contains("direction")) {
+            string direction=tracking["direction"];
+            if (direction == "forward") _data.trackingDirection=Config::TRACKING_FORWARD;
+            else if (direction == "backward") _data.trackingDirection=Config::TRACKING_BACKWARD;
+            else throw std::runtime_error("Unknown tracking direction: " + direction);
+        }
+        if (tracking.contains("backward_diffusion")) {
+            string diffusion=tracking["backward_diffusion"];
+            if (diffusion == "none") _data.backwardDiffusion=false;
+            else if (diffusion == "symmetric_stochastic") _data.backwardDiffusion=true;
+            else throw std::runtime_error("Unknown backward diffusion mode: " + diffusion);
+        }
     }
 }
 
@@ -640,6 +686,4 @@ void Config::MaskOutput(bool value) {
 double Config::Sigma() const {
     return _data.sigma;
 }
-
-
 

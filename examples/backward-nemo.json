@@ -1,0 +1,1 @@
+{"io":{"ocean_model":"NEMO","base_path":".","nc_inputs":["nemo.nc"],"nc_output_root":"backward-nemo"},"sources":{"active":false},"restart":{"active":true,"restart_file":"endpoint.nc"},"physics":{"random":false,"random_seed":5489,"dti":30},"tracking":{"direction":"backward","backward_diffusion":"none"}}

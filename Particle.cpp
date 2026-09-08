@@ -7,9 +7,9 @@
 #include "Particle.hpp"
 #include "Config.hpp"
 #include <random>
-#include <chrono>
+#include "NumericalHelpers.hpp"
 
-Particle::Particle(unsigned long id, double k, double j, double i,
+Particle::Particle(std::uint64_t id, double k, double j, double i,
                    double health, double age, double time)
 {
 #ifdef DEBUG
@@ -26,7 +26,7 @@ Particle::Particle(unsigned long id, double k, double j, double i,
 
 }
 
-Particle::Particle(unsigned long id, double k, double j, double i, double time) {
+Particle::Particle(std::uint64_t id, double k, double j, double i, double time) {
 
 #ifdef DEBUG
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
@@ -102,8 +102,18 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
 
 
-    // Number of integration intervals
-    double iint=deltat/dti;
+    // Physical forcing interval
+    int intervalDirection=configData->trackingDirection;
+    int intervalNextIdx=ocean_time_idx+intervalDirection;
+    double intervalStart=oceanTime(ocean_time_idx);
+    double intervalEnd=intervalNextIdx >= 0 && intervalNextIdx < oceanTime.Nx()
+                       ? oceanTime(intervalNextIdx) : intervalStart+intervalDirection*deltat;
+    double intervalLength=std::abs(intervalEnd-intervalStart);
+    double elapsed=0;
+    if (!std::isnan(configData->restartCheckpoint)) {
+        elapsed=NumericalHelpers::restartElapsed(intervalStart,intervalEnd,configData->restartCheckpoint);
+        if (std::isnan(elapsed)) return;
+    }
 
     // Get the number of the sigma levels
     size_t s_w = w.Ny();
@@ -117,11 +127,11 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
     size_t xi_rho = mask.Ny();
 
     // Create a random number generator
-    std::default_random_engine generator;
+    std::default_random_engine generator(static_cast<unsigned int>(
+            NumericalHelpers::mix(configData->randomSeed ^ localParticleData.id ^
+                                  static_cast<std::uint64_t>(oceanTime(ocean_time_idx)))));
 
     // Initialize seed of number generator
-    if (random)
-        generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
 
     // Check if the particle jumped outside the water :-)
     if (localParticleData.k>0) {
@@ -168,18 +178,41 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
     }
     // For each integration interval
-    for (int t=0;t<iint;t++) {
+    while (elapsed < intervalLength) {
+
+        double stepDt=std::min(dti,intervalLength-elapsed);
+        double physicalTime=intervalStart + configData->trackingDirection * elapsed;
+        double alpha=intervalLength == 0 ? 0 : elapsed/intervalLength;
+        int nextOceanTimeIdx=intervalNextIdx;
+        if (nextOceanTimeIdx < 0 || nextOceanTimeIdx >= oceanTime.Nx()) nextOceanTimeIdx=ocean_time_idx;
+
+        auto zetaAt=[&](int j, int i) {
+            return (float)NumericalHelpers::interpolateTime(zeta(ocean_time_idx,j,i),zeta(nextOceanTimeIdx,j,i),alpha);
+        };
+        auto uAt=[&](int k, int j, int i) {
+            return (float)NumericalHelpers::interpolateTime(u(ocean_time_idx,k,j,i),u(nextOceanTimeIdx,k,j,i),alpha);
+        };
+        auto vAt=[&](int k, int j, int i) {
+            return (float)NumericalHelpers::interpolateTime(v(ocean_time_idx,k,j,i),v(nextOceanTimeIdx,k,j,i),alpha);
+        };
+        auto wAt=[&](int k, int j, int i) {
+            return (float)NumericalHelpers::interpolateTime(w(ocean_time_idx,k,j,i),w(nextOceanTimeIdx,k,j,i),alpha);
+        };
+        auto aktAt=[&](int k, int j, int i) {
+            return (float)NumericalHelpers::interpolateTime(akt(ocean_time_idx,k,j,i),akt(nextOceanTimeIdx,k,j,i),alpha);
+        };
 
 #ifdef DEBUG
-        LOG4CPLUS_DEBUG(logger,"t:" << t);
+        LOG4CPLUS_DEBUG(logger,"time:" << physicalTime);
         LOG4CPLUS_DEBUG(logger, "k:" << localParticleData.k << " j:" << localParticleData.j << " i:" << localParticleData.i );
         LOG4CPLUS_DEBUG(logger, "age:" << localParticleData.age << " health:" << localParticleData.health << " time:" << localParticleData.time );
 #endif
 
         // Check if the particle is not yet active
-        if (localParticleData.time>(oceanTime(ocean_time_idx)+(t*dti))) {
+        if (configData->trackingDirection > 0 && localParticleData.time>physicalTime) {
             // The particle is not already active (already emitted, but not active)
-            break;
+            elapsed=std::min(intervalLength,localParticleData.time-intervalStart);
+            continue;
         }
 
         // Check of the particle health is less than its probability to survive
@@ -205,7 +238,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         auto iI=(int)localParticleData.i; double iF=localParticleData.i-iI;
 
         // Check if the particle is out of the domain
-        if (jI<0 || iI<0 || jI>=eta_rho|| iI>=xi_rho) {
+        if (!NumericalHelpers::validInterpolationCell(jI, iI, eta_rho, xi_rho)) {
 
             // Set the particle health
             localParticleData.health=-1;
@@ -235,10 +268,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
         // Perform the bilinear interpolation (2D) in order to get
         // the zeta at the particle position.
-        float z1 = zeta(ocean_time_idx, jI, iI) * (1.0 - iF) * (1.0 - jF);
-        float z2 = zeta(ocean_time_idx, jI + 1, iI) * (1.0 - iF) * jF;
-        float z3 = zeta(ocean_time_idx, jI + 1, iI + 1) * iF * jF;
-        float z4 = zeta(ocean_time_idx, jI, iI + 1) * iF * (1.0 - jF);
+        float z1 = zetaAt(jI, iI) * (1.0 - iF) * (1.0 - jF);
+        float z2 = zetaAt(jI + 1, iI) * (1.0 - iF) * jF;
+        float z3 = zetaAt(jI + 1, iI + 1) * iF * jF;
+        float z4 = zetaAt(jI, iI + 1) * iF * (1.0 - jF);
 
         // The current zeta at the particle position
         float zz = z1 + z2 + z3 + z4;
@@ -315,10 +348,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // Perform the bilinear interpolation (2D) in order to get
             // the u component of the current field in the particle position.
-            float u1 = u(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
-            float u2 = u(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF;
-            float u3 = u(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF;
-            float u4 = u(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF);
+            float u1 = uAt(kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
+            float u2 = uAt(kI, jI + 1, iI) * (1.0 - iF) * jF;
+            float u3 = uAt(kI, jI + 1, iI + 1) * iF * jF;
+            float u4 = uAt(kI, jI, iI + 1) * iF * (1.0 - jF);
 
             // The current u component in the particle position
             float uu = u1 + u2 + u3 + u4;
@@ -330,10 +363,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // Perform the bilinear interpolation (2D) in order to get
             // the v component of the current field in the particle position.
-            float v1 = v(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
-            float v2 = v(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF;
-            float v3 = v(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF;
-            float v4 = v(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF);
+            float v1 = vAt(kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
+            float v2 = vAt(kI, jI + 1, iI) * (1.0 - iF) * jF;
+            float v3 = vAt(kI, jI + 1, iI + 1) * iF * jF;
+            float v4 = vAt(kI, jI, iI + 1) * iF * (1.0 - jF);
 
             // The current v component in the particle position
             float vv = v1 + v2 + v3 + v4;
@@ -346,14 +379,14 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // Perform the bilinear interpolation (3D) in order to get
             // the w component of the current field in the particle position.
-            float w1 = w(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
-            float w2 = w(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
-            float w3 = w(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
-            float w4 = w(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
-            float w5 = w(ocean_time_idx, kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
-            float w6 = w(ocean_time_idx, kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
-            float w7 = w(ocean_time_idx, kI - 1, jI + 1, iI + 1) * iF * jF * kF;
-            float w8 = w(ocean_time_idx, kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
+            float w1 = wAt(kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
+            float w2 = wAt(kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
+            float w3 = wAt(kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
+            float w4 = wAt(kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
+            float w5 = wAt(kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
+            float w6 = wAt(kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
+            float w7 = wAt(kI - 1, jI + 1, iI + 1) * iF * jF * kF;
+            float w8 = wAt(kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
 
             // The current w component in the particle position
             float ww = w1 + w2 + w3 + w4 + w5 + w6 + w7 + w8;
@@ -365,14 +398,14 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // Perform the bilinear interpolation (3D) in order to get
             // the akt in the particle position.
-            float a1 = akt(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
-            float a2 = akt(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
-            float a3 = akt(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
-            float a4 = akt(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
-            float a5 = akt(ocean_time_idx, kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
-            float a6 = akt(ocean_time_idx, kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
-            float a7 = akt(ocean_time_idx, kI - 1, jI + 1, iI + 1) * iF * jF * kF;;
-            float a8 = akt(ocean_time_idx, kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
+            float a1 = aktAt(kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
+            float a2 = aktAt(kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
+            float a3 = aktAt(kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
+            float a4 = aktAt(kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
+            float a5 = aktAt(kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
+            float a6 = aktAt(kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
+            float a7 = aktAt(kI - 1, jI + 1, iI + 1) * iF * jF * kF;;
+            float a8 = aktAt(kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
 
             // The AKT at the particle position.
             float aa = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8;
@@ -382,9 +415,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 #endif
 
             // Evaluate the particle leap (in meters along x,y,z) due to the current field (deterministic leap).
-            double dxleap = uu * dti;
-            double dyleap = vv * dti;
-            double dzleap = (sv + ww) * dti;
+            double direction=configData->trackingDirection;
+            double dxleap = direction * uu * stepDt;
+            double dyleap = direction * vv * stepDt;
+            double dzleap = direction * (sv + ww) * stepDt;
 
 
             double rxleap=0;
@@ -392,15 +426,16 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             double rzleap=0;
 
 
-            if (random) {
+            if (random && (direction > 0 || configData->backwardDiffusion)) {
                 // Calculation of sigma for the particle depth
                 double sigmaDepth = sigma * (1 - localParticleData.k / kLowerLimit);
 
                 // Generate a distribution probability with mean=0 and stdev=sigmaDepth
                 std::normal_distribution<double> distribution(0,sigmaDepth);
-                rxleap= distribution(generator);
-                ryleap = distribution(generator);
-                rzleap  = distribution(generator) * aa * crid;
+                double stochasticScale=std::sqrt(stepDt/dti);
+                rxleap= distribution(generator)*stochasticScale;
+                ryleap = distribution(generator)*stochasticScale;
+                rzleap  = distribution(generator) * aa * crid * stochasticScale;
 
             }
 
@@ -525,7 +560,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             int kdetI = (int) (kdet);
 
 		    // Check if the candidate position is within the domain
-            if (jdetI >= 0 && idetI >= 0 && jdetI < eta_rho && idetI < xi_rho) {
+            if (NumericalHelpers::validInterpolationCell(jdetI, idetI, eta_rho, xi_rho)) {
 		
                 // Check if the candidate new particle position is on land (cfr. shoreLimit)
                 double idetF = idet-idetI;
@@ -534,10 +569,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
                 // Perform the bilinear interpolation (2D) in order to get
                 // the zeta at the new particle position.
-                z1 = zeta(ocean_time_idx, jdetI, idetI) * (1.0 - idetF) * (1.0 - jdetF);
-                z2 = zeta(ocean_time_idx, jdetI + 1, idetI) * (1.0 - idetF) * jdetF;
-                z3 = zeta(ocean_time_idx, jdetI + 1, idetI + 1) * idetF * jdetF;
-                z4 = zeta(ocean_time_idx, jdetI, idetI + 1) * idetF * (1.0 - jdetF);
+                z1 = zetaAt(jdetI, idetI) * (1.0 - idetF) * (1.0 - jdetF);
+                z2 = zetaAt(jdetI + 1, idetI) * (1.0 - idetF) * jdetF;
+                z3 = zetaAt(jdetI + 1, idetI + 1) * idetF * jdetF;
+                z4 = zetaAt(jdetI, idetI + 1) * idetF * (1.0 - jdetF);
 
                 // The new zeta at the particle position
                 float zzdet = z1 + z2 + z3 + z4;
@@ -579,16 +614,8 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
                                 case Config::CLOSURE_MODE_REFLECTION:
                                     // Reflect the particle
-                                    if (idetI < iI) {
-                                        idet = (double) iI + abs(localParticleData.i - idet);
-                                    } else if (idetI > iI) {
-                                        idet = (double) idetI - mod(idet, 1.0);
-                                    }
-                                    if (jdetI < jdet) {
-                                        jdet = (double) jdetI + abs(localParticleData.j - jdet);
-                                    } else if (jdetI > jI) {
-                                        jdet = (double) jdetI - mod(jdet, 1.0);
-                                    }
+                                    NumericalHelpers::reflectCell(localParticleData.i, iI, idet, idetI);
+                                    NumericalHelpers::reflectCell(localParticleData.j, jI, jdet, jdetI);
                                     break;
                             }
                        }
@@ -606,7 +633,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         if (localParticleData.health>0) {
 
             // Update the particle age
-            localParticleData.age = localParticleData.age + dti;
+            localParticleData.age = localParticleData.age + stepDt;
 
             // Decay the particle
             localParticleData.health = health0 * exp(-localParticleData.age / tau0);
@@ -615,8 +642,9 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 #ifdef DEBUG
         LOG4CPLUS_DEBUG(logger, "k:" << localParticleData.k << " j:" << localParticleData.j << " i:" << localParticleData.i );
         LOG4CPLUS_DEBUG(logger, "age:" << localParticleData.age << " health:" << localParticleData.health << " time:" << localParticleData.time );
-        LOG4CPLUS_DEBUG(logger,"t:" << t);
+        LOG4CPLUS_DEBUG(logger,"time:" << physicalTime);
 #endif
+        elapsed+=stepDt;
     }
     memcpy(&_data, &localParticleData, sizeof(particle_data));
 }
@@ -656,11 +684,6 @@ double Particle::Time() const {
     return _data.time;
 }
 
-unsigned long Particle::Id() const {
+std::uint64_t Particle::Id() const {
     return _data.id;
 }
-
-
-
-
-

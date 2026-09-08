@@ -31,11 +31,12 @@ public:
 
     void loadFromTxt(const string& fileName);
     void loadFromJson(const string &fileName);
-    void loadFromNetCDF(const string &fileName);
+    void loadFromNetCDF(const string &fileName, std::shared_ptr<Config> config);
 
     void saveAsTxt(const string& fileName);
     void saveAsJson(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
-    void saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter);
+    void saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
+                      std::shared_ptr<Config> config);
 
 private:
     log4cplus::Logger logger;

@@ -122,6 +122,13 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
     // Get the size of the time axis
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
 
+#ifdef USE_CUDA
+    if (num_gpus>0 && (ocean_time>1 || config->Backward() || config->Random())) {
+        LOG4CPLUS_WARN(logger,"CUDA execution does not yet implement physical-time interpolation, backtracking, and counter-based diffusion; using CPU execution");
+        num_gpus=0;
+    }
+#endif
+
     // Get the size of the vertical axis
     size_t s_rho=oceanModelAdapter->SRho().Nx();
 
@@ -158,7 +165,11 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
     Calendar cal;
 
     // For each element in the time axis
-    for (int ocean_time_idx = 0; ocean_time_idx < ocean_time; ocean_time_idx++) {
+    int ocean_time_direction=config->Backward() ? -1 : 1;
+    int ocean_time_first=config->Backward() ? (int)ocean_time - 1 : 0;
+    for (int ocean_time_idx = ocean_time_first;
+         ocean_time_idx >= 0 && ocean_time_idx < ocean_time;
+         ocean_time_idx += ocean_time_direction) {
 
         // Record start time
         auto start = std::chrono::high_resolution_clock::now();
@@ -209,7 +220,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             int nSources = sources->size();
 
             // For each source
-            for (int idx = 0; idx < nSources; idx++) {
+            for (int idx = 0; idx < nSources && !config->Backward(); idx++) {
 
                 // Emit particles
                 sources->at(idx).emit(config, particles, JulianDate::toModJulian(cal.asNCEPdate()));
@@ -303,7 +314,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
         // Define an array of MPI data type containing the MPI type of each field
         MPI_Datatype types[num_members] = {
-                MPI_UNSIGNED_LONG,
+                MPI_UINT64_T,
                 MPI_DOUBLE,
                 MPI_DOUBLE,
                 MPI_DOUBLE,
@@ -364,10 +375,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         size_t sparePerThread = particlesToProcess % ompMaxThreads;
 
         // Dafine an array with the number of particles to be processed by each thread
-        size_t thread_counts[ompMaxThreads];
+        vector<size_t> thread_counts(ompMaxThreads);
 
         // Define an array with the displacement of particles to be processed by each thread
-        size_t thread_displs[ompMaxThreads];
+        vector<size_t> thread_displs(ompMaxThreads);
 
         // The first thread get the spare
         thread_counts[0] = (int)((particlesPerThread + sparePerThread));
@@ -476,7 +487,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         // Record start time
         auto startLocal = std::chrono::high_resolution_clock::now();
 
-        float time_array[ompMaxThreads][num_gpus];
+        vector<vector<float>> time_array(ompMaxThreads,vector<float>(std::max(1,num_gpus),0));
         float _time = 0;
 
         // Begin the shared memory parallel section
@@ -531,10 +542,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                         size_t sparePerGPU = particlesToProcessGPU % num_gpus;
 
                         // Dafine an array with the number of particles to be processed by each GPU
-                        size_t GPU_counts[num_gpus];
+                        vector<size_t> GPU_counts(num_gpus);
 
                         // Define an array with the displacement of particles to be processed by each GPU
-                        size_t GPU_displs[num_gpus];
+                        vector<size_t> GPU_displs(num_gpus);
 
                         // The first GPU get the spare
                         GPU_counts[0] = (int)((particlesPerGPU + sparePerGPU));
@@ -604,6 +615,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
                             cudaEventElapsedTime(&_time, start, stop);
                             time_array[ompThreadNum][gpu_id] = _time;
+                            cudaEventDestroy(start);
+                            cudaEventDestroy(stop);
                         }
 
                         for (int idx=0; idx < num_gpus; idx++){
@@ -620,6 +633,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
                             //copy from device to host
                             cudaMemcpyAsync(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyDeviceToHost);
+                            cudaDeviceSynchronize();
 
                             // Copy all thread particles to the local processor particles
                             for(int i=GPU_first; i < GPU_last; i++){
@@ -629,6 +643,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
                             cudaFree(threadSectionDevice[gpu_id].sectionParticlesDevice);
                         }
+                        delete [] threadSectionDevice;
                     }
                 }
             }
@@ -681,6 +696,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                 cudaFree(stateVector[i].aktDevice);
                 cudaFree(stateVector[i].configDevice);
             }
+            delete [] stateVector;
         }
 #endif
         // Check if the current process is the world_rank==0
@@ -753,9 +769,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                     int i = (int) round(particle.I());
 
                     // Check if the indices are consistent
-                    if (j >= 0 && j < eta_rho && i > 0 && i < xi_rho && k >= (-(int) s_rho + 1) && k <= 0) {
+                    if (j >= 0 && j < eta_rho && i >= 0 && i < xi_rho && k >= (-(int) s_rho + 1) && k <= 0) {
 
                         // Increment the count of the particles in the grid cell
+                        #pragma omp atomic update
                         conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i) + 1;
                     }
                 }
@@ -844,7 +861,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                 } else if (config->SaveHistory() == "nc") {
 
                     // Save the history as NetCDF
-                    particles->saveAsNetCDF(historyFilename + ".nc", finalOceanTime, oceanModelAdapter);
+                    particles->saveAsNetCDF(historyFilename + ".nc", finalOceanTime, oceanModelAdapter, config);
                 }
             }
         }

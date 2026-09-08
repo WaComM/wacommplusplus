@@ -6,6 +6,10 @@
 #include "JulianDate.hpp"
 #include "OceanModelAdapters/WacommAdapter.hpp"
 #include "OceanModelAdapters/ROMSAdapter.hpp"
+#include "OceanModelAdapters/NEMOAdapter.hpp"
+#include "OceanModelAdapters/HYCOMAdapter.hpp"
+#include <algorithm>
+#include <stdexcept>
 
 #if defined(USE_MPI) || defined(USE_EMPI)
 #define OMPI_SKIP_MPICXX
@@ -40,7 +44,7 @@ void WacommPlusPlus::run() {
     int len, nParticles = 0;
 
     char bin[1024];
-    sprintf(bin,"%s","wacomm");
+    snprintf(bin,sizeof(bin),"%s","wacomm");
 
     int idx = 0;
     double p = 17000, t = 0.0;
@@ -83,6 +87,7 @@ void WacommPlusPlus::run() {
     ADM_MonitoringService (ADM_SERVICE_START);
 #endif
 
+    if (config->Backward()) std::reverse(config->NcInputs().begin(), config->NcInputs().end());
     for (auto &ncInput : config->NcInputs()) {
 
         if (world_rank == 0) {
@@ -92,9 +97,14 @@ void WacommPlusPlus::run() {
         shared_ptr<OceanModelAdapter> oceanModelAdapter;
         if (config->OceanModel() == "ROMS") {
             oceanModelAdapter = make_shared<ROMSAdapter>(ncInput);
-
-        } else {
+        } else if (config->OceanModel() == "NEMO") {
+            oceanModelAdapter = make_shared<NEMOAdapter>(ncInput);
+        } else if (config->OceanModel() == "HYCOM") {
+            oceanModelAdapter = make_shared<HYCOMAdapter>(ncInput);
+        } else if (config->OceanModel() == "WACOMM") {
             oceanModelAdapter = make_shared<WacommAdapter>(ncInput);
+        } else {
+            throw std::runtime_error("Unknown or unavailable ocean model adapter: " + config->OceanModel());
         }
         oceanModelAdapter->process();
 
@@ -150,7 +160,7 @@ void WacommPlusPlus::run() {
                 if (fileName.substr(fileName.find_last_of('.') + 1) == "nc") {
 
                     // The restart is a NetCDF
-                    particles->loadFromNetCDF(fileName);
+                    particles->loadFromNetCDF(fileName,config);
 
                     // Check if the restart is a geojson
                 } else if (fileName.substr(fileName.find_last_of('.') + 1) == "json") {
