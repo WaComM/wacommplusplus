@@ -71,7 +71,7 @@ if(BUILD_APPLICATION)
         set(CMAKE_CUDA_STANDARD 17)
         set(CMAKE_CUDA_STANDARD_REQUIRED ON)
         list(APPEND WACOMM_CUDA_SOURCES cuda/kernel.cu cuda/kernel.h)
-        list(APPEND WACOMM_LIBRARIES CUDA::cudart CUDA::curand)
+        list(APPEND WACOMM_LIBRARIES CUDA::cudart)
         add_compile_definitions(USE_CUDA)
     endif()
 

@@ -1,9 +1,11 @@
 # References
 
-- Bleck, R. (2002). An oceanic general circulation model framed in hybrid isopycnic-Cartesian coordinates. *Ocean Modelling*, 4, 55–88.
-- Shchepetkin, A. F., and McWilliams, J. C. (2005). The Regional Oceanic Modeling System. *Ocean Modelling*, 9, 347–404.
-- Madec, G., and the NEMO System Team. *NEMO ocean engine*. Institut Pierre-Simon Laplace.
-- Visser, A. W. (1997). Using random walk models to simulate the vertical distribution of particles in a turbulent water column. *Marine Ecology Progress Series*, 158, 275–281.
-- Thygesen, U. H., and Ådlandsvik, B. (2011). Simulating vertical turbulent dispersal with finite volumes and binned random walks. *Marine Ecology Progress Series*, 436, 1–17.
+- Montella, R., Di Luccio, D., De Vita, C. G., Mellone, G., Lapegna, M., Ortega, G., Marcellino, L., Zambianchi, E., and Giunta, G. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).
+- Di Luccio, D., Galletti, A., Marcellino, L., Riccio, A., Montella, R., and Brizius, A. (2017). Some remarks about a community open source Lagrangian pollutant transport and dispersion model. *Procedia Computer Science*, 113, 490–495. [doi:10.1016/j.procs.2017.08.308](https://doi.org/10.1016/j.procs.2017.08.308).
+- Bleck, R. (2002). An oceanic general circulation model framed in hybrid isopycnic-Cartesian coordinates. *Ocean Modelling*, 4, 55–88. [doi:10.1016/S1463-5003(01)00012-9](https://doi.org/10.1016/S1463-5003(01)00012-9).
+- Shchepetkin, A. F., and McWilliams, J. C. (2005). The regional oceanic modeling system (ROMS): a split-explicit, free-surface, topography-following-coordinate oceanic model. *Ocean Modelling*, 9, 347–404. [doi:10.1016/j.ocemod.2004.08.002](https://doi.org/10.1016/j.ocemod.2004.08.002).
+- Madec, G., and the NEMO System Team (2026). *NEMO Ocean Engine Reference Manual*, version 5.0.1. Zenodo. [doi:10.5281/zenodo.1464816](https://doi.org/10.5281/zenodo.1464816).
+- Visser, A. W. (1997). Using random walk models to simulate the vertical distribution of particles in a turbulent water column. *Marine Ecology Progress Series*, 158, 275–281. [doi:10.3354/meps158275](https://doi.org/10.3354/meps158275).
+- Thygesen, U. H. (2011). How to reverse time in stochastic particle tracking models. *Journal of Marine Systems*, 88(2), 159–168. [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009).
 
-Release documentation should add the verified WaComM foundational publication and product-specific source-attribution references before making associated scientific claims.
+The last reference is the basis for treating stochastic backward trajectories as conditional candidate-origin ensembles rather than exact inverses. The Visser reference motivates care when diffusivity varies spatially; the current WaComM++ stochastic specification is documented in [model.md](model.md) and must not be represented as implementing terms that are absent from the source.

@@ -602,6 +602,8 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                     switch (configData->horizontalClosure) {
 
                                 case Config::CLOSURE_MODE_CONSTRAINT:
+                                    idet=localParticleData.i;
+                                    jdet=localParticleData.j;
                                     break;
 
                                 case Config::CLOSURE_MODE_KILL:

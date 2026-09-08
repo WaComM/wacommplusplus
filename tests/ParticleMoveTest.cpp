@@ -42,4 +42,24 @@ int main() {
     assert(std::abs(emitted.Age()-25)<1e-12);
     double emittedDistance=(65.0*65.0-40.0*40.0)/65.0;
     assert(std::abs(emitted.I()-(.25+emittedDistance/xdist))<1e-10);
+
+    config.trackingDirection=Config::TRACKING_BACKWARD;
+    Particle backward(3,-.5,full.J(),full.I(),65);
+    backward.move(&config,1,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
+    assert(std::abs(backward.Age()-65)<1e-12);
+    assert(std::abs(backward.I()-.25)<1e-10);
+
+    config.trackingDirection=Config::TRACKING_FORWARD;
+    config.random=true;
+    config.randomSeed=5489;
+    Particle stochastic0(4,-.5,.25,.25,0),stochastic1(4,-.5,.25,.25,0);
+    stochastic0.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
+    stochastic1.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
+    assert(stochastic0.I()==stochastic1.I() && stochastic0.J()==stochastic1.J() &&
+           stochastic0.K()==stochastic1.K());
+    config.randomSeed=5490;
+    Particle stochastic2(4,-.5,.25,.25,0);
+    stochastic2.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
+    assert(stochastic0.I()!=stochastic2.I() || stochastic0.J()!=stochastic2.J() ||
+           stochastic0.K()!=stochastic2.K());
 }
