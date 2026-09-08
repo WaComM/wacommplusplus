@@ -41,7 +41,7 @@ struct config_data {
 class Config {
 public:
     Config();
-    explicit Config(string &fileName);
+    explicit Config(const string &fileName);
     ~Config();
 
     config_data *dataptr();

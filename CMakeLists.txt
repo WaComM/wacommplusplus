@@ -77,7 +77,7 @@ if(BUILD_APPLICATION)
 
     add_executable(wacommplusplus
             main.cpp Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
-            Config.cpp OceanModelAdapter.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
+            Config.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
             OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
             OceanModelAdapters/StructuredGridAdapter.cpp
             ${WACOMM_CUDA_SOURCES})
@@ -89,6 +89,15 @@ if(BUILD_APPLICATION)
                 OceanModelAdapter.cpp OceanModelAdapters/StructuredGridAdapter.cpp)
         target_link_libraries(structured_grid_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME structured_grid_adapters COMMAND structured_grid_adapter_test)
+
+        add_executable(config_test tests/ConfigTest.cpp Config.cpp Utils.cpp JulianDate.cpp)
+        target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME configuration_round_trip COMMAND config_test)
+
+        add_executable(restart_test tests/RestartTest.cpp Particles.cpp Particle.cpp OceanModelAdapter.cpp
+                Config.cpp Utils.cpp JulianDate.cpp)
+        target_link_libraries(restart_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME restart_format COMMAND restart_test)
     endif()
 endif()
 

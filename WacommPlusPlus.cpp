@@ -4,10 +4,7 @@
 
 #include "WacommPlusPlus.hpp"
 #include "JulianDate.hpp"
-#include "OceanModelAdapters/WacommAdapter.hpp"
-#include "OceanModelAdapters/ROMSAdapter.hpp"
-#include "OceanModelAdapters/NEMOAdapter.hpp"
-#include "OceanModelAdapters/HYCOMAdapter.hpp"
+#include "OceanModelAdapterFactory.hpp"
 #include <algorithm>
 #include <stdexcept>
 
@@ -94,18 +91,8 @@ void WacommPlusPlus::run() {
             LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
         }
 
-        shared_ptr<OceanModelAdapter> oceanModelAdapter;
-        if (config->OceanModel() == "ROMS") {
-            oceanModelAdapter = make_shared<ROMSAdapter>(ncInput);
-        } else if (config->OceanModel() == "NEMO") {
-            oceanModelAdapter = make_shared<NEMOAdapter>(ncInput);
-        } else if (config->OceanModel() == "HYCOM") {
-            oceanModelAdapter = make_shared<HYCOMAdapter>(ncInput);
-        } else if (config->OceanModel() == "WACOMM") {
-            oceanModelAdapter = make_shared<WacommAdapter>(ncInput);
-        } else {
-            throw std::runtime_error("Unknown or unavailable ocean model adapter: " + config->OceanModel());
-        }
+        shared_ptr<OceanModelAdapter> oceanModelAdapter=
+                OceanModelAdapterFactory::create(config->OceanModel(),ncInput);
         oceanModelAdapter->process();
 
         Calendar cal;

@@ -24,4 +24,6 @@ int main() {
     double random0=NumericalHelpers::normal(5489, 7, 3600, 2, 0);
     assert(random0 == NumericalHelpers::normal(5489, 7, 3600, 2, 0));
     assert(random0 != NumericalHelpers::normal(5490, 7, 3600, 2, 0));
+    assert(random0 != NumericalHelpers::normal(5489, 7, 3600, 3, 0));
+    assert(random0 != NumericalHelpers::normal(5489, 7, 3600, 2, 1));
 }

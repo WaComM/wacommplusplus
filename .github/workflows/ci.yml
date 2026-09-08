@@ -19,6 +19,10 @@ jobs:
     container: rockylinux:8.9
     steps:
       - uses: actions/checkout@v4
+      - name: Pin Rocky Linux 8.9 vault repositories
+        run: |
+          sed -i 's|^mirrorlist=|#mirrorlist=|' /etc/yum.repos.d/Rocky-*.repo
+          sed -i 's|^#baseurl=http://dl.rockylinux.org/\$contentdir/\$releasever|baseurl=https://dl.rockylinux.org/vault/rocky/8.9|' /etc/yum.repos.d/Rocky-*.repo
       - run: dnf install -y gcc-c++ cmake
       - run: cmake -S . -B build -DBUILD_APPLICATION=OFF
       - run: cmake --build build
@@ -31,3 +35,16 @@ jobs:
       - run: cmake -S . -B build -DBUILD_APPLICATION=OFF
       - run: cmake --build build
       - run: ctest --test-dir build --output-on-failure
+
+  riscv64-cross-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y g++-riscv64-linux-gnu
+      - run: >-
+          cmake -S . -B build-riscv64 -DBUILD_APPLICATION=OFF
+          -DCMAKE_SYSTEM_NAME=Linux
+          -DCMAKE_SYSTEM_PROCESSOR=riscv64
+          -DCMAKE_CXX_COMPILER=riscv64-linux-gnu-g++
+      - run: cmake --build build-riscv64

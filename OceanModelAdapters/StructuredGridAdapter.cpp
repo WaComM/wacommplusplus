@@ -74,6 +74,10 @@ void StructuredGridAdapter::process() {
     NcVar aktVar=variable(dataFile,model == "NEMO" ? vector<string>{"avt","votkeavt","akt"} : vector<string>{"diffusivity","akt"},true);
 
     if (!maskVar.isNull() && maskVar.getDimCount()==2) maskVar.getVar(this->Mask()());
+    else if (!maskVar.isNull() && maskVar.getDimCount()==3)
+        maskVar.getVar({0,0,0},{1,eta_rho,xi_rho},this->Mask()());
+    else if (!maskVar.isNull() && maskVar.getDimCount()==4)
+        maskVar.getVar({0,0,0,0},{1,1,eta_rho,xi_rho},this->Mask()());
     else for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) this->Mask()(j,i)=1;
     if (!hVar.isNull()) hVar.getVar(this->H()());
     else for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) this->H()(j,i)=maximumDepth;

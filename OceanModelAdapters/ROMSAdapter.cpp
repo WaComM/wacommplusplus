@@ -158,7 +158,7 @@ void ROMSAdapter::process()
     for (int t=0; t < ocean_time; t++) {
         for (int j = 0; j < eta_rho; j++) {
             for (int i = 0; i < xi_rho; i++) {
-                if (mask_rho(j, i) == 0 || zeta(t, j, i)==1e+37) {
+                if (mask_rho(j, i) == 0 || zeta(t, j, i)>=1e+36f) {
                     zeta(t, j, i) = 0;
                 }
             }
@@ -346,7 +346,6 @@ void ROMSAdapter::wakt2wakt(Array2<double>& mask_rho, Array4<float>& w, Array4<f
 
 
 ROMSAdapter::~ROMSAdapter() = default;
-
 
 
 

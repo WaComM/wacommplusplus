@@ -5,6 +5,7 @@
 #include "Config.hpp"
 #include "JulianDate.hpp"
 #include <nlohmann/json.hpp>
+#include <cmath>
 #include <limits>
 
 // for convenience
@@ -14,7 +15,7 @@ Config::Config() {
     setDefault();
 }
 
-Config::Config(string &fileName): configFile(fileName) {
+Config::Config(const string &fileName): configFile(fileName) {
     setDefault();
 
     log4cplus::BasicConfigurator basicConfig;
@@ -552,7 +553,8 @@ void Config::saveAsJson(const string &fileName) {
 
     json restart = {
             { "active", useRestart },
-            { "restart_file", restartFile }
+            { "restart_file", restartFile },
+            { "interval", restartInterval }
     };
 
     json sources = {
@@ -569,6 +571,14 @@ void Config::saveAsJson(const string &fileName) {
             { "dti", _data.dti },
             { "deltat", _data.deltat },
             { "crid", _data.crid },
+            { "sigma", _data.sigma },
+            { "shore_limit", _data.shoreLimit },
+            { "upper_closure", _data.upperClosure == Config::CLOSURE_MODE_CONSTRAINT ? "constraint" :
+                                 _data.upperClosure == Config::CLOSURE_MODE_KILL ? "kill" : "reflection" },
+            { "lower_closure", _data.lowerClosure == Config::CLOSURE_MODE_CONSTRAINT ? "constraint" :
+                                 _data.lowerClosure == Config::CLOSURE_MODE_KILL ? "kill" : "reflection" },
+            { "horizontal_closure", _data.horizontalClosure == Config::CLOSURE_MODE_CONSTRAINT ? "constraint" :
+                                      _data.horizontalClosure == Config::CLOSURE_MODE_KILL ? "kill" : "reflection" },
             { "random_seed", _data.randomSeed },
     };
 
@@ -643,6 +653,12 @@ void Config::loadFromJson(const string &fileName) {
     }
     if (config.contains("physics")) {
         json physics=config["physics"];
+        auto closureMode=[this](const json &value) {
+            string name=value;
+            auto item=dictionary.find(name);
+            if (item==dictionary.end()) throw std::runtime_error("Unknown closure mode: " + name);
+            return item->second;
+        };
         if (physics.contains("tau0")) { _data.tau0 = physics["tau0"]; }
         if (physics.contains("crid")) { _data.crid = physics["crid"]; }
         if (physics.contains("deltat")) { _data.deltat = physics["deltat"]; }
@@ -654,9 +670,9 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("random_seed")) { _data.randomSeed = physics["random_seed"]; }
         if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
         if (physics.contains("shore_limit")) { _data.shoreLimit = physics["shore_limit"]; }
-        if (physics.contains("upper_closure")) { _data.upperClosure = dictionary[physics["upper_closure"]]; }
-        if (physics.contains("lower_closure")) { _data.lowerClosure = dictionary[physics["lower_closure"]]; }
-        if (physics.contains("horizontal_closure")) { _data.horizontalClosure = dictionary[physics["horizontal_closure"]]; }
+        if (physics.contains("upper_closure")) { _data.upperClosure = closureMode(physics["upper_closure"]); }
+        if (physics.contains("lower_closure")) { _data.lowerClosure = closureMode(physics["lower_closure"]); }
+        if (physics.contains("horizontal_closure")) { _data.horizontalClosure = closureMode(physics["horizontal_closure"]); }
     }
     if (config.contains("tracking")) {
         json tracking=config["tracking"];
@@ -673,6 +689,18 @@ void Config::loadFromJson(const string &fileName) {
             else throw std::runtime_error("Unknown backward diffusion mode: " + diffusion);
         }
     }
+    if (!std::isfinite(_data.dti) || _data.dti<=0) {
+        throw std::runtime_error("physics.dti must be a finite value greater than zero");
+    }
+    if (!std::isfinite(_data.deltat) || _data.deltat<=0) {
+        throw std::runtime_error("physics.deltat must be a finite value greater than zero");
+    }
+    if (!std::isfinite(_data.sigma) || _data.sigma<0) {
+        throw std::runtime_error("physics.sigma must be a finite value greater than or equal to zero");
+    }
+    if (!std::isfinite(_data.shoreLimit) || _data.shoreLimit<0) {
+        throw std::runtime_error("physics.shore_limit must be a finite value greater than or equal to zero");
+    }
 }
 
 bool Config::MaskOutput() const {
@@ -686,4 +714,3 @@ void Config::MaskOutput(bool value) {
 double Config::Sigma() const {
     return _data.sigma;
 }
-

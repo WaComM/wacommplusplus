@@ -1,0 +1,8 @@
+{
+  "simulation": {"dry": false},
+  "io": {"ocean_model": "ROMS", "base_path": ".", "nc_inputs": ["forcing.nc"], "nc_output_root": "restart-forward"},
+  "sources": {"active": false, "sources_file": ""},
+  "restart": {"active": true, "restart_file": "checkpoint-forward.nc", "interval": 3600},
+  "physics": {"random": false, "random_seed": 5489, "dti": 30},
+  "tracking": {"direction": "forward", "backward_diffusion": "none"}
+}

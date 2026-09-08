@@ -3,6 +3,7 @@
 //
 
 #include "OceanModelAdapter.hpp"
+#include "NumericalHelpers.hpp"
 #include <math.h>
 
 OceanModelAdapter::OceanModelAdapter() {
@@ -202,7 +203,8 @@ void OceanModelAdapter::kji2deplatlon(double k, double j, double i, double &dep,
     auto iI=(int)i; double iF=i-iI;
 
     // Check if the source must be skipped
-    if (jI < 0 || iI < 0 || jI>=_data.mask.Nx() || iI>=_data.mask.Ny()) {
+    if (!NumericalHelpers::validInterpolationCell(jI,iI,_data.mask.Nx(),_data.mask.Ny()) ||
+        kI>0 || kI<=-(int)_data.sW.Nx()+1) {
         lon = 1e37;
         lat = 1e37;
         dep = 1e37;
@@ -360,7 +362,6 @@ void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double
 
 // Returns -1 if a < 0 and 1 if a > 0
 double OceanModelAdapter::sgn(double a) { return (a > 0) - (a < 0); }
-
 
 
 

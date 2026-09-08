@@ -1,0 +1,8 @@
+{
+  "simulation": {"dry": false},
+  "io": {"ocean_model": "ROMS", "base_path": ".", "nc_inputs": ["forcing.nc"], "nc_output_root": "parallel-openmp"},
+  "sources": {"active": true, "sources_file": "sources.json"},
+  "restart": {"active": false},
+  "physics": {"random": false, "random_seed": 5489, "dti": 30},
+  "tracking": {"direction": "forward", "backward_diffusion": "none"}
+}

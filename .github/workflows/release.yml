@@ -1,0 +1,28 @@
+name: Release source
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  source-archive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S . -B build -DBUILD_APPLICATION=OFF
+      - run: cmake --build build
+      - run: ctest --test-dir build --output-on-failure
+      - name: Create deterministic source archive
+        run: |
+          git archive --format=tar --prefix=wacommplusplus-${GITHUB_REF_NAME}/ HEAD > wacommplusplus-${GITHUB_REF_NAME}.tar
+          gzip -n -9 wacommplusplus-${GITHUB_REF_NAME}.tar
+          sha256sum wacommplusplus-${GITHUB_REF_NAME}.tar.gz > wacommplusplus-${GITHUB_REF_NAME}.tar.gz.sha256
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            wacommplusplus-${{ github.ref_name }}.tar.gz
+            wacommplusplus-${{ github.ref_name }}.tar.gz.sha256
+          generate_release_notes: true

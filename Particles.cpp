@@ -182,7 +182,7 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     dataFile.putAtt("checkpoint_time",ncDouble,particleTime);
     dataFile.putAtt("random_seed",ncUint64,config->RandomSeed());
 
-    NcDim particlesDim = dataFile.addDim("particles", this->size());
+    NcDim particlesDim = dataFile.addDim("particles", count);
     NcDim particleTimeDim = dataFile.addDim("particle_time", particle_time);
 
     NcVar particleTimeVar = dataFile.addVar("particle_time", ncDouble, particleTimeDim);
@@ -361,6 +361,11 @@ void Particles::loadFromNetCDF(const string &fileName, std::shared_ptr<Config> c
 
     NcGroupAtt versionAtt=dataFile.getAtt("wacomm_restart_version");
     if (!versionAtt.isNull()) {
+        string restartVersion;
+        versionAtt.getValues(restartVersion);
+        if (restartVersion != "2") {
+            throw std::runtime_error("Unsupported restart version: " + restartVersion);
+        }
         string restartDirection;
         dataFile.getAtt("tracking_direction").getValues(restartDirection);
         string configuredDirection=config->Backward() ? "backward" : "forward";
@@ -373,6 +378,23 @@ void Particles::loadFromNetCDF(const string &fileName, std::shared_ptr<Config> c
             double checkpointTime;
             checkpointAtt.getValues(&checkpointTime);
             config->RestartCheckpoint(checkpointTime);
+        }
+        NcGroupAtt seedAtt=dataFile.getAtt("random_seed");
+        if (!seedAtt.isNull()) {
+            std::uint64_t restartSeed;
+            seedAtt.getValues(&restartSeed);
+            if (restartSeed != config->RandomSeed()) {
+                throw std::runtime_error("Restart random seed does not match the configured random seed");
+            }
+        }
+        NcGroupAtt modelAtt=dataFile.getAtt("ocean_model");
+        if (!modelAtt.isNull()) {
+            string restartModel;
+            modelAtt.getValues(restartModel);
+            if (restartModel != config->OceanModel()) {
+                throw std::runtime_error("Restart ocean model is " + restartModel +
+                                         " but configuration ocean model is " + config->OceanModel());
+            }
         }
     }
 

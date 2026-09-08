@@ -6,7 +6,6 @@
 #include <utility>
 #include "Particle.hpp"
 #include "Config.hpp"
-#include <random>
 #include "NumericalHelpers.hpp"
 
 Particle::Particle(std::uint64_t id, double k, double j, double i,
@@ -125,13 +124,6 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
     // Get the domain size in west-east number of columns
     size_t xi_rho = mask.Ny();
-
-    // Create a random number generator
-    std::default_random_engine generator(static_cast<unsigned int>(
-            NumericalHelpers::mix(configData->randomSeed ^ localParticleData.id ^
-                                  static_cast<std::uint64_t>(oceanTime(ocean_time_idx)))));
-
-    // Initialize seed of number generator
 
     // Check if the particle jumped outside the water :-)
     if (localParticleData.k>0) {
@@ -430,12 +422,16 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                 // Calculation of sigma for the particle depth
                 double sigmaDepth = sigma * (1 - localParticleData.k / kLowerLimit);
 
-                // Generate a distribution probability with mean=0 and stdev=sigmaDepth
-                std::normal_distribution<double> distribution(0,sigmaDepth);
+                // Generate the random leap from the physical interval and absolute substep
+                std::int64_t intervalKey=static_cast<std::int64_t>(std::llround(std::min(intervalStart,intervalEnd)));
+                std::uint64_t substep=static_cast<std::uint64_t>(std::floor(elapsed/dti));
                 double stochasticScale=std::sqrt(stepDt/dti);
-                rxleap= distribution(generator)*stochasticScale;
-                ryleap = distribution(generator)*stochasticScale;
-                rzleap  = distribution(generator) * aa * crid * stochasticScale;
+                rxleap= sigmaDepth * NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                                               intervalKey,substep,0) * stochasticScale;
+                ryleap= sigmaDepth * NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                                               intervalKey,substep,1) * stochasticScale;
+                rzleap= sigmaDepth * NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                                               intervalKey,substep,2) * aa * crid * stochasticScale;
 
             }
 
