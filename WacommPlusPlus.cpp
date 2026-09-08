@@ -84,8 +84,10 @@ void WacommPlusPlus::run() {
     ADM_MonitoringService (ADM_SERVICE_START);
 #endif
 
-    if (config->Backward()) std::reverse(config->NcInputs().begin(), config->NcInputs().end());
-    for (auto &ncInput : config->NcInputs()) {
+    int inputDirection=config->Backward() ? -1 : 1;
+    int inputFirst=config->Backward() ? (int)config->NcInputs().size()-1 : 0;
+    for (int inputIdx=inputFirst;inputIdx>=0 && inputIdx<config->NcInputs().size();inputIdx+=inputDirection) {
+        string &ncInput=config->NcInputs()[inputIdx];
 
         if (world_rank == 0) {
             LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
@@ -94,6 +96,16 @@ void WacommPlusPlus::run() {
         shared_ptr<OceanModelAdapter> oceanModelAdapter=
                 OceanModelAdapterFactory::create(config->OceanModel(),ncInput);
         oceanModelAdapter->process();
+
+        int adjacentIdx=inputIdx+inputDirection;
+        if (adjacentIdx>=0 && adjacentIdx<config->NcInputs().size()) {
+            string &adjacentInput=config->NcInputs()[adjacentIdx];
+            shared_ptr<OceanModelAdapter> adjacentAdapter=
+                    OceanModelAdapterFactory::create(config->OceanModel(),adjacentInput);
+            adjacentAdapter->process();
+            int boundaryRecord=config->Backward() ? (int)adjacentAdapter->OceanTime().Nx()-1 : 0;
+            oceanModelAdapter->appendBoundaryRecord(*adjacentAdapter,boundaryRecord,config->Backward());
+        }
 
         Calendar cal;
 

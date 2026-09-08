@@ -8,6 +8,7 @@
 #include <utility>
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "JulianDate.hpp"
+#include "NumericalHelpers.hpp"
 
 #ifdef USE_OMP
 #include <omp.h>
@@ -122,6 +123,11 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
     // Get the size of the time axis
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
 
+    if (ocean_time<2) {
+        LOG4CPLUS_WARN(logger,"The forcing window does not contain a physical time interval; skipping it");
+        return 0;
+    }
+
 #ifdef USE_CUDA
     if (num_gpus>0 && (ocean_time>1 || config->Backward() || config->Random())) {
         LOG4CPLUS_WARN(logger,"CUDA execution does not yet implement physical-time interpolation, backtracking, and counter-based diffusion; using CPU execution");
@@ -168,8 +174,14 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
     int ocean_time_direction=config->Backward() ? -1 : 1;
     int ocean_time_first=config->Backward() ? (int)ocean_time - 1 : 0;
     for (int ocean_time_idx = ocean_time_first;
-         ocean_time_idx >= 0 && ocean_time_idx < ocean_time;
+         ocean_time_idx >= 0 && ocean_time_idx < ocean_time &&
+         ocean_time_idx+ocean_time_direction >= 0 && ocean_time_idx+ocean_time_direction < ocean_time;
          ocean_time_idx += ocean_time_direction) {
+
+        double intervalStart=oceanModelAdapter->OceanTime()(ocean_time_idx);
+        double intervalEnd=oceanModelAdapter->OceanTime()(ocean_time_idx+ocean_time_direction);
+        if (!NumericalHelpers::activeInterval(intervalStart,intervalEnd,config->RestartCheckpoint()))
+            continue;
 
         // Record start time
         auto start = std::chrono::high_resolution_clock::now();
@@ -220,7 +232,9 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             int nSources = sources->size();
 
             // For each source
-            for (int idx = 0; idx < nSources && !config->Backward(); idx++) {
+            bool emitSources=!config->Backward() &&
+                    NumericalHelpers::emitAtIntervalStart(intervalStart,config->RestartCheckpoint());
+            for (int idx = 0; idx < nSources && emitSources; idx++) {
 
                 // Emit particles
                 sources->at(idx).emit(config, particles, JulianDate::toModJulian(cal.asNCEPdate()));
@@ -701,6 +715,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #endif
         // Check if the current process is the world_rank==0
         if (world_rank==0) {
+            int concentrationTimeIdx=ocean_time_idx+ocean_time_direction;
             // Calculate the local wall clock
             std::chrono::duration<double> elapsedLocal = finishLocal - startLocal;
 
@@ -754,7 +769,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             auto _str = std::chrono::high_resolution_clock::now();
 
             // Evaluate the concentration of particles per grid cell
-            #pragma omp parallel for default(none) shared(nParticles, ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
+            #pragma omp parallel for default(none) shared(nParticles, concentrationTimeIdx, s_rho, eta_rho, xi_rho, conc)
             // For each particle...
             for (int idx = 0; idx < nParticles; idx++) {
                 // Get the reference to the particle
@@ -773,14 +788,14 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
                         // Increment the count of the particles in the grid cell
                         #pragma omp atomic update
-                        conc(ocean_time_idx, k, j, i) = conc(ocean_time_idx, k, j, i) + 1;
+                        conc(concentrationTimeIdx, k, j, i) = conc(concentrationTimeIdx, k, j, i) + 1;
                     }
                 }
             }
 
             if (config->MaskOutput()) {
                 // Mask all grid cells belonging to the land
-                #pragma omp parallel for collapse(3) default(none) shared(ocean_time_idx, s_rho, eta_rho, xi_rho, conc)
+                #pragma omp parallel for collapse(3) default(none) shared(concentrationTimeIdx, s_rho, eta_rho, xi_rho, conc)
                 // For each level...
                 for (int k = -(int) s_rho + 1; k <= 0; k++) {
 
@@ -794,7 +809,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                             if (oceanModelAdapter->Mask()(j, i) != 1) {
 
                                 // Mask the cell
-                                conc(ocean_time_idx, k, j, i) = 1e37;
+                                conc(concentrationTimeIdx, k, j, i) = 1e37;
                             }
                         }
                     }
@@ -831,7 +846,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         double startOceanTime=config->JulianStart()*86400;
 
         // Calculate the oceanTime at the end of calculations
-        double finalOceanTime=oceanModelAdapter->OceanTime()[ocean_time-1]+config->Deltat();
+        double finalOceanTime=config->Backward() ? oceanModelAdapter->OceanTime()[0] :
+                              oceanModelAdapter->OceanTime()[ocean_time-1];
 
         // Convert the ocean time from modified julian to gregorian calendar
         JulianDate::fromModJulian(finalOceanTime/86400, calFinal);

@@ -5,6 +5,7 @@
 #include "OceanModelAdapter.hpp"
 #include "NumericalHelpers.hpp"
 #include <math.h>
+#include <stdexcept>
 
 OceanModelAdapter::OceanModelAdapter() {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
@@ -192,6 +193,58 @@ oceanmodel_data *OceanModelAdapter::dataptr() {
     return &_data;
 }
 
+void OceanModelAdapter::appendBoundaryRecord(OceanModelAdapter &adapter, int record, bool prepend) {
+    if (record<0 || record>=adapter.OceanTime().Nx())
+        throw std::runtime_error("Adjacent forcing boundary record is out of range");
+    if (_data.sRho.Nx()!=adapter.SRho().Nx() || _data.sW.Nx()!=adapter.SW().Nx() ||
+        _data.mask.Nx()!=adapter.Mask().Nx() || _data.mask.Ny()!=adapter.Mask().Ny())
+        throw std::runtime_error("Adjacent forcing files have incompatible grid dimensions");
+    for (int k=-(int)_data.sRho.Nx()+1;k<=0;k++)
+        if (std::abs(_data.sRho(k)-adapter.SRho()(k))>1e-12)
+            throw std::runtime_error("Adjacent forcing files have incompatible vertical coordinates");
+    for (int k=-(int)_data.sW.Nx()+1;k<=0;k++)
+        if (std::abs(_data.sW(k)-adapter.SW()(k))>1e-12)
+            throw std::runtime_error("Adjacent forcing files have incompatible vertical coordinates");
+    for (int j=0;j<_data.mask.Nx();j++) for (int i=0;i<_data.mask.Ny();i++)
+        if (std::abs(_data.lon(j,i)-adapter.Lon()(j,i))>1e-10 ||
+            std::abs(_data.lat(j,i)-adapter.Lat()(j,i))>1e-10 ||
+            std::abs(_data.h(j,i)-adapter.H()(j,i))>1e-8 || _data.mask(j,i)!=adapter.Mask()(j,i))
+            throw std::runtime_error("Adjacent forcing files have incompatible horizontal grids");
+
+    size_t oldTime=_data.oceanTime.Nx(),newTime=oldTime+1,sRho=_data.sRho.Nx(),sW=_data.sW.Nx();
+    size_t eta=_data.mask.Nx(),xi=_data.mask.Ny();
+    Array1<double> oceanTime(newTime);
+    Array3<float> zeta(newTime,eta,xi);
+    Array4<float> u(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0);
+    Array4<float> v(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0);
+    Array4<float> w(newTime,sW,eta,xi,0,-(int)sW+1,0,0);
+    Array4<float> akt(newTime,sW,eta,xi,0,-(int)sW+1,0,0);
+    for (int t=0;t<newTime;t++) {
+        bool boundary=prepend ? t==0 : t==(int)oldTime;
+        int source=prepend ? t-1 : t;
+        oceanTime(t)=boundary ? adapter.OceanTime()(record) : _data.oceanTime(source);
+        for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) {
+            zeta(t,j,i)=boundary ? adapter.Zeta()(record,j,i) : _data.zeta(source,j,i);
+            for (int k=-(int)sRho+1;k<=0;k++) {
+                u(t,k,j,i)=boundary ? adapter.U()(record,k,j,i) : _data.u(source,k,j,i);
+                v(t,k,j,i)=boundary ? adapter.V()(record,k,j,i) : _data.v(source,k,j,i);
+            }
+            for (int k=-(int)sW+1;k<=0;k++) {
+                w(t,k,j,i)=boundary ? adapter.W()(record,k,j,i) : _data.w(source,k,j,i);
+                akt(t,k,j,i)=boundary ? adapter.AKT()(record,k,j,i) : _data.akt(source,k,j,i);
+            }
+        }
+    }
+    for (int t=1;t<newTime;t++) if (oceanTime(t)<=oceanTime(t-1))
+        throw std::runtime_error("Adjacent forcing files do not form a strictly chronological time axis");
+    _data.oceanTime.Reallocate(newTime); _data.oceanTime.Load(oceanTime());
+    _data.zeta.Deallocate(); _data.zeta.Allocate(newTime,eta,xi); _data.zeta.Load(zeta());
+    _data.u.Deallocate(); _data.u.Allocate(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0); _data.u.Load(u());
+    _data.v.Deallocate(); _data.v.Allocate(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0); _data.v.Load(v());
+    _data.w.Deallocate(); _data.w.Allocate(newTime,sW,eta,xi,0,-(int)sW+1,0,0); _data.w.Load(w());
+    _data.akt.Deallocate(); _data.akt.Allocate(newTime,sW,eta,xi,0,-(int)sW+1,0,0); _data.akt.Load(akt());
+}
+
 void OceanModelAdapter::kji2deplatlon(double k, double j, double i, double &dep, double &lat, double &lon) {
     // Get the integer part and the fraction part of particle k
     auto kI=(int)k; double kF=k-kI;
@@ -362,6 +415,3 @@ void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double
 
 // Returns -1 if a < 0 and 1 if a > 0
 double OceanModelAdapter::sgn(double a) { return (a > 0) - (a < 0); }
-
-
-

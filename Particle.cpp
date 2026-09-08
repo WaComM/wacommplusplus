@@ -174,7 +174,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
         double stepDt=std::min(dti,intervalLength-elapsed);
         double physicalTime=intervalStart + configData->trackingDirection * elapsed;
-        double alpha=intervalLength == 0 ? 0 : elapsed/intervalLength;
+        double alpha=intervalLength == 0 ? 0 : (elapsed+0.5*stepDt)/intervalLength;
         int nextOceanTimeIdx=intervalNextIdx;
         if (nextOceanTimeIdx < 0 || nextOceanTimeIdx >= oceanTime.Nx()) nextOceanTimeIdx=ocean_time_idx;
 

@@ -48,6 +48,8 @@ public:
 
     oceanmodel_data *dataptr();
 
+    void appendBoundaryRecord(OceanModelAdapter &adapter, int record, bool prepend);
+
     Array1<double> &OceanTime();
     Array1<double> &SRho();
     Array1<double> &SW();

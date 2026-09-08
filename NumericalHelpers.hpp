@@ -39,6 +39,14 @@ inline double restartElapsed(double intervalStart, double intervalEnd, double ch
     return std::min(intervalStart-intervalEnd,std::max(0.0,intervalStart-checkpoint));
 }
 
+inline bool activeInterval(double intervalStart, double intervalEnd, double checkpoint) {
+    return !std::isfinite(checkpoint) || !std::isnan(restartElapsed(intervalStart,intervalEnd,checkpoint));
+}
+
+inline bool emitAtIntervalStart(double intervalStart, double checkpoint) {
+    return !std::isfinite(checkpoint) || intervalStart>=checkpoint;
+}
+
 inline void reflectCell(double oldCoordinate, int oldCell, double &candidate, int candidateCell) {
     if (candidateCell < oldCell) candidate = oldCell + std::abs(oldCoordinate - candidate);
     else if (candidateCell > oldCell) candidate = candidateCell - std::fmod(candidate, 1.0);
