@@ -11,7 +11,7 @@ jobs:
     container: nvidia/cuda:12.6.3-devel-ubuntu24.04
     steps:
       - run: apt-get update && apt-get install -y ca-certificates git
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install application dependencies
         run: >-
           apt-get install -y cmake g++ pkg-config libnetcdf-dev
@@ -23,7 +23,7 @@ jobs:
   riscv64-qemu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: docker/setup-qemu-action@v3
         with:
           platforms: riscv64
