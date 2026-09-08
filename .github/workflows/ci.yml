@@ -2,8 +2,16 @@ name: CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   portable-core:
+    timeout-minutes: 30
     strategy:
       matrix:
         os: [ubuntu-latest, macos-15-intel, macos-15, windows-latest]
@@ -16,6 +24,7 @@ jobs:
 
   ubuntu-application:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       matrix:
         include:
@@ -43,6 +52,7 @@ jobs:
 
   rocky-8-9:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     container: rockylinux:8.9
     steps:
       - name: Pin Rocky Linux 8.9 vault repositories
@@ -57,6 +67,7 @@ jobs:
 
   raspberry-pi-os-proxy:
     runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
     container: debian:bookworm
     steps:
       - run: apt-get update && apt-get install -y ca-certificates git cmake g++
@@ -67,6 +78,7 @@ jobs:
 
   riscv64-cross-compile:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
       - run: sudo apt-get update
