@@ -180,7 +180,7 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     dataFile.putAtt("tracking_direction",config->Backward() ? "backward" : "forward");
     dataFile.putAtt("ocean_model",config->OceanModel());
     dataFile.putAtt("checkpoint_time",ncDouble,particleTime);
-    dataFile.putAtt("random_seed",ncUint64,config->RandomSeed());
+    dataFile.putAtt("random_seed",ncUint64,static_cast<unsigned long long>(config->RandomSeed()));
 
     NcDim particlesDim = dataFile.addDim("particles", count);
     NcDim particleTimeDim = dataFile.addDim("particle_time", particle_time);
