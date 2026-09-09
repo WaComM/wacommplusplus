@@ -30,11 +30,12 @@
     },
     "sources": {
       "active": true,
-      "sources_file": "./sources.json"
+      "sources_file": "examples/sources-sarno_river.json"
     },
     "physics": {
       "random": true,
       "random_sources": false,
+      "random_seed": 5489,
       "tau0": 86400,
       "survprob": 0.0001,
       "sigma": 3.46,
@@ -43,5 +44,8 @@
       "upper_closure": "reflection",
       "lower_closure": "constraint",
       "horizontal_closure": "kill"
+    },
+    "tracking": {
+      "direction": "forward"
     }
 }

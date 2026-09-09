@@ -33,7 +33,7 @@ Set `physics.random_seed` explicitly and archive the complete configuration, Git
 
 ## Documentation and examples
 
-Start at the [documentation index](docs/README.md) for the [model](docs/model.md), [build guide](docs/build.md), [configuration](docs/configuration.md), [adapters](docs/adapters.md), [backtracking](docs/backtracking.md), [restart](docs/restart.md), [testing](docs/testing.md), [parallelism](docs/parallelism.md), and [reproducibility](docs/reproducibility.md). The [examples index](examples/README.md) describes release expectations; documented deterministic forward and backward ROMS configurations are included.
+Start at the [documentation index](docs/README.md) for the [model](docs/model.md), [build guide](docs/build.md), [configuration](docs/configuration.md), [adapters](docs/adapters.md), [backtracking](docs/backtracking.md), [restart](docs/restart.md), [testing](docs/testing.md), [parallelism](docs/parallelism.md), [supported platforms](docs/supported-platforms.md), and [reproducibility](docs/reproducibility.md). The [examples index](examples/README.md) covers every checked-in run configuration and source artifact, including forward/backward ROMS, NEMO, HYCOM, and native WACOMM workflows.
 
 ## Citation
 

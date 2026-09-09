@@ -14,5 +14,7 @@ WaComM++ is a Lagrangian particle model driven by gridded ocean circulation. The
 - [Reproducibility](reproducibility.md)
 - [Examples](examples.md)
 - [Supported platforms](supported-platforms.md)
+- [Rocky Linux 8.9](rocky-linux.md)
+- [RISC-V 64 Linux](riscv64-linux.md)
 - [Scientific product policy](versioned-scientific-product.md)
 - [References](references.md)

@@ -205,5 +205,8 @@ if(BUILD_TESTING)
         add_test(NAME reproducibility_manifest COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ReproducibilityManifestTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/reproducibility_manifest.py")
+        add_test(NAME example_documentation COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/ExampleDocumentationTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples")
     endif()
 endif()

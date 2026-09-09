@@ -49,11 +49,12 @@
 	},
 	"sources": {
 		"active": true,
-		"sources_file": "sources.json"
+		"sources_file": "examples/sources-campania_region.json"
 	},
 	"physics": {
 		"random": false,
 		"random_sources": false,
+		"random_seed": 5489,
 		"tau0": 86400.0,
 		"survprob": 1.0e-4,
 		"sigma": 3.46,
@@ -61,5 +62,8 @@
 		"upper_closure": "reflection",
 		"lower_closure": "kill",
 		"horizontal_closure": "kill"
+	},
+	"tracking": {
+		"direction": "forward"
 	}
 }

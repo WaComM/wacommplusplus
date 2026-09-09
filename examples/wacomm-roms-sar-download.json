@@ -26,7 +26,6 @@
 			"2021/07/01/rms3_d03_20210701Z2200.nc",
 			"2021/07/01/rms3_d03_20210701Z2300.nc",
 			"2021/07/02/rms3_d03_20210702Z0000.nc",
-			"2021/07/02/rms3_d03_20210702Z0000.nc",
 			"2021/07/02/rms3_d03_20210702Z0100.nc",
 			"2021/07/02/rms3_d03_20210702Z0200.nc",
 			"2021/07/02/rms3_d03_20210702Z0300.nc",
@@ -65,15 +64,19 @@
 	},
 	"sources": {
 		"active": true,
-		"sources_file": "sources-sar.json"
+		"sources_file": "examples/sources-sar.json"
 	},
 	"physics": {
+		"random_seed": 5489,
 		"tau0": 86400.0,
 		"survprob": 1.0e-4,
-		"signa": 3.46,
+		"sigma": 3.46,
 		"shore_limit": 0.5,
-		"upper_clousere": "constraint",
-		"lower_clousere": "kill",
-		"horizontal_clousere": "reflection"
+		"upper_closure": "constraint",
+		"lower_closure": "kill",
+		"horizontal_closure": "reflection"
+	},
+	"tracking": {
+		"direction": "forward"
 	}
 }
