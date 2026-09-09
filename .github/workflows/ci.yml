@@ -34,6 +34,8 @@ jobs:
             cmake_options: -DUSE_OMP=ON
           - name: mpi
             cmake_options: -DUSE_MPI=ON
+          - name: mpi-openmp
+            cmake_options: -DUSE_MPI=ON -DUSE_OMP=ON
     name: Ubuntu application (${{ matrix.name }})
     steps:
       - uses: actions/checkout@v5

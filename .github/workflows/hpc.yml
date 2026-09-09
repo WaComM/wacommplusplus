@@ -19,6 +19,9 @@ jobs:
     container: nvidia/cuda:12.6.3-devel-ubuntu24.04
     env:
       DEBIAN_FRONTEND: noninteractive
+      OMPI_ALLOW_RUN_AS_ROOT: 1
+      OMPI_ALLOW_RUN_AS_ROOT_CONFIRM: 1
+      OMP_NUM_THREADS: 4
     steps:
       - run: apt-get update && apt-get install -y ca-certificates git
       - uses: actions/checkout@v5
@@ -26,7 +29,10 @@ jobs:
         run: >-
           apt-get install -y cmake g++ pkg-config libnetcdf-dev
           libnetcdf-c++4-dev liblog4cplus-dev nlohmann-json3-dev
-      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON
+          libopenmpi-dev openmpi-bin
+      - run: >-
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          -DUSE_MPI=ON -DUSE_OMP=ON -DUSE_CUDA=ON
       - run: cmake --build build --parallel
       - run: ctest --test-dir build --output-on-failure
 

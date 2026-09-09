@@ -4,4 +4,6 @@ Enable one or more optional backends at configure time, for example `-DUSE_OMP=O
 
 MPI transfers the fixed-width particle identity and six double-precision state fields through one shared derived datatype definition. The MPI regression intentionally assigns a remainder to rank zero, verifies lossless scatter/gather ordering, and compares the distributed seeded update with serial execution.
 
+Fast CI compiles serial, OpenMP, MPI, and combined MPI/OpenMP application configurations. Scheduled validation compiles MPI, OpenMP, and CUDA together and runs every CPU-side regression, including MPI execution. This proves build-time composition of the hierarchy; CUDA numerical parity still requires an NVIDIA GPU runner.
+
 Record ranks, threads, affinity, GPU and driver data with results. Validate deterministic output against serial execution before scientific use.
