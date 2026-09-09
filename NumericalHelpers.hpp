@@ -52,6 +52,14 @@ inline void reflectCell(double oldCoordinate, int oldCell, double &candidate, in
     else if (candidateCell > oldCell) candidate = candidateCell - std::fmod(candidate, 1.0);
 }
 
+inline std::size_t partitionCount(std::size_t total, std::size_t workers, std::size_t worker) {
+    return total/workers+(worker==0 ? total%workers : 0);
+}
+
+inline std::size_t partitionOffset(std::size_t total, std::size_t workers, std::size_t worker) {
+    return worker==0 ? 0 : partitionCount(total,workers,0)+(worker-1)*(total/workers);
+}
+
 inline std::uint64_t mix(std::uint64_t value) {
     value += 0x9e3779b97f4a7c15ULL;
     value = (value ^ (value >> 30U)) * 0xbf58476d1ce4e5b9ULL;

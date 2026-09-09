@@ -6,7 +6,7 @@ Exercise accelerator execution for a deterministic ROMS case and compare it with
 
 ## Configuration and command
 
-Configure with `cmake -S . -B build-cuda -DUSE_CUDA=ON`, build with `cmake --build build-cuda`, then run `./build-cuda/wacommplusplus examples/parallel-cuda.json`. The current executable deliberately falls back to CPU when requested features are not yet parity-validated on CUDA and emits a warning.
+Configure with `cmake -S . -B build-cuda -DUSE_CUDA=ON`, build with `cmake --build build-cuda`, then run `./build-cuda/wacommplusplus examples/parallel-cuda.json`. When no CUDA device is available the executable uses CPU execution; when a device is available it runs the CUDA kernel with the same physical-time and closure configuration.
 
 ## Expected behavior and validation
 
@@ -14,4 +14,4 @@ For a CUDA-supported path, compare identity, particle count, position, health, a
 
 ## Limitations, interpretation, and reproducibility
 
-Do not infer scientific equivalence from a successful kernel launch; only parity-tested configurations are supported. Record revision, inputs/configuration and checksums, compiler, CUDA toolkit, driver/GPU, CMake options, launch settings, tests, tolerances, timing, and output checksums. See [parallelism](../docs/parallelism.md) and [testing](../docs/testing.md).
+Do not infer measured scientific equivalence from a successful kernel launch or compile-only CI. Record revision, inputs/configuration and checksums, compiler, CUDA toolkit, driver/GPU, CMake options, launch settings, tests, tolerances, timing, and output checksums. See [parallelism](../docs/parallelism.md) and [testing](../docs/testing.md).

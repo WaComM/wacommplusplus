@@ -128,13 +128,6 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         return 0;
     }
 
-#ifdef USE_CUDA
-    if (num_gpus>0 && (ocean_time>1 || config->Backward() || config->Random())) {
-        LOG4CPLUS_WARN(logger,"CUDA execution does not yet implement physical-time interpolation, backtracking, and counter-based diffusion; using CPU execution");
-        num_gpus=0;
-    }
-#endif
-
     // Get the size of the vertical axis
     size_t s_rho=oceanModelAdapter->SRho().Nx();
 
@@ -382,12 +375,6 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #endif
         LOG4CPLUS_INFO(logger, world_rank << ": Local particles:" << pLocalParticles->size());
 
-        // Get the number of particles to be processed by each thread
-        size_t particlesPerThread = particlesToProcess / ompMaxThreads;
-
-        // Get the number of spare particles for the thread with tidx==0
-        size_t sparePerThread = particlesToProcess % ompMaxThreads;
-
         // Dafine an array with the number of particles to be processed by each thread
         vector<size_t> thread_counts(ompMaxThreads);
 
@@ -395,7 +382,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         vector<size_t> thread_displs(ompMaxThreads);
 
         // The first thread get the spare
-        thread_counts[0] = (int)((particlesPerThread + sparePerThread));
+        thread_counts[0] = NumericalHelpers::partitionCount(particlesToProcess,ompMaxThreads,0);
 
         // The first tread starts from 0
         thread_displs[0] = 0;
@@ -404,10 +391,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         for (int tidx = 1; tidx < ompMaxThreads; tidx++) {
 
             // Set the number of particles per thread
-            thread_counts[tidx] = (int)(particlesPerThread);
+            thread_counts[tidx] = NumericalHelpers::partitionCount(particlesToProcess,ompMaxThreads,tidx);
 
             // Set the displaement
-            thread_displs[tidx]=thread_counts[0]+particlesPerThread*(tidx-1);
+            thread_displs[tidx]=NumericalHelpers::partitionOffset(particlesToProcess,ompMaxThreads,tidx);
         }
 
 	    typedef struct WacommVariables{
@@ -505,7 +492,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         float _time = 0;
 
         // Begin the shared memory parallel section
-        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, particlesPerThread, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector, _time, time_array)
+        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector, _time, time_array)
         {
 
 #ifdef USE_OMP
@@ -546,15 +533,9 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #ifdef USE_CUDA
 	        else {
                 if (num_gpus>0) {
-                    int particlesToProcessGPU = particlesPerThread;
+                    size_t particlesToProcessGPU = thread_counts[ompThreadNum];
 
                     if (particlesToProcessGPU > 0){
-                        // Get the number of particles to be processed by each GPU
-                        size_t particlesPerGPU = particlesToProcessGPU / num_gpus;
-
-                        // Get the number of spare particles for the GPU with idx==0
-                        size_t sparePerGPU = particlesToProcessGPU % num_gpus;
-
                         // Dafine an array with the number of particles to be processed by each GPU
                         vector<size_t> GPU_counts(num_gpus);
 
@@ -562,7 +543,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                         vector<size_t> GPU_displs(num_gpus);
 
                         // The first GPU get the spare
-                        GPU_counts[0] = (int)((particlesPerGPU + sparePerGPU));
+                        GPU_counts[0] = NumericalHelpers::partitionCount(particlesToProcessGPU,num_gpus,0);
 
                         // The first GPU starts from 0
                         GPU_displs[0] = 0;
@@ -570,10 +551,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                         // For each available GPU...
                         for (int gidx = 1; gidx < num_gpus; gidx++) {
                             // Set the number of particles per GPU
-                            GPU_counts[gidx] = (int)(particlesPerGPU);
+                            GPU_counts[gidx] = NumericalHelpers::partitionCount(particlesToProcessGPU,num_gpus,gidx);
 
                             // Set the displaement
-                            GPU_displs[gidx] = GPU_counts[0] + particlesPerGPU*(gidx-1);
+                            GPU_displs[gidx] = NumericalHelpers::partitionOffset(particlesToProcessGPU,num_gpus,gidx);
                         }
 
                         typedef struct ThreadSectionDevice{

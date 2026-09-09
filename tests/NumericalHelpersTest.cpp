@@ -27,6 +27,13 @@ int main() {
     double left=.7; NumericalHelpers::reflectCell(1.2, 1, left, 0); assert(std::abs(left-1.5)<1e-12);
     double right=2.3; NumericalHelpers::reflectCell(1.8, 1, right, 2); assert(std::abs(right-1.7)<1e-12);
     double same=1.4; NumericalHelpers::reflectCell(1.2, 1, same, 1); assert(same==1.4);
+    std::size_t partitionTotal=0;
+    for (std::size_t worker=0;worker<4;worker++) {
+        std::size_t count=NumericalHelpers::partitionCount(11,4,worker);
+        assert(NumericalHelpers::partitionOffset(11,4,worker)==partitionTotal);
+        partitionTotal+=count;
+    }
+    assert(partitionTotal==11);
     double random0=NumericalHelpers::normal(5489, 7, 3600, 2, 0);
     assert(random0 == NumericalHelpers::normal(5489, 7, 3600, 2, 0));
     assert(random0 != NumericalHelpers::normal(5490, 7, 3600, 2, 0));
