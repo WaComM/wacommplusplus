@@ -1,0 +1,8 @@
+{
+  "simulation": {"dry": false},
+  "io": {"ocean_model": "WACOMM", "base_path": ".", "nc_inputs": ["wacomm.nc"], "nc_output_root": "backward-wacomm"},
+  "sources": {"active": false, "sources_file": ""},
+  "restart": {"active": true, "restart_file": "endpoint.nc"},
+  "physics": {"random": false, "random_seed": 5489, "dti": 30},
+  "tracking": {"direction": "backward", "backward_diffusion": "none"}
+}

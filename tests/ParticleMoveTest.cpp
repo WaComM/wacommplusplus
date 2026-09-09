@@ -62,4 +62,33 @@ int main() {
     stochastic2.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
     assert(stochastic0.I()!=stochastic2.I() || stochastic0.J()!=stochastic2.J() ||
            stochastic0.K()!=stochastic2.K());
+
+    config.random=false;
+    config.randomSeed=5489;
+    config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+    Array1<double> earlyTime(2); earlyTime(0)=0; earlyTime(1)=40;
+    Array4<float> earlyU(2,2,2,2,0,-1,0,0); earlyU=0.0f;
+    for (int k=-1;k<=0;k++) for (int j=0;j<2;j++) for (int i=0;i<2;i++)
+        earlyU(1,k,j,i)=80.0f/65.0f;
+    Particle restartedForward(5,-.5,.25,.25,0);
+    restartedForward.move(&config,0,earlyTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,earlyU,v,w,akt);
+    config.restartCheckpoint=40;
+    restartedForward.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
+    assert(std::abs(restartedForward.I()-full.I())<1e-8);
+    assert(std::abs(restartedForward.Age()-full.Age())<1e-12);
+
+    config.trackingDirection=Config::TRACKING_BACKWARD;
+    config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+    Array1<double> lateTime(2); lateTime(0)=40; lateTime(1)=65;
+    Array4<float> lateU(2,2,2,2,0,-1,0,0); lateU=0.0f;
+    for (int k=-1;k<=0;k++) for (int j=0;j<2;j++) for (int i=0;i<2;i++) {
+        lateU(0,k,j,i)=80.0f/65.0f;
+        lateU(1,k,j,i)=2.0f;
+    }
+    Particle restartedBackward(6,-.5,full.J(),full.I(),65);
+    restartedBackward.move(&config,1,lateTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,lateU,v,w,akt);
+    config.restartCheckpoint=40;
+    restartedBackward.move(&config,1,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
+    assert(std::abs(restartedBackward.I()-.25)<1e-8);
+    assert(std::abs(restartedBackward.Age()-65)<1e-12);
 }

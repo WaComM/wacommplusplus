@@ -1,5 +1,21 @@
-# Backward HYCOM
+# Deterministic backward HYCOM example
 
-This example estimates deterministic candidate prior positions from endpoint particles under HYCOM forcing. It requires the forward HYCOM variables and a direction-compatible endpoint restart; sources remain disabled.
+## Scientific objective
 
-Replace paths and run `./build/wacommplusplus examples/backward-hycom.json`. Validate using a diffusion-free round trip away from closures. Missing W/AKT and forcing resolution limit interpretation, and output is not proof of a unique origin. Preserve the full reproducibility record and see `docs/backtracking.md`, `docs/adapters.md`, and the adapter fixture test.
+Trace known endpoints backward through HYCOM forcing to produce candidate deterministic origins conditional on the circulation product.
+
+## Prerequisites and required fields
+
+Build with NetCDF C++4, provide chronological `hycom.nc`, and provide versioned `endpoint.nc`. Required aliases and optional-field policy are detailed in [adapters](../docs/adapters.md). Do not configure ordinary emission sources.
+
+## Configuration and run
+
+The JSON uses deterministic backward motion and `backward_diffusion:none`. Replace paths, run `cmake -S . -B build && cmake --build build`, then `./build/wacommplusplus examples/backward-hycom.json`.
+
+## Expected behavior and validation
+
+HYCOM data remains chronological and direction-neutral while the solver traverses newer to older records. Check restart direction safety, identities, time ordering, and bounds. Compare a deterministic forward/backward fixture within tolerance and run the structured-adapter, particle-interval, and restart tests.
+
+## Limitations, interpretation, and reproducibility
+
+Boundary interactions, decay, coarse forcing, missing W/AKT, and numerical error can prevent reversibility. Results are candidate origins, not a unique history. Archive revision, configuration, forcing/restart checksums, seed, toolchain, dependencies, platform/backend settings, tolerances, tests, and outputs.
