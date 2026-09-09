@@ -112,6 +112,11 @@ if(BUILD_APPLICATION)
         add_executable(particle_move_test tests/ParticleMoveTest.cpp Particle.cpp)
         target_link_libraries(particle_move_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME particle_physical_interval COMMAND particle_move_test)
+
+        add_executable(concentration_test tests/ConcentrationTest.cpp Particles.cpp Particle.cpp
+                OceanModelAdapter.cpp Config.cpp Utils.cpp JulianDate.cpp)
+        target_link_libraries(concentration_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME concentration_preservation COMMAND concentration_test)
     endif()
 endif()
 

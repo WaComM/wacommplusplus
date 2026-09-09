@@ -3,6 +3,7 @@
 //
 
 #include "Wacomm.hpp"
+#include "Concentration.hpp"
 
 #include <chrono>
 #include <utility>
@@ -747,30 +748,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
             auto _str = std::chrono::high_resolution_clock::now();
 
-            // Evaluate the concentration of particles per grid cell
-            #pragma omp parallel for default(none) shared(nParticles, concentrationTimeIdx, s_rho, eta_rho, xi_rho, conc)
-            // For each particle...
-            for (int idx = 0; idx < nParticles; idx++) {
-                // Get the reference to the particle
-                const Particle &particle = particles->at(idx);
-
-                // Even if it is redundant, check if the particle is alive
-                if (particle.isAlive()) {
-
-                    // Get the integer indeces k, j, i
-                    int k = (int) round(particle.K());
-                    int j = (int) round(particle.J());
-                    int i = (int) round(particle.I());
-
-                    // Check if the indices are consistent
-                    if (j >= 0 && j < eta_rho && i >= 0 && i < xi_rho && k >= (-(int) s_rho + 1) && k <= 0) {
-
-                        // Increment the count of the particles in the grid cell
-                        #pragma omp atomic update
-                        conc(concentrationTimeIdx, k, j, i) = conc(concentrationTimeIdx, k, j, i) + 1;
-                    }
-                }
-            }
+            Concentration::evaluate(particles.get(), concentrationTimeIdx, s_rho, eta_rho, xi_rho, conc);
 
             if (config->MaskOutput()) {
                 // Mask all grid cells belonging to the land
