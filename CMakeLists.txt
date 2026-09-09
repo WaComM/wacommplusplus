@@ -200,4 +200,10 @@ if(BUILD_TESTING)
     wacomm_enable_test_assertions(numerical_helpers_test)
     target_include_directories(numerical_helpers_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME numerical_helpers COMMAND numerical_helpers_test)
+    find_package(Python3 QUIET COMPONENTS Interpreter)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME reproducibility_manifest COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/ReproducibilityManifestTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/reproducibility_manifest.py")
+    endif()
 endif()
