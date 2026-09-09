@@ -40,6 +40,36 @@ if(BUILD_APPLICATION)
             nlohmann_json::nlohmann_json NetCDF::CXX4 PkgConfig::NETCDF PkgConfig::LOG4CPLUS)
 
     if(USE_OMP)
+        if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+            find_program(HOMEBREW_EXECUTABLE brew)
+            if(HOMEBREW_EXECUTABLE)
+                execute_process(COMMAND "${HOMEBREW_EXECUTABLE}" --prefix libomp
+                        RESULT_VARIABLE HOMEBREW_LIBOMP_RESULT
+                        OUTPUT_VARIABLE HOMEBREW_LIBOMP_PREFIX
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+                        ERROR_QUIET)
+                if(HOMEBREW_LIBOMP_RESULT EQUAL 0
+                        AND EXISTS "${HOMEBREW_LIBOMP_PREFIX}/include/omp.h"
+                        AND EXISTS "${HOMEBREW_LIBOMP_PREFIX}/lib/libomp.dylib")
+                    if(NOT OpenMP_CXX_FLAGS)
+                        set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp" CACHE STRING
+                                "C++ compiler flags for OpenMP" FORCE)
+                    endif()
+                    if(NOT OpenMP_CXX_INCLUDE_DIR)
+                        set(OpenMP_CXX_INCLUDE_DIR "${HOMEBREW_LIBOMP_PREFIX}/include" CACHE PATH
+                                "C++ include directory for OpenMP" FORCE)
+                    endif()
+                    if(NOT OpenMP_CXX_LIB_NAMES)
+                        set(OpenMP_CXX_LIB_NAMES omp CACHE STRING
+                                "C++ libraries for OpenMP" FORCE)
+                    endif()
+                    if(NOT OpenMP_omp_LIBRARY)
+                        set(OpenMP_omp_LIBRARY "${HOMEBREW_LIBOMP_PREFIX}/lib/libomp.dylib" CACHE FILEPATH
+                                "OpenMP runtime library" FORCE)
+                    endif()
+                endif()
+            endif()
+        endif()
         find_package(OpenMP REQUIRED COMPONENTS CXX)
         list(APPEND WACOMM_LIBRARIES OpenMP::OpenMP_CXX)
         add_compile_definitions(USE_OMP)

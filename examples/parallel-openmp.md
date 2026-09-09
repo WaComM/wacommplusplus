@@ -6,7 +6,7 @@ Run the deterministic ROMS scenario with shared-memory particle parallelism and 
 
 ## Configuration and command
 
-The JSON keeps physics independent of thread scheduling. Configure with `cmake -S . -B build-omp -DUSE_OMP=ON`, build with `cmake --build build-omp`, then run `OMP_NUM_THREADS=4 ./build-omp/wacommplusplus examples/parallel-openmp.json`.
+The JSON keeps physics independent of thread scheduling. Configure with `cmake -S . -B build-omp -DUSE_OMP=ON`, build with `cmake --build build-omp`, then run `OMP_NUM_THREADS=4 ./build-omp/wacommplusplus examples/parallel-openmp.json`. AppleClang users must first install the runtime with `brew install libomp`; CMake discovers that keg from Homebrew without assuming `/opt/homebrew` or `/usr/local`.
 
 ## Expected behavior and validation
 
