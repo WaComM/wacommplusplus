@@ -137,8 +137,12 @@ void WacommPlusPlus::run() {
         }
         if (weatherModelAdapter && config->WeatherRegridding()=="bilinear_geographic")
             weatherModelAdapter->regridBilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
+        else if (weatherModelAdapter && config->WeatherRegridding()=="bilinear_curvilinear_geographic")
+            weatherModelAdapter->regridBilinearCurvilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
         if (waveModelAdapter && config->WaveRegridding()=="bilinear_geographic")
             waveModelAdapter->regridBilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
+        else if (waveModelAdapter && config->WaveRegridding()=="bilinear_curvilinear_geographic")
+            waveModelAdapter->regridBilinearCurvilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
 
         Calendar cal;
 

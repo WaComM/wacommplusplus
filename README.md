@@ -8,7 +8,7 @@ Surface-object tracking augments the ambient current with an empirically paramet
 
 Environmental adapters validate declared velocity and coordinate units and normalize supported CF numeric time coordinates to the WaComM physical epoch. Ambiguous units, unsupported calendars, unequal grids, and inconsistent timestamps are rejected before particle integration.
 
-Environmental grids remain exact-match by default. An explicit `bilinear_geographic` option can interpolate Earth-relative WRF or WW3 vectors from a monotonic rectilinear longitude/latitude source grid onto the ocean grid without extrapolation. The operator preserves constants and affine coordinate fields but is not conservative; projected and curvilinear source grids remain unsupported.
+Environmental grids remain exact-match by default. Explicit `bilinear_geographic` and `bilinear_curvilinear_geographic` options can interpolate Earth-relative WRF or WW3 vectors from rectilinear or valid curvilinear longitude/latitude source grids onto the ocean grid without extrapolation. Antimeridian crossing and folded-cell rejection are handled explicitly. The operators preserve constants but are not conservative; projected source coordinates remain unsupported.
 
 Backward deterministic tracking reverses forcing traversal and resolved/terminal motion and suppresses normal forward sources. It can identify candidate prior locations under the supplied circulation and model assumptions; stochastic backward tracking is not a unique inverse trajectory.
 

@@ -6,7 +6,7 @@ This scenario estimates deterministic forward displacement of a person in water 
 
 ## Prerequisites, configuration, and command
 
-Provide `forcing.nc`, `wrf.nc`, `ww3.nc`, and `sources.json`. WRF requires `U10`, `V10`, `XLONG`, `XLAT`, `COSALPHA`, `SINALPHA`, and absolute time; WW3 requires time, coordinates, and eastward/northward surface Stokes velocity. Wind and Stokes components must declare meters per second, coordinates must declare degrees east/north, and numeric time must declare supported CF units relative to a UTC reference instant. WRF must already match the ocean grid. This example opts into `bilinear_geographic` for a monotonic rectilinear WW3 grid that encloses every ocean point; time axes must coincide after normalization. Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacommplusplus examples/sar-person-wrf-ww3-forward.json`.
+Provide `forcing.nc`, `wrf.nc`, `ww3.nc`, and `sources.json`. WRF requires `U10`, `V10`, `XLONG`, `XLAT`, `COSALPHA`, `SINALPHA`, and absolute time; WW3 requires time, coordinates, and eastward/northward surface Stokes velocity. Wind and Stokes components must declare meters per second, coordinates must declare degrees east/north, and numeric time must declare supported CF units relative to a UTC reference instant. This example opts into inverse-bilinear curvilinear geographic regridding for the WRF grid and rectilinear `bilinear_geographic` regridding for WW3; both source domains must enclose every ocean point and time axes must coincide after normalization. Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacommplusplus examples/sar-person-wrf-ww3-forward.json`.
 
 ## Expected behavior and validation
 
@@ -14,7 +14,7 @@ The deterministic velocity is ocean current plus empirical leeway plus WW3 surfa
 
 ## Limitations, interpretation, and reproducibility
 
-WW3 Stokes components are bilinearly interpolated and therefore smoothed but not conservatively remapped; record source and target grids and quantify resolution sensitivity. No WRF regridding, coefficient uncertainty, jibing, or depth-dependent Stokes profile is applied. The result is conditional on object class and forcing accuracy and is not an operational search area. Archive all input checksums, resolved configuration, Git revision, compiler and dependencies, CMake options, parallel layout, tolerances, and output checksums. Dynamic WRF/WW3 coupling is not yet supported by CUDA execution.
+WRF wind and WW3 Stokes components are bilinearly interpolated and therefore smoothed but not conservatively remapped; record source and target grids and quantify resolution sensitivity. Curvilinear cell location is currently a direct search and can dominate preprocessing for large grids. No projected-coordinate transform, coefficient uncertainty, jibing, or depth-dependent Stokes profile is applied. The result is conditional on object class and forcing accuracy and is not an operational search area. Archive all input checksums, resolved configuration, Git revision, compiler and dependencies, CMake options, parallel layout, tolerances, and output checksums. Dynamic WRF/WW3 coupling is not yet supported by CUDA execution.
 
 ## References
 

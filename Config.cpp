@@ -768,7 +768,8 @@ void Config::loadFromJson(const string &fileName) {
             } else if (adapter=="WRF") {
                 weatherModel=adapter; _data.hasWind=true;
                 weatherRegridding=wind.value("regrid","none");
-                if (weatherRegridding!="none" && weatherRegridding!="bilinear_geographic")
+                if (weatherRegridding!="none" && weatherRegridding!="bilinear_geographic" &&
+                    weatherRegridding!="bilinear_curvilinear_geographic")
                     throw std::runtime_error("Unknown environment.wind.regrid: " + weatherRegridding);
                 if (!wind.contains("nc_inputs") || !wind["nc_inputs"].is_array())
                     throw std::runtime_error("WRF wind requires environment.wind.nc_inputs");
@@ -780,7 +781,8 @@ void Config::loadFromJson(const string &fileName) {
             if (waveModel!="none" && waveModel!="WW3") throw std::runtime_error("Unknown environment.wave.adapter: " + waveModel);
             if (waveModel=="WW3") {
                 waveRegridding=wave.value("regrid","none");
-                if (waveRegridding!="none" && waveRegridding!="bilinear_geographic")
+                if (waveRegridding!="none" && waveRegridding!="bilinear_geographic" &&
+                    waveRegridding!="bilinear_curvilinear_geographic")
                     throw std::runtime_error("Unknown environment.wave.regrid: " + waveRegridding);
                 if (!wave.contains("nc_inputs") || !wave["nc_inputs"].is_array())
                     throw std::runtime_error("WW3 wave input requires environment.wave.nc_inputs");

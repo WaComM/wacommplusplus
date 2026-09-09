@@ -48,13 +48,13 @@ int main() {
         std::ofstream file(environment);
         file << R"({"io":{"nc_inputs":["ocean.nc"]},
           "drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"left"},
-          "environment":{"wind":{"adapter":"WRF","nc_inputs":["wrf.nc"],"regrid":"bilinear_geographic"},
+          "environment":{"wind":{"adapter":"WRF","nc_inputs":["wrf.nc"],"regrid":"bilinear_curvilinear_geographic"},
                          "wave":{"adapter":"WW3","nc_inputs":["ww3.nc"],"regrid":"bilinear_geographic"}}})";
     }
     Config environmental(environment);
     assert(environmental.WeatherModel()=="WRF" && environmental.WeatherInputs().size()==1);
     assert(environmental.WaveModel()=="WW3" && environmental.WaveInputs().size()==1);
-    assert(environmental.WeatherRegridding()=="bilinear_geographic");
+    assert(environmental.WeatherRegridding()=="bilinear_curvilinear_geographic");
     assert(environmental.WaveRegridding()=="bilinear_geographic");
     {
         std::ofstream file(invalid);

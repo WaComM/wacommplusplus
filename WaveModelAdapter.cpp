@@ -18,6 +18,15 @@ void WaveModelAdapter::regridBilinearGeographic(const Array2<double>& targetLon,
     StokesV().Deallocate(); StokesV().Allocate(v.Nx(),v.Ny(),v.Nz()); StokesV().Load(v());
 }
 
+void WaveModelAdapter::regridBilinearCurvilinearGeographic(const Array2<double>& targetLon,const Array2<double>& targetLat) {
+    Array3<float> u=EnvironmentalRegridder::bilinearCurvilinearGeographic(Lon(),Lat(),StokesU(),targetLon,targetLat);
+    Array3<float> v=EnvironmentalRegridder::bilinearCurvilinearGeographic(Lon(),Lat(),StokesV(),targetLon,targetLat);
+    Lon().Deallocate(); Lon().Allocate(targetLon.Nx(),targetLon.Ny()); Lon().Load(targetLon());
+    Lat().Deallocate(); Lat().Allocate(targetLat.Nx(),targetLat.Ny()); Lat().Load(targetLat());
+    StokesU().Deallocate(); StokesU().Allocate(u.Nx(),u.Ny(),u.Nz()); StokesU().Load(u());
+    StokesV().Deallocate(); StokesV().Allocate(v.Nx(),v.Ny(),v.Nz()); StokesV().Load(v());
+}
+
 void WaveModelAdapter::appendBoundaryRecord(WaveModelAdapter &adapter, int record, bool prepend) {
     if (record<0 || record>=adapter.Time().Nx()) throw std::runtime_error("Wave boundary record is out of range");
     size_t eta=Lon().Nx(),xi=Lon().Ny(),oldTime=Time().Nx(),newTime=oldTime+1;

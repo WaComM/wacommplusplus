@@ -5,5 +5,5 @@
   "physics": {"random":false, "random_seed":5489, "dti":30},
   "tracking": {"direction":"forward", "backward_diffusion":"none"},
   "drift": {"model":"leeway", "object_type":"PERSON_IN_WATER", "side":"right"},
-  "environment": {"wind":{"adapter":"WRF", "nc_inputs":["wrf.nc"]}, "wave":{"adapter":"WW3", "nc_inputs":["ww3.nc"], "regrid":"bilinear_geographic"}}
+  "environment": {"wind":{"adapter":"WRF", "nc_inputs":["wrf.nc"], "regrid":"bilinear_curvilinear_geographic"}, "wave":{"adapter":"WW3", "nc_inputs":["ww3.nc"], "regrid":"bilinear_geographic"}}
 }

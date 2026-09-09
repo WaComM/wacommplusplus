@@ -50,7 +50,7 @@ where `q` is the object class, `s` is the crosswind side, and `χS` is one only 
 The comparison identifies four ordered research-engineering milestones. Status refers to the repository revision containing this document:
 
 1. **Implemented:** extend CF metadata and unit validation across WRF and WW3 environmental adapters, rejecting ambiguous units and normalizing supported CF time coordinates.
-2. **Partially implemented:** provide explicit geographic bilinear regridding with constant preservation, affine exactness, no extrapolation, and Earth-relative vector semantics. General projected-coordinate transforms, curvilinear-source inversion, antimeridian handling, and conservative remapping remain open.
+2. **Partially implemented:** provide explicit rectilinear and inverse-bilinear curvilinear geographic regridding with constant preservation, analytical cell-coordinate tests, antimeridian handling, fold detection, no extrapolation, and Earth-relative vector semantics. General projected-coordinate transforms, indexed high-performance cell location, and conservative remapping remain open.
 3. Add SAR parameter ensembles and jibing only after coefficient distributions and transition assumptions are traced to peer-reviewed evidence.
 4. Add reproducible trajectory-map and ensemble-diagnostic tooling that reads WaComM++ output without modifying solver physics.
 

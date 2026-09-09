@@ -34,7 +34,7 @@ This is representation normalization only. It does not reorder records or change
 
 ## Geographic regridding
 
-Environmental regridding is disabled by default. Setting `regrid` to `bilinear_geographic` applies an explicit interpolation operator only when the environmental source grid is rectilinear in longitude and latitude with strictly monotonic axes. Every ocean-grid target must lie inside the source extent; extrapolation is prohibited. Product adapters first normalize vectors to eastward and northward components, after which both components use identical scalar weights.
+Environmental regridding is disabled by default. Setting `regrid` to `bilinear_geographic` applies an explicit interpolation operator only when the environmental source grid is rectilinear in longitude and latitude with strictly monotonic axes. `bilinear_curvilinear_geographic` locates a target inside a non-folded curvilinear quadrilateral by Newton inversion of the bilinear coordinate map, then applies the same four nodal weights. Every ocean-grid target must lie inside a valid source cell; extrapolation is prohibited. Product adapters first normalize vectors to eastward and northward components, after which both components use identical scalar weights.
 
 For normalized source-cell coordinates `ξ,η∈[0,1]`, each component is evaluated as
 
@@ -44,7 +44,7 @@ $$
 
 ![Four-point geographic bilinear interpolation and its fail-fast contract](figures/bilinear-regridding-schema.svg)
 
-The operator preserves constant fields and is exact for fields affine in longitude and latitude; both properties are regression-tested. Bilinear interpolation is not locally or globally conservative and introduces smoothing whose magnitude depends on unresolved curvature and scale separation. It is appropriate for point-sampled wind and Stokes velocity when this limitation is scientifically acceptable. It must not be described as conservative flux remapping. Projected coordinate systems, curvilinear environmental source grids, longitude axes crossing the antimeridian, extrapolation, and rotation from an unknown grid basis remain unsupported and fail explicitly.
+The rectilinear operator preserves constant fields and is exact for fields affine in longitude and latitude; the curvilinear operator preserves constants and fields bilinear in its local cell coordinates. These properties are regression-tested. A longitude axis or cell crossing the antimeridian is unwrapped onto a local continuous branch. Increasing and decreasing rectilinear axes are both supported. Folded or singular curvilinear cells are rejected. Bilinear interpolation is not locally or globally conservative and introduces smoothing whose magnitude depends on unresolved curvature and scale separation. It is appropriate for point-sampled wind and Stokes velocity when this limitation is scientifically acceptable. It must not be described as conservative flux remapping. Projected coordinate systems, extrapolation, and rotation from an unknown grid basis remain unsupported and fail explicitly. Curvilinear cell location currently scans source cells directly and can dominate preprocessing cost on large grids.
 
 ## References
 

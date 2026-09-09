@@ -37,7 +37,7 @@ Resolved WRF wind and WW3 Stokes drift use parallel forcing lists:
 
 ```json
 "environment": {
-  "wind": {"adapter":"WRF", "nc_inputs":["wrf.nc"], "regrid":"none"},
+  "wind": {"adapter":"WRF", "nc_inputs":["wrf.nc"], "regrid":"bilinear_curvilinear_geographic"},
   "wave": {"adapter":"WW3", "nc_inputs":["ww3.nc"], "regrid":"bilinear_geographic"}
 }
 ```
@@ -46,7 +46,7 @@ Each list must contain exactly one file for every entry in `io.nc_inputs`. Files
 
 Environmental variables must carry explicit metadata. Velocity uses `m s-1` or an accepted spelling of meters per second; longitude and latitude use east/north angular units. Numeric time uses CF-style `<unit> since <UTC reference>` metadata with seconds, minutes, hours, or days and a supported Gregorian calendar. WaComM++ converts the coordinate to seconds since 1968-05-23 before matching it against ocean time. It rejects unsupported calendars and units rather than guessing.
 
-`regrid` is `none` by default. `bilinear_geographic` is the only initial opt-in operator. It accepts a monotonic rectilinear environmental longitude/latitude grid, requires every ocean-grid point to be inside the source extent, and interpolates already Earth-relative vector components. It rejects projected, curvilinear-source, antimeridian-crossing, and extrapolation cases. The operator is exact for affine coordinate fields but is not conservative; configuration therefore records the scientific choice explicitly.
+`regrid` is `none` by default. `bilinear_geographic` accepts a monotonic rectilinear environmental longitude/latitude grid, including increasing or decreasing axes and longitude axes crossing the antimeridian. `bilinear_curvilinear_geographic` uses inverse bilinear coordinates in a valid, non-folded curvilinear quadrilateral. Both require every ocean-grid point to lie inside the source domain and interpolate already Earth-relative vector components. They reject projected coordinates and extrapolation. Neither operator is conservative; configuration therefore records the scientific choice explicitly.
 
 The complete resolved JSON configuration, including defaults, is embedded in NetCDF outputs. Reproducible experiments should nevertheless archive the original configuration, forcing and restart checksums, build metadata, parallel layout, tolerances, and output checksums.
 
