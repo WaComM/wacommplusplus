@@ -1,10 +1,11 @@
 // log4cplus - https://github.com/log4cplus/log4cplus
 #include "log4cplus/configurator.h"
+#include "log4cplus/config.hxx"
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
-#include "log4cplus/initializer.h"
 #include "log4cplus/consoleappender.h"
 #include "log4cplus/layout.h"
+#include "log4cplus/version.h"
 
 #include "WacommPlusPlus.hpp"
 #include "Particles.hpp"
@@ -12,7 +13,9 @@
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "JulianDate.hpp"
 
+#include <chrono>
 #include <iostream>
+#include <memory>
 #include <stdlib.h> /* getenv */
 #include <string>
 
@@ -84,7 +87,7 @@ int main(int argc, char **argv) {
     configFile = "wacomm.json";
 
     // Inizitalizer
-    log4cplus::Initializer initializer;
+    log4cplus::initialize();
 
     // Basic configuration
     log4cplus::BasicConfigurator basicConfigurator;
@@ -97,7 +100,11 @@ int main(int argc, char **argv) {
     appender->setName(LOG4CPLUS_TEXT("console"));
 
     log4cplus::tstring pattern = LOG4CPLUS_TEXT("%D{%y-%m-%d %H:%M:%S,%Q} %-5p %c");
+#if LOG4CPLUS_VERSION >= LOG4CPLUS_MAKE_VERSION(2, 0, 0)
     appender->setLayout(std::unique_ptr<log4cplus::Layout>(new log4cplus::PatternLayout(pattern)));
+#else
+    appender->setLayout(std::auto_ptr<log4cplus::Layout>(new log4cplus::PatternLayout(pattern)));
+#endif
 
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 

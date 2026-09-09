@@ -52,18 +52,39 @@ jobs:
 
   rocky-8-9:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     container: rockylinux:8.9
     steps:
       - name: Pin Rocky Linux 8.9 vault repositories
         run: |
           sed -i 's|^mirrorlist=|#mirrorlist=|' /etc/yum.repos.d/Rocky-*.repo
           sed -i 's|^#baseurl=http://dl.rockylinux.org/\$contentdir/\$releasever|baseurl=https://dl.rockylinux.org/vault/rocky/8.9|' /etc/yum.repos.d/Rocky-*.repo
-      - run: dnf install -y git gcc-c++ cmake
+      - name: Enable archived EPEL and PowerTools repositories
+        run: |
+          dnf install -y dnf-plugins-core epel-release
+          dnf config-manager --set-enabled powertools
+          sed -i 's|^mirrorlist=|#mirrorlist=|' /etc/yum.repos.d/epel*.repo
+          sed -i 's|^#baseurl=https://download.example/pub/epel|baseurl=https://archives.fedoraproject.org/pub/archive/epel|' /etc/yum.repos.d/epel*.repo
+      - name: Install application dependencies
+        run: >-
+          dnf install -y ca-certificates git gcc-c++ cmake pkgconf-pkg-config
+          netcdf-devel netcdf-cxx4-devel log4cplus-devel
+      - name: Install pinned nlohmann JSON headers
+        run: |
+          git clone --branch v3.11.3 --depth 1 https://github.com/nlohmann/json.git /tmp/json
+          test "$(git -C /tmp/json rev-parse HEAD)" = 9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03
+          cmake -S /tmp/json -B /tmp/json-build -DJSON_BuildTests=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --install /tmp/json-build
       - uses: actions/checkout@v5
-      - run: cmake -S . -B build -DBUILD_APPLICATION=OFF
-      - run: cmake --build build
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build --parallel
       - run: ctest --test-dir build --output-on-failure
+      - run: cmake --install build --prefix install
+      - name: Installed executable smoke check
+        run: |
+          test -x install/bin/wacommplusplus
+          ldd install/bin/wacommplusplus
+          ! ldd install/bin/wacommplusplus | grep 'not found'
 
   raspberry-pi-os-proxy:
     runs-on: ubuntu-24.04-arm
