@@ -33,5 +33,15 @@ int main() {
     assert(adapter.OceanTime()(1)==3600 && adapter.SW()(-2)==-1);
     assert(adapter.U()(1,-1,1,1)==.25f && adapter.V()(0,0,0,0)==-.1f);
     assert(adapter.AKT()(1,0,1,1)==.01f);
+    double particleDepth,particleLat,particleLon;
+    adapter.kji2deplatlon(-.5,.5,.5,particleDepth,particleLat,particleLon);
+    assert(particleDepth==-25 && particleLat==40.5 && particleLon==10.5);
+    adapter.kji2deplatlon(-.5,-.2,.5,particleDepth,particleLat,particleLon);
+    assert(particleDepth==1e37 && particleLat==1e37 && particleLon==1e37);
+    double k,j,i;
+    adapter.deplatlon2kji(0,40.5,10.5,k,j,i);
+    assert(k==0);
+    adapter.deplatlon2kji(200,40.5,10.5,k,j,i);
+    assert(k==-1);
     std::remove(fileName.c_str());
 }

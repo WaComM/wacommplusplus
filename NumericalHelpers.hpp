@@ -17,6 +17,18 @@ inline std::size_t storageLevel(int logicalLevel, std::size_t levels) {
     return static_cast<std::size_t>(logicalLevel + static_cast<int>(levels) - 1);
 }
 
+inline int horizontalCell(double coordinate) {
+    return static_cast<int>(std::floor(coordinate));
+}
+
+inline int upperVerticalLevel(double coordinate) {
+    return static_cast<int>(std::ceil(coordinate));
+}
+
+inline double lowerVerticalWeight(double coordinate) {
+    return std::ceil(coordinate)-coordinate;
+}
+
 inline double timeWeight(double time, double time0, double time1) {
     if (time1 == time0) return 0.0;
     return std::max(0.0, std::min(1.0, (time - time0) / (time1 - time0)));
@@ -50,6 +62,15 @@ inline bool emitAtIntervalStart(double intervalStart, double checkpoint) {
 inline void reflectCell(double oldCoordinate, int oldCell, double &candidate, int candidateCell) {
     if (candidateCell < oldCell) candidate = oldCell + std::abs(oldCoordinate - candidate);
     else if (candidateCell > oldCell) candidate = candidateCell - std::fmod(candidate, 1.0);
+}
+
+inline double reflectDomain(double coordinate, double maximum) {
+    if (maximum<=0) return 0;
+    double reflected=std::fmod(coordinate,2.0*maximum);
+    if (reflected<0) reflected+=2.0*maximum;
+    if (reflected>=maximum) reflected=2.0*maximum-reflected;
+    if (reflected>=maximum) reflected=std::nextafter(maximum,0.0);
+    return reflected;
 }
 
 inline std::size_t partitionCount(std::size_t total, std::size_t workers, std::size_t worker) {

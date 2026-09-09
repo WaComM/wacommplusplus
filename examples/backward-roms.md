@@ -1,7 +1,25 @@
 # Deterministic backward ROMS example
 
-This example estimates candidate prior positions for known endpoints under a ROMS circulation product. It requires the same ROMS fields described by the forward example and an endpoint NetCDF restart. Sources are disabled because ordinary release sources do not emit during backward tracking.
+## Scientific objective
 
-Build the application, replace paths, and run `./build/wacommplusplus examples/backward-roms.json`. Files and records are traversed newest to oldest and deterministic velocity and terminal motion are reversed. Validate with a diffusion-free forward/backward round trip away from boundaries.
+Estimate candidate prior positions for known endpoint particles under ROMS circulation. This tests deterministic reverse transport and supports conditional source-attribution analysis; it does not establish a unique origin.
 
-This is conditional trajectory analysis, not proof of an exact source. Resolution, forcing errors, irreversible boundaries, and missing physics limit inference. Archive the complete reproducibility metadata described in [reproducibility](../docs/reproducibility.md) and consult [backtracking](../docs/backtracking.md).
+## Prerequisites and required fields
+
+Provide the same chronological ROMS fields required by the forward example and a versioned `endpoint.nc` containing physical checkpoint time, backward-compatible direction, model name, seed, and 64-bit identities. Sources are disabled because ordinary forward release sources do not emit during backtracking.
+
+## Configuration and run
+
+`backward-roms.json` selects the ROMS adapter, deterministic motion, `direction:backward`, `backward_diffusion:none`, and endpoint restart input. Replace paths, build with `cmake -S . -B build && cmake --build build`, then run `./build/wacommplusplus examples/backward-roms.json`.
+
+## Expected behavior and validation
+
+The adapter leaves timestamps and velocity signs unchanged. The solver traverses files and records newest to oldest and reverses resolved and terminal velocity displacement. Verify physical output time, identities, bounds, and restart metadata. Away from closures, disable stochastic motion and other irreversible effects, integrate a fixture forward and then backward, and compare with its initial state. Run the ROMS, particle-interval, and restart CTests.
+
+## Limitations and interpretation
+
+Finite resolution, forcing error, decay, sources, and boundary interactions can prevent exact reversibility. Report output as candidate origins conditional on circulation and model assumptions. Stochastic reverse-time interpretation is separately documented in [backtracking](../docs/backtracking.md).
+
+## Reproducibility
+
+Archive revision, configuration, forcing/restart checksums, seed, compiler/dependencies, CMake options, platform/backend settings, tolerances, test results, and output checksums. See [reproducibility](../docs/reproducibility.md).

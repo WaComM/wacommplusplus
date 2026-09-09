@@ -247,13 +247,14 @@ void OceanModelAdapter::appendBoundaryRecord(OceanModelAdapter &adapter, int rec
 
 void OceanModelAdapter::kji2deplatlon(double k, double j, double i, double &dep, double &lat, double &lon) {
     // Get the integer part and the fraction part of particle k
-    auto kI=(int)k; double kF=k-kI;
+    auto kI=NumericalHelpers::upperVerticalLevel(k);
+    double kF=NumericalHelpers::lowerVerticalWeight(k);
 
     // Get the integer part and the fraction part of particle j
-    auto jI=(int)j; double jF=j-jI;
+    auto jI=NumericalHelpers::horizontalCell(j); double jF=j-jI;
 
     // Get the integer part and the fraction part of particle i
-    auto iI=(int)i; double iF=i-iI;
+    auto iI=NumericalHelpers::horizontalCell(i); double iF=i-iI;
 
     // Check if the source must be skipped
     if (!NumericalHelpers::validInterpolationCell(jI,iI,_data.mask.Nx(),_data.mask.Ny()) ||
@@ -360,10 +361,10 @@ void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double
     }
 
     // Get the integer part and the fraction part of particle j
-    auto jI=(int)j; double jF=j-jI;
+    auto jI=NumericalHelpers::horizontalCell(j); double jF=j-jI;
 
     // Get the integer part and the fraction part of particle i
-    auto iI=(int)i; double iF=i-iI;
+    auto iI=NumericalHelpers::horizontalCell(i); double iF=i-iI;
 
     // Convert dep to positive down
     dep = abs(dep);
@@ -381,15 +382,15 @@ void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double
     // Check if the depth is deeper than h
     if (dep>h) {
         // The position is about at the bottom
-        k=-(int) s_w + 1;
+        k=-(int) s_w + 2;
     } else
         // CHeck if it is on the surface
         if (dep==0) {
-            k=-1;
+            k=0;
     } else {
             minD = 1e37;
             double hs;
-            for (int k = (-(int) s_w + 1); k <= 0; k++) {
+            for (int k = (-(int) s_w + 2); k <= 0; k++) {
                 hs = h * abs(_data.sW(k));
                 d = abs(hs - dep);
                 if (d < minD) {

@@ -91,4 +91,14 @@ int main() {
     restartedBackward.move(&config,1,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
     assert(std::abs(restartedBackward.I()-.25)<1e-8);
     assert(std::abs(restartedBackward.Age()-65)<1e-12);
+
+    config.trackingDirection=Config::TRACKING_FORWARD;
+    config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+    Array1<double> verticalTime(2); verticalTime(0)=0; verticalTime(1)=1;
+    Array4<float> verticalW(2,3,2,2,0,-2,0,0); verticalW=0.0f;
+    for (int t=0;t<2;t++) for (int j=0;j<2;j++) for (int i=0;i<2;i++)
+        verticalW(t,0,j,i)=2.0f;
+    Particle vertical(7,-.5,.25,.25,0);
+    vertical.move(&config,0,verticalTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,verticalW,akt);
+    assert(std::abs(vertical.K()+.48)<1e-12);
 }

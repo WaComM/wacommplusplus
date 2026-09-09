@@ -80,6 +80,15 @@ __device__ void reflect(double oldCoordinate, int oldCell, double &candidate, in
     else if (candidateCell>oldCell) candidate=candidateCell-fmod(candidate,1.0);
 }
 
+__device__ double reflectDomain(double coordinate, double maximum) {
+    if (maximum<=0) return 0;
+    double reflected=fmod(coordinate,2.0*maximum);
+    if (reflected<0) reflected+=2.0*maximum;
+    if (reflected>=maximum) reflected=2.0*maximum-reflected;
+    if (reflected>=maximum) reflected=nextafter(maximum,0.0);
+    return reflected;
+}
+
 __device__ double distance(double lat0, double lon0, double lat1, double lon1) {
     double dLat=lat1-lat0,dLon=lon1-lon0;
     double value=sin(.5*dLat)*sin(.5*dLat)+sin(.5*dLon)*sin(.5*dLon)*cos(lat1)*cos(lat0);
@@ -127,8 +136,8 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
         }
         if (particle.health<config->survprob) { particle.health=-1; break; }
 
-        int kI=(int)particle.k,jI=(int)particle.j,iI=(int)particle.i;
-        double kF=particle.k-kI,jF=particle.j-jI,iF=particle.i-iI;
+        int kI=(int)ceil(particle.k),jI=(int)floor(particle.j),iI=(int)floor(particle.i);
+        double kF=ceil(particle.k)-particle.k,jF=particle.j-jI,iF=particle.i-iI;
         if (!validCell(jI,iI,eta,xi) || kI>0 || kI<=-sW+1) { particle.health=-1; break; }
         double alpha=intervalLength==0 ? 0 : (elapsed+.5*stepDt)/intervalLength;
         float zz=bilinear(zeta,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha);
@@ -171,7 +180,7 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
             else if (config->lowerClosure==Config::CLOSURE_MODE_REFLECTION) kdet=2.0*lowerLimit-kdet;
         }
 
-        int jdetI=(int)jdet,idetI=(int)idet;
+        int jdetI=(int)floor(jdet),idetI=(int)floor(idet);
         if (validCell(jdetI,idetI,eta,xi)) {
             double jdetF=jdet-jdetI,idetF=idet-idetI;
             double hcdet=bilinear(h,jdetI,idetI,jdetF,idetF,xi)+
@@ -185,6 +194,14 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
                 }
             }
             particle.i=idet; particle.j=jdet; particle.k=kdet;
+        } else {
+            if (config->horizontalClosure==Config::CLOSURE_MODE_CONSTRAINT) particle.k=kdet;
+            else if (config->horizontalClosure==Config::CLOSURE_MODE_KILL) particle.health=-1;
+            else if (config->horizontalClosure==Config::CLOSURE_MODE_REFLECTION) {
+                particle.i=reflectDomain(idet,xi-1);
+                particle.j=reflectDomain(jdet,eta-1);
+                particle.k=kdet;
+            }
         }
         if (particle.health>0) { particle.age+=stepDt; particle.health=exp(-particle.age/config->tau0); }
         elapsed+=stepDt;

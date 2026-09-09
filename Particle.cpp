@@ -221,13 +221,14 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
          */
 
         // Get the integer part and the fraction part of particle k
-        auto kI=(int)localParticleData.k; double kF=localParticleData.k-kI;
+        auto kI=NumericalHelpers::upperVerticalLevel(localParticleData.k);
+        double kF=NumericalHelpers::lowerVerticalWeight(localParticleData.k);
 
         // Get the integer part and the fraction part of particle j
-        auto jI=(int)localParticleData.j; double jF=localParticleData.j-jI;
+        auto jI=NumericalHelpers::horizontalCell(localParticleData.j); double jF=localParticleData.j-jI;
 
         // Get the integer part and the fraction part of particle i
-        auto iI=(int)localParticleData.i; double iF=localParticleData.i-iI;
+        auto iI=NumericalHelpers::horizontalCell(localParticleData.i); double iF=localParticleData.i-iI;
 
         // Check if the particle is out of the domain
         if (!NumericalHelpers::validInterpolationCell(jI, iI, eta_rho, xi_rho)) {
@@ -551,9 +552,8 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             // Reflect if crossed the coastline
 
             // Calculate the integer part of the j, i, k candidates
-            int jdetI = (int) (jdet);
-            int idetI = (int) (idet);
-            int kdetI = (int) (kdet);
+            int jdetI = NumericalHelpers::horizontalCell(jdet);
+            int idetI = NumericalHelpers::horizontalCell(idet);
 
 		    // Check if the candidate position is within the domain
             if (NumericalHelpers::validInterpolationCell(jdetI, idetI, eta_rho, xi_rho)) {
@@ -561,8 +561,6 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                 // Check if the candidate new particle position is on land (cfr. shoreLimit)
                 double idetF = idet-idetI;
                 double jdetF = jdet-jdetI;
-                double kdetF = kdet - kdetI;
-
                 // Perform the bilinear interpolation (2D) in order to get
                 // the zeta at the new particle position.
                 z1 = zetaAt(jdetI, idetI) * (1.0 - idetF) * (1.0 - jdetF);
@@ -622,6 +620,20 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                 localParticleData.i = idet;
                 localParticleData.j = jdet;
                 localParticleData.k = kdet;
+           } else {
+                switch (configData->horizontalClosure) {
+                    case Config::CLOSURE_MODE_CONSTRAINT:
+                        localParticleData.k=kdet;
+                        break;
+                    case Config::CLOSURE_MODE_KILL:
+                        localParticleData.health=-1;
+                        break;
+                    case Config::CLOSURE_MODE_REFLECTION:
+                        localParticleData.i=NumericalHelpers::reflectDomain(idet,xi_rho-1);
+                        localParticleData.j=NumericalHelpers::reflectDomain(jdet,eta_rho-1);
+                        localParticleData.k=kdet;
+                        break;
+                }
            }
 
 	//}
