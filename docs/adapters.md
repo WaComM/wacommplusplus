@@ -1,5 +1,7 @@
 # Ocean adapters
 
+![Ocean, weather, and wave adapters normalize product data before a single solver composes the physics](figures/environment-adapter-schema.svg)
+
 Adapters normalize ocean time, vertical levels, mask, longitude, latitude, bathymetry, sea-surface height, velocity, and diffusivity onto the particle grid. They never reverse time or velocity. The solver owns tracking direction.
 
 The implemented adapters are ROMS, native WACOMM, NEMO, and HYCOM. Adapter selection is explicit and an unknown name fails; no fallback chooses a different model silently.
@@ -16,7 +18,7 @@ Run `ctest --test-dir build -R "roms_adapter|native_adapter|structured_grid_adap
 
 Atmospheric and wave inputs are deliberately independent of the ocean adapter family. `WeatherModelAdapter` and `WeatherModelAdapterFactory` expose generic chronological time, longitude, latitude, and eastward/northward 10 m wind fields. The `WRFAdapter` reads `U10`, `V10`, `XLONG`, `XLAT`, `COSALPHA`, `SINALPHA`, and either absolute numeric `time` or `Times`. Native grid-relative wind is rotated to Earth-relative components using `u_e=U10 cos(alpha)-V10 sin(alpha)` and `v_n=V10 cos(alpha)+U10 sin(alpha)` before it reaches drift physics.
 
-`WaveModelAdapter` and `WaveModelAdapterFactory` expose the corresponding generic surface Stokes velocity. The `WW3Adapter` accepts chronological `time`, one- or two-dimensional longitude/latitude, and the component aliases `uuss/vuss`, `ust/vst`, or `stokes_u/stokes_v`, all in m s-1. Longitude above 180 degrees is normalized to the `[-180,180]` convention for one-dimensional WW3 grids.
+`WaveModelAdapter` and `WaveModelAdapterFactory` expose the corresponding generic surface Stokes velocity. The `WW3Adapter` accepts chronological `time`, one- or two-dimensional longitude/latitude, and the component aliases `uuss/vuss`, `ust/vst`, `stokes_u/stokes_v`, `eastward_surface_stokes_drift/northward_surface_stokes_drift`, or `sea_surface_wave_stokes_drift_x_velocity/sea_surface_wave_stokes_drift_y_velocity`, all in m s-1. The last two pairs improve interoperability with CF-oriented products and OpenDrift reader conventions without coupling WaComM++ to OpenDrift. Longitude above 180 degrees is normalized to the `[-180,180]` convention.
 
 The present coupling requires each environmental forcing list to contain one file per ocean forcing window. After the same chronological boundary-record assembly used by ocean forcing, weather and wave times and coordinates must match the normalized ocean particle grid within declared numerical tolerances. The application fails if regridding would be required; it never treats unequal grids as coincident. ROMS, NEMO, HYCOM, native WACOMM, WRF, and WW3 adapters never reverse time or velocity. Direction remains solver policy.
 

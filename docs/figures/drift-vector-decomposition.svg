@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="560" viewBox="0 0 900 560" role="img" aria-labelledby="title desc">
+  <title id="title">Surface-object velocity decomposition</title><desc id="desc">Vector diagram of current, leeway, Stokes drift, and their resultant.</desc>
+  <defs><marker id="blue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#2673b8"/></marker><marker id="orange" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#d06b28"/></marker><marker id="green" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#28865c"/></marker><marker id="black" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#172b3a"/></marker></defs>
+  <rect width="900" height="560" fill="#fbfcfd"/><g font-family="Arial,sans-serif"><text x="450" y="40" text-anchor="middle" font-size="24" font-weight="700" fill="#172b3a">Direction-neutral surface velocity</text>
+  <g stroke="#d6dde3" stroke-width="1"><path d="M100 470H820"/><path d="M100 470V90"/></g><text x="825" y="490" font-size="15">east</text><text x="72" y="92" font-size="15">north</text>
+  <path d="M130 450L360 360" stroke="#2673b8" stroke-width="6" marker-end="url(#blue)"/><text x="235" y="390" fill="#2673b8" font-size="18">Vcurrent</text>
+  <path d="M360 360L570 245" stroke="#d06b28" stroke-width="6" marker-end="url(#orange)"/><text x="430" y="275" fill="#d06b28" font-size="18">Vleeway(U₁₀)</text>
+  <path d="M570 245L690 190" stroke="#28865c" stroke-width="6" marker-end="url(#green)"/><text x="610" y="160" fill="#28865c" font-size="18">VStokes</text>
+  <path d="M130 450L690 190" stroke="#172b3a" stroke-width="4" stroke-dasharray="10 8" marker-end="url(#black)"/><text x="515" y="390" fill="#172b3a" font-size="18">resultant V</text>
+  <text x="450" y="530" text-anchor="middle" font-size="16" fill="#536675">Backward integration reverses Δt in the solver; adapters do not negate any vector.</text></g>
+</svg>

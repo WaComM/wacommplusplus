@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="620" viewBox="0 0 1000 620" role="img" aria-labelledby="title desc">
+  <title id="title">Schematic coupled-drift map</title><desc id="desc">A non-geographic schematic map showing a release point, forward ensemble, backward reconstruction, forcing grid, and coastline.</desc>
+  <rect width="1000" height="620" fill="#dff3fb"/><path d="M0 0H300L340 85 300 145 365 220 315 300 360 390 305 470 345 620H0Z" fill="#e7dfc4" stroke="#8f835e" stroke-width="3"/>
+  <g stroke="#8bc3d9" stroke-width="1" opacity=".65"><path d="M400 30V590M520 30V590M640 30V590M760 30V590M880 30V590"/><path d="M360 100H960M360 220H960M360 340H960M360 460H960M360 580H960"/></g>
+  <g font-family="Arial,sans-serif"><text x="500" y="40" font-size="24" font-weight="700" fill="#17324d">Coupled trajectory diagnostic (schematic, not georeferenced)</text><circle cx="520" cy="360" r="10" fill="#111"/><text x="535" y="385" font-size="16">observation / release</text>
+  <g fill="none" stroke="#d95f43" stroke-width="4"><path d="M520 360Q620 300 760 210"/><path d="M520 360Q650 350 820 285"/><path d="M520 360Q610 405 750 420"/></g><g fill="#d95f43"><circle cx="760" cy="210" r="7"/><circle cx="820" cy="285" r="7"/><circle cx="750" cy="420" r="7"/></g>
+  <g fill="none" stroke="#3569a8" stroke-width="4" stroke-dasharray="9 7"><path d="M520 360Q455 305 395 245"/><path d="M520 360Q470 400 405 455"/></g><text x="755" y="180" fill="#b43e2c" font-size="18">forward ensemble</text><text x="365" y="220" fill="#28588e" font-size="18">backward reconstruction</text>
+  <rect x="690" y="500" width="270" height="88" rx="8" fill="#fff" opacity=".9"/><text x="710" y="528" font-size="15">Grid: normalized ocean/weather/wave</text><text x="710" y="551" font-size="15">Red: forward hypotheses</text><text x="710" y="574" font-size="15">Blue dashed: backward hypotheses</text></g>
+</svg>

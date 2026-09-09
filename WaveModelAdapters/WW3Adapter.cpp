@@ -13,7 +13,10 @@ NcVar WW3Adapter::variable(NcFile &file, const std::vector<std::string>& names) 
 void WW3Adapter::process() {
     NcFile file(fileName,NcFile::read);
     NcVar time=variable(file,{"time"}),lon=variable(file,{"longitude","lon"}),lat=variable(file,{"latitude","lat"});
-    NcVar u=variable(file,{"uuss","ust","stokes_u"}),v=variable(file,{"vuss","vst","stokes_v"});
+    NcVar u=variable(file,{"uuss","ust","stokes_u","eastward_surface_stokes_drift",
+                                "sea_surface_wave_stokes_drift_x_velocity"});
+    NcVar v=variable(file,{"vuss","vst","stokes_v","northward_surface_stokes_drift",
+                                "sea_surface_wave_stokes_drift_y_velocity"});
     auto dims=u.getDims();
     if (dims.size()!=3 || v.getDims().size()!=3 || dims[0].getSize()!=v.getDim(0).getSize() ||
         dims[1].getSize()!=v.getDim(1).getSize() || dims[2].getSize()!=v.getDim(2).getSize())

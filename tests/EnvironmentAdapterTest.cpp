@@ -23,8 +23,9 @@ void createWW3(const std::string& name) {
     std::vector<NcDim> dims{time,y,x}; double times[2]={0,60},lon[2]={350,11},lat[2]={40,41};
     float u[8]={.1,.2,.3,.4,.5,.6,.7,.8},v[8]={-.1,-.2,-.3,-.4,-.5,-.6,-.7,-.8};
     file.addVar("time",ncDouble,time).putVar(times); file.addVar("longitude",ncDouble,x).putVar(lon);
-    file.addVar("latitude",ncDouble,y).putVar(lat); file.addVar("uuss",ncFloat,dims).putVar(u);
-    file.addVar("vuss",ncFloat,dims).putVar(v);
+    file.addVar("latitude",ncDouble,y).putVar(lat);
+    file.addVar("eastward_surface_stokes_drift",ncFloat,dims).putVar(u);
+    file.addVar("northward_surface_stokes_drift",ncFloat,dims).putVar(v);
 }
 
 int main() {

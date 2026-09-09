@@ -244,5 +244,8 @@ if(BUILD_TESTING)
         add_test(NAME example_documentation COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ExampleDocumentationTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/examples")
+        add_test(NAME documentation_visuals COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DocumentationVisualTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs")
     endif()
 endif()
