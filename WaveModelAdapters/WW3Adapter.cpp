@@ -1,4 +1,5 @@
 #include "WW3Adapter.hpp"
+#include "../EnvironmentalMetadata.hpp"
 #include <stdexcept>
 #include <vector>
 
@@ -17,6 +18,10 @@ void WW3Adapter::process() {
                                 "sea_surface_wave_stokes_drift_x_velocity"});
     NcVar v=variable(file,{"vuss","vst","stokes_v","northward_surface_stokes_drift",
                                 "sea_surface_wave_stokes_drift_y_velocity"});
+    EnvironmentalMetadata::requireVelocity(u,"WW3 eastward Stokes drift");
+    EnvironmentalMetadata::requireVelocity(v,"WW3 northward Stokes drift");
+    EnvironmentalMetadata::requireLongitude(lon,"WW3 longitude");
+    EnvironmentalMetadata::requireLatitude(lat,"WW3 latitude");
     auto dims=u.getDims();
     if (dims.size()!=3 || v.getDims().size()!=3 || dims[0].getSize()!=v.getDim(0).getSize() ||
         dims[1].getSize()!=v.getDim(1).getSize() || dims[2].getSize()!=v.getDim(2).getSize())
@@ -26,7 +31,7 @@ void WW3Adapter::process() {
         throw std::runtime_error("WW3 input does not contain a usable time/grid axis");
     Time().Allocate(nt); Lon().Allocate(eta,xi); Lat().Allocate(eta,xi);
     StokesU().Allocate(nt,eta,xi); StokesV().Allocate(nt,eta,xi);
-    time.getVar(Time()()); u.getVar(StokesU()()); v.getVar(StokesV()());
+    EnvironmentalMetadata::readCfTime(time,Time(),"WW3 time"); u.getVar(StokesU()()); v.getVar(StokesV()());
     if (lon.getDimCount()==1 && lat.getDimCount()==1 && lon.getDim(0).getSize()==xi && lat.getDim(0).getSize()==eta) {
         std::vector<double> x(xi),y(eta); lon.getVar(x.data()); lat.getVar(y.data());
         for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) { Lon()(j,i)=x[i]>180 ? x[i]-360 : x[i]; Lat()(j,i)=y[j]; }

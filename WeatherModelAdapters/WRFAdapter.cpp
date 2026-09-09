@@ -1,4 +1,5 @@
 #include "WRFAdapter.hpp"
+#include "../EnvironmentalMetadata.hpp"
 #include "../JulianDate.hpp"
 #include <cstdio>
 #include <stdexcept>
@@ -11,6 +12,10 @@ void WRFAdapter::process() {
     NcVar u=file.getVar("U10"),v=file.getVar("V10"),lon=file.getVar("XLONG"),lat=file.getVar("XLAT");
     if (u.isNull() || v.isNull() || lon.isNull() || lat.isNull())
         throw std::runtime_error("WRF input requires U10, V10, XLONG, and XLAT");
+    EnvironmentalMetadata::requireVelocity(u,"WRF U10");
+    EnvironmentalMetadata::requireVelocity(v,"WRF V10");
+    EnvironmentalMetadata::requireLongitude(lon,"WRF XLONG");
+    EnvironmentalMetadata::requireLatitude(lat,"WRF XLAT");
     auto dims=u.getDims();
     if (dims.size()!=3 || v.getDims().size()!=3 || dims[0].getSize()!=v.getDim(0).getSize() ||
         dims[1].getSize()!=v.getDim(1).getSize() || dims[2].getSize()!=v.getDim(2).getSize())
@@ -49,7 +54,8 @@ void WRFAdapter::process() {
         lon.getVar(Lon()()); lat.getVar(Lat()());
     } else throw std::runtime_error("WRF XLONG and XLAT dimensions are incompatible with U10/V10");
     NcVar times=file.getVar("Times"),numeric=file.getVar("time");
-    if (!numeric.isNull() && numeric.getDimCount()==1 && numeric.getDim(0).getSize()==nt) numeric.getVar(Time()());
+    if (!numeric.isNull() && numeric.getDimCount()==1 && numeric.getDim(0).getSize()==nt)
+        EnvironmentalMetadata::readCfTime(numeric,Time(),"WRF time");
     else if (!times.isNull() && times.getDimCount()==2 && times.getDim(0).getSize()==nt) {
         size_t length=times.getDim(1).getSize(); std::vector<char> values(nt*length); times.getVar(values.data());
         for (int t=0;t<nt;t++) {

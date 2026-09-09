@@ -6,7 +6,7 @@ This scenario estimates deterministic forward displacement of a person in water 
 
 ## Prerequisites, configuration, and command
 
-Provide `forcing.nc`, `wrf.nc`, `ww3.nc`, and `sources.json`. WRF requires `U10`, `V10`, `XLONG`, `XLAT`, `COSALPHA`, `SINALPHA`, and absolute time; WW3 requires time, coordinates, and eastward/northward surface Stokes velocity in m s-1. All normalized grids and timestamps must coincide. Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacommplusplus examples/sar-person-wrf-ww3-forward.json`.
+Provide `forcing.nc`, `wrf.nc`, `ww3.nc`, and `sources.json`. WRF requires `U10`, `V10`, `XLONG`, `XLAT`, `COSALPHA`, `SINALPHA`, and absolute time; WW3 requires time, coordinates, and eastward/northward surface Stokes velocity. Wind and Stokes components must declare meters per second, coordinates must declare degrees east/north, and numeric time must declare supported CF units relative to a UTC reference instant. All normalized grids and timestamps must coincide. Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacommplusplus examples/sar-person-wrf-ww3-forward.json`.
 
 ## Expected behavior and validation
 

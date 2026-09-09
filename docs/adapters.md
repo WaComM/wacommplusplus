@@ -22,6 +22,16 @@ Atmospheric and wave inputs are deliberately independent of the ocean adapter fa
 
 The present coupling requires each environmental forcing list to contain one file per ocean forcing window. After the same chronological boundary-record assembly used by ocean forcing, weather and wave times and coordinates must match the normalized ocean particle grid within declared numerical tolerances. The application fails if regridding would be required; it never treats unequal grids as coincident. ROMS, NEMO, HYCOM, native WACOMM, WRF, and WW3 adapters never reverse time or velocity. Direction remains solver policy.
 
+Environmental metadata are part of the adapter contract. WRF and WW3 horizontal velocities must declare units equivalent to `m s-1`; longitude and latitude must declare `degrees_east` and `degrees_north`, respectively. Numeric environmental time must use a supported Gregorian calendar and CF-style units in seconds, minutes, hours, or days since a UTC reference date. Missing, non-finite, ambiguous, or unsupported metadata cause an error rather than an implicit scale conversion. WRF character `Times` remains supported because it carries an explicit `YYYY-MM-DD_HH:MM:SS` timestamp.
+
+If `τ` is the numeric coordinate, `sU` is its unit scale in seconds, `t0` is the declared reference instant, and `tW` is the WaComM epoch, normalization is
+
+$$
+t_{\mathrm{WaComM}}=(t_0-t_W)+s_U\tau .
+$$
+
+This is representation normalization only. It does not reorder records or change tracking direction. The first implementation supports `standard`, `gregorian`, and `proleptic_gregorian` calendars for modern forcing dates and rejects non-Gregorian model calendars until their chronology is implemented explicitly.
+
 ## References
 
 - Shchepetkin, A. F., and McWilliams, J. C. (2005). The regional oceanic modeling system (ROMS): a split-explicit, free-surface, topography-following-coordinate oceanic model. *Ocean Modelling*, 9, 347–404. [doi:10.1016/j.ocemod.2004.08.002](https://doi.org/10.1016/j.ocemod.2004.08.002).
@@ -29,3 +39,4 @@ The present coupling requires each environmental forcing list to contain one fil
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
 - Powers, J. G., et al. (2017). The Weather Research and Forecasting Model: overview, system efforts, and future directions. *Bulletin of the American Meteorological Society*, 98, 1717–1737. [doi:10.1175/BAMS-D-15-00308.1](https://doi.org/10.1175/BAMS-D-15-00308.1).
 - Tolman, H. L. (1991). A third-generation model for wind waves on slowly varying, unsteady, and inhomogeneous depths and currents. *Journal of Physical Oceanography*, 21, 782–797. [doi:10.1175/1520-0485(1991)021%3C0782:ATGMFW%3E2.0.CO;2](https://doi.org/10.1175/1520-0485(1991)021%3C0782:ATGMFW%3E2.0.CO;2).
+- Hassell, D., Gregory, J., Blower, J., Lawrence, B. N., and Taylor, K. E. (2017). A data model of the Climate and Forecast metadata conventions (CF-1.6) with a software implementation (cf-python v2.1). *Geoscientific Model Development*, 10, 4619–4646. [doi:10.5194/gmd-10-4619-2017](https://doi.org/10.5194/gmd-10-4619-2017).

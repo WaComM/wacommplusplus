@@ -6,6 +6,8 @@ The current release reads ROMS, NEMO, HYCOM, and native WACOMM products through 
 
 Surface-object tracking augments the ambient current with an empirically parameterized leeway velocity resolved into downwind and crosswind components relative to 10 m wind, plus optional surface Stokes drift. Generic weather and wave interfaces keep transport physics independent of forcing products; the initial concrete adapters read WRF wind and WAVEWATCH III Stokes velocity. The first object catalog comprises a person in water, liferafts with and without drogues, a generic vessel, and a shipping container. Passive transport remains the default. The same deterministic velocity is evaluated in forward and backward integrations; only the solver applies temporal orientation.
 
+Environmental adapters validate declared velocity and coordinate units and normalize supported CF numeric time coordinates to the WaComM physical epoch. Ambiguous units, unsupported calendars, unequal grids, and inconsistent timestamps are rejected before particle integration.
+
 Backward deterministic tracking reverses forcing traversal and resolved/terminal motion and suppresses normal forward sources. It can identify candidate prior locations under the supplied circulation and model assumptions; stochastic backward tracking is not a unique inverse trajectory.
 
 ## Quick start

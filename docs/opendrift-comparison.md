@@ -47,9 +47,9 @@ where `q` is the object class, `s` is the crosswind side, and `χS` is one only 
 
 ## Roadmap governed by evidence
 
-The comparison identifies four ordered research-engineering milestones:
+The comparison identifies four ordered research-engineering milestones. Status refers to the repository revision containing this document:
 
-1. Extend CF metadata and unit validation across environmental adapters, rejecting ambiguous units.
+1. **Implemented:** extend CF metadata and unit validation across WRF and WW3 environmental adapters, rejecting ambiguous units and normalizing supported CF time coordinates.
 2. Introduce explicit, tested projection and regridding services with documented interpolation error and vector rotation.
 3. Add SAR parameter ensembles and jibing only after coefficient distributions and transition assumptions are traced to peer-reviewed evidence.
 4. Add reproducible trajectory-map and ensemble-diagnostic tooling that reads WaComM++ output without modifying solver physics.
@@ -61,3 +61,4 @@ Each milestone must preserve deterministic forward/backward behavior, restart eq
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
 - Montella, R., Di Luccio, D., De Vita, C. G., Mellone, G., Lapegna, M., Ortega, G., Marcellino, L., Zambianchi, E., and Giunta, G. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).
+- Hassell, D., Gregory, J., Blower, J., Lawrence, B. N., and Taylor, K. E. (2017). A data model of the Climate and Forecast metadata conventions (CF-1.6) with a software implementation (cf-python v2.1). *Geoscientific Model Development*, 10, 4619–4646. [doi:10.5194/gmd-10-4619-2017](https://doi.org/10.5194/gmd-10-4619-2017).

@@ -148,6 +148,7 @@ if(BUILD_APPLICATION)
     add_executable(wacommplusplus
             main.cpp Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
             Config.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
+            EnvironmentalMetadata.cpp
             WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
             WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
             OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
@@ -227,7 +228,8 @@ if(BUILD_TESTING)
     if(BUILD_APPLICATION)
         add_executable(environment_adapter_test tests/EnvironmentAdapterTest.cpp
                 WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
-                WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp JulianDate.cpp)
+                WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
+                EnvironmentalMetadata.cpp JulianDate.cpp)
         wacomm_enable_test_assertions(environment_adapter_test)
         target_link_libraries(environment_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME environment_adapters COMMAND environment_adapter_test)
