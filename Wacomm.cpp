@@ -46,13 +46,32 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
 Wacomm::Wacomm(std::shared_ptr<Config> config,
                std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
                std::shared_ptr<Sources> sources,
-               std::shared_ptr<Particles> particles) :
+               std::shared_ptr<Particles> particles,
+               std::shared_ptr<WeatherModelAdapter> weatherModelAdapter,
+               std::shared_ptr<WaveModelAdapter> waveModelAdapter) :
                config(std::move(config)),
                oceanModelAdapter(std::move(oceanModelAdapter)),
                sources(std::move(sources)),
-               particles(std::move(particles)) {
+               particles(std::move(particles)),
+               weatherModelAdapter(std::move(weatherModelAdapter)),
+               waveModelAdapter(std::move(waveModelAdapter)) {
 
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
+    auto validateEnvironment=[this](auto adapter,const char *name) {
+        if (!adapter) return;
+        if (adapter->Time().Nx()!=this->oceanModelAdapter->OceanTime().Nx() ||
+            adapter->Lon().Nx()!=this->oceanModelAdapter->Lon().Nx() || adapter->Lon().Ny()!=this->oceanModelAdapter->Lon().Ny())
+            throw std::runtime_error(std::string(name) + " forcing dimensions do not match the ocean particle grid");
+        for (int t=0;t<adapter->Time().Nx();t++)
+            if (std::abs(adapter->Time()(t)-this->oceanModelAdapter->OceanTime()(t))>1.e-6)
+                throw std::runtime_error(std::string(name) + " forcing times do not match ocean_time");
+        for (int j=0;j<adapter->Lon().Nx();j++) for (int i=0;i<adapter->Lon().Ny();i++)
+            if (std::abs(adapter->Lon()(j,i)-this->oceanModelAdapter->Lon()(j,i))>1.e-8 ||
+                std::abs(adapter->Lat()(j,i)-this->oceanModelAdapter->Lat()(j,i))>1.e-8)
+                throw std::runtime_error(std::string(name) + " coordinates do not match the ocean particle grid; regridding is required");
+    };
+    validateEnvironment(this->weatherModelAdapter,"Weather");
+    validateEnvironment(this->waveModelAdapter,"Wave");
     //cout << "Wacomm::Wacomm oceanModelAdapter->H()(650,550):" << oceanModelAdapter->H()(650,550) << endl;
 
 }
@@ -119,6 +138,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         // If a GPU is not present, or a problem occurred, set the number of GPUs as 0;
         num_gpus = 0;
     }
+    if (num_gpus>0 && (weatherModelAdapter || waveModelAdapter))
+        throw std::runtime_error("Dynamic weather/wave adapters are not yet supported by CUDA; run the CPU/OpenMP path or use constant wind");
 #endif
 
     // Get the size of the time axis
@@ -453,7 +474,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         vector<vector<float>> time_array(ompMaxThreads,vector<float>(std::max(1,num_gpus),0));
 
         // Begin the shared memory parallel section
-        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector, time_array)
+        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, ocean_time_idx, oceanModelAdapter, weatherModelAdapter, waveModelAdapter, num_gpus, particlesHost, stateVector, time_array)
         {
 
 #ifdef USE_OMP
@@ -487,7 +508,11 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                       	oceanModelAdapter->U(),
                       	oceanModelAdapter->V(),
                       	oceanModelAdapter->W(),
-                      	oceanModelAdapter->AKT()
+                        oceanModelAdapter->AKT(),
+                        weatherModelAdapter ? &weatherModelAdapter->WindU10() : nullptr,
+                        weatherModelAdapter ? &weatherModelAdapter->WindV10() : nullptr,
+                        waveModelAdapter ? &waveModelAdapter->StokesU() : nullptr,
+                        waveModelAdapter ? &waveModelAdapter->StokesV() : nullptr
                   );
 		        }
             }

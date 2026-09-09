@@ -13,7 +13,7 @@ ocean forcing/time progression
             -> CUDA/accelerator execution where enabled
 ```
 
-No accelerator or backend may contain a separate physical model. ROMS, NEMO, HYCOM, and native WaComM adapters normalize physical data only. They must not negate velocities, reverse `ocean_time`, reverse file order, or select diffusion from tracking direction. Direction belongs to the solver.
+No accelerator or backend may contain a separate physical model. ROMS, NEMO, HYCOM, native WaComM, WRF, WW3, and future ocean, weather, or wave adapters normalize physical data only. They must not negate velocities, reverse physical time, reverse file order, or select diffusion or environmental forcing from tracking direction. Coordinate rotation into documented Earth-relative components is normalization, not direction policy. Direction belongs to the solver.
 
 All changes must preserve the original WaComM++ repository coding style, including the style, tone, structure, and granularity of existing comments. Contributors and coding agents must not mass-reformat unrelated code or introduce a competing style inside existing source files. Follow nearby code, preserve established terminology, and rewrite legacy comments only when they are incorrect or directly affected.
 

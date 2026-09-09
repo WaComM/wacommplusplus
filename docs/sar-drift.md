@@ -7,7 +7,7 @@ WaComM++ represents floating search-and-rescue objects as Lagrangian tracers who
 The horizontal object velocity in m s-1 is
 
 ```text
-V_object = V_current + V_leeway
+V_object = V_current + V_leeway + V_stokes
 V_leeway = (a_DW |W10| + b_DW) w_hat
            + side (a_CW |W10| + b_CW) w_hat_perp
 ```
@@ -16,7 +16,9 @@ V_leeway = (a_DW |W10| + b_DW) w_hat
 
 The coefficients are empirical regression parameters, not universal material constants. Their validity is conditional on object configuration, immersion, loading, environmental range, current reference depth, and observational uncertainty. A catalog choice therefore constitutes a scientific hypothesis that must be recorded with the forcing and numerical configuration.
 
-The current constant-wind provider is intended for controlled experiments and forcing-window studies. Configure `environment.wind.adapter` as `constant` and provide eastward `u10` and northward `v10`. Spatially and temporally varying atmospheric adapters remain future work.
+Classical leeway observations can contain wave-correlated motion implicitly because leeway is defined relative to a near-surface current. Adding an explicit WW3 Stokes vector may therefore double count part of the wave contribution unless coefficients and current reference are calibrated for an explicit-wave formulation. Runs enabling WW3 must state this modeling choice and validate it against an appropriate observational dataset; the implementation performs the requested vector sum but does not assert universal validity of that decomposition.
+
+The constant-wind provider is intended for controlled experiments and forcing-window studies. Configure `environment.wind.adapter` as `constant` and provide eastward `u10` and northward `v10`. For resolved coupling, `WRFAdapter` supplies rotated Earth-relative 10 m wind and `WW3Adapter` supplies surface Stokes components. Both are bilinearly interpolated in the particle cell and linearly interpolated at the physical substep midpoint. Their grids and timestamps must already match the normalized ocean forcing; regridding is outside the first coupling milestone.
 
 ## Direction and restart semantics
 
@@ -26,7 +28,7 @@ NetCDF restart version 3 stores stable numeric object type and crosswind side fo
 
 ## Configuration and limitations
 
-Select `drift.model=leeway`, a supported `object_type`, and `side=left|right`. Missing wind, unknown objects, or undefined side fail during configuration. Coefficient uncertainty, randomized side, jibing, Stokes drift, wind-file adapters, and refloating are not yet implemented. Existing coastline closure behavior applies unchanged.
+Select `drift.model=leeway`, a supported `object_type`, and `side=left|right`. Missing wind, unknown objects, or undefined side fail during configuration. Coefficient uncertainty, randomized side, jibing, vertical Stokes profiles, environmental regridding, and refloating are not yet implemented. Existing coastline closure behavior applies unchanged.
 
 Record the configured wind, random seed, forcing and restart checksums, Git revision, compiler, CMake options, backend settings, tolerances, and output checksums. Deterministic math is shared by serial, OpenMP, and MPI execution. CUDA/OpenACC builds use the same particle representation; operational leeway parity on those backends must be validated before use.
 

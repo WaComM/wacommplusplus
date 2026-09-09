@@ -154,4 +154,20 @@ int main() {
     leewayBackward.move(&config,1,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
     assert(std::abs(leewayBackward.I()-.25)<1.e-8);
     assert(std::abs(leewayBackward.J()-.25)<1.e-8);
+
+    Array3<float> windU(2,2,2),windV(2,2,2),stokesU(2,2,2),stokesV(2,2,2);
+    windU=10.0f; windV=0.0f; stokesU=.2f; stokesV=-.1f;
+    config.trackingDirection=Config::TRACKING_FORWARD;
+    Particle coupledForward(11,-.5,.25,.25,0);
+    coupledForward.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    coupledForward.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt,
+                        &windU,&windV,&stokesU,&stokesV);
+    assert(coupledForward.I()>leewayForward.I());
+    config.trackingDirection=Config::TRACKING_BACKWARD;
+    Particle coupledBackward(12,-.5,coupledForward.J(),coupledForward.I(),65);
+    coupledBackward.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    coupledBackward.move(&config,1,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt,
+                         &windU,&windV,&stokesU,&stokesV);
+    assert(std::abs(coupledBackward.I()-.25)<1.e-8);
+    assert(std::abs(coupledBackward.J()-.25)<1.e-8);
 }

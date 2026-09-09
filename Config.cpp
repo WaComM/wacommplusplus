@@ -130,6 +130,10 @@ void Config::setDefault() {
     _data.hasWind = false;
     _data.windU10 = 0;
     _data.windV10 = 0;
+    weatherModel="none";
+    weatherInputs.clear();
+    waveModel="none";
+    waveInputs.clear();
 
     // Save processed input files (default false)
     saveInput = false;
@@ -536,6 +540,11 @@ string Config::OceanModel() const {
     return oceanModel;
 }
 
+string Config::WeatherModel() const { return weatherModel; }
+vector<string>& Config::WeatherInputs() { return weatherInputs; }
+string Config::WaveModel() const { return waveModel; }
+vector<string>& Config::WaveInputs() { return waveInputs; }
+
 void Config::OceanModel(string value) {
     oceanModel = value;
 }
@@ -609,8 +618,10 @@ string Config::asJson() const {
     };
 
     json environment = {
-            { "wind", {{"adapter",_data.hasWind ? "constant" : "none"},
-                        {"u10",_data.windU10},{"v10",_data.windV10}} }
+            { "wind", {{"adapter",weatherModel=="WRF" ? "WRF" : (_data.hasWind ? "constant" : "none")},
+                        {"u10",_data.windU10},{"v10",_data.windV10},
+                        {"nc_inputs",weatherInputs}} },
+            { "wave", {{"adapter",waveModel},{"nc_inputs",waveInputs}} }
     };
 
     json config = {
@@ -750,7 +761,21 @@ void Config::loadFromJson(const string &fileName) {
                 _data.windU10=wind["u10"];
                 _data.windV10=wind["v10"];
                 _data.hasWind=true;
+            } else if (adapter=="WRF") {
+                weatherModel=adapter; _data.hasWind=true;
+                if (!wind.contains("nc_inputs") || !wind["nc_inputs"].is_array())
+                    throw std::runtime_error("WRF wind requires environment.wind.nc_inputs");
+                for (auto input:wind["nc_inputs"]) weatherInputs.push_back(input);
             } else if (adapter!="none") throw std::runtime_error("Unknown environment.wind.adapter: " + adapter);
+        }
+        if (environment.contains("wave")) {
+            json wave=environment["wave"]; waveModel=wave.value("adapter","none");
+            if (waveModel!="none" && waveModel!="WW3") throw std::runtime_error("Unknown environment.wave.adapter: " + waveModel);
+            if (waveModel=="WW3") {
+                if (!wave.contains("nc_inputs") || !wave["nc_inputs"].is_array())
+                    throw std::runtime_error("WW3 wave input requires environment.wave.nc_inputs");
+                for (auto input:wave["nc_inputs"]) waveInputs.push_back(input);
+            }
         }
     }
     if (_data.driftModel==1 && static_cast<DriftObjectType>(_data.driftObjectType)==DriftObjectType::PASSIVE)
@@ -758,9 +783,13 @@ void Config::loadFromJson(const string &fileName) {
     if (_data.driftModel==1 && _data.driftSide==static_cast<std::int8_t>(DriftSide::UNDEFINED))
         throw std::runtime_error("drift.model=leeway requires drift.side=left or right");
     if (_data.driftModel==1 && !_data.hasWind)
-        throw std::runtime_error("Leeway drift requires 10 m wind. Configure environment.wind.adapter=constant with u10 and v10");
+        throw std::runtime_error("Leeway drift requires 10 m wind. Configure environment.wind.adapter=constant or WRF");
     if (_data.hasWind && (!std::isfinite(_data.windU10) || !std::isfinite(_data.windV10)))
         throw std::runtime_error("environment.wind.u10 and environment.wind.v10 must be finite values in m/s");
+    if (weatherModel=="WRF" && weatherInputs.size()!=ncInputs.size())
+        throw std::runtime_error("WRF and ocean nc_inputs must contain one matching file per forcing window");
+    if (waveModel=="WW3" && waveInputs.size()!=ncInputs.size())
+        throw std::runtime_error("WW3 and ocean nc_inputs must contain one matching file per forcing window");
     if (!std::isfinite(_data.dti) || _data.dti<=0) {
         throw std::runtime_error("physics.dti must be a finite value greater than zero");
     }

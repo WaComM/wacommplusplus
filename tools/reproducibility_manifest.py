@@ -61,6 +61,11 @@ def configured_inputs(configuration,working_directory):
     for item in io.get("nc_inputs",[]):
         path=pathlib.Path(item)
         records.append(("forcing",path if path.is_absolute() else base/path))
+    environment=configuration.get("environment",{})
+    for section,role in (("wind","weather_forcing"),("wave","wave_forcing")):
+        for item in environment.get(section,{}).get("nc_inputs",[]):
+            path=pathlib.Path(item)
+            records.append((role,path if path.is_absolute() else base/path))
     sources=configuration.get("sources",{})
     if sources.get("active") and sources.get("sources_file"):
         path=pathlib.Path(sources["sources_file"])

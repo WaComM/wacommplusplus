@@ -5,6 +5,8 @@
 #include "WacommPlusPlus.hpp"
 #include "JulianDate.hpp"
 #include "OceanModelAdapterFactory.hpp"
+#include "WeatherModelAdapterFactory.hpp"
+#include "WaveModelAdapterFactory.hpp"
 #include <algorithm>
 #include <stdexcept>
 
@@ -97,6 +99,19 @@ void WacommPlusPlus::run() {
                 OceanModelAdapterFactory::create(config->OceanModel(),ncInput);
         oceanModelAdapter->process();
 
+        shared_ptr<WeatherModelAdapter> weatherModelAdapter;
+        if (config->WeatherModel()=="WRF") {
+            string &weatherInput=config->WeatherInputs()[inputIdx];
+            weatherModelAdapter=WeatherModelAdapterFactory::create(config->WeatherModel(),weatherInput);
+            weatherModelAdapter->process();
+        }
+        shared_ptr<WaveModelAdapter> waveModelAdapter;
+        if (config->WaveModel()=="WW3") {
+            string &waveInput=config->WaveInputs()[inputIdx];
+            waveModelAdapter=WaveModelAdapterFactory::create(config->WaveModel(),waveInput);
+            waveModelAdapter->process();
+        }
+
         int adjacentIdx=inputIdx+inputDirection;
         if (adjacentIdx>=0 && adjacentIdx<config->NcInputs().size()) {
             string &adjacentInput=config->NcInputs()[adjacentIdx];
@@ -105,6 +120,20 @@ void WacommPlusPlus::run() {
             adjacentAdapter->process();
             int boundaryRecord=config->Backward() ? (int)adjacentAdapter->OceanTime().Nx()-1 : 0;
             oceanModelAdapter->appendBoundaryRecord(*adjacentAdapter,boundaryRecord,config->Backward());
+            if (weatherModelAdapter) {
+                string &adjacentWeatherInput=config->WeatherInputs()[adjacentIdx];
+                auto adjacentWeather=WeatherModelAdapterFactory::create(config->WeatherModel(),adjacentWeatherInput);
+                adjacentWeather->process();
+                int weatherRecord=config->Backward() ? (int)adjacentWeather->Time().Nx()-1 : 0;
+                weatherModelAdapter->appendBoundaryRecord(*adjacentWeather,weatherRecord,config->Backward());
+            }
+            if (waveModelAdapter) {
+                string &adjacentWaveInput=config->WaveInputs()[adjacentIdx];
+                auto adjacentWave=WaveModelAdapterFactory::create(config->WaveModel(),adjacentWaveInput);
+                adjacentWave->process();
+                int waveRecord=config->Backward() ? (int)adjacentWave->Time().Nx()-1 : 0;
+                waveModelAdapter->appendBoundaryRecord(*adjacentWave,waveRecord,config->Backward());
+            }
         }
 
         Calendar cal;
@@ -178,7 +207,7 @@ void WacommPlusPlus::run() {
         // Check if it is a dry run
         if (!config->Dry()) {
             // Create a new Wacomm object
-            Wacomm wacomm(config, oceanModelAdapter, sources, particles);
+            Wacomm wacomm(config, oceanModelAdapter, sources, particles,weatherModelAdapter,waveModelAdapter);
 
             // Run the model
             double cuda=0;

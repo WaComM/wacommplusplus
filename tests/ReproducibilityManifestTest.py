@@ -9,9 +9,13 @@ import tempfile
 with tempfile.TemporaryDirectory() as directory:
     root=pathlib.Path(directory)
     forcing=root/"forcing.nc"; forcing.write_bytes(b"forcing-data")
+    weather=root/"wrf.nc"; weather.write_bytes(b"weather-data")
+    wave=root/"ww3.nc"; wave.write_bytes(b"wave-data")
     output=root/"output.nc"; output.write_bytes(b"output-data")
     config=root/"config.json"
     config.write_text(json.dumps({"io":{"base_path":str(root),"nc_inputs":["forcing.nc"]},
+                                  "environment":{"wind":{"adapter":"WRF","nc_inputs":["wrf.nc"]},
+                                                 "wave":{"adapter":"WW3","nc_inputs":["ww3.nc"]}},
                                   "sources":{"active":False},"restart":{"active":False}}))
     build=root/"build"; build.mkdir()
     (build/"CMakeCache.txt").write_text("CMAKE_BUILD_TYPE:STRING=Release\nUSE_MPI:BOOL=ON\n")
@@ -25,4 +29,6 @@ with tempfile.TemporaryDirectory() as directory:
     assert data["tolerances"]=={"absolute":1e-10,"relative":1e-8}
     records={record["role"]:record for record in data["files"]}
     assert records["forcing"]["sha256"]==hashlib.sha256(b"forcing-data").hexdigest()
+    assert records["weather_forcing"]["sha256"]==hashlib.sha256(b"weather-data").hexdigest()
+    assert records["wave_forcing"]["sha256"]==hashlib.sha256(b"wave-data").hexdigest()
     assert records["output"]["sha256"]==hashlib.sha256(b"output-data").hexdigest()

@@ -33,6 +33,17 @@ Surface-object drift is opt-in:
 
 The first environmental provider is `environment.wind.adapter=constant`. Components `u10` and `v10` are finite eastward and northward 10 m wind velocities in m s-1. This provider is appropriate for analytical verification, controlled sensitivity studies, and spatially uniform forcing intervals. It is not a substitute for resolved atmospheric forcing in operational applications. Unknown models, object types, orientations, wind adapters, missing components, and non-finite winds fail during configuration loading.
 
+Resolved WRF wind and WW3 Stokes drift use parallel forcing lists:
+
+```json
+"environment": {
+  "wind": {"adapter":"WRF", "nc_inputs":["wrf.nc"]},
+  "wave": {"adapter":"WW3", "nc_inputs":["ww3.nc"]}
+}
+```
+
+Each list must contain exactly one file for every entry in `io.nc_inputs`. Files must normalize to the same chronological timestamps and horizontal coordinates as the ocean particle grid. WRF wind is required by leeway; WW3 Stokes drift is optional and is added only for non-passive drift objects. Dynamic WRF/WW3 coupling currently runs on serial CPU, OpenMP, MPI, and FlexMPI/EMPI paths. A CUDA device causes an actionable failure because dynamic environmental arrays have not yet been ported to device memory; constant wind remains CUDA-compatible.
+
 The complete resolved JSON configuration, including defaults, is embedded in NetCDF outputs. Reproducible experiments should nevertheless archive the original configuration, forcing and restart checksums, build metadata, parallel layout, tolerances, and output checksums.
 
 ## References

@@ -43,6 +43,17 @@ int main() {
     Config drift(leeway);
     assert(drift.Leeway() && drift.DriftObject()==DriftObjectType::PERSON_IN_WATER);
     assert(drift.DefaultDriftSide()==DriftSide::RIGHT);
+    const string environment="config-test-environment.json";
+    {
+        std::ofstream file(environment);
+        file << R"({"io":{"nc_inputs":["ocean.nc"]},
+          "drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"left"},
+          "environment":{"wind":{"adapter":"WRF","nc_inputs":["wrf.nc"]},
+                         "wave":{"adapter":"WW3","nc_inputs":["ww3.nc"]}}})";
+    }
+    Config environmental(environment);
+    assert(environmental.WeatherModel()=="WRF" && environmental.WeatherInputs().size()==1);
+    assert(environmental.WaveModel()=="WW3" && environmental.WaveInputs().size()==1);
     {
         std::ofstream file(invalid);
         file << R"({"physics":{"upper_closure":"unknown"}})";
@@ -62,4 +73,5 @@ int main() {
     std::remove(input.c_str()); std::remove(saved.c_str()); std::remove(invalid.c_str());
     std::remove(invalidStep.c_str());
     std::remove(leeway.c_str());
+    std::remove(environment.c_str());
 }

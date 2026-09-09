@@ -54,7 +54,8 @@ class Particle {
         void move(config_data *configData, int ocean_time_idx, Array1<double> &oceanTime, Array2<double> &mask,
                   Array2<double> &lonRad, Array2<double> &latRad,  Array1<double> &sW, Array1<double> &depthIntervals,
                   Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
-                  Array4<float> &akt);
+                  Array4<float> &akt, Array3<float> *windU10=nullptr, Array3<float> *windV10=nullptr,
+                  Array3<float> *stokesU=nullptr, Array3<float> *stokesV=nullptr);
 
         particle_data data();
         void data(particle_data data);

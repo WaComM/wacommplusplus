@@ -135,6 +135,10 @@ public:
 
     string OceanModel() const;
     void OceanModel(string value);
+    string WeatherModel() const;
+    vector<string>& WeatherInputs();
+    string WaveModel() const;
+    vector<string>& WaveInputs();
 
     void saveAsJson(const string &fileName);
     string asJson() const;
@@ -167,6 +171,10 @@ private:
     double julianRef;
 
     string oceanModel;
+    string weatherModel;
+    vector<string> weatherInputs;
+    string waveModel;
+    vector<string> waveInputs;
     string ncBasePath;
     vector<string> ncInputs;
     string ncOutputRoot;

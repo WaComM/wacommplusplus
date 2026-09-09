@@ -148,6 +148,8 @@ if(BUILD_APPLICATION)
     add_executable(wacommplusplus
             main.cpp Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
             Config.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
+            WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
+            WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
             OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
             OceanModelAdapters/StructuredGridAdapter.cpp
             ${WACOMM_CUDA_SOURCES})
@@ -222,6 +224,14 @@ if(BUILD_TESTING)
     wacomm_enable_test_assertions(drift_model_test)
     target_include_directories(drift_model_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME drift_model COMMAND drift_model_test)
+    if(BUILD_APPLICATION)
+        add_executable(environment_adapter_test tests/EnvironmentAdapterTest.cpp
+                WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
+                WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(environment_adapter_test)
+        target_link_libraries(environment_adapter_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME environment_adapters COMMAND environment_adapter_test)
+    endif()
     add_executable(numerical_helpers_test tests/NumericalHelpersTest.cpp)
     wacomm_enable_test_assertions(numerical_helpers_test)
     target_include_directories(numerical_helpers_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

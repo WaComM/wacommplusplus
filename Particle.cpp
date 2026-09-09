@@ -71,7 +71,8 @@ bool Particle::isAlive() const {
 void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> &oceanTime, Array2<double> &mask,
                     Array2<double> &lonRad, Array2<double> &latRad, Array1<double> &sW, Array1<double> &depthIntervals,
                     Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
-                    Array4<float> &akt) {
+                    Array4<float> &akt, Array3<float> *windU10, Array3<float> *windV10,
+                    Array3<float> *stokesU, Array3<float> *stokesV) {
 
     particle_data localParticleData;
     memcpy(&localParticleData, &_data, sizeof(particle_data));
@@ -373,10 +374,36 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                 localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE)) {
                 const auto& object=DriftObjectCatalog::definition(
                         static_cast<DriftObjectType>(localParticleData.driftObjectType));
-                DriftVelocity leeway=computeLeeway(object.leeway,configData->windU10,configData->windV10,
+                auto environmentAt=[&](Array3<float> *field) {
+                    if (!field) return 0.0;
+                    float f1=(*field)(ocean_time_idx,jI,iI)*(1-iF)*(1-jF);
+                    float f2=(*field)(ocean_time_idx,jI+1,iI)*(1-iF)*jF;
+                    float f3=(*field)(ocean_time_idx,jI+1,iI+1)*iF*jF;
+                    float f4=(*field)(ocean_time_idx,jI,iI+1)*iF*(1-jF);
+                    float n1=(*field)(nextOceanTimeIdx,jI,iI)*(1-iF)*(1-jF);
+                    float n2=(*field)(nextOceanTimeIdx,jI+1,iI)*(1-iF)*jF;
+                    float n3=(*field)(nextOceanTimeIdx,jI+1,iI+1)*iF*jF;
+                    float n4=(*field)(nextOceanTimeIdx,jI,iI+1)*iF*(1-jF);
+                    return NumericalHelpers::interpolateTime(f1+f2+f3+f4,n1+n2+n3+n4,alpha);
+                };
+                double windU=windU10 ? environmentAt(windU10) : configData->windU10;
+                double windV=windV10 ? environmentAt(windV10) : configData->windV10;
+                DriftVelocity leeway=computeLeeway(object.leeway,windU,windV,
                         static_cast<DriftSide>(localParticleData.driftSide));
                 uu+=static_cast<float>(leeway.u);
                 vv+=static_cast<float>(leeway.v);
+            }
+            if (configData->driftModel==1 &&
+                localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE) &&
+                stokesU && stokesV) {
+                auto waveAt=[&](Array3<float> *field) {
+                    double first=(*field)(ocean_time_idx,jI,iI)*(1-iF)*(1-jF)+(*field)(ocean_time_idx,jI+1,iI)*(1-iF)*jF+
+                                 (*field)(ocean_time_idx,jI+1,iI+1)*iF*jF+(*field)(ocean_time_idx,jI,iI+1)*iF*(1-jF);
+                    double next=(*field)(nextOceanTimeIdx,jI,iI)*(1-iF)*(1-jF)+(*field)(nextOceanTimeIdx,jI+1,iI)*(1-iF)*jF+
+                                (*field)(nextOceanTimeIdx,jI+1,iI+1)*iF*jF+(*field)(nextOceanTimeIdx,jI,iI+1)*iF*(1-jF);
+                    return NumericalHelpers::interpolateTime(first,next,alpha);
+                };
+                uu+=static_cast<float>(waveAt(stokesU)); vv+=static_cast<float>(waveAt(stokesV));
             }
 
 #ifdef DEBUG
