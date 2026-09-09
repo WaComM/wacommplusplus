@@ -34,6 +34,15 @@ int main() {
     assert(restored.LowerClosure()==config.LowerClosure());
     assert(restored.HorizontalClosure()==config.HorizontalClosure());
     assert(restored.RestartInterval()==config.RestartInterval());
+    const string leeway="config-test-leeway.json";
+    {
+        std::ofstream file(leeway);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right"},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":1.0}}})";
+    }
+    Config drift(leeway);
+    assert(drift.Leeway() && drift.DriftObject()==DriftObjectType::PERSON_IN_WATER);
+    assert(drift.DefaultDriftSide()==DriftSide::RIGHT);
     {
         std::ofstream file(invalid);
         file << R"({"physics":{"upper_closure":"unknown"}})";
@@ -52,4 +61,5 @@ int main() {
     assert(rejected);
     std::remove(input.c_str()); std::remove(saved.c_str()); std::remove(invalid.c_str());
     std::remove(invalidStep.c_str());
+    std::remove(leeway.c_str());
 }

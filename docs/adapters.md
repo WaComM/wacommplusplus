@@ -13,3 +13,11 @@ NEMO recognizes `nav_lon/longitude/lon`, `nav_lat/latitude/lat`, `time_counter/t
 The initial NEMO implementation accepts products whose U and V fields already share the particle grid. It detects and rejects unsupported staggered or inconsistent dimensions. Input time must be strictly chronological. Positive-down depth may be stored shallow-to-deep or deep-to-shallow, but must be strictly monotonic; the adapter maps depth and every dynamic vertical field together onto WaComM's bottom-to-surface logical indices. Missing W or AKT fields use zero with a warning; this excludes resolved vertical transport or turbulent vertical diffusion and must be considered in scientific interpretation.
 
 Run `ctest --test-dir build -R "roms_adapter|native_adapter|structured_grid_adapters" --output-on-failure` after configuring an application build. The fixtures are generated at runtime and require NetCDF C++4. Failures normally indicate an unsupported dimension layout, a non-chronological time axis, or a mismatch between coordinates and velocity dimensions. Adapter fixture success verifies normalization, not the scientific suitability or resolution of a forcing product.
+
+Atmospheric input is deliberately independent of the ocean adapter family. The initial `constant` wind provider supplies finite eastward and northward 10 m components in m s-1 for controlled experiments. ROMS, NEMO, HYCOM, and native WACOMM adapters neither synthesize nor reinterpret wind, and no ocean adapter changes velocity sign according to tracking direction.
+
+## References
+
+- Shchepetkin, A. F., and McWilliams, J. C. (2005). The regional oceanic modeling system (ROMS): a split-explicit, free-surface, topography-following-coordinate oceanic model. *Ocean Modelling*, 9, 347–404. [doi:10.1016/j.ocemod.2004.08.002](https://doi.org/10.1016/j.ocemod.2004.08.002).
+- Bleck, R. (2002). An oceanic general circulation model framed in hybrid isopycnic-Cartesian coordinates. *Ocean Modelling*, 4, 55–88. [doi:10.1016/S1463-5003(01)00012-9](https://doi.org/10.1016/S1463-5003(01)00012-9).
+- Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

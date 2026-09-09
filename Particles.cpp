@@ -32,7 +32,8 @@ void Particles::saveAsTxt(const string& fileName)
     outfile << "\t" << count << endl;
     for(int idx=0; idx<count; idx++) {
         Particle particle = at(idx);
-        outfile << particle.Id() << " " << particle.I() << " "  << particle.J() << " " <<  particle.K() << " " << particle.Health() << " " <<  particle.Age() << " " << particle.Time() << endl;
+        outfile << particle.Id() << " " << particle.I() << " "  << particle.J() << " " <<  particle.K() << " " << particle.Health() << " " <<  particle.Age() << " " << particle.Time() << " "
+                << static_cast<int>(particle.DriftObject()) << " " << static_cast<int>(particle.Side()) << endl;
     }
 }
 
@@ -64,7 +65,9 @@ void Particles::saveAsJson(const string &fileName, double particleTime, std::sha
                 { "health", particle.Health()},
                 { "age", particle.Age()},
                 { "time", particle.Time()},
-                { "depth", dep}
+                { "depth", dep},
+                { "object_type", DriftObjectCatalog::name(particle.DriftObject())},
+                { "drift_side", static_cast<int>(particle.Side())}
         };
 
         json geometry = {
@@ -110,6 +113,8 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     Array2<double> health(this->size(),particle_time);
     Array2<double> age(this->size(),particle_time);
     Array2<double> time(this->size(),particle_time);
+    Array1<unsigned int> driftObjectType(this->size());
+    Array1<int> driftSide(this->size());
 
     /*
     Array4<float> conc(particle_time,
@@ -161,6 +166,8 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
         health(count,0)=particle.Health();
         age(count,0)=particle.Age();
         time(count,0)=particle.Time();
+        driftObjectType(count)=static_cast<unsigned int>(particle.DriftObject());
+        driftSide(count)=static_cast<int>(particle.Side());
 
         //double concK=oceanModelAdapter->Depth().Nx()*depth/(maxDepth-minDepth);
         //double concJ=oceanModelAdapter->Latitude().Nx()*latitude/(maxLat-minLat);
@@ -179,7 +186,7 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
 
     Provenance::writeBuildMetadata(dataFile,*config);
 
-    dataFile.putAtt("wacomm_restart_version","2");
+    dataFile.putAtt("wacomm_restart_version","3");
     dataFile.putAtt("tracking_direction",config->Backward() ? "backward" : "forward");
     dataFile.putAtt("ocean_model",config->OceanModel());
     dataFile.putAtt("checkpoint_time",ncDouble,particleTime);
@@ -201,6 +208,14 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     idVar.putAtt("long_name","id");
     idVar.putAtt("cf_role", "trajectory_id");
     idVar.putVar(id());
+
+    NcVar objectTypeVar = dataFile.addVar("object_type", ncUint, particlesDim);
+    objectTypeVar.putAtt("long_name","drift object type identifier");
+    objectTypeVar.putVar(driftObjectType());
+
+    NcVar driftSideVar = dataFile.addVar("drift_side", ncInt, particlesDim);
+    driftSideVar.putAtt("long_name","crosswind orientation: -1 left, 0 undefined, 1 right");
+    driftSideVar.putVar(driftSide());
 
     vector<NcDim> particlesParticleTimeDims;
     particlesParticleTimeDims.push_back(particlesDim);
@@ -334,7 +349,7 @@ void Particles::loadFromTxt(const string &fileName) {
                 k=atof(tokens[2].c_str());
                 health=atof(tokens[3].c_str());
                 tpart=atof(tokens[4].c_str());
-            } else {
+            } else if (tokens.size()>=7) {
                 // C++ style restart text file
                 id=atoi(tokens[0].c_str());
                 i=atof(tokens[1].c_str());
@@ -343,8 +358,12 @@ void Particles::loadFromTxt(const string &fileName) {
                 health=atof(tokens[4].c_str());
                 tpart=atof(tokens[5].c_str());
                 emitOceanTime=atof(tokens[6].c_str());
+            } else {
+                throw std::runtime_error("Invalid particle restart record");
             }
             Particle particle(id, k, j, i, health, tpart, emitOceanTime);
+            if (tokens.size()>=9) particle.Drift(static_cast<DriftObjectType>(atoi(tokens[7].c_str())),
+                                                 static_cast<DriftSide>(atoi(tokens[8].c_str())));
             push_back(particle);
         }
         count++;
@@ -366,9 +385,11 @@ void Particles::loadFromNetCDF(const string &fileName, std::shared_ptr<Config> c
     if (!versionAtt.isNull()) {
         string restartVersion;
         versionAtt.getValues(restartVersion);
-        if (restartVersion != "2") {
+        if (restartVersion != "2" && restartVersion != "3") {
             throw std::runtime_error("Unsupported restart version: " + restartVersion);
         }
+        if (restartVersion=="2" && config->Leeway())
+            throw std::runtime_error("Restart version 2 does not contain drift object state required by drift.model=leeway");
         string restartDirection;
         dataFile.getAtt("tracking_direction").getValues(restartDirection);
         string configuredDirection=config->Backward() ? "backward" : "forward";
@@ -437,8 +458,16 @@ void Particles::loadFromNetCDF(const string &fileName, std::shared_ptr<Config> c
     Array1<double> time(size);
     varTime.getVar({0,0},{size,1},time());
 
+    Array1<unsigned int> driftObjectType(size); driftObjectType=static_cast<unsigned int>(0);
+    Array1<int> driftSide(size); driftSide=0;
+    NcVar varObjectType=dataFile.getVar("object_type");
+    NcVar varDriftSide=dataFile.getVar("drift_side");
+    if (!varObjectType.isNull()) varObjectType.getVar(driftObjectType());
+    if (!varDriftSide.isNull()) varDriftSide.getVar(driftSide());
+
     for (int i=0; i<size; i++) {
         Particle particle(Id[i], K[i], J[i], I[i], health[i], age[i], time[i]);
+        particle.Drift(static_cast<DriftObjectType>(driftObjectType[i]),static_cast<DriftSide>(driftSide[i]));
         push_back(particle);
     }
 }

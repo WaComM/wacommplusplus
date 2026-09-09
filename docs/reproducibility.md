@@ -23,3 +23,8 @@ python3 tools/reproducibility_manifest.py \
 ```
 
 The command fails if a declared configuration, forcing, source, restart, output, test log, or CMake cache file is missing. Relative configuration paths are resolved with the same run working directory convention as the application. The JSON contains the complete input configuration, SHA-256 and byte size for every discovered file, Git revision and dirty state, selected CMake cache entries, operating system and architecture, relevant MPI/OpenMP/CUDA environment variables, and declared tolerances. Review dependency and GPU/driver details separately when those are not represented in the CMake cache or environment.
+
+## References
+
+- Peng, R. D. (2011). Reproducible research in computational science. *Science*, 334, 1226–1227. [doi:10.1126/science.1213847](https://doi.org/10.1126/science.1213847).
+- Sandve, G. K., Nekrutenko, A., Taylor, J., and Hovig, E. (2013). Ten simple rules for reproducible computational research. *PLoS Computational Biology*, 9, e1003285. [doi:10.1371/journal.pcbi.1003285](https://doi.org/10.1371/journal.pcbi.1003285).

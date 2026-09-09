@@ -4,6 +4,8 @@
 
 This historical forward scenario follows a known surface search-and-rescue release with hourly ROMS forcing from 2021-07-01 09:00 through 2021-07-03 00:00 UTC.
 
+Despite its historical name, this configuration is passive because it does not select `drift.model=leeway`. It represents current-driven tracer transport rather than object-specific wind leeway.
+
 ## Prerequisites and fields
 
 Build with NetCDF C++4 and ensure the configured OPeNDAP endpoint is reachable. ROMS files must contain chronological `ocean_time`, rho-grid coordinates/mask/bathymetry, sigma metadata, zeta, staggered U/V, and configured W/AKT inputs. The scenario uses `sources-sar.json`.
@@ -23,3 +25,9 @@ The adapter normalizes ROMS fields without changing velocity signs or time direc
 ## Limitations, interpretation, and reproducibility
 
 Remote availability and content are outside the repository; download and checksum inputs for a reproducible run. The model omits object-specific leeway and cannot establish a unique trajectory. Archive revision, configuration, source/forcing checksums, seed, toolchain, backend settings, tolerances, tests, and outputs.
+
+
+## References
+
+- Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
+- Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

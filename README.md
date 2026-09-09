@@ -1,8 +1,10 @@
 # WaComM++
 
-WaComM++ (Water quality COMmunity Model in C++) is a C++17 Lagrangian transport and diffusion model for marine pollutant assessment. Gridded Eulerian ocean forcing drives independent particles whose state includes position, emission time, age, health, and a stable 64-bit identity.
+WaComM++ (Water quality COMmunity Model in C++) is a C++17 Lagrangian transport and diffusion framework for marine pollutants and drifting surface objects. Gridded Eulerian ocean forcing drives compact, independently advected particles whose state includes position, emission time, age, health, a stable 64-bit identity, and restart-safe drift-object metadata.
 
-The current release reads ROMS, NEMO, HYCOM, and native WACOMM products through direction-neutral adapters. It supports deterministic forward and backward traversal, configurable stochastic forward diffusion, an explicitly labeled stochastic backward ensemble mode, restart input/output, OpenMP, MPI, FlexMPI/EMPI, OpenACC, and optional CUDA. Unsupported adapter layouts are rejected rather than silently interpreted as another grid.
+The current release reads ROMS, NEMO, HYCOM, and native WACOMM products through direction-neutral adapters. It supports deterministic forward and backward traversal, configurable stochastic forward diffusion, an explicitly labelled stochastic backward ensemble mode, restart input/output, OpenMP, MPI, FlexMPI/EMPI, OpenACC, and optional CUDA. Unsupported adapter layouts are rejected rather than silently interpreted as another grid.
+
+Surface-object tracking augments the ambient current with an empirically parameterized leeway velocity resolved into downwind and crosswind components relative to 10 m wind. The first catalog comprises a person in water, liferafts with and without drogues, a generic vessel, and a shipping container. Passive transport remains the default. The same deterministic velocity is evaluated in forward and backward integrations; only the solver applies temporal orientation.
 
 Backward deterministic tracking reverses forcing traversal and resolved/terminal motion and suppresses normal forward sources. It can identify candidate prior locations under the supplied circulation and model assumptions; stochastic backward tracking is not a unique inverse trajectory.
 
@@ -35,9 +37,13 @@ Set `physics.random_seed` explicitly and archive the complete configuration, Git
 
 Start at the [documentation index](docs/README.md) for the [model](docs/model.md), [build guide](docs/build.md), [configuration](docs/configuration.md), [adapters](docs/adapters.md), [backtracking](docs/backtracking.md), [restart](docs/restart.md), [testing](docs/testing.md), [parallelism](docs/parallelism.md), [supported platforms](docs/supported-platforms.md), and [reproducibility](docs/reproducibility.md). The [examples index](examples/README.md) covers every checked-in run configuration and source artifact, including forward/backward ROMS, NEMO, HYCOM, and native WACOMM workflows.
 
+The [surface-drift guide](docs/sar-drift.md) defines the object-relative velocity model, coefficient provenance, units, direction semantics, restart format, supported object classes, and current limitations. Its paired [forward](examples/sar-person-forward.md) and [backward](examples/sar-person-backward.md) person-in-water scenarios provide reproducible reference configurations.
+
 ## Citation
 
 Montella, R., et al. (2023), “A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment,” *31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing*, 17–26. Earlier WaComM publications and ocean-model references are listed in [references](docs/references.md).
+
+Scientific use of surface-object drift should additionally cite the peer-reviewed leeway methodology and object-specific studies identified in [references](docs/references.md). Model output is conditional on forcing, parameterization, resolution, boundary treatment, and numerical configuration; it is not an observation or a unique reconstruction of an unobserved trajectory.
 
 ## License
 

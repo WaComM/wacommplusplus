@@ -32,3 +32,9 @@ ctest --test-dir build -C Release --output-on-failure
 ```
 
 `USE_EMPI=ON` requires an MPI implementation plus a real FlexMPI installation. Configuration searches for `empi.h` and the EMPI library and fails clearly if either is absent. Pass its installation prefix through `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH`, or `CMAKE_LIBRARY_PATH` when it is outside the system search path.
+
+
+## References
+
+- Sandve, G. K., Nekrutenko, A., Taylor, J., and Hovig, E. (2013). Ten simple rules for reproducible computational research. *PLoS Computational Biology*, 9, e1003285. [doi:10.1371/journal.pcbi.1003285](https://doi.org/10.1371/journal.pcbi.1003285).
+- Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

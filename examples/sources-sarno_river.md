@@ -25,3 +25,9 @@ Particles are emitted at the configured rate while the source is active. Confirm
 ## Limitations, interpretation, and reproducibility
 
 The source rate is a particle sampling rate, not a calibrated contaminant mass flux. Results describe transport conditional on forcing, resolution, diffusion, and closure assumptions. Archive revision, resolved configuration, source/forcing checksums, seed, dependencies, platform, parallel settings, tolerances, tests, and output checksums. See [model](../docs/model.md) and [testing](../docs/testing.md).
+
+
+## References
+
+- Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
+- Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

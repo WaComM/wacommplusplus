@@ -147,7 +147,7 @@ if(BUILD_APPLICATION)
 
     add_executable(wacommplusplus
             main.cpp Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
-            Config.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
+            Config.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
             OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
             OceanModelAdapters/StructuredGridAdapter.cpp
             ${WACOMM_CUDA_SOURCES})
@@ -157,41 +157,41 @@ if(BUILD_APPLICATION)
 
     if(BUILD_TESTING)
         add_executable(structured_grid_adapter_test tests/StructuredGridAdapterTest.cpp
-                Particle.cpp OceanModelAdapter.cpp OceanModelAdapters/StructuredGridAdapter.cpp)
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/StructuredGridAdapter.cpp)
         wacomm_enable_test_assertions(structured_grid_adapter_test)
         target_link_libraries(structured_grid_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME structured_grid_adapters COMMAND structured_grid_adapter_test)
 
         add_executable(roms_adapter_test tests/ROMSAdapterTest.cpp
-                Particle.cpp OceanModelAdapter.cpp OceanModelAdapters/ROMSAdapter.cpp)
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/ROMSAdapter.cpp)
         wacomm_enable_test_assertions(roms_adapter_test)
         target_link_libraries(roms_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME roms_adapter COMMAND roms_adapter_test)
 
         add_executable(native_adapter_test tests/NativeAdapterTest.cpp
-                Particle.cpp OceanModelAdapter.cpp OceanModelAdapters/WacommAdapter.cpp)
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/WacommAdapter.cpp)
         wacomm_enable_test_assertions(native_adapter_test)
         target_link_libraries(native_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME native_adapter COMMAND native_adapter_test)
 
-        add_executable(config_test tests/ConfigTest.cpp Config.cpp Utils.cpp JulianDate.cpp)
+        add_executable(config_test tests/ConfigTest.cpp Config.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
         wacomm_enable_test_assertions(config_test)
         target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME configuration_round_trip COMMAND config_test)
 
-        add_executable(restart_test tests/RestartTest.cpp Particles.cpp Particle.cpp OceanModelAdapter.cpp
+        add_executable(restart_test tests/RestartTest.cpp Particles.cpp Particle.cpp DriftModel.cpp OceanModelAdapter.cpp
                 Config.cpp Utils.cpp JulianDate.cpp)
         target_include_directories(restart_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
         wacomm_enable_test_assertions(restart_test)
         target_link_libraries(restart_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME restart_format COMMAND restart_test)
 
-        add_executable(particle_move_test tests/ParticleMoveTest.cpp Particle.cpp)
+        add_executable(particle_move_test tests/ParticleMoveTest.cpp Particle.cpp DriftModel.cpp)
         wacomm_enable_test_assertions(particle_move_test)
         target_link_libraries(particle_move_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME particle_physical_interval COMMAND particle_move_test)
 
-        add_executable(concentration_test tests/ConcentrationTest.cpp Particles.cpp Particle.cpp
+        add_executable(concentration_test tests/ConcentrationTest.cpp Particles.cpp Particle.cpp DriftModel.cpp
                 OceanModelAdapter.cpp Config.cpp Utils.cpp JulianDate.cpp)
         target_include_directories(concentration_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
         wacomm_enable_test_assertions(concentration_test)
@@ -199,7 +199,7 @@ if(BUILD_APPLICATION)
         add_test(NAME concentration_preservation COMMAND concentration_test)
 
         if(USE_MPI)
-            add_executable(mpi_decomposition_test tests/MpiDecompositionTest.cpp Particle.cpp)
+            add_executable(mpi_decomposition_test tests/MpiDecompositionTest.cpp Particle.cpp DriftModel.cpp)
             wacomm_enable_test_assertions(mpi_decomposition_test)
             target_link_libraries(mpi_decomposition_test PRIVATE ${WACOMM_LIBRARIES})
             add_test(NAME mpi_decomposition_parity COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
@@ -207,7 +207,7 @@ if(BUILD_APPLICATION)
         endif()
 
         if(USE_CUDA)
-            add_executable(cuda_particle_parity_test tests/CudaParticleParityTest.cu Particle.cpp cuda/kernel.cu)
+            add_executable(cuda_particle_parity_test tests/CudaParticleParityTest.cu Particle.cpp DriftModel.cpp cuda/kernel.cu)
             wacomm_enable_test_assertions(cuda_particle_parity_test)
             target_link_libraries(cuda_particle_parity_test PRIVATE ${WACOMM_LIBRARIES})
             add_test(NAME cuda_particle_parity COMMAND cuda_particle_parity_test)
@@ -218,6 +218,10 @@ endif()
 
 if(BUILD_TESTING)
     include(CTest)
+    add_executable(drift_model_test tests/DriftModelTest.cpp DriftModel.cpp)
+    wacomm_enable_test_assertions(drift_model_test)
+    target_include_directories(drift_model_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME drift_model COMMAND drift_model_test)
     add_executable(numerical_helpers_test tests/NumericalHelpersTest.cpp)
     wacomm_enable_test_assertions(numerical_helpers_test)
     target_include_directories(numerical_helpers_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

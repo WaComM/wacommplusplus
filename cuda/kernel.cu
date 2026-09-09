@@ -149,6 +149,14 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
 
         float uu=bilinear(u,timeIndex,nextTime,kI,sRho,jI,iI,jF,iF,eta,xi,alpha);
         float vv=bilinear(v,timeIndex,nextTime,kI,sRho,jI,iI,jF,iF,eta,xi,alpha);
+        if (config->driftModel==1 &&
+            particle.driftObjectType!=(unsigned short)DriftObjectType::PASSIVE) {
+            LeewayCoefficients coefficients=driftObjectCoefficients((DriftObjectType)particle.driftObjectType);
+            DriftVelocity leeway=computeLeeway(coefficients,config->windU10,config->windV10,
+                                                (DriftSide)particle.driftSide);
+            uu+=(float)leeway.u;
+            vv+=(float)leeway.v;
+        }
         double ww=bilinear(w,timeIndex,nextTime,kI,sW,jI,iI,jF,iF,eta,xi,alpha)*(1.0-kF)+
                   bilinear(w,timeIndex,nextTime,kI-1,sW,jI,iI,jF,iF,eta,xi,alpha)*kF;
         double aa=bilinear(akt,timeIndex,nextTime,kI,sW,jI,iI,jF,iF,eta,xi,alpha)*(1.0-kF)+

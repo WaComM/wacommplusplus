@@ -39,3 +39,9 @@ The last command is the runtime dependency gate. Do not publish the executable i
 ## Validation and reproducibility
 
 Record the container digest, Git revision, installed RPM versions, compiler and CMake versions, configure options, CTest output, input checksums, numerical tolerances, and result checksums. The CI job validates x86_64 container execution; it does not validate a different architecture or a site-specific MPI fabric.
+
+
+## References
+
+- Sandve, G. K., Nekrutenko, A., Taylor, J., and Hovig, E. (2013). Ten simple rules for reproducible computational research. *PLoS Computational Biology*, 9, e1003285. [doi:10.1371/journal.pcbi.1003285](https://doi.org/10.1371/journal.pcbi.1003285).
+- Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

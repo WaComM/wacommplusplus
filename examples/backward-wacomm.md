@@ -19,3 +19,9 @@ The adapter returns identical normalized fields regardless of direction; the sol
 ## Limitations, interpretation, and reproducibility
 
 Decay, closures, and discretization can break exact reversibility. Describe output as candidate origins conditional on forcing and assumptions. Archive revision, configuration, forcing/restart checksums, seed, toolchain, dependencies, platform/backend settings, tolerances, tests, and outputs.
+
+
+## References
+
+- Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
+- Thygesen, U. H. (2011). How to reverse time in stochastic particle tracking models. *Journal of Marine Systems*, 88, 159–168. [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009).

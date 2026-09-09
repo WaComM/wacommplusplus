@@ -23,3 +23,9 @@ The configured source maps to a wet cell and repeat runs with identical seed/inp
 ## Limitations, interpretation, and reproducibility
 
 External data is not bundled, and the sampling density is not a physical flux. Confirm the actual `ocean_time` values against the declared 08:00-10:00 UTC simulation before scientific use. Archive resolved configuration, all inputs/checksums, revision, seed, toolchain, backend layout, tolerances, tests, restarts, and outputs.
+
+
+## References
+
+- Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
+- Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

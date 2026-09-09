@@ -36,6 +36,8 @@ struct particle_data {
     double health;
     double age;
     double time;
+    std::uint16_t driftObjectType;
+    std::int8_t driftSide;
 };
 
 class Particle {
@@ -66,6 +68,9 @@ class Particle {
 
         double Time() const;
         std::uint64_t Id() const;
+        DriftObjectType DriftObject() const;
+        DriftSide Side() const;
+        void Drift(DriftObjectType objectType, DriftSide side);
 
         std::string to_string() const;
 

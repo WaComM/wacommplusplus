@@ -1,0 +1,9 @@
+{
+  "io": {"ocean_model": "ROMS", "base_path": ".", "nc_inputs": ["forcing.nc"], "nc_output_root": "sar-person-backward"},
+  "sources": {"active": false},
+  "restart": {"active": true, "restart_file": "sar-endpoint.nc"},
+  "physics": {"random": false, "random_seed": 5489, "dti": 30},
+  "tracking": {"direction": "backward", "backward_diffusion": "none"},
+  "drift": {"model": "leeway", "object_type": "PERSON_IN_WATER", "side": "right"},
+  "environment": {"wind": {"adapter": "constant", "u10": 5.0, "v10": 0.0}}
+}

@@ -13,6 +13,14 @@ def main():
         guide = configuration.with_suffix(".md")
         if not guide.is_file():
             missing.append(guide.name)
+        else:
+            text = guide.read_text()
+            if "## References" not in text:
+                print(f"Missing References section in {guide.name}")
+                return 1
+            if "doi:" not in text.lower():
+                print(f"Missing persistent peer-reviewed citation in {guide.name}")
+                return 1
         try:
             json.loads(configuration.read_text())
         except (OSError, json.JSONDecodeError) as error:

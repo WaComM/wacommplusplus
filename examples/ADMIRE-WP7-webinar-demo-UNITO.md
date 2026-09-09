@@ -4,6 +4,7 @@
 ```bash
 git clone https://github.com/CCMMMA/wacommplusplus.git
 ```
+
 2) Enter the project directory
 ```bash
 cd wacomplusplus
@@ -115,6 +116,11 @@ A correct result file will look like this:
 
 ...
 ```
+
+## References
+
+- Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).
+- Shchepetkin, A. F., and McWilliams, J. C. (2005). The regional oceanic modeling system (ROMS): a split-explicit, free-surface, topography-following-coordinate oceanic model. *Ocean Modelling*, 9, 347–404. [doi:10.1016/j.ocemod.2004.08.002](https://doi.org/10.1016/j.ocemod.2004.08.002).
 
 1) The introductive section describes used hardware and configuration chosen:
 ```bash

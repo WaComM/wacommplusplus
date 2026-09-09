@@ -23,3 +23,9 @@ The run should accept the point as wet and emit at the requested rate. Check log
 ## Limitations, interpretation, and reproducibility
 
 This is a demonstration sampling density, not a measured discharge. The external 2019 forcing is not distributed here. Record all configuration/source changes, input checksums, revision, seed, compiler, dependencies, backend layout, tolerances, tests, and output checksums. See [parallelism](../docs/parallelism.md) and [reproducibility](../docs/reproducibility.md).
+
+
+## References
+
+- Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
+- Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

@@ -138,4 +138,20 @@ int main() {
     Particle vertical(7,-.5,.25,.25,0);
     vertical.move(&config,0,verticalTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,verticalW,akt);
     assert(std::abs(vertical.K()+.48)<1e-12);
+
+    config.sv=0;
+    config.driftModel=1;
+    config.driftObjectType=static_cast<std::uint16_t>(DriftObjectType::PERSON_IN_WATER);
+    config.driftSide=static_cast<std::int8_t>(DriftSide::RIGHT);
+    config.hasWind=true; config.windU10=10; config.windV10=0;
+    Particle leewayForward(9,-.5,.25,.25,0);
+    leewayForward.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    leewayForward.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    assert(leewayForward.I()>.25 && leewayForward.J()>.25);
+    config.trackingDirection=Config::TRACKING_BACKWARD;
+    Particle leewayBackward(10,-.5,leewayForward.J(),leewayForward.I(),65);
+    leewayBackward.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    leewayBackward.move(&config,1,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    assert(std::abs(leewayBackward.I()-.25)<1.e-8);
+    assert(std::abs(leewayBackward.J()-.25)<1.e-8);
 }

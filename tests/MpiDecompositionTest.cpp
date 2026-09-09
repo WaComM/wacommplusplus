@@ -21,7 +21,9 @@ int main(int argc, char **argv) {
     std::vector<particle_data> input,parallelResult;
     if (worldRank==0) {
         for (int idx=0;idx<particleCount;idx++) {
-            input.push_back({9007199254740993ULL+(std::uint64_t)idx,-.5,.25,.25,1,0,0});
+            input.push_back({9007199254740993ULL+(std::uint64_t)idx,-.5,.25,.25,1,0,0,
+                             static_cast<std::uint16_t>(DriftObjectType::PERSON_IN_WATER),
+                             static_cast<std::int8_t>(idx%2 ? DriftSide::LEFT : DriftSide::RIGHT)});
         }
         parallelResult.resize(particleCount);
     }
@@ -69,6 +71,8 @@ int main(int argc, char **argv) {
             assert(parallelResult[idx].i==serial.i && parallelResult[idx].j==serial.j);
             assert(parallelResult[idx].k==serial.k && parallelResult[idx].health==serial.health);
             assert(parallelResult[idx].age==serial.age && parallelResult[idx].time==serial.time);
+            assert(parallelResult[idx].driftObjectType==serial.driftObjectType);
+            assert(parallelResult[idx].driftSide==serial.driftSide);
         }
     }
     MPI_Type_free(&particleType);

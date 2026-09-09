@@ -43,7 +43,9 @@ void Source::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particl
                     ii = i + distribution(generator);
                 }
 
-                particles->push_back(Particle(id, kk, jj, ii, currentOceanTime));
+                Particle particle(id, kk, jj, ii, currentOceanTime);
+                particle.Drift(config->DriftObject(),config->DefaultDriftSide());
+                particles->push_back(particle);
                 id++;
             }
         }

@@ -10,6 +10,7 @@
 #include <cstdint>
 
 #include "Utils.hpp"
+#include "DriftModel.hpp"
 
 using namespace std;
 
@@ -36,6 +37,12 @@ struct config_data {
     int trackingDirection;
     int backwardDiffusion;
     double restartCheckpoint;
+    int driftModel;
+    std::uint16_t driftObjectType;
+    std::int8_t driftSide;
+    bool hasWind;
+    double windU10;
+    double windV10;
 };
 
 class Config {
@@ -81,6 +88,9 @@ public:
     std::uint64_t RandomSeed() const;
     bool Backward() const;
     bool BackwardDiffusion() const;
+    bool Leeway() const;
+    DriftObjectType DriftObject() const;
+    DriftSide DefaultDriftSide() const;
     void RestartCheckpoint(double value);
     double RestartCheckpoint() const;
 

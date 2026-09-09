@@ -7,3 +7,9 @@ Fast CI builds the portable core on Ubuntu, macOS Intel, macOS Apple Silicon, an
 The scheduled/manual HPC workflow compiles CUDA in an NVIDIA development container, tests OpenACC, and builds/tests the complete application under Debian Trixie riscv64 through QEMU. A separate manual workflow runs deterministic and stochastic CPU/CUDA parity on a self-hosted GPU. Raspberry Pi OS and RV64 hardware claims still require recorded native validation because container/QEMU execution is not native hardware evidence. Only platforms exercised by CI or a recorded native validation run should be described in a release as validated.
 
 Exact commands, validation gates, and failure modes are documented in the [Rocky Linux 8.9 guide](rocky-linux.md) and [RISC-V 64 Linux guide](riscv64-linux.md).
+
+
+## References
+
+- Sandve, G. K., Nekrutenko, A., Taylor, J., and Hovig, E. (2013). Ten simple rules for reproducible computational research. *PLoS Computational Biology*, 9, e1003285. [doi:10.1371/journal.pcbi.1003285](https://doi.org/10.1371/journal.pcbi.1003285).
+- Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

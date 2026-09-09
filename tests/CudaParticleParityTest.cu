@@ -67,14 +67,22 @@ int main() {
     config.trackingDirection=Config::TRACKING_FORWARD;
     config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
 
-    for (int stochastic=0;stochastic<2;stochastic++) {
-        config.random=stochastic!=0;
+    for (int mode=0;mode<3;mode++) {
+        bool stochastic=mode==1;
+        bool leeway=mode==2;
+        config.random=stochastic;
+        config.driftModel=leeway ? 1 : 0;
+        config.driftObjectType=static_cast<std::uint16_t>(leeway ? DriftObjectType::PERSON_IN_WATER : DriftObjectType::PASSIVE);
+        config.driftSide=static_cast<std::int8_t>(leeway ? DriftSide::RIGHT : DriftSide::UNDEFINED);
+        config.hasWind=leeway; config.windU10=10; config.windV10=0;
         Particle cpu(9007199254740993ULL,-.5,.25,.25,0);
+        if (leeway) cpu.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
         cpu.move(&config,0,cpuTime,cpuMask,cpuLon,cpuLat,cpuSW,cpuDepth,cpuH,cpuZeta,
                  cpuU,cpuV,cpuW,cpuAkt);
         particle_data result=cpu.data();
 
-        particle_data initial{9007199254740993ULL,-.5,.25,.25,1,0,0};
+        particle_data initial{9007199254740993ULL,-.5,.25,.25,1,0,0,
+                              config.driftObjectType,config.driftSide};
         config_data *deviceConfig=copyToDevice(&config,1);
         particle_data *deviceParticle=copyToDevice(&initial,1);
         double *deviceTime=copyToDevice(oceanTime,2),*deviceMask=copyToDevice(mask,4);

@@ -22,6 +22,8 @@ Particle::Particle(std::uint64_t id, double k, double j, double i,
     _data.health=health;
     _data.age=age;
     _data.time=time;
+    _data.driftObjectType=static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
+    _data.driftSide=static_cast<std::int8_t>(DriftSide::UNDEFINED);
 
 }
 
@@ -37,6 +39,8 @@ Particle::Particle(std::uint64_t id, double k, double j, double i, double time) 
     _data.health=health0;
     _data.age=0;
     _data.time=time;
+    _data.driftObjectType=static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
+    _data.driftSide=static_cast<std::int8_t>(DriftSide::UNDEFINED);
 }
 
 Particle::Particle(particle_data data) {
@@ -363,6 +367,17 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // The current v component in the particle position
             float vv = v1 + v2 + v3 + v4;
+
+            // Object drift is direction-neutral. The solver applies trackingDirection below.
+            if (configData->driftModel==1 &&
+                localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE)) {
+                const auto& object=DriftObjectCatalog::definition(
+                        static_cast<DriftObjectType>(localParticleData.driftObjectType));
+                DriftVelocity leeway=computeLeeway(object.leeway,configData->windU10,configData->windV10,
+                        static_cast<DriftSide>(localParticleData.driftSide));
+                uu+=static_cast<float>(leeway.u);
+                vv+=static_cast<float>(leeway.v);
+            }
 
 #ifdef DEBUG
             LOG4CPLUS_DEBUG(logger, "vv:" << vv );
@@ -696,4 +711,17 @@ double Particle::Time() const {
 
 std::uint64_t Particle::Id() const {
     return _data.id;
+}
+
+DriftObjectType Particle::DriftObject() const {
+    return static_cast<DriftObjectType>(_data.driftObjectType);
+}
+
+DriftSide Particle::Side() const {
+    return static_cast<DriftSide>(_data.driftSide);
+}
+
+void Particle::Drift(DriftObjectType objectType, DriftSide side) {
+    _data.driftObjectType=static_cast<std::uint16_t>(objectType);
+    _data.driftSide=static_cast<std::int8_t>(side);
 }

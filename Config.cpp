@@ -123,6 +123,14 @@ void Config::setDefault() {
     // Physical restart checkpoint (not set by default)
     _data.restartCheckpoint = std::numeric_limits<double>::quiet_NaN();
 
+    // Passive particles do not request atmospheric forcing.
+    _data.driftModel = 0;
+    _data.driftObjectType = static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
+    _data.driftSide = static_cast<std::int8_t>(DriftSide::UNDEFINED);
+    _data.hasWind = false;
+    _data.windU10 = 0;
+    _data.windV10 = 0;
+
     // Save processed input files (default false)
     saveInput = false;
 
@@ -331,6 +339,12 @@ std::uint64_t Config::RandomSeed() const { return _data.randomSeed; }
 bool Config::Backward() const { return _data.trackingDirection == Config::TRACKING_BACKWARD; }
 
 bool Config::BackwardDiffusion() const { return _data.backwardDiffusion; }
+
+bool Config::Leeway() const { return _data.driftModel==1; }
+
+DriftObjectType Config::DriftObject() const { return static_cast<DriftObjectType>(_data.driftObjectType); }
+
+DriftSide Config::DefaultDriftSide() const { return static_cast<DriftSide>(_data.driftSide); }
 
 void Config::RestartCheckpoint(double value) { _data.restartCheckpoint=value; }
 
@@ -587,6 +601,18 @@ string Config::asJson() const {
             { "backward_diffusion", BackwardDiffusion() ? "symmetric_stochastic" : "none" }
     };
 
+    json drift = {
+            { "model", Leeway() ? "leeway" : "passive" },
+            { "object_type", DriftObjectCatalog::name(DriftObject()) },
+            { "side", DefaultDriftSide()==DriftSide::LEFT ? "left" :
+                      DefaultDriftSide()==DriftSide::RIGHT ? "right" : "undefined" }
+    };
+
+    json environment = {
+            { "wind", {{"adapter",_data.hasWind ? "constant" : "none"},
+                        {"u10",_data.windU10},{"v10",_data.windV10}} }
+    };
+
     json config = {
             { "simulation", simulation},
             { "io", io},
@@ -594,6 +620,8 @@ string Config::asJson() const {
             { "sources", sources},
             { "physics", physics},
             { "tracking", tracking},
+            { "drift", drift},
+            { "environment", environment},
     };
 
     return config.dump(4);
@@ -693,6 +721,46 @@ void Config::loadFromJson(const string &fileName) {
             else throw std::runtime_error("Unknown backward diffusion mode: " + diffusion);
         }
     }
+    if (config.contains("drift")) {
+        json drift=config["drift"];
+        string model=drift.value("model","passive");
+        if (model=="passive") _data.driftModel=0;
+        else if (model=="leeway") _data.driftModel=1;
+        else throw std::runtime_error("Unknown drift.model: " + model);
+        if (drift.contains("object_type")) {
+            string objectType=drift["object_type"];
+            _data.driftObjectType=static_cast<std::uint16_t>(DriftObjectCatalog::type(objectType.c_str()));
+        }
+        if (drift.contains("side")) {
+            string side=drift["side"];
+            if (side=="left") _data.driftSide=static_cast<std::int8_t>(DriftSide::LEFT);
+            else if (side=="right") _data.driftSide=static_cast<std::int8_t>(DriftSide::RIGHT);
+            else if (side=="undefined") _data.driftSide=static_cast<std::int8_t>(DriftSide::UNDEFINED);
+            else throw std::runtime_error("Unknown drift.side: " + side);
+        }
+    }
+    if (config.contains("environment")) {
+        json environment=config["environment"];
+        if (environment.contains("wind")) {
+            json wind=environment["wind"];
+            string adapter=wind.value("adapter","none");
+            if (adapter=="constant") {
+                if (!wind.contains("u10") || !wind.contains("v10"))
+                    throw std::runtime_error("The constant wind adapter requires environment.wind.u10 and environment.wind.v10");
+                _data.windU10=wind["u10"];
+                _data.windV10=wind["v10"];
+                _data.hasWind=true;
+            } else if (adapter!="none") throw std::runtime_error("Unknown environment.wind.adapter: " + adapter);
+        }
+    }
+    if (_data.driftModel==1 && static_cast<DriftObjectType>(_data.driftObjectType)==DriftObjectType::PASSIVE)
+        throw std::runtime_error("drift.model=leeway requires a non-passive drift.object_type");
+    if (_data.driftModel==1 && _data.driftSide==static_cast<std::int8_t>(DriftSide::UNDEFINED))
+        throw std::runtime_error("drift.model=leeway requires drift.side=left or right");
+    if (_data.driftModel==1 && !_data.hasWind)
+        throw std::runtime_error("Leeway drift requires 10 m wind. Configure environment.wind.adapter=constant with u10 and v10");
+    if (_data.hasWind && (!std::isfinite(_data.windU10) || !std::isfinite(_data.windV10)))
+        throw std::runtime_error("environment.wind.u10 and environment.wind.v10 must be finite values in m/s");
     if (!std::isfinite(_data.dti) || _data.dti<=0) {
         throw std::runtime_error("physics.dti must be a finite value greater than zero");
     }
