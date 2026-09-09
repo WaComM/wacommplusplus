@@ -48,18 +48,28 @@ int main() {
         std::ofstream file(environment);
         file << R"({"io":{"nc_inputs":["ocean.nc"]},
           "drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"left"},
-          "environment":{"wind":{"adapter":"WRF","nc_inputs":["wrf.nc"]},
-                         "wave":{"adapter":"WW3","nc_inputs":["ww3.nc"]}}})";
+          "environment":{"wind":{"adapter":"WRF","nc_inputs":["wrf.nc"],"regrid":"bilinear_geographic"},
+                         "wave":{"adapter":"WW3","nc_inputs":["ww3.nc"],"regrid":"bilinear_geographic"}}})";
     }
     Config environmental(environment);
     assert(environmental.WeatherModel()=="WRF" && environmental.WeatherInputs().size()==1);
     assert(environmental.WaveModel()=="WW3" && environmental.WaveInputs().size()==1);
+    assert(environmental.WeatherRegridding()=="bilinear_geographic");
+    assert(environmental.WaveRegridding()=="bilinear_geographic");
     {
         std::ofstream file(invalid);
         file << R"({"physics":{"upper_closure":"unknown"}})";
     }
     bool rejected=false;
     try { Config invalidConfig(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"io":{"nc_inputs":["ocean.nc"]},"environment":{"wave":{"adapter":"WW3","nc_inputs":["ww3.nc"],"regrid":"automatic"}}})";
+    }
+    rejected=false;
+    try { Config invalidRegridding(invalid); }
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
     {

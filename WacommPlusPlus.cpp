@@ -135,6 +135,10 @@ void WacommPlusPlus::run() {
                 waveModelAdapter->appendBoundaryRecord(*adjacentWave,waveRecord,config->Backward());
             }
         }
+        if (weatherModelAdapter && config->WeatherRegridding()=="bilinear_geographic")
+            weatherModelAdapter->regridBilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
+        if (waveModelAdapter && config->WaveRegridding()=="bilinear_geographic")
+            waveModelAdapter->regridBilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
 
         Calendar cal;
 

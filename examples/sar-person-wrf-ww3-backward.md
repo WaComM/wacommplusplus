@@ -6,7 +6,7 @@ This scenario reconstructs a deterministic prior trajectory of a person in water
 
 ## Prerequisites, configuration, and command
 
-Provide `forcing.nc`, `wrf.nc`, `ww3.nc`, and `sources.json`, with the source time interpreted as the terminal observation. WRF requires `U10`, `V10`, `XLONG`, `XLAT`, `COSALPHA`, `SINALPHA`, and absolute time; WW3 requires time, coordinates, and eastward/northward surface Stokes velocity. Wind and Stokes components must declare meters per second, coordinates must declare degrees east/north, and numeric time must declare supported CF units relative to a UTC reference instant. All normalized grids and timestamps must coincide. Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacommplusplus examples/sar-person-wrf-ww3-backward.json`.
+Provide `forcing.nc`, `wrf.nc`, `ww3.nc`, and `sources.json`, with the source time interpreted as the terminal observation. WRF requires `U10`, `V10`, `XLONG`, `XLAT`, `COSALPHA`, `SINALPHA`, and absolute time; WW3 requires time, coordinates, and eastward/northward surface Stokes velocity. Wind and Stokes components must declare meters per second, coordinates must declare degrees east/north, and numeric time must declare supported CF units relative to a UTC reference instant. WRF must already match the ocean grid. This example opts into `bilinear_geographic` for a monotonic rectilinear WW3 grid that encloses every ocean point; time axes must coincide after normalization. Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacommplusplus examples/sar-person-wrf-ww3-backward.json`.
 
 ## Expected behavior and validation
 
@@ -14,9 +14,10 @@ The solver traverses the chronological forcing in reverse while the WRF and WW3 
 
 ## Limitations, interpretation, and reproducibility
 
-Deterministic backtracking is a kinematic reconstruction conditional on forcing and object coefficients, not a posterior probability distribution. No environmental regridding, coefficient uncertainty, jibing, or depth-dependent Stokes profile is applied. Classical leeway coefficients may already contain wave-correlated motion, so explicit Stokes addition requires observational calibration to avoid double counting. Archive all ocean, WRF, and WW3 checksums, resolved configuration, Git revision, compiler and dependencies, CMake options, parallel layout, tolerances, and output checksums. Dynamic WRF/WW3 coupling is not yet supported by CUDA execution.
+Deterministic backtracking is a kinematic reconstruction conditional on forcing and object coefficients, not a posterior probability distribution. WW3 Stokes components are bilinearly interpolated and therefore smoothed but not conservatively remapped; record source and target grids and quantify resolution sensitivity. No WRF regridding, coefficient uncertainty, jibing, or depth-dependent Stokes profile is applied. Classical leeway coefficients may already contain wave-correlated motion, so explicit Stokes addition requires observational calibration to avoid double counting. Archive all ocean, WRF, and WW3 checksums, resolved configuration, Git revision, compiler and dependencies, CMake options, parallel layout, tolerances, and output checksums. Dynamic WRF/WW3 coupling is not yet supported by CUDA execution.
 
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).
 - Ardhuin, F., et al. (2010). Semiempirical dissipation source functions for ocean waves. Part I: definition, calibration, and validation. *Journal of Physical Oceanography*, 40, 1917–1941. [doi:10.1175/2010JPO4324.1](https://doi.org/10.1175/2010JPO4324.1).
+- Jones, P. W. (1999). First- and second-order conservative remapping schemes for grids in spherical coordinates. *Monthly Weather Review*, 127, 2204–2210. [doi:10.1175/1520-0493(1999)127%3C2204:FASOCR%3E2.0.CO;2](https://doi.org/10.1175/1520-0493%281999%29127%3C2204%3AFASOCR%3E2.0.CO%3B2).

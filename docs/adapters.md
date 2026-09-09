@@ -32,6 +32,20 @@ $$
 
 This is representation normalization only. It does not reorder records or change tracking direction. The first implementation supports `standard`, `gregorian`, and `proleptic_gregorian` calendars for modern forcing dates and rejects non-Gregorian model calendars until their chronology is implemented explicitly.
 
+## Geographic regridding
+
+Environmental regridding is disabled by default. Setting `regrid` to `bilinear_geographic` applies an explicit interpolation operator only when the environmental source grid is rectilinear in longitude and latitude with strictly monotonic axes. Every ocean-grid target must lie inside the source extent; extrapolation is prohibited. Product adapters first normalize vectors to eastward and northward components, after which both components use identical scalar weights.
+
+For normalized source-cell coordinates `ξ,η∈[0,1]`, each component is evaluated as
+
+$$
+f(\xi,\eta)=(1-\xi)(1-\eta)f_{00}+\xi(1-\eta)f_{10}+(1-\xi)\eta f_{01}+\xi\eta f_{11}.
+$$
+
+![Four-point geographic bilinear interpolation and its fail-fast contract](figures/bilinear-regridding-schema.svg)
+
+The operator preserves constant fields and is exact for fields affine in longitude and latitude; both properties are regression-tested. Bilinear interpolation is not locally or globally conservative and introduces smoothing whose magnitude depends on unresolved curvature and scale separation. It is appropriate for point-sampled wind and Stokes velocity when this limitation is scientifically acceptable. It must not be described as conservative flux remapping. Projected coordinate systems, curvilinear environmental source grids, longitude axes crossing the antimeridian, extrapolation, and rotation from an unknown grid basis remain unsupported and fail explicitly.
+
 ## References
 
 - Shchepetkin, A. F., and McWilliams, J. C. (2005). The regional oceanic modeling system (ROMS): a split-explicit, free-surface, topography-following-coordinate oceanic model. *Ocean Modelling*, 9, 347–404. [doi:10.1016/j.ocemod.2004.08.002](https://doi.org/10.1016/j.ocemod.2004.08.002).
@@ -40,3 +54,4 @@ This is representation normalization only. It does not reorder records or change
 - Powers, J. G., et al. (2017). The Weather Research and Forecasting Model: overview, system efforts, and future directions. *Bulletin of the American Meteorological Society*, 98, 1717–1737. [doi:10.1175/BAMS-D-15-00308.1](https://doi.org/10.1175/BAMS-D-15-00308.1).
 - Tolman, H. L. (1991). A third-generation model for wind waves on slowly varying, unsteady, and inhomogeneous depths and currents. *Journal of Physical Oceanography*, 21, 782–797. [doi:10.1175/1520-0485(1991)021%3C0782:ATGMFW%3E2.0.CO;2](https://doi.org/10.1175/1520-0485(1991)021%3C0782:ATGMFW%3E2.0.CO;2).
 - Hassell, D., Gregory, J., Blower, J., Lawrence, B. N., and Taylor, K. E. (2017). A data model of the Climate and Forecast metadata conventions (CF-1.6) with a software implementation (cf-python v2.1). *Geoscientific Model Development*, 10, 4619–4646. [doi:10.5194/gmd-10-4619-2017](https://doi.org/10.5194/gmd-10-4619-2017).
+- Jones, P. W. (1999). First- and second-order conservative remapping schemes for grids in spherical coordinates. *Monthly Weather Review*, 127, 2204–2210. [doi:10.1175/1520-0493(1999)127%3C2204:FASOCR%3E2.0.CO;2](https://doi.org/10.1175/1520-0493%281999%29127%3C2204%3AFASOCR%3E2.0.CO%3B2).

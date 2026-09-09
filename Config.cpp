@@ -132,8 +132,10 @@ void Config::setDefault() {
     _data.windV10 = 0;
     weatherModel="none";
     weatherInputs.clear();
+    weatherRegridding="none";
     waveModel="none";
     waveInputs.clear();
+    waveRegridding="none";
 
     // Save processed input files (default false)
     saveInput = false;
@@ -542,8 +544,10 @@ string Config::OceanModel() const {
 
 string Config::WeatherModel() const { return weatherModel; }
 vector<string>& Config::WeatherInputs() { return weatherInputs; }
+string Config::WeatherRegridding() const { return weatherRegridding; }
 string Config::WaveModel() const { return waveModel; }
 vector<string>& Config::WaveInputs() { return waveInputs; }
+string Config::WaveRegridding() const { return waveRegridding; }
 
 void Config::OceanModel(string value) {
     oceanModel = value;
@@ -620,8 +624,8 @@ string Config::asJson() const {
     json environment = {
             { "wind", {{"adapter",weatherModel=="WRF" ? "WRF" : (_data.hasWind ? "constant" : "none")},
                         {"u10",_data.windU10},{"v10",_data.windV10},
-                        {"nc_inputs",weatherInputs}} },
-            { "wave", {{"adapter",waveModel},{"nc_inputs",waveInputs}} }
+                        {"nc_inputs",weatherInputs},{"regrid",weatherRegridding}} },
+            { "wave", {{"adapter",waveModel},{"nc_inputs",waveInputs},{"regrid",waveRegridding}} }
     };
 
     json config = {
@@ -763,6 +767,9 @@ void Config::loadFromJson(const string &fileName) {
                 _data.hasWind=true;
             } else if (adapter=="WRF") {
                 weatherModel=adapter; _data.hasWind=true;
+                weatherRegridding=wind.value("regrid","none");
+                if (weatherRegridding!="none" && weatherRegridding!="bilinear_geographic")
+                    throw std::runtime_error("Unknown environment.wind.regrid: " + weatherRegridding);
                 if (!wind.contains("nc_inputs") || !wind["nc_inputs"].is_array())
                     throw std::runtime_error("WRF wind requires environment.wind.nc_inputs");
                 for (auto input:wind["nc_inputs"]) weatherInputs.push_back(input);
@@ -772,6 +779,9 @@ void Config::loadFromJson(const string &fileName) {
             json wave=environment["wave"]; waveModel=wave.value("adapter","none");
             if (waveModel!="none" && waveModel!="WW3") throw std::runtime_error("Unknown environment.wave.adapter: " + waveModel);
             if (waveModel=="WW3") {
+                waveRegridding=wave.value("regrid","none");
+                if (waveRegridding!="none" && waveRegridding!="bilinear_geographic")
+                    throw std::runtime_error("Unknown environment.wave.regrid: " + waveRegridding);
                 if (!wave.contains("nc_inputs") || !wave["nc_inputs"].is_array())
                     throw std::runtime_error("WW3 wave input requires environment.wave.nc_inputs");
                 for (auto input:wave["nc_inputs"]) waveInputs.push_back(input);

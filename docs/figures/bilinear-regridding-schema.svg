@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" role="img" aria-labelledby="title desc">
+  <title id="title">Geographic bilinear environmental regridding</title><desc id="desc">A target ocean point inside four surrounding environmental source points receives a bilinear weighted value without extrapolation.</desc>
+  <rect width="1000" height="560" fill="#f8fbfd"/><g font-family="Arial,sans-serif" fill="#17324d"><text x="500" y="42" text-anchor="middle" font-size="24" font-weight="700">Opt-in geographic bilinear regridding</text>
+  <g stroke="#78a9c4" stroke-width="3"><path d="M180 120H700M180 420H700M220 80V470M660 80V470"/></g>
+  <g fill="#2673b8"><circle cx="220" cy="120" r="10"/><circle cx="660" cy="120" r="10"/><circle cx="220" cy="420" r="10"/><circle cx="660" cy="420" r="10"/></g>
+  <g font-size="17"><text x="170" y="105">f₀₀</text><text x="675" y="105">f₁₀</text><text x="170" y="452">f₀₁</text><text x="675" y="452">f₁₁</text></g>
+  <circle cx="485" cy="285" r="13" fill="#d95f43"/><text x="505" y="280" font-size="18">ocean target (λ, φ)</text>
+  <path d="M220 120L485 285M660 120L485 285M220 420L485 285M660 420L485 285" stroke="#8797a3" stroke-width="2" stroke-dasharray="7 6"/>
+  <rect x="745" y="115" width="220" height="310" rx="10" fill="#fff" stroke="#9aabb6"/><text x="765" y="150" font-size="17" font-weight="700">Contract</text><text x="765" y="185" font-size="15">• geographic coordinates</text><text x="765" y="215" font-size="15">• rectilinear source</text><text x="765" y="245" font-size="15">• monotonic axes</text><text x="765" y="275" font-size="15">• no extrapolation</text><text x="765" y="305" font-size="15">• Earth-relative vectors</text><text x="765" y="335" font-size="15">• constant preservation</text><text x="765" y="365" font-size="15">• affine exactness test</text><text x="765" y="405" font-size="14" fill="#6a3b2e">Not conservative remapping</text>
+  <text x="450" y="525" text-anchor="middle" font-size="16">Conceptual grid geometry; not a geographic map or model result.</text></g>
+</svg>

@@ -137,8 +137,10 @@ public:
     void OceanModel(string value);
     string WeatherModel() const;
     vector<string>& WeatherInputs();
+    string WeatherRegridding() const;
     string WaveModel() const;
     vector<string>& WaveInputs();
+    string WaveRegridding() const;
 
     void saveAsJson(const string &fileName);
     string asJson() const;
@@ -173,8 +175,10 @@ private:
     string oceanModel;
     string weatherModel;
     vector<string> weatherInputs;
+    string weatherRegridding;
     string waveModel;
     vector<string> waveInputs;
+    string waveRegridding;
     string ncBasePath;
     vector<string> ncInputs;
     string ncOutputRoot;

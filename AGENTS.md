@@ -17,6 +17,8 @@ No accelerator or backend may contain a separate physical model. ROMS, NEMO, HYC
 
 Environmental adapters must validate variable identity, dimensions, units, calendar, time origin, coordinate orientation, missing values, and finite ranges before exposing a field to physics. Unit or calendar conversion must be explicit, mathematically documented, and regression-tested; ambiguous or unsupported metadata must fail rather than inherit an implicit scale or epoch. New CF aliases require a fixture using the alias and its declared units. Regridding and projection transforms are separate numerical operators and must not be hidden inside a product-name alias.
 
+Regridding is opt-in configuration and must name the numerical operator. Every regridding implementation must document its coordinate reference system, stencil, weights, vector basis, domain-of-validity, extrapolation policy, conservation properties, error behavior, and unsupported grids. Tests must cover constants, analytically representable fields, boundaries, invalid geometry, and forward/backward use. A non-conservative interpolant must never be described as conservative, and a projection transform must never be inferred from coordinate values alone.
+
 All changes must preserve the original WaComM++ repository coding style, including the style, tone, structure, and granularity of existing comments. Contributors and coding agents must not mass-reformat unrelated code or introduce a competing style inside existing source files. Follow nearby code, preserve established terminology, and rewrite legacy comments only when they are incorrect or directly affected.
 
 Restart behavior is defined in physical time and must satisfy, within declared tolerances:

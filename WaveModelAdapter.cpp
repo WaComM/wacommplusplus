@@ -1,4 +1,5 @@
 #include "WaveModelAdapter.hpp"
+#include "EnvironmentalRegridder.hpp"
 #include <cmath>
 #include <stdexcept>
 
@@ -7,6 +8,15 @@ Array2<double>& WaveModelAdapter::Lon() { return lon; }
 Array2<double>& WaveModelAdapter::Lat() { return lat; }
 Array3<float>& WaveModelAdapter::StokesU() { return stokesU; }
 Array3<float>& WaveModelAdapter::StokesV() { return stokesV; }
+
+void WaveModelAdapter::regridBilinearGeographic(const Array2<double>& targetLon,const Array2<double>& targetLat) {
+    Array3<float> u=EnvironmentalRegridder::bilinearGeographic(Lon(),Lat(),StokesU(),targetLon,targetLat);
+    Array3<float> v=EnvironmentalRegridder::bilinearGeographic(Lon(),Lat(),StokesV(),targetLon,targetLat);
+    Lon().Deallocate(); Lon().Allocate(targetLon.Nx(),targetLon.Ny()); Lon().Load(targetLon());
+    Lat().Deallocate(); Lat().Allocate(targetLat.Nx(),targetLat.Ny()); Lat().Load(targetLat());
+    StokesU().Deallocate(); StokesU().Allocate(u.Nx(),u.Ny(),u.Nz()); StokesU().Load(u());
+    StokesV().Deallocate(); StokesV().Allocate(v.Nx(),v.Ny(),v.Nz()); StokesV().Load(v());
+}
 
 void WaveModelAdapter::appendBoundaryRecord(WaveModelAdapter &adapter, int record, bool prepend) {
     if (record<0 || record>=adapter.Time().Nx()) throw std::runtime_error("Wave boundary record is out of range");

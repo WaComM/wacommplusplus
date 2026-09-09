@@ -148,7 +148,7 @@ if(BUILD_APPLICATION)
     add_executable(wacommplusplus
             main.cpp Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
             Config.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
-            EnvironmentalMetadata.cpp
+            EnvironmentalMetadata.cpp EnvironmentalRegridder.cpp
             WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
             WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
             OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
@@ -229,7 +229,7 @@ if(BUILD_TESTING)
         add_executable(environment_adapter_test tests/EnvironmentAdapterTest.cpp
                 WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
                 WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
-                EnvironmentalMetadata.cpp JulianDate.cpp)
+                EnvironmentalMetadata.cpp EnvironmentalRegridder.cpp JulianDate.cpp)
         wacomm_enable_test_assertions(environment_adapter_test)
         target_link_libraries(environment_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME environment_adapters COMMAND environment_adapter_test)
@@ -238,6 +238,10 @@ if(BUILD_TESTING)
     wacomm_enable_test_assertions(numerical_helpers_test)
     target_include_directories(numerical_helpers_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME numerical_helpers COMMAND numerical_helpers_test)
+    add_executable(environmental_regridder_test tests/EnvironmentalRegridderTest.cpp EnvironmentalRegridder.cpp)
+    wacomm_enable_test_assertions(environmental_regridder_test)
+    target_include_directories(environmental_regridder_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME environmental_regridding COMMAND environmental_regridder_test)
     find_package(Python3 QUIET COMPONENTS Interpreter)
     if(Python3_Interpreter_FOUND)
         add_test(NAME reproducibility_manifest COMMAND "${Python3_EXECUTABLE}"

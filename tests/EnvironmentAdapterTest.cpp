@@ -42,6 +42,11 @@ int main() {
     assert(wave->Time().Nx()==2 && wave->Time()(0)==0 && wave->Time()(1)==60);
     assert(std::abs(wave->StokesU()(1,1,1)-.8)<1.e-6);
     assert(wave->Lon()(0,0)==-10 && wave->Lon()(0,1)==11 && wave->Lat()(1,0)==41);
+    Array2<double> targetLon(3,3),targetLat(3,3);
+    for (int j=0;j<3;j++) for (int i=0;i<3;i++) { targetLon(j,i)=-10+10.5*i; targetLat(j,i)=40+.5*j; }
+    wave->regridBilinearGeographic(targetLon,targetLat);
+    assert(wave->StokesU().Ny()==3 && wave->StokesU().Nz()==3);
+    assert(std::abs(wave->StokesU()(0,1,1)-.25)<1.e-6);
     bool rejected=false; try { WeatherModelAdapterFactory::create("unknown",wrfFile); }
     catch (const std::runtime_error&) { rejected=true; } assert(rejected);
     std::string invalidFile="ww3-invalid-units.nc"; createWW3(invalidFile,"knots"); rejected=false;
