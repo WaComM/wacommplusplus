@@ -417,9 +417,6 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             // The size of the particle_data struct in bytes
             int itemSize = sizeof(struct particle_data);
 
-            // The size of all particles in byte
-            int sizeParticles = pLocalParticles->size() * itemSize;
-
             // Allocate a container of each GPU
             stateVector = new WacommVariables[num_gpus];
 
@@ -434,51 +431,51 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             for (int i=0; i<num_gpus; i++){
 
                 //set GPU Device
-                cudaSetDevice(i);
+                gpuErrchk(cudaSetDevice(i));
 
                 // Get the GPU id
                 int gpu_id = -1;
-                cudaGetDevice(&gpu_id);
+                gpuErrchk(cudaGetDevice(&gpu_id));
 
                 //device memory allocation
-                cudaMalloc((void**) &(stateVector[i].oceanTimeDevice), oceanModelAdapter->OceanTime().Nx() *sizeof(double));
-                cudaMalloc((void**) &(stateVector[i].depthIntervalsDevice), oceanModelAdapter->DepthIntervals().Nx() * sizeof(double));
-                cudaMalloc((void**) &(stateVector[i].lonRadDevice), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double));
-                cudaMalloc((void**) &(stateVector[i].latRadDevice), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double));
-                cudaMalloc((void**) &(stateVector[i].maskDevice), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double));
-                cudaMalloc((void**) &(stateVector[i].hDevice), oceanModelAdapter->H().Nx() * oceanModelAdapter->H().Ny() * sizeof(double));
-                cudaMalloc((void**) &(stateVector[i].zetaDevice), oceanModelAdapter->Zeta().Nx() * oceanModelAdapter->Zeta().Ny() * oceanModelAdapter->Zeta().Nz() * sizeof(float));
-                cudaMalloc((void**) &(stateVector[i].uDevice), oceanModelAdapter->U().Nx() * oceanModelAdapter->U().Ny() * oceanModelAdapter->U().Nz() * oceanModelAdapter->U().N4() * sizeof(float));
-                cudaMalloc((void**) &(stateVector[i].vDevice), oceanModelAdapter->V().Nx() * oceanModelAdapter->V().Ny() * oceanModelAdapter->V().Nz() * oceanModelAdapter->V().N4() * sizeof(float));
-                cudaMalloc((void**) &(stateVector[i].wDevice), oceanModelAdapter->W().Nx() * oceanModelAdapter->W().Ny() * oceanModelAdapter->W().Nz() * oceanModelAdapter->W().N4() * sizeof(float));
-                cudaMalloc((void**) &(stateVector[i].aktDevice), oceanModelAdapter->AKT().Nx() * oceanModelAdapter->AKT().Ny() * oceanModelAdapter->AKT().Nz() * oceanModelAdapter->AKT().N4() * sizeof(float));
-                cudaMalloc((void**) &(stateVector[i].configDevice), sizeof(struct config_data));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].oceanTimeDevice), oceanModelAdapter->OceanTime().Nx() *sizeof(double)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].depthIntervalsDevice), oceanModelAdapter->DepthIntervals().Nx() * sizeof(double)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].lonRadDevice), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].latRadDevice), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].maskDevice), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].hDevice), oceanModelAdapter->H().Nx() * oceanModelAdapter->H().Ny() * sizeof(double)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].zetaDevice), oceanModelAdapter->Zeta().Nx() * oceanModelAdapter->Zeta().Ny() * oceanModelAdapter->Zeta().Nz() * sizeof(float)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].uDevice), oceanModelAdapter->U().Nx() * oceanModelAdapter->U().Ny() * oceanModelAdapter->U().Nz() * oceanModelAdapter->U().N4() * sizeof(float)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].vDevice), oceanModelAdapter->V().Nx() * oceanModelAdapter->V().Ny() * oceanModelAdapter->V().Nz() * oceanModelAdapter->V().N4() * sizeof(float)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].wDevice), oceanModelAdapter->W().Nx() * oceanModelAdapter->W().Ny() * oceanModelAdapter->W().Nz() * oceanModelAdapter->W().N4() * sizeof(float)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].aktDevice), oceanModelAdapter->AKT().Nx() * oceanModelAdapter->AKT().Ny() * oceanModelAdapter->AKT().Nz() * oceanModelAdapter->AKT().N4() * sizeof(float)));
+                gpuErrchk(cudaMalloc((void**) &(stateVector[i].configDevice), sizeof(struct config_data)));
 
                 //copy data from host to device
-                cudaMemcpy(stateVector[i].oceanTimeDevice, oceanModelAdapter->OceanTime(), oceanModelAdapter->OceanTime().Nx() * sizeof(double), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].depthIntervalsDevice, oceanModelAdapter->DepthIntervals(), oceanModelAdapter->DepthIntervals().Nx()*sizeof(double), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].lonRadDevice, oceanModelAdapter->LonRad(), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].latRadDevice, oceanModelAdapter->LatRad(), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].maskDevice, oceanModelAdapter->Mask(), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].hDevice, oceanModelAdapter->H(), oceanModelAdapter->H().Nx() * oceanModelAdapter->H().Ny() * sizeof(double), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].zetaDevice, oceanModelAdapter->Zeta(), oceanModelAdapter->Zeta().Nx() * oceanModelAdapter->Zeta().Ny() * oceanModelAdapter->Zeta().Nz() * sizeof(float), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].uDevice, oceanModelAdapter->U(),
+                gpuErrchk(cudaMemcpy(stateVector[i].oceanTimeDevice, oceanModelAdapter->OceanTime(), oceanModelAdapter->OceanTime().Nx() * sizeof(double), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].depthIntervalsDevice, oceanModelAdapter->DepthIntervals(), oceanModelAdapter->DepthIntervals().Nx()*sizeof(double), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].lonRadDevice, oceanModelAdapter->LonRad(), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].latRadDevice, oceanModelAdapter->LatRad(), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].maskDevice, oceanModelAdapter->Mask(), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].hDevice, oceanModelAdapter->H(), oceanModelAdapter->H().Nx() * oceanModelAdapter->H().Ny() * sizeof(double), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].zetaDevice, oceanModelAdapter->Zeta(), oceanModelAdapter->Zeta().Nx() * oceanModelAdapter->Zeta().Ny() * oceanModelAdapter->Zeta().Nz() * sizeof(float), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].uDevice, oceanModelAdapter->U(),
                            oceanModelAdapter->U().Nx() * oceanModelAdapter->U().Ny() * oceanModelAdapter->U().Nz() *
                            oceanModelAdapter->U().N4() *
-                           sizeof(float), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].vDevice, oceanModelAdapter->V(),
+                           sizeof(float), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].vDevice, oceanModelAdapter->V(),
                            oceanModelAdapter->V().Nx() * oceanModelAdapter->V().Ny() * oceanModelAdapter->V().Nz() *
                            oceanModelAdapter->V().N4() *
-                           sizeof(float), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].wDevice, oceanModelAdapter->W(),
+                           sizeof(float), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].wDevice, oceanModelAdapter->W(),
                            oceanModelAdapter->W().Nx() * oceanModelAdapter->W().Ny() * oceanModelAdapter->W().Nz() *
                            oceanModelAdapter->W().N4() *
-                           sizeof(float), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].aktDevice, oceanModelAdapter->AKT(),
+                           sizeof(float), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].aktDevice, oceanModelAdapter->AKT(),
                            oceanModelAdapter->AKT().Nx() * oceanModelAdapter->AKT().Ny() * oceanModelAdapter->AKT().Nz() *
                            oceanModelAdapter->AKT().N4() *
-                           sizeof(float), cudaMemcpyHostToDevice);
-                cudaMemcpy(stateVector[i].configDevice, pConfigData, sizeof(struct config_data), cudaMemcpyHostToDevice);
+                           sizeof(float), cudaMemcpyHostToDevice));
+                gpuErrchk(cudaMemcpy(stateVector[i].configDevice, pConfigData, sizeof(struct config_data), cudaMemcpyHostToDevice));
             }
             auto stp = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elap = stp - str;
@@ -489,10 +486,9 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         auto startLocal = std::chrono::high_resolution_clock::now();
 
         vector<vector<float>> time_array(ompMaxThreads,vector<float>(std::max(1,num_gpus),0));
-        float _time = 0;
 
         // Begin the shared memory parallel section
-        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector, _time, time_array)
+        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, ocean_time_idx, oceanModelAdapter, num_gpus, particlesHost, stateVector, time_array)
         {
 
 #ifdef USE_OMP
@@ -572,17 +568,17 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                             struct particle_data *particlesThread = &particlesHost[GPU_first];
 
                             int gpu_id = -1;
-                            cudaSetDevice(idx);
-                            cudaGetDevice(&gpu_id);
+                            gpuErrchk(cudaSetDevice(idx));
+                            gpuErrchk(cudaGetDevice(&gpu_id));
 
-                            cudaMalloc((void**) &(threadSectionDevice[gpu_id].sectionParticlesDevice), GPU_counts[idx] * sizeof(struct particle_data));
-                            cudaMemcpyAsync(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyHostToDevice);
+                            gpuErrchk(cudaMalloc((void**) &(threadSectionDevice[gpu_id].sectionParticlesDevice), GPU_counts[idx] * sizeof(struct particle_data)));
+                            gpuErrchk(cudaMemcpyAsync(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyHostToDevice));
 
                             cudaEvent_t start, stop;
-                            cudaEventCreate(&start);
-                            cudaEventCreate(&stop);
+                            gpuErrchk(cudaEventCreate(&start));
+                            gpuErrchk(cudaEventCreate(&stop));
 
-                            cudaEventRecord(start);
+                            gpuErrchk(cudaEventRecord(start));
 
                             gpuErrchk(cudaMoveParticle(stateVector[gpu_id].configDevice,
                                 threadSectionDevice[gpu_id].sectionParticlesDevice,
@@ -605,13 +601,14 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                                 stateVector[gpu_id].aktDevice,
                                 GPU_counts[idx], idx, gpu_id));
 
-                            cudaEventRecord(stop);
-                            cudaEventSynchronize(stop);
+                            gpuErrchk(cudaEventRecord(stop));
+                            gpuErrchk(cudaEventSynchronize(stop));
 
-                            cudaEventElapsedTime(&_time, start, stop);
-                            time_array[ompThreadNum][gpu_id] = _time;
-                            cudaEventDestroy(start);
-                            cudaEventDestroy(stop);
+                            float gpuTime=0;
+                            gpuErrchk(cudaEventElapsedTime(&gpuTime, start, stop));
+                            time_array[ompThreadNum][gpu_id] = gpuTime;
+                            gpuErrchk(cudaEventDestroy(start));
+                            gpuErrchk(cudaEventDestroy(stop));
                         }
 
                         for (int idx=0; idx < num_gpus; idx++){
@@ -621,14 +618,14 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                             struct particle_data *particlesThread = &particlesHost[GPU_first];
 
                             int gpu_id = -1;
-                            cudaSetDevice(idx);
-                            cudaGetDevice(&gpu_id);
+                            gpuErrchk(cudaSetDevice(idx));
+                            gpuErrchk(cudaGetDevice(&gpu_id));
 
-                            cudaDeviceSynchronize();
+                            gpuErrchk(cudaDeviceSynchronize());
 
                             //copy from device to host
-                            cudaMemcpyAsync(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyDeviceToHost);
-                            cudaDeviceSynchronize();
+                            gpuErrchk(cudaMemcpyAsync(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyDeviceToHost));
+                            gpuErrchk(cudaDeviceSynchronize());
 
                             // Copy all thread particles to the local processor particles
                             for(int i=GPU_first; i < GPU_last; i++){
@@ -636,7 +633,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                                 pLocalParticles->at(i).data(particlesThread[i - GPU_first]);
                             }
 
-                            cudaFree(threadSectionDevice[gpu_id].sectionParticlesDevice);
+                            gpuErrchk(cudaFree(threadSectionDevice[gpu_id].sectionParticlesDevice));
                         }
                         delete [] threadSectionDevice;
                     }
@@ -676,20 +673,20 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             free(particlesHost);
 
             for(int i=0; i<num_gpus; i++){
-                cudaSetDevice(i);
+                gpuErrchk(cudaSetDevice(i));
 
-                cudaFree(stateVector[i].depthIntervalsDevice);
-                cudaFree(stateVector[i].oceanTimeDevice);
-                cudaFree(stateVector[i].lonRadDevice);
-                cudaFree(stateVector[i].latRadDevice);
-                cudaFree(stateVector[i].maskDevice);
-                cudaFree(stateVector[i].hDevice);
-                cudaFree(stateVector[i].zetaDevice);
-                cudaFree(stateVector[i].uDevice);
-                cudaFree(stateVector[i].vDevice);
-                cudaFree(stateVector[i].wDevice);
-                cudaFree(stateVector[i].aktDevice);
-                cudaFree(stateVector[i].configDevice);
+                gpuErrchk(cudaFree(stateVector[i].depthIntervalsDevice));
+                gpuErrchk(cudaFree(stateVector[i].oceanTimeDevice));
+                gpuErrchk(cudaFree(stateVector[i].lonRadDevice));
+                gpuErrchk(cudaFree(stateVector[i].latRadDevice));
+                gpuErrchk(cudaFree(stateVector[i].maskDevice));
+                gpuErrchk(cudaFree(stateVector[i].hDevice));
+                gpuErrchk(cudaFree(stateVector[i].zetaDevice));
+                gpuErrchk(cudaFree(stateVector[i].uDevice));
+                gpuErrchk(cudaFree(stateVector[i].vDevice));
+                gpuErrchk(cudaFree(stateVector[i].wDevice));
+                gpuErrchk(cudaFree(stateVector[i].aktDevice));
+                gpuErrchk(cudaFree(stateVector[i].configDevice));
             }
             delete [] stateVector;
         }
@@ -715,10 +712,11 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                     cuda_time += time_array[i][j] / 1000;
                 }
             }
-            cuda += cuda_time/(num_gpus * ompMaxThreads);
+            double averageCudaTime=cuda_time/(num_gpus * ompMaxThreads);
+            cuda += averageCudaTime;
 
-            nParticlesPerSecondLocal = pLocalParticles->size() / ((double) _time / 1000);
-            elapsTime = (double) _time / 1000;
+            nParticlesPerSecondLocal = pLocalParticles->size() / averageCudaTime;
+            elapsTime = averageCudaTime;
 
 #endif
 
