@@ -14,6 +14,14 @@ option(USE_OMP "Use OpenMP for shared memory parallelism." OFF)
 option(USE_OPENACC "Use OpenACC acceleration." OFF)
 option(USE_CUDA "Use CUDA acceleration." OFF)
 
+function(wacomm_enable_test_assertions target)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE /UNDEBUG)
+    else()
+        target_compile_options(${target} PRIVATE -UNDEBUG)
+    endif()
+endfunction()
+
 if(USE_MPI AND USE_EMPI)
     message(FATAL_ERROR "You can not use both MPI and EMPI.")
 endif()
@@ -117,34 +125,41 @@ if(BUILD_APPLICATION)
     if(BUILD_TESTING)
         add_executable(structured_grid_adapter_test tests/StructuredGridAdapterTest.cpp
                 OceanModelAdapter.cpp OceanModelAdapters/StructuredGridAdapter.cpp)
+        wacomm_enable_test_assertions(structured_grid_adapter_test)
         target_link_libraries(structured_grid_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME structured_grid_adapters COMMAND structured_grid_adapter_test)
 
         add_executable(roms_adapter_test tests/ROMSAdapterTest.cpp
                 OceanModelAdapter.cpp OceanModelAdapters/ROMSAdapter.cpp)
+        wacomm_enable_test_assertions(roms_adapter_test)
         target_link_libraries(roms_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME roms_adapter COMMAND roms_adapter_test)
 
         add_executable(native_adapter_test tests/NativeAdapterTest.cpp
                 OceanModelAdapter.cpp OceanModelAdapters/WacommAdapter.cpp)
+        wacomm_enable_test_assertions(native_adapter_test)
         target_link_libraries(native_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME native_adapter COMMAND native_adapter_test)
 
         add_executable(config_test tests/ConfigTest.cpp Config.cpp Utils.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(config_test)
         target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME configuration_round_trip COMMAND config_test)
 
         add_executable(restart_test tests/RestartTest.cpp Particles.cpp Particle.cpp OceanModelAdapter.cpp
                 Config.cpp Utils.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(restart_test)
         target_link_libraries(restart_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME restart_format COMMAND restart_test)
 
         add_executable(particle_move_test tests/ParticleMoveTest.cpp Particle.cpp)
+        wacomm_enable_test_assertions(particle_move_test)
         target_link_libraries(particle_move_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME particle_physical_interval COMMAND particle_move_test)
 
         add_executable(concentration_test tests/ConcentrationTest.cpp Particles.cpp Particle.cpp
                 OceanModelAdapter.cpp Config.cpp Utils.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(concentration_test)
         target_link_libraries(concentration_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME concentration_preservation COMMAND concentration_test)
     endif()
@@ -153,6 +168,7 @@ endif()
 if(BUILD_TESTING)
     include(CTest)
     add_executable(numerical_helpers_test tests/NumericalHelpersTest.cpp)
+    wacomm_enable_test_assertions(numerical_helpers_test)
     target_include_directories(numerical_helpers_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME numerical_helpers COMMAND numerical_helpers_test)
 endif()

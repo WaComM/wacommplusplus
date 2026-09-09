@@ -27,6 +27,20 @@ int main() {
     assert(NumericalHelpers::activeInterval(0,900,450));
     assert(!NumericalHelpers::activeInterval(900,0,0));
     assert(NumericalHelpers::activeInterval(900,0,450));
+    const double irregularTimes[5]={0,900,2700,5400,7200};
+    int forwardIntervals=0,backwardIntervals=0;
+    for (int i=0;i<4;i++) {
+        if (NumericalHelpers::activeInterval(irregularTimes[i],irregularTimes[i+1],2700))
+            forwardIntervals++;
+    }
+    for (int i=4;i>0;i--) {
+        if (NumericalHelpers::activeInterval(irregularTimes[i],irregularTimes[i-1],2700))
+            backwardIntervals++;
+    }
+    assert(forwardIntervals==2);
+    assert(backwardIntervals==2);
+    assert(NumericalHelpers::restartElapsed(2700,5400,2700)==0);
+    assert(std::isnan(NumericalHelpers::restartElapsed(5400,2700,2700)));
     assert(!NumericalHelpers::emitAtIntervalStart(0,450));
     assert(NumericalHelpers::emitAtIntervalStart(450,450));
     double left=.7; NumericalHelpers::reflectCell(1.2, 1, left, 0); assert(std::abs(left-1.5)<1e-12);

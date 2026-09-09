@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <fstream>
 
 class FixtureAdapter: public OceanModelAdapter {
 public:
@@ -43,5 +44,20 @@ int main() {
     assert(k==0);
     adapter.deplatlon2kji(200,40.5,10.5,k,j,i);
     assert(k==-1);
+    string nextFile="native-adapter-next-test.nc";
+    {
+        std::ifstream input(fileName,std::ios::binary);
+        std::ofstream output(nextFile,std::ios::binary);
+        output << input.rdbuf();
+    }
+    {
+        NcFile file(nextFile,NcFile::write);
+        double times[2]={5400,7200}; file.getVar("ocean_time").putVar(times);
+    }
+    WacommAdapter next(nextFile); next.process();
+    adapter.appendBoundaryRecord(next,0,false);
+    assert(adapter.OceanTime().Nx()==3 && adapter.OceanTime()(2)==5400);
+    assert(adapter.U()(2,-1,1,1)==.25f);
     std::remove(fileName.c_str());
+    std::remove(nextFile.c_str());
 }

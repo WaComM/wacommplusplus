@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <vector>
 
 using namespace netCDF;
@@ -65,5 +66,23 @@ int main() {
         assert(std::abs(adapter.U()(t,k,j,2)-4)<1e-6);
         for (int i=0;i<3;i++) assert(std::abs(adapter.V()(t,k,j,i)-6)<1e-6);
     }
+    const string nextFile="roms-adapter-next-test.nc";
+    {
+        std::ifstream input(fileName,std::ios::binary);
+        std::ofstream output(nextFile,std::ios::binary);
+        output << input.rdbuf();
+    }
+    {
+        NcFile file(nextFile,NcFile::write);
+        double times[2]={5400,7200}; file.getVar("ocean_time").putVar(times);
+        float values[16]; for (float &value:values) value=8;
+        file.getVar("u").putVar(values);
+    }
+    string nextInput=nextFile;
+    ROMSAdapter next(nextInput); next.process();
+    adapter.appendBoundaryRecord(next,0,false);
+    assert(adapter.OceanTime().Nx()==3 && adapter.OceanTime()(2)==5400);
+    assert(adapter.U()(2,-1,0,1)==8);
     std::remove(fileName.c_str());
+    std::remove(nextFile.c_str());
 }

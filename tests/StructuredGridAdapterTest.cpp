@@ -38,14 +38,20 @@ void createFixture(const string &fileName, bool nemo) {
 
 int main() {
     string nemoFile="structured-nemo-test.nc",hycomFile="structured-hycom-test.nc";
-    string nextFile="structured-next-test.nc",olderFile="structured-older-test.nc";
+    string nextFile="structured-next-test.nc",nextHycomFile="structured-next-hycom-test.nc";
+    string olderFile="structured-older-test.nc";
     string invalidFile="structured-invalid-time-test.nc";
     createFixture(nemoFile,true); createFixture(hycomFile,false); createFixture(nextFile,true);
+    createFixture(nextHycomFile,false);
     createFixture(olderFile,true); createFixture(invalidFile,false);
     {
         NcFile file(nextFile,NcFile::write);
-        double times[2]={7200,10800}; file.getVar("time_counter").putVar(times);
+        double times[2]={5400,7200}; file.getVar("time_counter").putVar(times);
         vector<float> values(24,.3f); file.getVar("uo").putVar(values.data());
+    }
+    {
+        NcFile file(nextHycomFile,NcFile::write);
+        double times[2]={5400,7200}; file.getVar("MT").putVar(times);
     }
     {
         NcFile file(olderFile,NcFile::write);
@@ -55,6 +61,7 @@ int main() {
     NEMOAdapter next(nextFile); next.process();
     NEMOAdapter older(olderFile); older.process();
     HYCOMAdapter hycom(hycomFile); hycom.process();
+    HYCOMAdapter nextHycom(nextHycomFile); nextHycom.process();
     assert(nemo.OceanTime().Nx()==2 && nemo.U().Ny()==2);
     assert(nemo.SRho()(-1)==-1 && nemo.SRho()(0)==-.2);
     assert(std::abs(nemo.U()(0,-1,0,0)-.2)<1e-6);
@@ -62,7 +69,7 @@ int main() {
     assert(std::abs(nemo.V()(0,-1,0,0)+.2)<1e-6);
     assert(nemo.Mask()(0,0)==0 && nemo.Mask()(0,1)==1);
     nemo.appendBoundaryRecord(next,0,false);
-    assert(nemo.OceanTime().Nx()==3 && nemo.OceanTime()(2)==7200);
+    assert(nemo.OceanTime().Nx()==3 && nemo.OceanTime()(2)==5400);
     assert(std::abs(nemo.U()(2,-1,0,0)-.3)<1e-6);
     NEMOAdapter backward(nemoFile); backward.process();
     backward.appendBoundaryRecord(older,1,true);
@@ -73,6 +80,8 @@ int main() {
     assert(rejected);
     assert(hycom.Lon()(0,0)==-10);
     assert(hycom.W()(0,-2,0,0)==0 && hycom.AKT()(0,-2,0,0)==0);
+    hycom.appendBoundaryRecord(nextHycom,0,false);
+    assert(hycom.OceanTime().Nx()==3 && hycom.OceanTime()(2)==5400);
     {
         NcFile file(invalidFile,NcFile::write);
         double descending[2]={3600,0}; file.getVar("MT").putVar(descending);
@@ -82,6 +91,7 @@ int main() {
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
     std::remove(nemoFile.c_str()); std::remove(hycomFile.c_str()); std::remove(nextFile.c_str());
+    std::remove(nextHycomFile.c_str());
     std::remove(olderFile.c_str());
     std::remove(invalidFile.c_str());
 }
