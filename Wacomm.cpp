@@ -16,8 +16,7 @@
 #endif
 
 #if defined(USE_MPI) || defined(USE_EMPI)
-#define OMPI_SKIP_MPICXX
-#include <mpi.h>
+#include "MpiHelpers.hpp"
 #endif
 
 #ifdef USE_EMPI
@@ -302,43 +301,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         int mpiError;
 
         // Define a MPI struct miming particle_data struct
-
-        // Set the number of fields
-        constexpr std::size_t num_members = 7;
-
-        // Set the cardinality of each field
-        int lengths[num_members] = { 1, 1, 1, 1, 1, 1, 1 };
-
-        // Define an array of MPI int containing the offset of each struct field
-        MPI_Aint offsets[num_members] = {
-                offsetof(struct particle_data, id),
-                offsetof(struct particle_data, k),
-                offsetof(struct particle_data, j),
-                offsetof(struct particle_data, i),
-                offsetof(struct particle_data, health),
-                offsetof(struct particle_data, age),
-                offsetof(struct particle_data, time)
-        };
-
-        // Define an array of MPI data type containing the MPI type of each field
-        MPI_Datatype types[num_members] = {
-                MPI_UINT64_T,
-                MPI_DOUBLE,
-                MPI_DOUBLE,
-                MPI_DOUBLE,
-                MPI_DOUBLE,
-                MPI_DOUBLE,
-                MPI_DOUBLE
-        };
-
-        // Define a container for the new MPI data type
-        MPI_Datatype mpiParticleData;
-
-        // Create the MPI struct
-        MPI_Type_create_struct(num_members, lengths, offsets, types, &mpiParticleData);
-
-        // Add the new datatype
-        MPI_Type_commit(&mpiParticleData);
+        MPI_Datatype mpiParticleData=MpiHelpers::particleDataType();
 
 #if defined(USE_MPI)
         // Distribute to all processes the send buffer

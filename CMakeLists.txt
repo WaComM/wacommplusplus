@@ -162,6 +162,14 @@ if(BUILD_APPLICATION)
         wacomm_enable_test_assertions(concentration_test)
         target_link_libraries(concentration_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME concentration_preservation COMMAND concentration_test)
+
+        if(USE_MPI)
+            add_executable(mpi_decomposition_test tests/MpiDecompositionTest.cpp Particle.cpp)
+            wacomm_enable_test_assertions(mpi_decomposition_test)
+            target_link_libraries(mpi_decomposition_test PRIVATE ${WACOMM_LIBRARIES})
+            add_test(NAME mpi_decomposition_parity COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 3
+                    ${MPIEXEC_PREFLAGS} $<TARGET_FILE:mpi_decomposition_test> ${MPIEXEC_POSTFLAGS})
+        endif()
     endif()
 endif()
 
