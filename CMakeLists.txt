@@ -14,6 +14,24 @@ option(USE_OMP "Use OpenMP for shared memory parallelism." OFF)
 option(USE_OPENACC "Use OpenACC acceleration." OFF)
 option(USE_CUDA "Use CUDA acceleration." OFF)
 
+set(WACOMM_GIT_REVISION "unknown")
+find_package(Git QUIET)
+if(Git_FOUND)
+    execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+            RESULT_VARIABLE WACOMM_GIT_RESULT
+            OUTPUT_VARIABLE WACOMM_GIT_OUTPUT
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET)
+    if(WACOMM_GIT_RESULT EQUAL 0)
+        set(WACOMM_GIT_REVISION "${WACOMM_GIT_OUTPUT}")
+    endif()
+endif()
+set(WACOMM_CMAKE_OPTIONS
+        "BUILD_APPLICATION=${BUILD_APPLICATION};BUILD_TESTING=${BUILD_TESTING};DEBUG=${DEBUG};USE_MPI=${USE_MPI};USE_EMPI=${USE_EMPI};USE_OMP=${USE_OMP};USE_OPENACC=${USE_OPENACC};USE_CUDA=${USE_CUDA}")
+set(WACOMM_GENERATED_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+configure_file(BuildInfo.hpp.in "${WACOMM_GENERATED_INCLUDE}/BuildInfo.hpp" @ONLY)
+
 function(wacomm_enable_test_assertions target)
     if(MSVC)
         target_compile_options(${target} PRIVATE /UNDEBUG)
@@ -120,6 +138,7 @@ if(BUILD_APPLICATION)
             OceanModelAdapters/StructuredGridAdapter.cpp
             ${WACOMM_CUDA_SOURCES})
     target_link_libraries(wacommplusplus PRIVATE ${WACOMM_LIBRARIES})
+    target_include_directories(wacommplusplus PRIVATE "${WACOMM_GENERATED_INCLUDE}")
     install(TARGETS wacommplusplus RUNTIME DESTINATION bin)
 
     if(BUILD_TESTING)
@@ -148,6 +167,7 @@ if(BUILD_APPLICATION)
 
         add_executable(restart_test tests/RestartTest.cpp Particles.cpp Particle.cpp OceanModelAdapter.cpp
                 Config.cpp Utils.cpp JulianDate.cpp)
+        target_include_directories(restart_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
         wacomm_enable_test_assertions(restart_test)
         target_link_libraries(restart_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME restart_format COMMAND restart_test)
@@ -159,6 +179,7 @@ if(BUILD_APPLICATION)
 
         add_executable(concentration_test tests/ConcentrationTest.cpp Particles.cpp Particle.cpp
                 OceanModelAdapter.cpp Config.cpp Utils.cpp JulianDate.cpp)
+        target_include_directories(concentration_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
         wacomm_enable_test_assertions(concentration_test)
         target_link_libraries(concentration_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME concentration_preservation COMMAND concentration_test)

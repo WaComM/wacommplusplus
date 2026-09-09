@@ -3,6 +3,7 @@
 //
 
 #include "Particles.hpp"
+#include "Provenance.hpp"
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
@@ -175,6 +176,8 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
 
     // Open the file for read access
     netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
+
+    Provenance::writeBuildMetadata(dataFile,*config);
 
     dataFile.putAtt("wacomm_restart_version","2");
     dataFile.putAtt("tracking_direction",config->Backward() ? "backward" : "forward");

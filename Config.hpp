@@ -127,6 +127,7 @@ public:
     void OceanModel(string value);
 
     void saveAsJson(const string &fileName);
+    string asJson() const;
     void loadFromJson(const string &fileName);
     void loadFromNamelist(const string &fileName);
 

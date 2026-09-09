@@ -1,4 +1,5 @@
 #include "../Particles.hpp"
+#include "../Provenance.hpp"
 
 #include <cassert>
 #include <cstdio>
@@ -36,6 +37,25 @@ int main() {
         file << R"({"io":{"ocean_model":"ROMS"},"physics":{"random_seed":5489},"tracking":{"direction":"forward"}})";
     }
     auto config=std::make_shared<Config>(configFile);
+    {
+        const string provenanceFile="provenance-test.nc";
+        NcFile file(provenanceFile,NcFile::replace,NcFile::nc4);
+        Provenance::writeBuildMetadata(file,*config);
+        file.close();
+        NcFile check(provenanceFile,NcFile::read);
+        string revision,compiler,options,configuration,resolvedConfiguration;
+        check.getAtt("wacomm_git_revision").getValues(revision);
+        check.getAtt("wacomm_compiler").getValues(compiler);
+        check.getAtt("wacomm_cmake_options").getValues(options);
+        check.getAtt("wacomm_configuration_file").getValues(configuration);
+        check.getAtt("wacomm_configuration").getValues(resolvedConfiguration);
+        assert(!revision.empty() && !compiler.empty() && !options.empty());
+        assert(configuration==configFile);
+        assert(resolvedConfiguration.find("\"random_seed\": 5489")!=string::npos);
+        assert(resolvedConfiguration.find("\"direction\": \"forward\"")!=string::npos);
+        check.close();
+        std::remove(provenanceFile.c_str());
+    }
     Particles particles;
     particles.loadFromNetCDF(restartFile,config);
     assert(particles.size()==1);

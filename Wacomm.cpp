@@ -10,6 +10,7 @@
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "JulianDate.hpp"
 #include "NumericalHelpers.hpp"
+#include "Provenance.hpp"
 
 #ifdef USE_OMP
 #include <omp.h>
@@ -844,6 +845,7 @@ void Wacomm::save(const string &fileName, Array4<float> &conc) {
     // Open the file for read access
     netCDF::NcFile dataFile(fileName, netCDF::NcFile::replace,NcFile::nc4);
     LOG4CPLUS_INFO(logger,"--------------: " << fileName);
+    Provenance::writeBuildMetadata(dataFile,*config);
 
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);
     NcVar oceanTimeVar = dataFile.addVar("ocean_time", ncDouble, oceanTimeDim);

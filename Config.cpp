@@ -526,7 +526,7 @@ void Config::OceanModel(string value) {
     oceanModel = value;
 }
 
-void Config::saveAsJson(const string &fileName) {
+string Config::asJson() const {
 
     Calendar calStart, calEnd;
 
@@ -596,9 +596,13 @@ void Config::saveAsJson(const string &fileName) {
             { "tracking", tracking},
     };
 
+    return config.dump(4);
+}
+
+void Config::saveAsJson(const string &fileName) {
     // write prettified JSON to another file
     std::ofstream o(fileName);
-    o << std::setw(4) << config << std::endl;
+    o << asJson() << std::endl;
 }
 
 void Config::loadFromJson(const string &fileName) {
