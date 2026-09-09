@@ -90,6 +90,16 @@ if(BUILD_APPLICATION)
         target_link_libraries(structured_grid_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME structured_grid_adapters COMMAND structured_grid_adapter_test)
 
+        add_executable(roms_adapter_test tests/ROMSAdapterTest.cpp
+                OceanModelAdapter.cpp OceanModelAdapters/ROMSAdapter.cpp)
+        target_link_libraries(roms_adapter_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME roms_adapter COMMAND roms_adapter_test)
+
+        add_executable(native_adapter_test tests/NativeAdapterTest.cpp
+                OceanModelAdapter.cpp OceanModelAdapters/WacommAdapter.cpp)
+        target_link_libraries(native_adapter_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME native_adapter COMMAND native_adapter_test)
+
         add_executable(config_test tests/ConfigTest.cpp Config.cpp Utils.cpp JulianDate.cpp)
         target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME configuration_round_trip COMMAND config_test)

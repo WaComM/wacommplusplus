@@ -4,6 +4,8 @@
 
 #include "ROMSAdapter.hpp"
 
+#include <stdexcept>
+
 ROMSAdapter::ROMSAdapter(string &fileName): fileName(fileName) {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 }
@@ -102,6 +104,11 @@ void ROMSAdapter::process()
     varOceanTime.getDim(0).getSize();
     Array1<double> oceanTime(ocean_time);
     varOceanTime.getVar(oceanTime());
+    for (int t=1;t<ocean_time;t++) {
+        if (oceanTime(t)<=oceanTime(t-1)) {
+            throw std::runtime_error("ROMS ocean time must be strictly chronological");
+        }
+    }
 
     // Retrieve the variable named "zeta"
     NcVar varZeta=dataFile.getVar("zeta");
@@ -193,7 +200,7 @@ void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array
     size_t s_rho = u.Ny();
     size_t eta_v = mask_v.Nx();
     size_t xi_v = mask_v.Ny();
-    size_t eta_u = mask_v.Nx();
+    size_t eta_u = mask_u.Nx();
     size_t xi_u = mask_u.Ny();
     size_t eta_rho = mask_rho.Nx();
     size_t xi_rho = mask_rho.Ny();
@@ -203,43 +210,37 @@ void ROMSAdapter::uv2rho(Array2<double>& mask_rho, Array2<double>& mask_u, Array
     {
         for (int k=(-(int)s_rho+1); k <=0; k++)
         {
-            for (int j=0; j < eta_v; j++)
+            for (int j=0; j < eta_rho; j++)
             {
-                for (int i=0; i< xi_u; i++)
+                for (int i=0; i< xi_rho; i++)
                 {
-                    float uw1, uw2, vw1, vw2;
+                    float usum=0.0, vsum=0.0;
+                    int ucount=0, vcount=0;
                     if ( j>=0 && i>=0 && j < eta_rho && i < xi_rho && mask_rho(j,i) > 0.0 )
                     {
                         if ( j>=0 && i>=0 && j<eta_u && i <xi_u && mask_u(j,i) > 0.0 )
                         {
-                            uw1=u(t,k,j,i);
-                        } else {
-                            uw1=0.0;
+                            usum+=u(t,k,j,i);
+                            ucount++;
                         }
-                        if ( j>0 && i>=0 && j<eta_u && i <xi_u && mask_u(j-1,i) > 0.0 )
+                        if ( j>=0 && i>0 && j<eta_u && i-1<xi_u && mask_u(j,i-1) > 0.0 )
                         {
-                            uw2=u(t,k,j-1,i);
-                        } else
-                        {
-                            uw2=0.0;
+                            usum+=u(t,k,j,i-1);
+                            ucount++;
                         }
                         if ( j>=0 && i>=0 && j<eta_v && i <xi_v && mask_v(j,i) > 0.0 )
                         {
-                            vw1=v(t,k,j,i);
-                        } else
-                        {
-                            vw1=0.0;
+                            vsum+=v(t,k,j,i);
+                            vcount++;
                         }
-                        if ( j>=0 && i>0 && j<eta_v && i <xi_v && mask_v(j,i-1) > 0.0 )
+                        if ( j>0 && i>=0 && j-1<eta_v && i<xi_v && mask_v(j-1,i) > 0.0 )
                         {
-                            vw2=v(t,k,j,i-1);
-                        } else
-                        {
-                            vw2=0.0;
+                            vsum+=v(t,k,j-1,i);
+                            vcount++;
                         }
 
-                        this->U().operator()(t,k,j,i)=0.5*(uw1+uw2);
-                        this->V().operator()(t,k,j,i)=0.5*(vw1+vw2);
+                        this->U().operator()(t,k,j,i)=ucount>0 ? usum/ucount : 0.0;
+                        this->V().operator()(t,k,j,i)=vcount>0 ? vsum/vcount : 0.0;
                     } else {
                         this->U().operator()(t,k,j,i)=0.0;
                         this->V().operator()(t,k,j,i)=0.0;
@@ -346,6 +347,4 @@ void ROMSAdapter::wakt2wakt(Array2<double>& mask_rho, Array4<float>& w, Array4<f
 
 
 ROMSAdapter::~ROMSAdapter() = default;
-
-
 

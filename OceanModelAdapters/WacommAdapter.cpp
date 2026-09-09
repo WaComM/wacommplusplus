@@ -4,6 +4,8 @@
 
 #include "WacommAdapter.hpp"
 
+#include <stdexcept>
+
 WacommAdapter::WacommAdapter(string &fileName): fileName(fileName) {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 }
@@ -20,7 +22,12 @@ void WacommAdapter::process()  {
     NcDim sRhoDim = dataFile.getDim("s_rho");
     NcDim sWDim = dataFile.getDim("s_w");
     NcDim etaRhoDim = dataFile.getDim("eta_rho");
-    NcDim xiRhoDim = dataFile.getDim("eta_xi");
+    NcDim xiRhoDim = dataFile.getDim("xi_rho");
+    if (xiRhoDim.isNull()) xiRhoDim=dataFile.getDim("eta_xi");
+    if (oceanTimeDim.isNull() || sRhoDim.isNull() || sWDim.isNull() ||
+        etaRhoDim.isNull() || xiRhoDim.isNull()) {
+        throw std::runtime_error("Native WACOMM input is missing required dimensions");
+    }
 
     size_t ocean_time=oceanTimeDim.getSize();
     size_t s_rho=sRhoDim.getSize();
@@ -47,6 +54,11 @@ void WacommAdapter::process()  {
 
     NcVar oceanTimeVar = dataFile.getVar("ocean_time");
     oceanTimeVar.getVar(this->OceanTime()());
+    for (int t=1;t<ocean_time;t++) {
+        if (this->OceanTime()(t)<=this->OceanTime()(t-1)) {
+            throw std::runtime_error("Native WACOMM ocean time must be strictly chronological");
+        }
+    }
 
     //cout << "OceanModelAdapter::loadFromNetCDF : " << _data.oceanTime(0) << endl;
 

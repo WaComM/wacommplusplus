@@ -50,7 +50,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     NcDim sRhoDim = dataFile.addDim("s_rho", s_rho);
     NcDim sWDim = dataFile.addDim("s_w", s_w);
     NcDim etaRhoDim = dataFile.addDim("eta_rho", eta_rho);
-    NcDim xiRhoDim = dataFile.addDim("eta_xi", xi_rho);
+    NcDim xiRhoDim = dataFile.addDim("xi_rho", xi_rho);
 
     NcVar oceanTimeVar = dataFile.addVar("ocean_time", ncDouble, oceanTimeDim);
     oceanTimeVar.putAtt("long_name","time since initialization");
