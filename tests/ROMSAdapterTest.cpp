@@ -1,4 +1,5 @@
 #include "../OceanModelAdapters/ROMSAdapter.hpp"
+#include "AdapterRestartEquivalence.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -59,6 +60,7 @@ int main() {
     string input=fileName;
     ROMSAdapter adapter(input);
     adapter.process();
+    assertAdapterRestartEquivalence(adapter);
     assert(adapter.OceanTime()(0)==0 && adapter.OceanTime()(1)==3600);
     for (int t=0;t<2;t++) for (int k=-1;k<=0;k++) for (int j=0;j<2;j++) {
         assert(std::abs(adapter.U()(t,k,j,0)-2)<1e-6);

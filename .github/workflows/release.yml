@@ -12,7 +12,37 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  openacc-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo apt-get update
+      - run: >-
+          sudo apt-get install -y libnetcdf-dev libnetcdf-c++4-dev
+          liblog4cplus-dev nlohmann-json3-dev pkg-config
+      - run: cmake -S . -B build-openacc -DCMAKE_BUILD_TYPE=Release -DUSE_OPENACC=ON
+      - run: cmake --build build-openacc --parallel
+      - run: ctest --test-dir build-openacc --output-on-failure
+
+  cuda-compile-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container: nvidia/cuda:12.6.3-devel-ubuntu24.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - run: apt-get update && apt-get install -y ca-certificates git
+      - uses: actions/checkout@v5
+      - run: >-
+          apt-get install -y cmake g++ pkg-config libnetcdf-dev
+          libnetcdf-c++4-dev liblog4cplus-dev nlohmann-json3-dev
+      - run: cmake -S . -B build-cuda -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON
+      - run: cmake --build build-cuda --parallel
+      - run: ctest --test-dir build-cuda --output-on-failure
+
   source-archive:
+    needs: [openacc-validation, cuda-compile-validation]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

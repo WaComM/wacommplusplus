@@ -52,6 +52,36 @@ jobs:
       - name: Installed executable smoke check
         run: test -x install/bin/wacommplusplus && ldd install/bin/wacommplusplus
 
+  macos-application:
+    timeout-minutes: 45
+    strategy:
+      matrix:
+        os: [macos-15-intel, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: brew install netcdf netcdf-cxx log4cplus nlohmann-json pkg-config
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build --parallel
+      - run: ctest --test-dir build --output-on-failure
+      - run: cmake --install build --prefix install
+      - run: test -x install/bin/wacommplusplus && otool -L install/bin/wacommplusplus
+
+  windows-application:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - run: vcpkg install --triplet x64-windows
+      - run: >-
+          cmake -S . -B build -A x64
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - run: cmake --build build --config Release --parallel
+      - run: ctest --test-dir build -C Release --output-on-failure
+      - run: cmake --install build --config Release --prefix install
+      - shell: pwsh
+        run: if (-not (Test-Path install/bin/wacommplusplus.exe)) { exit 1 }
+
   rocky-8-9:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -93,11 +123,15 @@ jobs:
     timeout-minutes: 30
     container: debian:bookworm
     steps:
-      - run: apt-get update && apt-get install -y ca-certificates git cmake g++
+      - run: >-
+          apt-get update && apt-get install -y ca-certificates git cmake g++ pkg-config
+          libnetcdf-dev libnetcdf-c++4-dev liblog4cplus-dev nlohmann-json3-dev
       - uses: actions/checkout@v5
-      - run: cmake -S . -B build -DBUILD_APPLICATION=OFF
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build
       - run: ctest --test-dir build --output-on-failure
+      - run: cmake --install build --prefix install
+      - run: test -x install/bin/wacommplusplus && ldd install/bin/wacommplusplus
 
   riscv64-cross-compile:
     runs-on: ubuntu-latest

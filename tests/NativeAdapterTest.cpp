@@ -1,4 +1,5 @@
 #include "../OceanModelAdapters/WacommAdapter.hpp"
+#include "AdapterRestartEquivalence.hpp"
 
 #include <cassert>
 #include <cstdio>
@@ -30,6 +31,7 @@ int main() {
 
     WacommAdapter adapter(output);
     adapter.process();
+    assertAdapterRestartEquivalence(adapter);
     assert(adapter.OceanTime().Nx()==2 && adapter.Mask().Nx()==2 && adapter.Mask().Ny()==2);
     assert(adapter.OceanTime()(1)==3600 && adapter.SW()(-2)==-1);
     assert(adapter.U()(1,-1,1,1)==.25f && adapter.V()(0,0,0,0)==-.1f);

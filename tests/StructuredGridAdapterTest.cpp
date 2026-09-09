@@ -1,5 +1,6 @@
 #include "../OceanModelAdapters/HYCOMAdapter.hpp"
 #include "../OceanModelAdapters/NEMOAdapter.hpp"
+#include "AdapterRestartEquivalence.hpp"
 
 #include <cassert>
 #include <cmath>
@@ -80,6 +81,8 @@ int main() {
     assert(rejected);
     assert(hycom.Lon()(0,0)==-10);
     assert(hycom.W()(0,-2,0,0)==0 && hycom.AKT()(0,-2,0,0)==0);
+    assertAdapterRestartEquivalence(nemo);
+    assertAdapterRestartEquivalence(hycom);
     hycom.appendBoundaryRecord(nextHycom,0,false);
     assert(hycom.OceanTime().Nx()==3 && hycom.OceanTime()(2)==5400);
     {

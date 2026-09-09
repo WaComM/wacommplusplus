@@ -20,3 +20,15 @@ ctest --test-dir build-core --output-on-failure
 Optional switches are `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, and `USE_CUDA`. CUDA is unavailable on modern macOS. Configuration fails explicitly when a requested dependency is missing.
 
 On macOS with AppleClang, install Homebrew's keg-only OpenMP runtime with `brew install libomp`. When `USE_OMP=ON`, configuration obtains the formula prefix from Homebrew and supplies its header, library, and AppleClang frontend flags to CMake's imported `OpenMP::OpenMP_CXX` target. Existing command-line `OpenMP_CXX_*` and `OpenMP_omp_LIBRARY` cache settings take precedence. If Homebrew is unavailable, configure those variables explicitly or select a compiler with its own OpenMP runtime before creating the build directory.
+
+On Windows, install dependencies through the checked-in vcpkg manifest and use native MSVC:
+
+```powershell
+vcpkg install --triplet x64-windows
+cmake -S . -B build -A x64 `
+  -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+cmake --build build --config Release --parallel
+ctest --test-dir build -C Release --output-on-failure
+```
+
+`USE_EMPI=ON` requires an MPI implementation plus a real FlexMPI installation. Configuration searches for `empi.h` and the EMPI library and fails clearly if either is absent. Pass its installation prefix through `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH`, or `CMAKE_LIBRARY_PATH` when it is outside the system search path.

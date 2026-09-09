@@ -13,6 +13,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  openacc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo apt-get update
+      - run: >-
+          sudo apt-get install -y g++ pkg-config libnetcdf-dev libnetcdf-c++4-dev
+          liblog4cplus-dev nlohmann-json3-dev
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_OPENACC=ON
+      - run: cmake --build build --parallel
+      - run: ctest --test-dir build --output-on-failure
+
   cuda-compile:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -50,7 +63,10 @@ jobs:
           -v "$PWD:/workspace" -w /workspace
           riscv64/debian:trixie-slim
           sh -c 'export DEBIAN_FRONTEND=noninteractive &&
-          apt-get update && apt-get install -y cmake g++ &&
-          cmake -S . -B build-riscv64-qemu -DBUILD_APPLICATION=OFF &&
+          apt-get update && apt-get install -y cmake g++ pkg-config
+          libnetcdf-dev libnetcdf-c++4-dev liblog4cplus-dev nlohmann-json3-dev &&
+          cmake -S . -B build-riscv64-qemu -DCMAKE_BUILD_TYPE=Release &&
           cmake --build build-riscv64-qemu --parallel 2 &&
-          ctest --test-dir build-riscv64-qemu --output-on-failure'
+          ctest --test-dir build-riscv64-qemu --output-on-failure &&
+          cmake --install build-riscv64-qemu --prefix install-riscv64 &&
+          test -x install-riscv64/bin/wacommplusplus'
