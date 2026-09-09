@@ -4,7 +4,7 @@ Run the dependency-light numerical suite with the commands in [build.md](build.m
 
 Application and backend validation additionally requires NetCDF fixtures and the relevant OpenMP, MPI, or CUDA runtime. Compare particle count, identity, position, health, and age with declared absolute and relative tolerances. Platform CI is build evidence, not proof of scientific equivalence.
 
-When configured with `USE_MPI=ON`, CTest launches a three-rank decomposition test over eleven particles. It uses the same committed MPI datatype as the application, performs the seeded stochastic particle update after a non-uniform scatter, gathers the state, and compares identity, position, health, age, and emission time exactly with serial execution.
+When configured with `USE_MPI=ON`, CTest launches a two-rank decomposition test over eleven particles. It uses the same committed MPI datatype as the application, performs the seeded stochastic particle update after a non-uniform scatter, gathers the state, and compares identity, position, health, age, and emission time exactly with serial execution. Two ranks fit the minimum GitHub-hosted runner allocation without implementation-specific oversubscription flags, while the odd particle count still exercises a remainder on rank zero.
 
 Test targets explicitly undefine `NDEBUG`, including in Release configurations, because the regression executables use C assertions as their failure mechanism. A Release CI pass therefore executes the numerical and metadata checks rather than only launching empty test bodies.
 
