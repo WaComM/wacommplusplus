@@ -4,6 +4,7 @@
 #include <cassert>
 #include <cmath>
 #include <limits>
+#include <vector>
 
 int main() {
     Array1<double> oceanTime(2); oceanTime(0)=0; oceanTime(1)=65;
@@ -62,6 +63,42 @@ int main() {
     stochastic2.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
     assert(stochastic0.I()!=stochastic2.I() || stochastic0.J()!=stochastic2.J() ||
            stochastic0.K()!=stochastic2.K());
+
+    Array4<float> zeroU(2,2,2,2,0,-1,0,0); zeroU=0.0f;
+    config.randomSeed=5489;
+    config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+    Particle stochasticFull(8,-.5,.25,.25,0);
+    stochasticFull.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    Array1<double> stochasticEarlyTime(2); stochasticEarlyTime(0)=0; stochasticEarlyTime(1)=30;
+    Particle stochasticRestarted(8,-.5,.25,.25,0);
+    stochasticRestarted.move(&config,0,stochasticEarlyTime,mask,lonRad,latRad,sW,depthIntervals,h,
+                             zeta,zeroU,v,w,akt);
+    config.restartCheckpoint=30;
+    stochasticRestarted.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,
+                             zeta,zeroU,v,w,akt);
+    assert(stochasticRestarted.I()==stochasticFull.I());
+    assert(stochasticRestarted.J()==stochasticFull.J());
+    assert(stochasticRestarted.K()==stochasticFull.K());
+    assert(stochasticRestarted.Age()==stochasticFull.Age());
+
+    config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+    std::vector<Particle> serialParticles,parallelParticles;
+    for (int idx=0;idx<64;idx++) {
+        serialParticles.push_back(Particle(100+idx,-.5,.25,.25,0));
+        parallelParticles.push_back(Particle(100+idx,-.5,.25,.25,0));
+        serialParticles[idx].move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,
+                                  zeta,zeroU,v,w,akt);
+    }
+    #pragma omp parallel for default(none) shared(parallelParticles, config, oceanTime, mask, lonRad, latRad, sW, depthIntervals, h, zeta, zeroU, v, w, akt)
+    for (int idx=0;idx<64;idx++) {
+        parallelParticles[idx].move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,
+                                    zeta,zeroU,v,w,akt);
+    }
+    for (int idx=0;idx<64;idx++) {
+        assert(parallelParticles[idx].I()==serialParticles[idx].I());
+        assert(parallelParticles[idx].J()==serialParticles[idx].J());
+        assert(parallelParticles[idx].K()==serialParticles[idx].K());
+    }
 
     config.random=false;
     config.randomSeed=5489;
