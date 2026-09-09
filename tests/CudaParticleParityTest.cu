@@ -52,10 +52,10 @@ int main() {
     Array1<double> cpuSW(3,-2),cpuDepth(3,-1);
     cpuSW(-2)=-1; cpuSW(-1)=-.5; cpuSW(0)=0;
     cpuDepth(-1)=.5; cpuDepth(0)=.5; cpuDepth(1)=.5;
-    Array3<float> cpuZeta(2,2,2); cpuZeta=0;
+    Array3<float> cpuZeta(2,2,2); cpuZeta=0.0f;
     Array4<float> cpuU(2,2,2,2,0,-1,0,0),cpuV(2,2,2,2,0,-1,0,0);
     Array4<float> cpuW(2,3,2,2,0,-2,0,0),cpuAkt(2,3,2,2,0,-2,0,0);
-    cpuU=0; cpuV=0; cpuW=0; cpuAkt=.01f;
+    cpuU=0.0f; cpuV=0.0f; cpuW=0.0f; cpuAkt=.01f;
     for (int k=-1;k<=0;k++) for (int j=0;j<2;j++) for (int i=0;i<2;i++) cpuU(1,k,j,i)=.25f;
 
     config_data config{};
