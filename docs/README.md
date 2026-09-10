@@ -16,6 +16,7 @@ The documentation is organized as a scientific model description rather than sol
 - [Parallelism](parallelism.md)
 - [Testing](testing.md)
 - [Reproducibility](reproducibility.md)
+- [Trajectory maps and ensemble diagnostics](trajectory-diagnostics.md)
 - [Examples](examples.md)
 - [Supported platforms](supported-platforms.md)
 - [Rocky Linux 8.9](rocky-linux.md)

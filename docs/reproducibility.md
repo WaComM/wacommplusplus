@@ -24,6 +24,8 @@ python3 tools/reproducibility_manifest.py \
 
 The command fails if a declared configuration, forcing, source, restart, output, test log, or CMake cache file is missing. Relative ocean, weather, and wave paths are resolved against `io.base_path`; other relative configuration paths use the run working directory convention. The JSON contains the complete input configuration, SHA-256 and byte size for every discovered file, Git revision and dirty state, selected CMake cache entries, operating system and architecture, relevant MPI/OpenMP/CUDA environment variables, and declared tolerances. Review dependency and GPU/driver details separately when those are not represented in the CMake cache or environment.
 
+The [trajectory diagnostics](trajectory-diagnostics.md) workflow records the SHA-256 checksum and embedded build provenance of every input snapshot in its JSON product. Because absolute paths are identifiers, relocating inputs can change JSON bytes without changing diagnostic values. Archive both the diagnostic JSON and SVG with the run manifest; neither replaces the simulation outputs from which it was derived.
+
 ## References
 
 - Peng, R. D. (2011). Reproducible research in computational science. *Science*, 334, 1226–1227. [doi:10.1126/science.1213847](https://doi.org/10.1126/science.1213847).

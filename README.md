@@ -12,6 +12,8 @@ Environmental grids remain exact-match by default. Explicit `bilinear_geographic
 
 Backward deterministic tracking reverses forcing traversal and resolved/terminal motion and suppresses normal forward sources. It can identify candidate prior locations under the supplied circulation and model assumptions; stochastic backward tracking is not a unique inverse trajectory.
 
+A read-only [trajectory diagnostic workflow](docs/trajectory-diagnostics.md) joins stable particle identities across output snapshots, computes explicitly descriptive ensemble-spread statistics, and creates a self-documenting SVG map with projection, extent, time, provenance, and uncertainty semantics. It does not infer probability contours or modify solver physics.
+
 ## Quick start
 
 Install CMake 3.20+, a C++17 compiler, NetCDF C/C++, log4cplus, nlohmann-json, pkg-config, and any requested backend. Then run:
@@ -39,7 +41,7 @@ Set `physics.random_seed` explicitly and archive the complete configuration, Git
 
 ## Documentation and examples
 
-Start at the [documentation index](docs/README.md) for the [model](docs/model.md), [build guide](docs/build.md), [configuration](docs/configuration.md), [adapters](docs/adapters.md), [OpenDrift comparison and roadmap](docs/opendrift-comparison.md), [backtracking](docs/backtracking.md), [restart](docs/restart.md), [testing](docs/testing.md), [parallelism](docs/parallelism.md), [supported platforms](docs/supported-platforms.md), and [reproducibility](docs/reproducibility.md). The [examples index](examples/README.md) covers every checked-in run configuration and source artifact, including forward/backward ROMS, NEMO, HYCOM, and native WACOMM workflows.
+Start at the [documentation index](docs/README.md) for the [model](docs/model.md), [build guide](docs/build.md), [configuration](docs/configuration.md), [adapters](docs/adapters.md), [OpenDrift comparison and roadmap](docs/opendrift-comparison.md), [backtracking](docs/backtracking.md), [restart](docs/restart.md), [testing](docs/testing.md), [parallelism](docs/parallelism.md), [supported platforms](docs/supported-platforms.md), [reproducibility](docs/reproducibility.md), and [trajectory diagnostics](docs/trajectory-diagnostics.md). The [examples index](examples/README.md) covers every checked-in run configuration and source artifact, including forward/backward ROMS, NEMO, HYCOM, and native WACOMM workflows.
 
 The [surface-drift guide](docs/sar-drift.md) defines the object-relative velocity model, coefficient provenance, units, ensemble assumptions, direction semantics, restart behavior, supported object classes, and current limitations. Its paired catalog-mean [forward](examples/sar-person-forward.md) and [backward](examples/sar-person-backward.md) scenarios provide uniform-wind references; the coefficient-ensemble [forward](examples/sar-person-ensemble-forward.md) and [backward](examples/sar-person-ensemble-backward.md) scenarios demonstrate reproducible member uncertainty; the coupled [forward](examples/sar-person-wrf-ww3-forward.md) and [backward](examples/sar-person-wrf-ww3-backward.md) scenarios exercise WRF wind and WW3 Stokes drift.
 
