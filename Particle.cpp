@@ -391,12 +391,21 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                 std::int64_t uncertaintyInterval=static_cast<std::int64_t>(std::llround(std::min(intervalStart,intervalEnd)));
                 std::uint64_t uncertaintySubstep=static_cast<std::uint64_t>(std::floor(elapsed/dti));
                 if (configData->windErrorStdDev>0) {
-                    windU+=configData->windErrorStdDev*NumericalHelpers::normal(configData->randomSeed,
-                            localParticleData.id,uncertaintyInterval,uncertaintySubstep,
-                            LEEWAY_WIND_ERROR_U_COMPONENT);
-                    windV+=configData->windErrorStdDev*NumericalHelpers::normal(configData->randomSeed,
-                            localParticleData.id,uncertaintyInterval,uncertaintySubstep,
-                            LEEWAY_WIND_ERROR_V_COMPONENT);
+                    double longitude=lonRad(jI,iI)*(1-iF)*(1-jF)+lonRad(jI+1,iI)*(1-iF)*jF+
+                              lonRad(jI+1,iI+1)*iF*jF+lonRad(jI,iI+1)*iF*(1-jF);
+                    double latitude=latRad(jI,iI)*(1-iF)*(1-jF)+latRad(jI+1,iI)*(1-iF)*jF+
+                             latRad(jI+1,iI+1)*iF*jF+latRad(jI,iI+1)*iF*(1-jF);
+                    double first=forcingErrorNormal(configData->randomSeed,localParticleData.id,
+                            uncertaintyInterval,uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT,
+                            longitude,latitude,physicalTime+.5*configData->trackingDirection*stepDt,configData->windErrorSpatialScale,
+                            configData->windErrorTemporalScale);
+                    double second=forcingErrorNormal(configData->randomSeed,localParticleData.id,
+                            uncertaintyInterval,uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT,
+                            longitude,latitude,physicalTime+.5*configData->trackingDirection*stepDt,configData->windErrorSpatialScale,
+                            configData->windErrorTemporalScale);
+                    windU+=configData->windErrorStdDev*first;
+                    windV+=configData->windErrorStdDev*correlatedNormal(first,second,
+                            configData->windErrorComponentCorrelation);
                 }
                 double downwindNormal=0,crosswindNormal=0;
                 if (configData->leewayCoefficientEnsemble) {

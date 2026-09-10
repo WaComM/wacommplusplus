@@ -37,7 +37,7 @@ Options include `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA`, `US
 
 ## Reproducible operation
 
-Set `physics.random_seed` explicitly and archive the complete configuration, Git revision, forcing and restart checksums, compiler/dependency versions, platform, parallel settings, tolerances, test output, and result checksums. Production random behavior does not use wall-clock time. Examples, documentation, tests, source implementation, and physical definitions are versioned together.
+Set `physics.random_seed` explicitly. Wind forcing error can declare a PSD-validated east/north covariance and reproducible spatial and physical-time support scales; zero scales retain identity/substep white noise. Archive the complete configuration, Git revision, forcing and restart checksums, compiler/dependency versions, platform, parallel settings, tolerances, test output, and result checksums. Production random behavior does not use wall-clock time. Examples, documentation, tests, source implementation, and physical definitions are versioned together.
 
 ## Documentation and examples
 

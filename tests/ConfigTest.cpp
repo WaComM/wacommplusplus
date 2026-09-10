@@ -46,18 +46,24 @@ int main() {
     {
         std::ofstream file(leeway);
         file << R"({"drift":{"model":"leeway","object_type":"KAYAK_WITH_PERSON","side":"right","coefficient_ensemble":true,"residual_correlation":-0.35},
-                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":1.0,"uncertainty_stddev":1.5}}})";
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":1.0,"uncertainty_stddev":1.5,
+                       "uncertainty_component_correlation":0.4,"uncertainty_spatial_scale":10000.0,
+                       "uncertainty_temporal_scale":3600.0}}})";
     }
     Config drift(leeway);
     assert(drift.Leeway() && drift.DriftObject()==DriftObjectType::KAYAK_WITH_PERSON);
     assert(drift.DefaultDriftSide()==DriftSide::RIGHT);
     assert(drift.LeewayCoefficientEnsemble());
     assert(drift.LeewayResidualCorrelation()==-.35 && drift.WindErrorStdDev()==1.5);
+    assert(drift.WindErrorComponentCorrelation()==.4 && drift.WindErrorSpatialScale()==10000);
+    assert(drift.WindErrorTemporalScale()==3600);
     drift.saveAsJson(saved);
     Config driftRestored(saved);
     assert(driftRestored.DriftObject()==DriftObjectType::KAYAK_WITH_PERSON);
     assert(driftRestored.LeewayCoefficientEnsemble());
     assert(driftRestored.LeewayResidualCorrelation()==-.35 && driftRestored.WindErrorStdDev()==1.5);
+    assert(driftRestored.WindErrorComponentCorrelation()==.4 && driftRestored.WindErrorSpatialScale()==10000);
+    assert(driftRestored.WindErrorTemporalScale()==3600);
     const string sideEnsemble="config-test-side-ensemble.json";
     {
         std::ofstream file(sideEnsemble);
@@ -152,6 +158,26 @@ int main() {
     }
     rejected=false;
     try { Config invalidPassiveWindError(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right"},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":0.0,
+                     "uncertainty_stddev":1.0,"uncertainty_component_correlation":1.01}}})";
+    }
+    rejected=false;
+    try { Config invalidWindCovariance(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right"},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":0.0,
+                     "uncertainty_spatial_scale":1000.0}}})";
+    }
+    rejected=false;
+    try { Config unusedWindCorrelation(invalid); }
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
     {

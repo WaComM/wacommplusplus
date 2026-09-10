@@ -45,7 +45,7 @@ The process catalog is an inventory of the single solver's existing operators. I
 | `vertical_diffusion` | `physics.random` and ocean `AKt` | diffusivity, m2 s-1 | stochastic, counter-keyed displacement |
 | `settling_rise` | `physics.sv` | terminal velocity, m s-1 | deterministic, stateless |
 | `decay` | `physics.survprob`, `physics.tau0` | e-folding time, s | deterministic concentration update |
-| `wind_error` | `environment.wind.uncertainty_stddev` | component error, m s-1 | stochastic per interval/substep |
+| `wind_error` | `environment.wind.uncertainty_*` | component error, m s-1; spatial scale, m; temporal scale, s | stochastic keyed block field |
 | `jibing` | `drift.jibe_probability_per_hour` | hourly transition probability, dimensionless | stochastic; resolved side is restart state |
 
 Deterministic velocities are evaluated in physical time and the solver applies tracking direction to their combined displacement. Diffusion in backward runs is disabled by default; the opt-in symmetric stochastic mode is not an inverse realization. Decay is not generally reversible. Jibing transitions are meaningful as a forward stochastic process; backward ensembles remain candidate-origin sensitivity experiments. Continuous and restarted runs preserve the resolved object ID and side, and counter keys reconstruct stateless random terms independently of rank, thread, or accelerator scheduling.

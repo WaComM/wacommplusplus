@@ -132,6 +132,9 @@ void Config::setDefault() {
     _data.leewayRightSideProbability = 0.5;
     _data.leewayJibeProbabilityHourly = 0;
     _data.windErrorStdDev = 0;
+    _data.windErrorComponentCorrelation = 0;
+    _data.windErrorSpatialScale = 0;
+    _data.windErrorTemporalScale = 0;
     _data.driftObjectType = static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
     _data.driftSide = static_cast<std::int8_t>(DriftSide::UNDEFINED);
     _data.hasWind = false;
@@ -362,6 +365,9 @@ bool Config::LeewayRandomSide() const { return _data.leewayRandomSide; }
 double Config::LeewayRightSideProbability() const { return _data.leewayRightSideProbability; }
 double Config::LeewayJibeProbabilityHourly() const { return _data.leewayJibeProbabilityHourly; }
 double Config::WindErrorStdDev() const { return _data.windErrorStdDev; }
+double Config::WindErrorComponentCorrelation() const { return _data.windErrorComponentCorrelation; }
+double Config::WindErrorSpatialScale() const { return _data.windErrorSpatialScale; }
+double Config::WindErrorTemporalScale() const { return _data.windErrorTemporalScale; }
 
 DriftObjectType Config::DriftObject() const { return static_cast<DriftObjectType>(_data.driftObjectType); }
 
@@ -646,6 +652,9 @@ string Config::asJson() const {
             { "wind", {{"adapter",weatherModel=="WRF" ? "WRF" : (_data.hasWind ? "constant" : "none")},
                         {"u10",_data.windU10},{"v10",_data.windV10},
                         {"uncertainty_stddev",_data.windErrorStdDev},
+                        {"uncertainty_component_correlation",_data.windErrorComponentCorrelation},
+                        {"uncertainty_spatial_scale",_data.windErrorSpatialScale},
+                        {"uncertainty_temporal_scale",_data.windErrorTemporalScale},
                         {"nc_inputs",weatherInputs},{"regrid",weatherRegridding},{"source_crs",weatherSourceCrs}} },
             { "wave", {{"adapter",waveModel},{"nc_inputs",waveInputs},{"regrid",waveRegridding},{"source_crs",waveSourceCrs}} }
     };
@@ -800,6 +809,12 @@ void Config::loadFromJson(const string &fileName) {
             string adapter=wind.value("adapter","none");
             if (wind.contains("uncertainty_stddev"))
                 _data.windErrorStdDev=wind["uncertainty_stddev"];
+            if (wind.contains("uncertainty_component_correlation"))
+                _data.windErrorComponentCorrelation=wind["uncertainty_component_correlation"];
+            if (wind.contains("uncertainty_spatial_scale"))
+                _data.windErrorSpatialScale=wind["uncertainty_spatial_scale"];
+            if (wind.contains("uncertainty_temporal_scale"))
+                _data.windErrorTemporalScale=wind["uncertainty_temporal_scale"];
             if (adapter=="constant") {
                 if (!wind.contains("u10") || !wind.contains("v10"))
                     throw std::runtime_error("The constant wind adapter requires environment.wind.u10 and environment.wind.v10");
@@ -861,6 +876,16 @@ void Config::loadFromJson(const string &fileName) {
     if (!std::isfinite(_data.windErrorStdDev) || _data.windErrorStdDev<0 ||
         (_data.windErrorStdDev>0 && _data.driftModel!=1))
         throw std::runtime_error("environment.wind.uncertainty_stddev must be nonnegative and requires drift.model=leeway");
+    if (!std::isfinite(_data.windErrorComponentCorrelation) || _data.windErrorComponentCorrelation < -1 ||
+        _data.windErrorComponentCorrelation > 1)
+        throw std::runtime_error("environment.wind.uncertainty_component_correlation must be finite and in [-1,1]");
+    if (!std::isfinite(_data.windErrorSpatialScale) || _data.windErrorSpatialScale<0)
+        throw std::runtime_error("environment.wind.uncertainty_spatial_scale must be finite and nonnegative in metres");
+    if (!std::isfinite(_data.windErrorTemporalScale) || _data.windErrorTemporalScale<0)
+        throw std::runtime_error("environment.wind.uncertainty_temporal_scale must be finite and nonnegative in seconds");
+    if (_data.windErrorStdDev==0 && (_data.windErrorComponentCorrelation!=0 ||
+        _data.windErrorSpatialScale!=0 || _data.windErrorTemporalScale!=0))
+        throw std::runtime_error("wind-error correlation parameters require environment.wind.uncertainty_stddev > 0");
     if (weatherModel=="WRF" && weatherInputs.size()!=ncInputs.size())
         throw std::runtime_error("WRF and ocean nc_inputs must contain one matching file per forcing window");
     if (waveModel=="WW3" && waveInputs.size()!=ncInputs.size())

@@ -6,7 +6,7 @@ How does the same declared leeway covariance and unresolved-wind model generate 
 
 ## Prerequisites, fields, configuration, and command
 
-Provide the ROMS `forcing.nc` and an endpoint `sources.json` described by the adapter and source guides. Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacommplusplus examples/sar-person-correlated-forcing-backward.json`. The -0.35 residual correlation and 1.5 m s-1 component standard deviation are deliberately explicit sensitivity parameters and require replacement by study-specific estimates for scientific use.
+Provide the ROMS `forcing.nc` and an endpoint `sources.json` described by the adapter and source guides. Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacommplusplus examples/sar-person-correlated-forcing-backward.json`. The -0.35 residual correlation, 1.5 m s-1 component standard deviation, 0.4 east/north correlation, 10 km spatial support, and 1 h temporal support are explicit sensitivity parameters requiring study-specific evidence.
 
 ## Expected output and verification
 
@@ -14,7 +14,7 @@ The run writes NetCDF output rooted at `sar-person-correlated-forcing-backward`.
 
 ## Limitations, interpretation, and reproducibility
 
-Each member is a conditional candidate-origin history, not the unique past path. The Gaussian white-in-substep wind-error model is not a meteorological ensemble and carries no calibrated coverage probability. It excludes current and wave error, spatial covariance between particles, object misclassification, and observation error. Archive parameter provenance, seed, `dti`, identities, configuration, forcing/restart/output checksums, revision, dependencies, backend settings, and tolerances.
+Each member is a conditional candidate-origin history, not the unique past path. The Gaussian block wind-error model is not a meteorological ensemble and carries no calibrated coverage probability. Its covariance is perfect inside common space/time bins and zero across boundaries; equirectangular bins are unsuitable near poles and the antimeridian. It excludes current and wave error, object misclassification, and observation error. Archive parameter provenance, seed, identities, configuration, forcing/restart/output checksums, revision, dependencies, backend settings, and tolerances.
 
 ## References
 

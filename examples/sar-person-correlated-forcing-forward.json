@@ -5,5 +5,5 @@
   "physics": {"random": false, "random_seed": 5489, "dti": 30},
   "tracking": {"direction": "forward", "backward_diffusion": "none"},
   "drift": {"model": "leeway", "object_type": "PERSON_IN_WATER", "side": "right", "coefficient_ensemble": true, "residual_correlation": -0.35},
-  "environment": {"wind": {"adapter": "constant", "u10": 5.0, "v10": 0.0, "uncertainty_stddev": 1.5}}
+  "environment": {"wind": {"adapter": "constant", "u10": 5.0, "v10": 0.0, "uncertainty_stddev": 1.5, "uncertainty_component_correlation": 0.4, "uncertainty_spatial_scale": 10000.0, "uncertainty_temporal_scale": 3600.0}}
 }

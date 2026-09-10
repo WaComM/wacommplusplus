@@ -96,6 +96,31 @@ static constexpr std::uint64_t LEEWAY_JIBE_RANDOM_COMPONENT=0x4a494245ULL;
 static constexpr std::uint64_t LEEWAY_WIND_ERROR_U_COMPONENT=0x57494e4455ULL;
 static constexpr std::uint64_t LEEWAY_WIND_ERROR_V_COMPONENT=0x57494e4456ULL;
 
+// A zero scale preserves the legacy particle/substep white-noise coordinates. Positive scales
+// select a shared, piecewise-constant Earth-relative random field in metre and second bins.
+inline double forcingErrorNormal(std::uint64_t seed,std::uint64_t particle,std::int64_t interval,
+                                 std::uint64_t substep,std::uint64_t component,double longitude,
+                                 double latitude,double physicalTime,double spatialScale,
+                                 double temporalScale) {
+    if (spatialScale<=0 && temporalScale<=0)
+        return NumericalHelpers::normal(seed,particle,interval,substep,component);
+    std::uint64_t spatialKey=particle;
+    if (spatialScale>0) {
+        constexpr double earthRadius=6371000.0;
+        auto x=static_cast<std::int64_t>(std::floor(earthRadius*longitude*std::cos(latitude)/spatialScale));
+        auto y=static_cast<std::int64_t>(std::floor(earthRadius*latitude/spatialScale));
+        spatialKey=NumericalHelpers::mix(static_cast<std::uint64_t>(x))^
+                   NumericalHelpers::mix(static_cast<std::uint64_t>(y));
+    }
+    std::int64_t timeKey=interval;
+    std::uint64_t sampleKey=substep;
+    if (temporalScale>0) {
+        timeKey=static_cast<std::int64_t>(std::floor(physicalTime/temporalScale));
+        sampleKey=0;
+    }
+    return NumericalHelpers::normal(seed,spatialKey,timeKey,sampleKey,component);
+}
+
 WACOMM_HOST_DEVICE inline double correlatedNormal(double firstNormal,double independentNormal,
                                                    double correlation) {
     return correlation*firstNormal+std::sqrt(1-correlation*correlation)*independentNormal;

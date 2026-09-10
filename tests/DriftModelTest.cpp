@@ -40,6 +40,14 @@ int main() {
            NumericalHelpers::uniform(5489,42,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0));
     assert(NumericalHelpers::normal(5489,42,0,0,LEEWAY_WIND_ERROR_U_COMPONENT)!=
            NumericalHelpers::normal(5489,42,0,0,LEEWAY_WIND_ERROR_V_COMPONENT));
+    double shared0=forcingErrorNormal(5489,42,0,0,LEEWAY_WIND_ERROR_U_COMPONENT,
+                                      .1,.5,1200,10000,3600);
+    double shared1=forcingErrorNormal(5489,99,9,7,LEEWAY_WIND_ERROR_U_COMPONENT,
+                                      .100001,.500001,1250,10000,3600);
+    assert(shared0==shared1);
+    double later=forcingErrorNormal(5489,99,9,7,LEEWAY_WIND_ERROR_U_COMPONENT,
+                                    .100001,.500001,4800,10000,3600);
+    assert(shared0!=later);
     assert(jibeStepProbability(0,3600)==0);
     assert(jibeStepProbability(1,1)==1);
     assert(std::abs(jibeStepProbability(.04,3600)-.04)<1.e-12);

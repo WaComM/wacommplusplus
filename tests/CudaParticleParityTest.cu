@@ -88,6 +88,9 @@ int main() {
         config.leewayJibeProbabilityHourly=mode==4 ? 1 : 0;
         config.leewayResidualCorrelation=mode==3 ? -.35 : 0;
         config.windErrorStdDev=mode==5 ? 1.5 : 0;
+        config.windErrorComponentCorrelation=0;
+        config.windErrorSpatialScale=0;
+        config.windErrorTemporalScale=0;
         config.driftModel=leeway ? 1 : 0;
         config.driftObjectType=static_cast<std::uint16_t>(object);
         config.driftSide=static_cast<std::int8_t>(side);

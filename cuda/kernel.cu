@@ -35,6 +35,23 @@ __device__ double normal(unsigned long long seed, unsigned long long particle, l
     return sqrt(-2.0*log(u1))*cos(6.28318530717958647692*u2);
 }
 
+__device__ double forcingErrorNormal(unsigned long long seed,unsigned long long particle,long long interval,
+                                     unsigned long long substep,unsigned long long component,double longitude,
+                                     double latitude,double physicalTime,double spatialScale,double temporalScale) {
+    if (spatialScale<=0 && temporalScale<=0) return normal(seed,particle,interval,substep,component);
+    unsigned long long spatialKey=particle;
+    if (spatialScale>0) {
+        const double earthRadius=6371000.0;
+        long long x=(long long)floor(earthRadius*longitude*cos(latitude)/spatialScale);
+        long long y=(long long)floor(earthRadius*latitude/spatialScale);
+        spatialKey=mix((unsigned long long)x)^mix((unsigned long long)y);
+    }
+    long long timeKey=interval;
+    unsigned long long sampleKey=substep;
+    if (temporalScale>0) { timeKey=(long long)floor(physicalTime/temporalScale); sampleKey=0; }
+    return normal(seed,spatialKey,timeKey,sampleKey,component);
+}
+
 __device__ size_t index3(int t, int j, int i, int eta, int xi) {
     return ((size_t)t*eta+j)*xi+i;
 }
@@ -158,10 +175,17 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
             double windU=windU10 ? bilinear(windU10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windU10;
             double windV=windV10 ? bilinear(windV10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windV10;
             if (config->windErrorStdDev>0) {
-                windU+=config->windErrorStdDev*normal(config->randomSeed,particle.id,uncertaintyInterval,
-                                                      uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT);
-                windV+=config->windErrorStdDev*normal(config->randomSeed,particle.id,uncertaintyInterval,
-                                                      uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT);
+                double longitude=bilinear(lonRad,jI,iI,jF,iF,xi);
+                double latitude=bilinear(latRad,jI,iI,jF,iF,xi);
+                double first=forcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
+                        uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT,longitude,latitude,
+                        physicalTime+.5*direction*stepDt,config->windErrorSpatialScale,config->windErrorTemporalScale);
+                double second=forcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
+                        uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT,longitude,latitude,
+                        physicalTime+.5*direction*stepDt,config->windErrorSpatialScale,config->windErrorTemporalScale);
+                windU+=config->windErrorStdDev*first;
+                windV+=config->windErrorStdDev*correlatedNormal(first,second,
+                                                               config->windErrorComponentCorrelation);
             }
             double downwindNormal=0,crosswindNormal=0;
             if (config->leewayCoefficientEnsemble) {
