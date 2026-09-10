@@ -18,7 +18,7 @@ The dependency-light `environmental_regridding` test verifies exact preservation
 
 All workflows declare the minimum repository permission they require, bound job duration, and cancel obsolete CI/HPC runs for the same ref. Container package installation is noninteractive. A successful CUDA container build with a skipped parity test remains compile-only evidence; a successful self-hosted GPU workflow is required before a release can claim measured CUDA equivalence. FlexMPI claims likewise require the dedicated workflow on an installation providing `empi.h`, the EMPI library, and its configured MPI runtime.
 
-Surface-drift validation adds zero-wind finiteness, pure downwind direction, equal-and-opposite left/right crosswind motion, catalog identity, configuration validation, deterministic forward/backward current-plus-leeway reversal, version 3 restart persistence, MPI metadata preservation, and deterministic CPU/CUDA leeway parity. The CUDA parity assertion executes only on a CUDA-capable host; compilation alone is not parity evidence.
+Surface-drift validation adds zero-wind finiteness, pure downwind direction, equal-and-opposite left/right crosswind motion, catalog identity, configuration validation, deterministic forward/backward current-plus-leeway reversal, version 3 restart persistence, MPI metadata preservation, and deterministic CPU/CUDA leeway parity. Coefficient-ensemble tests additionally verify the residual equation, same-seed/same-identity repeatability, distinct members, forward/backward reversal for one member, configuration persistence, and CPU/CUDA parity. The CUDA parity assertion executes only on a CUDA-capable host; compilation alone is not parity evidence.
 
 ## References
 

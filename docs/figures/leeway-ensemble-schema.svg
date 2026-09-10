@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360" role="img" aria-labelledby="title description">
+  <title id="title">Reproducible leeway coefficient ensemble schema</title>
+  <desc id="description">A conceptual flow from an empirical object-class regression and a configured seed through stable particle identifiers to fixed downwind and crosswind residuals and a family of trajectory members.</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#3b82f6"/></marker></defs>
+  <rect width="900" height="360" fill="#f8fafc"/>
+  <g font-family="sans-serif" fill="#172033" stroke="#334155" stroke-width="2">
+    <rect x="35" y="42" width="220" height="92" rx="10" fill="#dbeafe"/>
+    <text x="145" y="70" text-anchor="middle" font-size="18">Object-class regression</text>
+    <text x="145" y="98" text-anchor="middle" font-size="15">a, b, σ in SI units</text>
+    <rect x="35" y="220" width="220" height="82" rx="10" fill="#dcfce7"/>
+    <text x="145" y="251" text-anchor="middle" font-size="18">Run identity</text>
+    <text x="145" y="279" text-anchor="middle" font-size="15">seed + particle ID</text>
+    <rect x="345" y="118" width="220" height="112" rx="10" fill="#fef3c7"/>
+    <text x="455" y="149" text-anchor="middle" font-size="18">Fixed member residual</text>
+    <text x="455" y="178" text-anchor="middle" font-size="15">εDW = σDW zDW</text>
+    <text x="455" y="204" text-anchor="middle" font-size="15">εCW = σCW zCW</text>
+    <path d="M255 88 L345 145" marker-end="url(#arrow)" fill="none"/>
+    <path d="M255 260 L345 203" marker-end="url(#arrow)" fill="none"/>
+    <path d="M565 174 L662 174" marker-end="url(#arrow)" fill="none"/>
+    <path d="M677 174 C735 98 820 88 866 75" fill="none" stroke="#2563eb"/>
+    <path d="M677 174 C750 155 812 154 866 151" fill="none" stroke="#16a34a"/>
+    <path d="M677 174 C744 224 806 237 866 258" fill="none" stroke="#dc2626"/>
+    <circle cx="677" cy="174" r="9" fill="#172033"/>
+    <text x="760" y="326" text-anchor="middle" font-size="15" stroke="none">Conceptual trajectories; not georeferenced output</text>
+  </g>
+</svg>

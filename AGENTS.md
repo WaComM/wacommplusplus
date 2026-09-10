@@ -36,6 +36,8 @@ The portable C++17 core remains buildable without optional HPC backends on Ubunt
 
 Reproducible scientific runs record the Git revision, complete configuration, forcing and restart checksums, configured random seed, compiler, CMake options, dependencies, platform, parallel execution settings, numerical tolerances, and output checksums. Production stochastic runs must never use wall-clock, rank, thread, or accelerator scheduling as their scientific seed.
 
+Uncertainty models are part of the governing scientific configuration. Document the sampled quantity, distribution, units, dependence assumptions, support or truncation, keying strategy, temporal correlation, restart behavior, and interpretation. A parameter ensemble must be reproducible from archived metadata and invariant under rank, thread, accelerator scheduling, and restart decomposition. Do not label an ensemble as probabilistic calibration, confidence, or posterior inference without peer-reviewed methodology and observational validation supporting that claim.
+
 WaComM++ is one versioned scientific product comprising physics, implementation, tests, examples, and documentation. Review releases across all five layers.
 
 Documentation is a scientific interface and must remain semantically synchronized with the implementation. A change to equations, parameter values, units, sign conventions, configuration keys, defaults, environmental inputs, object catalogs, restart variables, output variables, adapters, execution backends, or validation tolerances must update the model description, configuration reference, relevant example guides, main README, and repository reference list in the same change.

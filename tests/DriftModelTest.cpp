@@ -18,6 +18,11 @@ int main() {
     assert(std::abs(left.v+right.v)<1.e-12);
     assert(std::abs(left.v)==std::abs(right.v));
 
+    LeewayCoefficients uncertain{.01,.02,.03,.04,.05,.06};
+    DriftVelocity member=computeLeeway(uncertain,10,0,DriftSide::RIGHT,2,-1);
+    assert(std::abs(member.u-(.1+.02+2*.03))<1.e-12);
+    assert(std::abs(member.v-(.4+.05-.06))<1.e-12);
+
     const auto& person=DriftObjectCatalog::definition(DriftObjectType::PERSON_IN_WATER);
     assert(person.leeway.downwindSlope==.0096);
     assert(DriftObjectCatalog::type("SHIPPING_CONTAINER")==DriftObjectType::SHIPPING_CONTAINER);

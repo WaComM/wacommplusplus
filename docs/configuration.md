@@ -17,7 +17,8 @@ Surface-object drift is opt-in:
   "drift": {
     "model": "leeway",
     "object_type": "PERSON_IN_WATER",
-    "side": "right"
+    "side": "right",
+    "coefficient_ensemble": false
   },
   "environment": {
     "wind": {
@@ -30,6 +31,8 @@ Surface-object drift is opt-in:
 ```
 
 `drift.model` is `passive` or `leeway`. Passive is the backward-compatible default and does not request atmospheric input. Leeway requires one of `PERSON_IN_WATER`, `LIFERAFT_NO_DROGUE`, `LIFERAFT_DROGUE`, `GENERIC_VESSEL`, or `SHIPPING_CONTAINER`; it also requires `side=left|right`. Stable numeric object identifiers are persisted in restart files, while symbolic names remain the public configuration interface.
+
+`drift.coefficient_ensemble` defaults to `false`. When true, the catalog standard deviations define independent Gaussian residual velocities in the downwind and crosswind regressions. A residual pair is a deterministic function of `physics.random_seed` and the stable particle identity and remains fixed for that member's trajectory. It is consequently independent of `physics.random`, integration substeps, MPI ranks, OpenMP threads, and CUDA scheduling. The option is invalid for `drift.model=passive`.
 
 The first environmental provider is `environment.wind.adapter=constant`. Components `u10` and `v10` are finite eastward and northward 10 m wind velocities in m s-1. This provider is appropriate for analytical verification, controlled sensitivity studies, and spatially uniform forcing intervals. It is not a substitute for resolved atmospheric forcing in operational applications. Unknown models, object types, orientations, wind adapters, missing components, and non-finite winds fail during configuration loading.
 

@@ -152,8 +152,13 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
         if (config->driftModel==1 &&
             particle.driftObjectType!=(unsigned short)DriftObjectType::PASSIVE) {
             LeewayCoefficients coefficients=driftObjectCoefficients((DriftObjectType)particle.driftObjectType);
+            double downwindNormal=0,crosswindNormal=0;
+            if (config->leewayCoefficientEnsemble) {
+                downwindNormal=normal(config->randomSeed,particle.id,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0);
+                crosswindNormal=normal(config->randomSeed,particle.id,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,1);
+            }
             DriftVelocity leeway=computeLeeway(coefficients,config->windU10,config->windV10,
-                                                (DriftSide)particle.driftSide);
+                                                (DriftSide)particle.driftSide,downwindNormal,crosswindNormal);
             uu+=(float)leeway.u;
             vv+=(float)leeway.v;
         }

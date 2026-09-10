@@ -46,6 +46,8 @@ struct DriftVelocity {
     double w;
 };
 
+static constexpr std::int64_t LEEWAY_ENSEMBLE_RANDOM_INTERVAL=(-9223372036854775807LL-1);
+
 class DriftObjectCatalog {
 public:
     static const DriftObjectDefinition& definition(DriftObjectType type);
@@ -65,13 +67,16 @@ WACOMM_HOST_DEVICE inline LeewayCoefficients driftObjectCoefficients(DriftObject
 }
 
 WACOMM_HOST_DEVICE inline DriftVelocity computeLeeway(const LeewayCoefficients& coefficients, double windU10,
-                                   double windV10, DriftSide side) {
+                                   double windV10, DriftSide side, double downwindNormal=0,
+                                   double crosswindNormal=0) {
     double speed=std::sqrt(windU10*windU10+windV10*windV10);
     if (speed<1.0e-12 || side==DriftSide::UNDEFINED) return {0,0,0};
     double windDirectionU=windU10/speed;
     double windDirectionV=windV10/speed;
-    double downwind=coefficients.downwindSlope*speed+coefficients.downwindIntercept;
-    double crosswind=coefficients.crosswindSlope*speed+coefficients.crosswindIntercept;
+    double downwind=coefficients.downwindSlope*speed+coefficients.downwindIntercept+
+                    coefficients.downwindStdDev*downwindNormal;
+    double crosswind=coefficients.crosswindSlope*speed+coefficients.crosswindIntercept+
+                     coefficients.crosswindStdDev*crosswindNormal;
     double orientation=static_cast<int>(side);
     return {downwind*windDirectionU-orientation*crosswind*windDirectionV,
             downwind*windDirectionV+orientation*crosswind*windDirectionU,0};

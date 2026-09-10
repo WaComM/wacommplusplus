@@ -388,8 +388,15 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                 };
                 double windU=windU10 ? environmentAt(windU10) : configData->windU10;
                 double windV=windV10 ? environmentAt(windV10) : configData->windV10;
+                double downwindNormal=0,crosswindNormal=0;
+                if (configData->leewayCoefficientEnsemble) {
+                    downwindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                            LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0);
+                    crosswindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                            LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,1);
+                }
                 DriftVelocity leeway=computeLeeway(object.leeway,windU,windV,
-                        static_cast<DriftSide>(localParticleData.driftSide));
+                        static_cast<DriftSide>(localParticleData.driftSide),downwindNormal,crosswindNormal);
                 uu+=static_cast<float>(leeway.u);
                 vv+=static_cast<float>(leeway.v);
             }

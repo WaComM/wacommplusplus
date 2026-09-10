@@ -8,7 +8,7 @@ Forcing progression keeps the current normalized adapter plus one adjacent adapt
 
 When explicitly configured, environmental regridding occurs after adjacent-file boundary assembly and before construction of `Wacomm`. Product-specific adapters have therefore already normalized time, units, longitude convention, and vector basis. The shared geographic bilinear operator changes only the horizontal representation; `Wacomm` subsequently applies the same time/grid compatibility checks as for an exact-match run. No regridding branch exists inside `Particle` or any execution backend.
 
-Surface drift follows the same hierarchy. `DriftObjectType` and `DriftSide` are fixed-width particle state; `DriftObjectCatalog` is the single coefficient source; and the allocation-free leeway function is shared by CPU and CUDA code. `Config` selects the model and environmental provider before integration. Passive runs follow a configuration-level fast path and do not incur catalog lookup or wind computation.
+Surface drift follows the same hierarchy. `DriftObjectType` and `DriftSide` are fixed-width particle state; `DriftObjectCatalog` is the single coefficient source; and the allocation-free leeway function is shared by CPU and CUDA code. Optional coefficient-ensemble residuals use the same counter-key algorithm on both paths and are keyed only by configured seed and stable particle identity. `Config` selects the model and environmental provider before integration. Passive runs follow a configuration-level fast path and do not incur catalog lookup or wind computation.
 
 ## References
 

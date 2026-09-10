@@ -37,12 +37,16 @@ int main() {
     const string leeway="config-test-leeway.json";
     {
         std::ofstream file(leeway);
-        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right"},
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right","coefficient_ensemble":true},
                      "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":1.0}}})";
     }
     Config drift(leeway);
     assert(drift.Leeway() && drift.DriftObject()==DriftObjectType::PERSON_IN_WATER);
     assert(drift.DefaultDriftSide()==DriftSide::RIGHT);
+    assert(drift.LeewayCoefficientEnsemble());
+    drift.saveAsJson(saved);
+    Config driftRestored(saved);
+    assert(driftRestored.LeewayCoefficientEnsemble());
     const string environment="config-test-environment.json";
     {
         std::ofstream file(environment);
@@ -70,6 +74,14 @@ int main() {
     }
     rejected=false;
     try { Config invalidRegridding(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"drift":{"model":"passive","coefficient_ensemble":true}})";
+    }
+    rejected=false;
+    try { Config invalidPassiveEnsemble(invalid); }
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
     {

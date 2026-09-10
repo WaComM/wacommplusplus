@@ -155,6 +155,26 @@ int main() {
     assert(std::abs(leewayBackward.I()-.25)<1.e-8);
     assert(std::abs(leewayBackward.J()-.25)<1.e-8);
 
+    config.leewayCoefficientEnsemble=true;
+    config.trackingDirection=Config::TRACKING_FORWARD;
+    Particle ensemble0(20,-.5,.25,.25,0),ensemble0Repeat(20,-.5,.25,.25,0);
+    Particle ensemble1(21,-.5,.25,.25,0);
+    ensemble0.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    ensemble0Repeat.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    ensemble1.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    ensemble0.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    ensemble0Repeat.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    ensemble1.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    assert(ensemble0.I()==ensemble0Repeat.I() && ensemble0.J()==ensemble0Repeat.J());
+    assert(ensemble0.I()!=ensemble1.I() || ensemble0.J()!=ensemble1.J());
+    config.trackingDirection=Config::TRACKING_BACKWARD;
+    Particle ensembleBackward(20,-.5,ensemble0.J(),ensemble0.I(),65);
+    ensembleBackward.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    ensembleBackward.move(&config,1,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    assert(std::abs(ensembleBackward.I()-.25)<1.e-8);
+    assert(std::abs(ensembleBackward.J()-.25)<1.e-8);
+    config.leewayCoefficientEnsemble=false;
+
     Array3<float> windU(2,2,2),windV(2,2,2),stokesU(2,2,2),stokesV(2,2,2);
     windU=10.0f; windV=0.0f; stokesU=.2f; stokesV=-.1f;
     config.trackingDirection=Config::TRACKING_FORWARD;

@@ -125,6 +125,7 @@ void Config::setDefault() {
 
     // Passive particles do not request atmospheric forcing.
     _data.driftModel = 0;
+    _data.leewayCoefficientEnsemble = false;
     _data.driftObjectType = static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
     _data.driftSide = static_cast<std::int8_t>(DriftSide::UNDEFINED);
     _data.hasWind = false;
@@ -347,6 +348,7 @@ bool Config::Backward() const { return _data.trackingDirection == Config::TRACKI
 bool Config::BackwardDiffusion() const { return _data.backwardDiffusion; }
 
 bool Config::Leeway() const { return _data.driftModel==1; }
+bool Config::LeewayCoefficientEnsemble() const { return _data.leewayCoefficientEnsemble; }
 
 DriftObjectType Config::DriftObject() const { return static_cast<DriftObjectType>(_data.driftObjectType); }
 
@@ -616,6 +618,7 @@ string Config::asJson() const {
 
     json drift = {
             { "model", Leeway() ? "leeway" : "passive" },
+            { "coefficient_ensemble", LeewayCoefficientEnsemble() },
             { "object_type", DriftObjectCatalog::name(DriftObject()) },
             { "side", DefaultDriftSide()==DriftSide::LEFT ? "left" :
                       DefaultDriftSide()==DriftSide::RIGHT ? "right" : "undefined" }
@@ -742,6 +745,8 @@ void Config::loadFromJson(const string &fileName) {
         if (model=="passive") _data.driftModel=0;
         else if (model=="leeway") _data.driftModel=1;
         else throw std::runtime_error("Unknown drift.model: " + model);
+        if (drift.contains("coefficient_ensemble"))
+            _data.leewayCoefficientEnsemble=drift["coefficient_ensemble"];
         if (drift.contains("object_type")) {
             string objectType=drift["object_type"];
             _data.driftObjectType=static_cast<std::uint16_t>(DriftObjectCatalog::type(objectType.c_str()));
@@ -796,6 +801,8 @@ void Config::loadFromJson(const string &fileName) {
         throw std::runtime_error("drift.model=leeway requires drift.side=left or right");
     if (_data.driftModel==1 && !_data.hasWind)
         throw std::runtime_error("Leeway drift requires 10 m wind. Configure environment.wind.adapter=constant or WRF");
+    if (_data.driftModel!=1 && _data.leewayCoefficientEnsemble)
+        throw std::runtime_error("drift.coefficient_ensemble requires drift.model=leeway");
     if (_data.hasWind && (!std::isfinite(_data.windU10) || !std::isfinite(_data.windV10)))
         throw std::runtime_error("environment.wind.u10 and environment.wind.v10 must be finite values in m/s");
     if (weatherModel=="WRF" && weatherInputs.size()!=ncInputs.size())

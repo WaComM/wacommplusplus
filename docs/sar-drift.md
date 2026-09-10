@@ -8,13 +8,19 @@ The horizontal object velocity in m s-1 is
 
 ```text
 V_object = V_current + V_leeway + V_stokes
-V_leeway = (a_DW |W10| + b_DW) w_hat
-           + side (a_CW |W10| + b_CW) w_hat_perp
+V_leeway = (a_DW |W10| + b_DW + sigma_DW z_DW) w_hat
+           + side (a_CW |W10| + b_CW + sigma_CW z_CW) w_hat_perp
 ```
 
-`W10` is the 10 m wind vector in m s-1, `w_hat_perp=(-w_hat_y,w_hat_x)`, slopes are dimensionless, offsets are m s-1, and `side` is -1 for left or +1 for right. Wind below 1e-12 m s-1 produces zero leeway and is never normalized. Catalog values are converted from percent and cm s-1 to SI units. The generic vessel uses the fishing-vessel mean class; the container uses the experimentally characterized 20-ft, 80%-submerged class. The parameterization follows the peer-reviewed leeway field methodology of Breivik et al. (2011), the container experiments of Breivik et al. (2012), and the operational Lagrangian context described by Dagestad et al. (2018).
+`W10` is the 10 m wind vector in m s-1, `w_hat_perp=(-w_hat_y,w_hat_x)`, slopes `a` are dimensionless, offsets `b` and residual standard deviations `sigma` are m s-1, and `side` is -1 for left or +1 for right. In catalog-mean mode, `z_DW=z_CW=0`. With `drift.coefficient_ensemble=true`, both are independent standard-normal variates fixed by the run seed and particle identity. Wind below 1e-12 m s-1 produces zero leeway and is never normalized. Catalog values are converted from percent and cm s-1 to SI units. The generic vessel uses the fishing-vessel mean class; the container uses the experimentally characterized 20-ft, 80%-submerged class. The parameterization follows the peer-reviewed leeway field methodology of Breivik et al. (2011), the container experiments of Breivik et al. (2012), and the operational Lagrangian context described by Dagestad et al. (2018).
 
 The coefficients are empirical regression parameters, not universal material constants. Their validity is conditional on object configuration, immersion, loading, environmental range, current reference depth, and observational uncertainty. A catalog choice therefore constitutes a scientific hypothesis that must be recorded with the forcing and numerical configuration.
+
+The ensemble represents residual variability around the fitted leeway regressions. It does not propagate uncertainty in atmospheric or ocean forcing, regression coefficients, object classification, crosswind side, or model discrepancy. Gaussian support is unbounded, so an individual residual may reverse a modeled component; no undocumented clipping is imposed. Independence of the two standardized residuals is an explicit implementation assumption rather than an observationally validated covariance model.
+
+![Conceptual schema from catalog regression and stable run identity to fixed leeway members](figures/leeway-ensemble-schema.svg)
+
+This schema is conceptual, not a georeferenced model result. Each path is one reproducible parameter member; path spread must not be interpreted as a calibrated probability region without an external validation study.
 
 Classical leeway observations can contain wave-correlated motion implicitly because leeway is defined relative to a near-surface current. Adding an explicit WW3 Stokes vector may therefore double count part of the wave contribution unless coefficients and current reference are calibrated for an explicit-wave formulation. Runs enabling WW3 must state this modeling choice and validate it against an appropriate observational dataset; the implementation performs the requested vector sum but does not assert universal validity of that decomposition.
 
@@ -30,9 +36,11 @@ The drift calculation is direction-neutral. The existing solver multiplies the c
 
 NetCDF restart version 3 stores stable numeric object type and crosswind side for every particle. Version 2 restarts remain readable in passive mode and are rejected for leeway runs because they lack required object state. Text restarts append the same two fields while retaining compatibility with earlier seven-field records.
 
+Ensemble residuals are a stateless function of the configured seed and stored 64-bit particle identity. They are therefore invariant under restart boundaries and MPI/OpenMP/CUDA scheduling. A forward member and a backward member use the same residual pair when seed and identity match; direction is still applied only by the solver.
+
 ## Configuration and limitations
 
-Select `drift.model=leeway`, a supported `object_type`, and `side=left|right`. Missing wind, unknown objects, or undefined side fail during configuration. Coefficient uncertainty, randomized side, jibing, vertical Stokes profiles, environmental regridding, and refloating are not yet implemented. Existing coastline closure behavior applies unchanged.
+Select `drift.model=leeway`, a supported `object_type`, and `side=left|right`; optionally set `coefficient_ensemble=true`. Missing wind, unknown objects, undefined side, or an ensemble requested for passive transport fails during configuration. Randomized side, jibing, vertical Stokes profiles, projected-coordinate transformation, conservative environmental remapping, and refloating are not yet implemented. Existing coastline closure behavior applies unchanged.
 
 Record the configured wind, random seed, forcing and restart checksums, Git revision, compiler, CMake options, backend settings, tolerances, and output checksums. Deterministic math is shared by serial, OpenMP, and MPI execution. CUDA/OpenACC builds use the same particle representation; operational leeway parity on those backends must be validated before use.
 
