@@ -40,7 +40,7 @@ Ensemble residuals are a stateless function of the configured seed and stored 64
 
 ## Configuration and limitations
 
-Select `drift.model=leeway`, a supported `object_type`, and `side=left|right`; optionally set `coefficient_ensemble=true`. Missing wind, unknown objects, undefined side, or an ensemble requested for passive transport fails during configuration. Randomized side, jibing, vertical Stokes profiles, projected-coordinate transformation, conservative environmental remapping, and refloating are not yet implemented. Existing coastline closure behavior applies unchanged.
+Select `drift.model=leeway`, a supported `object_type`, and `side=left|right`; optionally set `coefficient_ensemble=true`. Missing wind, unknown objects, undefined side, or an ensemble requested for passive transport fails during configuration. Randomized side, jibing, vertical Stokes profiles, conservative vector-flux remapping, and refloating are not yet implemented. Declared projected-coordinate transformation is available, while the first-order conservative operator is deliberately restricted to cell-average scalars and is not a wind or Stokes option. Existing coastline closure behavior applies unchanged.
 
 Record the configured wind, random seed, forcing and restart checksums, Git revision, compiler, CMake options, backend settings, tolerances, and output checksums. Deterministic math is shared by serial, OpenMP, and MPI execution. CUDA/OpenACC builds use the same particle representation; operational leeway parity on those backends must be validated before use.
 

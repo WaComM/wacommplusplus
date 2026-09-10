@@ -53,6 +53,8 @@ Environmental variables must carry explicit metadata. Velocity uses `m s-1` or a
 
 `bilinear_projected` requires an explicit `source_crs`, for example `"EPSG:3857"`, and `USE_PROJ=ON`. The file must expose rectilinear axes or a valid curvilinear `x/y` mesh in meters. PROJ transforms ocean targets from EPSG:4326 into the declared source CRS before rectilinear or inverse-bilinear interpolation. A CRS is never inferred. Missing or misplaced CRS declarations, unavailable PROJ support, invalid transforms, non-metric coordinates, folded geometry, and extrapolation are errors.
 
+The library-level `conservativeRectilinearGeographicCellAverage` operator is not a valid `environment.wind.regrid` or `environment.wave.regrid` value. It accepts explicit source and target geographic cell bounds and cell-average scalar data. This restriction prevents a conservation label from being attached to point-valued velocity components without a scientifically defined flux and vector-basis treatment.
+
 The complete resolved JSON configuration, including defaults, is embedded in NetCDF outputs. Reproducible experiments should nevertheless archive the original configuration, forcing and restart checksums, build metadata, parallel layout, tolerances, and output checksums.
 
 ## References

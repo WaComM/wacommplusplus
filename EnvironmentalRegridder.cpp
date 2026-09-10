@@ -51,6 +51,39 @@ double bilinear(double f00,double f10,double f01,double f11,double x,double y) {
     return (1-x)*(1-y)*f00+x*(1-y)*f10+(1-x)*y*f01+x*y*f11;
 }
 
+void rectilinearBounds(const Array::Array2<double>& longitude,const Array::Array2<double>& latitude,
+                       std::vector<double>& longitudeAxis,std::vector<double>& latitudeAxis,const char *grid) {
+    if (longitude.Nx()<2 || longitude.Ny()<2 || latitude.Nx()!=longitude.Nx() || latitude.Ny()!=longitude.Ny())
+        throw std::runtime_error(std::string("Conservative ") + grid + " bounds require compatible dimensions of at least 2x2");
+    longitudeAxis.resize(longitude.Ny()); latitudeAxis.resize(latitude.Nx());
+    for (int i=0;i<longitude.Ny();i++) longitudeAxis[i]=longitude(0,i);
+    for (int j=0;j<latitude.Nx();j++) latitudeAxis[j]=latitude(j,0);
+    for (int j=0;j<longitude.Nx();j++) for (int i=0;i<longitude.Ny();i++) {
+        if (!std::isfinite(longitude(j,i)) || !std::isfinite(latitude(j,i)) ||
+            std::abs(longitude(j,i)-longitudeAxis[i])>1.e-10 || std::abs(latitude(j,i)-latitudeAxis[j])>1.e-10)
+            throw std::runtime_error(std::string("Conservative ") + grid + " bounds must be a finite rectilinear geographic grid");
+    }
+    unwrapLongitude(longitudeAxis);
+    if (std::abs(longitudeAxis.back()-longitudeAxis.front())>360+1.e-10)
+        throw std::runtime_error(std::string("Conservative ") + grid + " longitude bounds span more than one revolution");
+    bool east=longitudeAxis.back()>longitudeAxis.front(),north=latitudeAxis.back()>latitudeAxis.front();
+    for (size_t i=1;i<longitudeAxis.size();i++)
+        if ((east && longitudeAxis[i]<=longitudeAxis[i-1]) || (!east && longitudeAxis[i]>=longitudeAxis[i-1]) ||
+            std::abs(longitudeAxis[i]-longitudeAxis[i-1])>180+1.e-10)
+            throw std::runtime_error(std::string("Conservative ") + grid + " longitude bounds must be strictly monotonic with unambiguous cells");
+    for (size_t j=0;j<latitudeAxis.size();j++) {
+        if (!std::isfinite(latitudeAxis[j]) || latitudeAxis[j]<-90 || latitudeAxis[j]>90)
+            throw std::runtime_error(std::string("Conservative ") + grid + " latitude bounds must lie in [-90,90] degrees");
+        if (j && ((north && latitudeAxis[j]<=latitudeAxis[j-1]) || (!north && latitudeAxis[j]>=latitudeAxis[j-1])))
+            throw std::runtime_error(std::string("Conservative ") + grid + " latitude bounds must be strictly monotonic");
+    }
+}
+
+double sphericalRectangleMeasure(double west,double east,double south,double north) {
+    const double radians=3.14159265358979323846/180;
+    return (east-west)*radians*(std::sin(north*radians)-std::sin(south*radians));
+}
+
 struct CurvilinearCell {
     int j,i;
     double minimumX,maximumX,minimumY,maximumY;
@@ -276,6 +309,49 @@ Array::Array3<float> EnvironmentalRegridder::bilinearCurvilinearCartesian(
         for (int t=0;t<source.Nx();t++)
             result(t,tj,ti)=static_cast<float>(bilinear(source(t,foundJ,foundI),source(t,foundJ,foundI+1),
                                                         source(t,foundJ+1,foundI),source(t,foundJ+1,foundI+1),foundX,foundY));
+    }
+    return result;
+}
+
+Array::Array3<float> EnvironmentalRegridder::conservativeRectilinearGeographicCellAverage(
+        const Array::Array2<double>& sourceLonBounds,const Array::Array2<double>& sourceLatBounds,
+        const Array::Array3<float>& sourceCellAverage,const Array::Array2<double>& targetLonBounds,
+        const Array::Array2<double>& targetLatBounds) {
+    std::vector<double> sourceLongitude,sourceLatitude,targetLongitude,targetLatitude;
+    rectilinearBounds(sourceLonBounds,sourceLatBounds,sourceLongitude,sourceLatitude,"source");
+    rectilinearBounds(targetLonBounds,targetLatBounds,targetLongitude,targetLatitude,"target");
+    if (sourceCellAverage.Ny()+1!=sourceLatitude.size() || sourceCellAverage.Nz()+1!=sourceLongitude.size())
+        throw std::runtime_error("Conservative source cell averages must have one fewer row and column than their bounds");
+    for (int t=0;t<sourceCellAverage.Nx();t++) for (int j=0;j<sourceCellAverage.Ny();j++)
+        for (int i=0;i<sourceCellAverage.Nz();i++)
+            if (!std::isfinite(sourceCellAverage(t,j,i)))
+                throw std::runtime_error("Conservative source cell averages must be finite");
+    double sourceCenter=.5*(sourceLongitude.front()+sourceLongitude.back());
+    double targetCenter=.5*(targetLongitude.front()+targetLongitude.back());
+    double targetShift=360*std::round((sourceCenter-targetCenter)/360);
+    for (double& longitude:targetLongitude) longitude+=targetShift;
+    Array::Array3<float> result(sourceCellAverage.Nx(),targetLatitude.size()-1,targetLongitude.size()-1);
+    for (int tj=0;tj+1<targetLatitude.size();tj++) for (int ti=0;ti+1<targetLongitude.size();ti++) {
+        double targetWest=std::min(targetLongitude[ti],targetLongitude[ti+1]);
+        double targetEastEdge=std::max(targetLongitude[ti],targetLongitude[ti+1]);
+        double targetSouth=std::min(targetLatitude[tj],targetLatitude[tj+1]);
+        double targetNorthEdge=std::max(targetLatitude[tj],targetLatitude[tj+1]);
+        double targetMeasure=sphericalRectangleMeasure(targetWest,targetEastEdge,targetSouth,targetNorthEdge);
+        std::vector<double> totals(sourceCellAverage.Nx(),0); double covered=0;
+        for (int sj=0;sj+1<sourceLatitude.size();sj++) for (int si=0;si+1<sourceLongitude.size();si++) {
+            double sourceWest=std::min(sourceLongitude[si],sourceLongitude[si+1]);
+            double sourceEastEdge=std::max(sourceLongitude[si],sourceLongitude[si+1]);
+            double sourceSouth=std::min(sourceLatitude[sj],sourceLatitude[sj+1]);
+            double sourceNorthEdge=std::max(sourceLatitude[sj],sourceLatitude[sj+1]);
+            double west=std::max(targetWest,sourceWest),east=std::min(targetEastEdge,sourceEastEdge);
+            double south=std::max(targetSouth,sourceSouth),north=std::min(targetNorthEdge,sourceNorthEdge);
+            if (east<=west || north<=south) continue;
+            double overlap=sphericalRectangleMeasure(west,east,south,north); covered+=overlap;
+            for (int t=0;t<sourceCellAverage.Nx();t++) totals[t]+=overlap*sourceCellAverage(t,sj,si);
+        }
+        if (targetMeasure<=0 || std::abs(covered-targetMeasure)>1.e-10*std::max(1.0,targetMeasure))
+            throw std::runtime_error("Conservative target cell is not completely covered by the source grid; extrapolation is prohibited");
+        for (int t=0;t<sourceCellAverage.Nx();t++) result(t,tj,ti)=static_cast<float>(totals[t]/targetMeasure);
     }
     return result;
 }

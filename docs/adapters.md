@@ -52,6 +52,26 @@ $$
 
 The rectilinear operator preserves constant fields and is exact for fields affine in its coordinate axes; the curvilinear operator preserves constants and fields bilinear in its local cell coordinates. These properties are regression-tested. A longitude axis or cell crossing the antimeridian is unwrapped onto a local continuous branch. Increasing and decreasing rectilinear axes are both supported. Folded or singular curvilinear cells are rejected. Bilinear interpolation is not locally or globally conservative and introduces smoothing whose magnitude depends on unresolved curvature and scale separation. It is appropriate for point-sampled wind and Stokes velocity when this limitation is scientifically acceptable. It must not be described as conservative flux remapping. Extrapolation, unavailable datum resources, and rotation from an unknown vector basis remain unsupported and fail explicitly. Projected geometry uses Cartesian coordinates without longitude wrapping. Index construction is linear in source-cell count; lookup may approach a full scan for highly overlapping bounds.
 
+## Conservative cell-average remapping
+
+WaComM++ also provides a distinct first-order operator for extensive-density or cell-average scalar fields on rectilinear longitude/latitude grids. It is intentionally absent from WRF and WW3 velocity configuration: a point-sampled vector component is not a cell-integrated scalar, and component-wise conservation would not establish conservation of vector flux.
+
+For source cell means $q_s$ and target cell $T$, the remapped mean is
+
+$$
+q_T=\frac{1}{A_T}\sum_s A_{T\cap s}q_s,\qquad
+A([\lambda_w,\lambda_e]\times[\phi_s,\phi_n])
+=R^2(\lambda_e-\lambda_w)(\sin\phi_n-\sin\phi_s),
+$$
+
+where $A_T$ and $A_{T\cap s}$ are target and overlap areas in m², $R$ is the consistently cancelled spherical radius in m, longitude $\lambda$ and latitude $\phi$ are in radians, and $q$ retains the input cell-average units. The implementation uses the dimensionless area factor because $R^2$ cancels exactly. Every target cell must be completely covered; gaps and extrapolation fail. Bounds must form monotonic rectilinear geographic cells no wider than 180 degrees. This first-order method preserves constants and the area-integrated scalar over a common domain, but not gradients or higher moments. Curvilinear polygons, masked partial cells, projected grids, vector-flux rotation, and second-order reconstruction remain unsupported.
+
+![Conceptual overlap weights for first-order conservative remapping](figures/conservative-remapping-schema.svg)
+
+The figure is a conceptual, non-georeferenced schema rather than a model result. It distinguishes overlap-area weights from nodal bilinear weights.
+
+As a reproducible verification example, `tests/EnvironmentalRegridderTest.cpp` aggregates four 1° source-cell means onto one 2° target cell. The expected value is computed independently from the two latitude-band factors $\sin(1^\circ)-\sin(0^\circ)$ and $\sin(2^\circ)-\sin(1^\circ)$; a second case preserves a constant exactly, and an uncovered target fails. Configure and execute it with `cmake -S . -B build && cmake --build build && ctest --test-dir build -R environmental_regridding --output-on-failure`. Passing establishes these numerical identities within the asserted tolerances, not observational validity for an environmental product.
+
 ## References
 
 - Shchepetkin, A. F., and McWilliams, J. C. (2005). The regional oceanic modeling system (ROMS): a split-explicit, free-surface, topography-following-coordinate oceanic model. *Ocean Modelling*, 9, 347–404. [doi:10.1016/j.ocemod.2004.08.002](https://doi.org/10.1016/j.ocemod.2004.08.002).

@@ -111,6 +111,54 @@ int main() {
     auto projectedCurved=EnvironmentalRegridder::bilinearProjected(projectedCurvedX,projectedCurvedY,
             projectedCurvedField,geographicLon,geographicLat,"EPSG:3857");
     assert(std::abs(projectedCurved(0,0,0)-3.5)<1.e-5);
+#endif
+    Array2<double> sourceBoundsLon(3,3),sourceBoundsLat(3,3);
+    for (int j=0;j<3;j++) for (int i=0;i<3;i++) {
+        sourceBoundsLon(j,i)=i; sourceBoundsLat(j,i)=j;
+    }
+    Array3<float> sourceAverage(2,2,2);
+    sourceAverage(0,0,0)=1; sourceAverage(0,0,1)=3;
+    sourceAverage(0,1,0)=5; sourceAverage(0,1,1)=7;
+    for (int j=0;j<2;j++) for (int i=0;i<2;i++) sourceAverage(1,j,i)=-2*sourceAverage(0,j,i);
+    Array2<double> targetBoundsLon(2,2),targetBoundsLat(2,2);
+    for (int j=0;j<2;j++) for (int i=0;i<2;i++) {
+        targetBoundsLon(j,i)=2*i; targetBoundsLat(j,i)=2*j;
+    }
+    auto conservative=EnvironmentalRegridder::conservativeRectilinearGeographicCellAverage(
+            sourceBoundsLon,sourceBoundsLat,sourceAverage,targetBoundsLon,targetBoundsLat);
+    double lowerArea=std::sin(3.14159265358979323846/180.0);
+    double upperArea=std::sin(2*3.14159265358979323846/180.0)-lowerArea;
+    double expected=(4*lowerArea+12*upperArea)/(2*(lowerArea+upperArea));
+    assert(std::abs(conservative(0,0,0)-expected)<1.e-5);
+    assert(std::abs(conservative(1,0,0)+2*expected)<1.e-5);
+    Array3<float> constantAverage(2,2,2); constantAverage=4.25f;
+    conservative=EnvironmentalRegridder::conservativeRectilinearGeographicCellAverage(
+            sourceBoundsLon,sourceBoundsLat,constantAverage,targetBoundsLon,targetBoundsLat);
+    assert(std::abs(conservative(0,0,0)-4.25)<1.e-6);
+    for (int j=0;j<3;j++) { sourceBoundsLon(j,0)=179; sourceBoundsLon(j,1)=180; sourceBoundsLon(j,2)=-179; }
+    targetBoundsLon(0,0)=179; targetBoundsLon(1,0)=179;
+    targetBoundsLon(0,1)=-179; targetBoundsLon(1,1)=-179;
+    conservative=EnvironmentalRegridder::conservativeRectilinearGeographicCellAverage(
+            sourceBoundsLon,sourceBoundsLat,constantAverage,targetBoundsLon,targetBoundsLat);
+    assert(std::abs(conservative(0,0,0)-4.25)<1.e-6);
+    for (int j=0;j<3;j++) for (int i=0;i<3;i++) sourceBoundsLon(j,i)=i;
+    for (int j=0;j<2;j++) for (int i=0;i<2;i++) targetBoundsLon(j,i)=2*i;
+    Array2<double> outsideBoundsLon(2,2),outsideBoundsLat(2,2);
+    for (int j=0;j<2;j++) for (int i=0;i<2;i++) {
+        outsideBoundsLon(j,i)=3*i; outsideBoundsLat(j,i)=2*j;
+    }
+    rejected=false;
+    try { EnvironmentalRegridder::conservativeRectilinearGeographicCellAverage(
+            sourceBoundsLon,sourceBoundsLat,sourceAverage,outsideBoundsLon,outsideBoundsLat); }
+    catch (const std::runtime_error&) { rejected=true; }
+    assert(rejected);
+    Array2<double> invalidBoundsLon=sourceBoundsLon;
+    invalidBoundsLon(1,1)=.5; rejected=false;
+    try { EnvironmentalRegridder::conservativeRectilinearGeographicCellAverage(
+            invalidBoundsLon,sourceBoundsLat,sourceAverage,targetBoundsLon,targetBoundsLat); }
+    catch (const std::runtime_error&) { rejected=true; }
+    assert(rejected);
+#ifdef WACOMM_USE_PROJ
     rejected=false;
     try { EnvironmentalRegridder::bilinearProjected(projectedX,projectedY,projectedField,
                                                       geographicLon,geographicLat,"EPSG:invalid"); }

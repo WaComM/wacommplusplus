@@ -12,6 +12,8 @@ Curvilinear preprocessing builds a deterministic uniform spatial index over loca
 
 Projected preprocessing is an optional adapter-layer operation. PROJ transforms EPSG:4326 ocean targets into an explicitly declared source CRS, while fields remain in their normalized Earth-relative vector basis. Transformed coordinates enter the rectilinear weights or the same indexed inverse-bilinear geometry with cyclic handling disabled. Neither the solver nor an execution backend contains CRS logic.
 
+First-order conservative remapping is a separate shared preprocessing primitive for rectilinear geographic cell averages. Spherical rectangle intersections define sparse conceptual weights before any solver/backend execution. It is not exposed as a weather or wave velocity option because conservation semantics depend on the sampled quantity, staggering, and vector basis.
+
 Surface drift follows the same hierarchy. `DriftObjectType` and `DriftSide` are fixed-width particle state; `DriftObjectCatalog` is the single coefficient source; and the allocation-free leeway function is shared by CPU and CUDA code. Optional coefficient-ensemble residuals use the same counter-key algorithm on both paths and are keyed only by configured seed and stable particle identity. `Config` selects the model and environmental provider before integration. Passive runs follow a configuration-level fast path and do not incur catalog lookup or wind computation.
 
 ## References
