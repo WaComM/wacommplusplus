@@ -35,11 +35,12 @@ void createWW3(const std::string& name,const std::string& velocityUnits="m s-1",
 void createProjectedWW3(const std::string& name) {
     NcFile file(name,NcFile::replace,NcFile::nc4);
     NcDim time=file.addDim("time",1),y=file.addDim("y",2),x=file.addDim("x",2);
-    double times[1]={0},xs[2]={0,111319.49079327357},ys[2]={0,111325.1428663851};
+    double times[1]={0},xs[4]={0,111219.49079327357,100,111319.49079327357};
+    double ys[4]={0,100,111225.1428663851,111325.1428663851};
     float u[4]={0,1,2,3},v[4]={0,-1,-2,-3};
     NcVar timeVar=file.addVar("time",ncDouble,time); timeVar.putAtt("units","seconds since 1968-05-23 00:00:00 UTC"); timeVar.putVar(times);
-    NcVar xVar=file.addVar("x",ncDouble,x); xVar.putAtt("units","m"); xVar.putVar(xs);
-    NcVar yVar=file.addVar("y",ncDouble,y); yVar.putAtt("units","m"); yVar.putVar(ys);
+    NcVar xVar=file.addVar("x",ncDouble,{y,x}); xVar.putAtt("units","m"); xVar.putVar(xs);
+    NcVar yVar=file.addVar("y",ncDouble,{y,x}); yVar.putAtt("units","m"); yVar.putVar(ys);
     NcVar stokesU=file.addVar("eastward_surface_stokes_drift",ncFloat,{time,y,x}); stokesU.putAtt("units","m s-1"); stokesU.putVar(u);
     NcVar stokesV=file.addVar("northward_surface_stokes_drift",ncFloat,{time,y,x}); stokesV.putAtt("units","m s-1"); stokesV.putVar(v);
 }

@@ -21,6 +21,11 @@ namespace EnvironmentalRegridder {
                                            const Array::Array2<double>& targetLon,
                                            const Array::Array2<double>& targetLat,
                                            const std::string& sourceCrs);
+    Array::Array3<float> bilinearCurvilinearCartesian(const Array::Array2<double>& sourceX,
+                                                      const Array::Array2<double>& sourceY,
+                                                      const Array::Array3<float>& source,
+                                                      const Array::Array2<double>& targetX,
+                                                      const Array::Array2<double>& targetY);
 }
 
 #endif

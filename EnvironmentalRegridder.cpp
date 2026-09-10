@@ -58,19 +58,20 @@ struct CurvilinearCell {
 
 class CurvilinearCellIndex {
 public:
-    CurvilinearCellIndex(const Array::Array2<double>& longitude,const Array::Array2<double>& latitude) {
+    CurvilinearCellIndex(const Array::Array2<double>& longitude,const Array::Array2<double>& latitude,bool cyclicLongitude=true): cyclicLongitude(cyclicLongitude) {
         double reference=longitude(0,0);
         if (!std::isfinite(reference))
             throw std::runtime_error("Environmental curvilinear source coordinates must be finite");
         for (int j=0;j+1<longitude.Nx();j++) for (int i=0;i+1<longitude.Ny();i++) {
-            double x00=longitude(j,i),x10=nearLongitude(longitude(j,i+1),x00);
-            double x01=nearLongitude(longitude(j+1,i),x00),x11=nearLongitude(longitude(j+1,i+1),x00);
+            double x00=longitude(j,i),x10=cyclicLongitude ? nearLongitude(longitude(j,i+1),x00) : longitude(j,i+1);
+            double x01=cyclicLongitude ? nearLongitude(longitude(j+1,i),x00) : longitude(j+1,i);
+            double x11=cyclicLongitude ? nearLongitude(longitude(j+1,i+1),x00) : longitude(j+1,i+1);
             double y00=latitude(j,i),y10=latitude(j,i+1),y01=latitude(j+1,i),y11=latitude(j+1,i+1);
             if (!std::isfinite(x00) || !std::isfinite(x10) || !std::isfinite(x01) || !std::isfinite(x11) ||
                 !std::isfinite(y00) || !std::isfinite(y10) || !std::isfinite(y01) || !std::isfinite(y11))
                 throw std::runtime_error("Environmental curvilinear source coordinates must be finite");
             double center=.25*(x00+x10+x01+x11);
-            double shift=360*std::round((reference-center)/360);
+            double shift=cyclicLongitude ? 360*std::round((reference-center)/360) : 0;
             CurvilinearCell cell={j,i,std::min(std::min(x00,x10),std::min(x01,x11))+shift,
                     std::max(std::max(x00,x10),std::max(x01,x11))+shift,
                     std::min(std::min(y00,y10),std::min(y01,y11)),
@@ -98,7 +99,7 @@ public:
     }
 
     const std::vector<size_t>& candidates(double& longitude,double latitude) const {
-        longitude=nearLongitude(longitude,longitudeReference);
+        if (cyclicLongitude) longitude=nearLongitude(longitude,longitudeReference);
         if (longitude<minimumX-1.e-10 || longitude>maximumX+1.e-10 ||
             latitude<minimumY-1.e-10 || latitude>maximumY+1.e-10) return empty;
         return bins[(size_t)yBin(latitude)*binsX+xBin(longitude)];
@@ -120,6 +121,7 @@ private:
     std::vector<size_t> empty;
     double minimumX=0,maximumX=0,minimumY=0,maximumY=0,longitudeReference=0;
     int binsX=1,binsY=1;
+    bool cyclicLongitude=true;
 };
 }
 
@@ -222,6 +224,62 @@ Array::Array3<float> EnvironmentalRegridder::bilinearCurvilinearGeographic(
     return result;
 }
 
+Array::Array3<float> EnvironmentalRegridder::bilinearCurvilinearCartesian(
+        const Array::Array2<double>& sourceX,const Array::Array2<double>& sourceY,
+        const Array::Array3<float>& source,const Array::Array2<double>& targetX,
+        const Array::Array2<double>& targetY) {
+    size_t eta=sourceX.Nx(),xi=sourceX.Ny();
+    if (eta<2 || xi<2 || sourceY.Nx()!=eta || sourceY.Ny()!=xi || source.Ny()!=eta || source.Nz()!=xi)
+        throw std::runtime_error("Environmental Cartesian curvilinear regridding requires compatible source dimensions of at least 2x2");
+    if (targetX.Nx()!=targetY.Nx() || targetX.Ny()!=targetY.Ny())
+        throw std::runtime_error("Environmental Cartesian target dimensions differ");
+    for (int t=0;t<source.Nx();t++) for (int j=0;j<eta;j++) for (int i=0;i<xi;i++)
+        if (!std::isfinite(source(t,j,i))) throw std::runtime_error("Environmental source field must be finite before regridding");
+    CurvilinearCellIndex cellIndex(sourceX,sourceY,false);
+    Array::Array3<float> result(source.Nx(),targetX.Nx(),targetX.Ny());
+    for (int tj=0;tj<targetX.Nx();tj++) for (int ti=0;ti<targetX.Ny();ti++) {
+        double targetCoordinateX=targetX(tj,ti),targetCoordinateY=targetY(tj,ti),foundX=0,foundY=0;
+        if (!std::isfinite(targetCoordinateX) || !std::isfinite(targetCoordinateY))
+            throw std::runtime_error("Environmental target coordinates must be finite");
+        int foundJ=-1,foundI=-1;
+        const auto& candidates=cellIndex.candidates(targetCoordinateX,targetCoordinateY);
+        for (size_t candidate:candidates) {
+            const auto& indexedCell=cellIndex.cell(candidate); int j=indexedCell.j,i=indexedCell.i;
+            double x00=sourceX(j,i),x10=sourceX(j,i+1),x01=sourceX(j+1,i),x11=sourceX(j+1,i+1);
+            double y00=sourceY(j,i),y10=sourceY(j,i+1),y01=sourceY(j+1,i),y11=sourceY(j+1,i+1);
+            if (targetCoordinateX<indexedCell.minimumX-1.e-10 || targetCoordinateX>indexedCell.maximumX+1.e-10 ||
+                targetCoordinateY<indexedCell.minimumY-1.e-10 || targetCoordinateY>indexedCell.maximumY+1.e-10) continue;
+            double x=.5,y=.5;
+            for (int iteration=0;iteration<20;iteration++) {
+                double mappedX=bilinear(x00,x10,x01,x11,x,y),mappedY=bilinear(y00,y10,y01,y11,x,y);
+                double dXdx=(1-y)*(x10-x00)+y*(x11-x01),dXdy=(1-x)*(x01-x00)+x*(x11-x10);
+                double dYdx=(1-y)*(y10-y00)+y*(y11-y01),dYdy=(1-x)*(y01-y00)+x*(y11-y10);
+                double determinant=dXdx*dYdy-dXdy*dYdx;
+                if (std::abs(determinant)<1.e-14) break;
+                double residualX=mappedX-targetCoordinateX,residualY=mappedY-targetCoordinateY;
+                x-=(dYdy*residualX-dXdy*residualY)/determinant;
+                y-=(-dYdx*residualX+dXdx*residualY)/determinant;
+            }
+            double residual=std::hypot(bilinear(x00,x10,x01,x11,x,y)-targetCoordinateX,
+                                       bilinear(y00,y10,y01,y11,x,y)-targetCoordinateY);
+            if (x>=-1.e-9 && x<=1+1.e-9 && y>=-1.e-9 && y<=1+1.e-9 && residual<1.e-8) {
+                double d00=(x10-x00)*(y01-y00)-(x01-x00)*(y10-y00);
+                double d10=(x10-x00)*(y11-y10)-(x11-x10)*(y10-y00);
+                double d01=(x11-x01)*(y01-y00)-(x01-x00)*(y11-y01);
+                double d11=(x11-x01)*(y11-y10)-(x11-x10)*(y11-y01);
+                if (std::abs(d00)<1.e-14 || d00*d10<=0 || d00*d01<=0 || d00*d11<=0)
+                    throw std::runtime_error("Environmental Cartesian source contains a folded or singular cell");
+                foundJ=j; foundI=i; foundX=std::max(0.0,std::min(1.0,x)); foundY=std::max(0.0,std::min(1.0,y)); break;
+            }
+        }
+        if (foundJ<0) throw std::runtime_error("Environmental target lies outside the Cartesian source grid; extrapolation is prohibited");
+        for (int t=0;t<source.Nx();t++)
+            result(t,tj,ti)=static_cast<float>(bilinear(source(t,foundJ,foundI),source(t,foundJ,foundI+1),
+                                                        source(t,foundJ+1,foundI),source(t,foundJ+1,foundI+1),foundX,foundY));
+    }
+    return result;
+}
+
 Array::Array3<float> EnvironmentalRegridder::bilinearProjected(
         const Array::Array2<double>& sourceX,const Array::Array2<double>& sourceY,
         const Array::Array3<float>& source,const Array::Array2<double>& targetLon,
@@ -239,10 +297,12 @@ Array::Array3<float> EnvironmentalRegridder::bilinearProjected(
     std::vector<double> xAxis(xi),yAxis(eta);
     for (int i=0;i<xi;i++) xAxis[i]=sourceX(0,i);
     for (int j=0;j<eta;j++) yAxis[j]=sourceY(j,0);
-    for (int j=0;j<eta;j++) for (int i=0;i<xi;i++)
-        if (!std::isfinite(sourceX(j,i)) || !std::isfinite(sourceY(j,i)) ||
-            std::abs(sourceX(j,i)-xAxis[i])>1.e-8 || std::abs(sourceY(j,i)-yAxis[j])>1.e-8)
-            throw std::runtime_error("Environmental projected regridding currently requires rectilinear source coordinates");
+    bool rectilinear=true;
+    for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) {
+        if (!std::isfinite(sourceX(j,i)) || !std::isfinite(sourceY(j,i)))
+            throw std::runtime_error("Environmental projected source coordinates must be finite");
+        if (std::abs(sourceX(j,i)-xAxis[i])>1.e-8 || std::abs(sourceY(j,i)-yAxis[j])>1.e-8) rectilinear=false;
+    }
     for (int t=0;t<source.Nx();t++) for (int j=0;j<eta;j++) for (int i=0;i<xi;i++)
         if (!std::isfinite(source(t,j,i))) throw std::runtime_error("Environmental source field must be finite before regridding");
     PJ_CONTEXT *context=proj_context_create();
@@ -253,6 +313,23 @@ Array::Array3<float> EnvironmentalRegridder::bilinearProjected(
         if (transform) proj_destroy(transform);
         if (context) proj_context_destroy(context);
         throw std::runtime_error("Unable to create the declared environmental CRS transformation: " + sourceCrs);
+    }
+    if (!rectilinear) {
+        Array::Array2<double> projectedX(targetLon.Nx(),targetLon.Ny()),projectedY(targetLon.Nx(),targetLon.Ny());
+        try {
+            for (int j=0;j<targetLon.Nx();j++) for (int i=0;i<targetLon.Ny();i++) {
+                if (!std::isfinite(targetLon(j,i)) || !std::isfinite(targetLat(j,i)))
+                    throw std::runtime_error("Environmental target coordinates must be finite");
+                PJ_COORD projected=proj_trans(transform,PJ_FWD,proj_coord(targetLon(j,i),targetLat(j,i),0,0));
+                if (!std::isfinite(projected.xy.x) || !std::isfinite(projected.xy.y))
+                    throw std::runtime_error("Environmental CRS transformation produced a non-finite coordinate");
+                projectedX(j,i)=projected.xy.x; projectedY(j,i)=projected.xy.y;
+            }
+            Array::Array3<float> result=bilinearCurvilinearCartesian(sourceX,sourceY,source,projectedX,projectedY);
+            proj_destroy(transform); proj_context_destroy(context); return result;
+        } catch (...) {
+            proj_destroy(transform); proj_context_destroy(context); throw;
+        }
     }
     Array::Array3<float> result(source.Nx(),targetLon.Nx(),targetLon.Ny());
     try {

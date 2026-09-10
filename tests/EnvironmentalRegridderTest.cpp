@@ -100,6 +100,17 @@ int main() {
                                                                geographicLon,geographicLat,"EPSG:3857");
     double targetX=55659.74539663678,targetY=55660.45186542152;
     assert(std::abs(projected(0,0,0)-(targetX/1000+2*targetY/1000))<1.e-4);
+    Array2<double> projectedCurvedX(2,2),projectedCurvedY(2,2);
+    projectedCurvedX(0,0)=targetX-1000; projectedCurvedX(0,1)=targetX+900;
+    projectedCurvedX(1,0)=targetX-900; projectedCurvedX(1,1)=targetX+1000;
+    projectedCurvedY(0,0)=targetY-1000; projectedCurvedY(0,1)=targetY-900;
+    projectedCurvedY(1,0)=targetY+900; projectedCurvedY(1,1)=targetY+1000;
+    Array3<float> projectedCurvedField(1,2,2);
+    projectedCurvedField(0,0,0)=1; projectedCurvedField(0,0,1)=3;
+    projectedCurvedField(0,1,0)=4; projectedCurvedField(0,1,1)=6;
+    auto projectedCurved=EnvironmentalRegridder::bilinearProjected(projectedCurvedX,projectedCurvedY,
+            projectedCurvedField,geographicLon,geographicLat,"EPSG:3857");
+    assert(std::abs(projectedCurved(0,0,0)-3.5)<1.e-5);
     rejected=false;
     try { EnvironmentalRegridder::bilinearProjected(projectedX,projectedY,projectedField,
                                                       geographicLon,geographicLat,"EPSG:invalid"); }
