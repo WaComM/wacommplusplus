@@ -54,7 +54,7 @@ The rectilinear operator preserves constant fields and is exact for fields affin
 
 ## Conservative cell-average remapping
 
-WaComM++ also provides a distinct first-order operator for extensive-density or cell-average scalar fields on rectilinear longitude/latitude grids. It is intentionally absent from WRF and WW3 velocity configuration: a point-sampled vector component is not a cell-integrated scalar, and component-wise conservation would not establish conservation of vector flux.
+WaComM++ also provides distinct conservative operators for extensive-density or cell-average scalar fields on rectilinear or convex-curvilinear longitude/latitude grids. They are intentionally absent from WRF and WW3 velocity configuration: a point-sampled vector component is not a cell-integrated scalar, and component-wise conservation would not establish conservation of vector flux.
 
 For source cell means $q_s$ and target cell $T$, the remapped mean is
 
@@ -64,13 +64,23 @@ A([\lambda_w,\lambda_e]\times[\phi_s,\phi_n])
 =R^2(\lambda_e-\lambda_w)(\sin\phi_n-\sin\phi_s),
 $$
 
-where $A_T$ and $A_{T\cap s}$ are target and overlap areas in m², $R$ is the consistently cancelled spherical radius in m, longitude $\lambda$ and latitude $\phi$ are in radians, and $q$ retains the input cell-average units. The implementation uses the dimensionless area factor because $R^2$ cancels exactly. Every target cell must be completely covered; gaps and extrapolation fail. Bounds must form monotonic rectilinear geographic cells no wider than 180 degrees. This first-order method preserves constants and the area-integrated scalar over a common domain, but not gradients or higher moments. Curvilinear polygons, masked partial cells, projected grids, vector-flux rotation, and second-order reconstruction remain unsupported.
+where $A_T$ and $A_{T\cap s}$ are target and overlap areas in m², $R$ is the consistently cancelled spherical radius in m, longitude $\lambda$ and latitude $\phi$ are in radians, and $q$ retains the input cell-average units. The implementation uses the dimensionless area factor because $R^2$ cancels exactly. Every target cell must be completely and uniquely covered; gaps, overlap, and extrapolation fail.
+
+For curvilinear cells the operator defines edges as straight segments in the local equal-area coordinates $x=\lambda$ and $y=\sin\phi$, clips convex quadrilaterals, and evaluates polygon area and centroid in that plane. Antimeridian coordinates are placed on one explicitly local branch; global cells, non-convex/folded cells, and edges ambiguous by 180 degrees are rejected. A supplied active fraction $f_s\in[0,1]$ multiplies the extensive source contribution. A zero-fraction cell may contain a non-finite placeholder because it contributes exactly zero; active cells must be finite. The target mean remains normalized by full target area, so inactive source fraction represents zero extensive content rather than missing coverage.
+
+The optional limited second-order reconstruction is
+
+$$
+q_s(x,y)=\bar q_s+\alpha_s\nabla q_s\boldsymbol{\cdot}\left[(x,y)-(x_s,y_s)\right],
+$$
+
+where $\bar q_s$ is the source cell mean, $(x_s,y_s)$ its equal-area centroid, $\nabla q_s$ a dimensioned least-squares gradient with respect to $x$ and $y$, and the dimensionless $\alpha_s\in[0,1]$ limits reconstructed source vertices to the extrema of active edge-neighbors. Integrating about the source centroid makes the linear correction integrate to zero over the complete source cell; therefore the common-domain extensive integral is preserved. First order preserves constants but not gradients. Second order reproduces an unlimited linear field where the limiter is inactive, but extrema, masks, boundaries, distorted cells, and insufficient neighbors reduce local order. Polygon construction is linear in grid size and the current deterministic all-pairs clipping is $O(N_sN_t)$ in source and target cell counts; no performance claim is made for global production meshes. Projected grids and vector-flux rotation remain unsupported.
 
 ![Conceptual overlap weights for first-order conservative remapping](figures/conservative-remapping-schema.svg)
 
 The figure is a conceptual, non-georeferenced schema rather than a model result. It distinguishes overlap-area weights from nodal bilinear weights.
 
-As a reproducible verification example, `tests/EnvironmentalRegridderTest.cpp` aggregates four 1° source-cell means onto one 2° target cell. The expected value is computed independently from the two latitude-band factors $\sin(1^\circ)-\sin(0^\circ)$ and $\sin(2^\circ)-\sin(1^\circ)$; a second case preserves a constant exactly, and an uncovered target fails. Configure and execute it with `cmake -S . -B build && cmake --build build && ctest --test-dir build -R environmental_regridding --output-on-failure`. Passing establishes these numerical identities within the asserted tolerances, not observational validity for an environmental product.
+As a reproducible verification example, `tests/EnvironmentalRegridderTest.cpp` aggregates four 1° source-cell means onto one 2° target cell. It also refines the central cell of a 3×3 grid, verifies a linear longitude field under second-order reconstruction, compares first- and second-order integrals, applies a fractional mask, and rejects folded and uncovered geometry. Configure and execute it with `cmake -S . -B build && cmake --build build && ctest --test-dir build -R environmental_regridding --output-on-failure`. Passing establishes these numerical identities within the asserted tolerances, not observational validity for an environmental product.
 
 ## References
 
@@ -81,4 +91,5 @@ As a reproducible verification example, `tests/EnvironmentalRegridderTest.cpp` a
 - Tolman, H. L. (1991). A third-generation model for wind waves on slowly varying, unsteady, and inhomogeneous depths and currents. *Journal of Physical Oceanography*, 21, 782–797. [doi:10.1175/1520-0485(1991)021%3C0782:ATGMFW%3E2.0.CO;2](https://doi.org/10.1175/1520-0485(1991)021%3C0782:ATGMFW%3E2.0.CO;2).
 - Hassell, D., Gregory, J., Blower, J., Lawrence, B. N., and Taylor, K. E. (2017). A data model of the Climate and Forecast metadata conventions (CF-1.6) with a software implementation (cf-python v2.1). *Geoscientific Model Development*, 10, 4619–4646. [doi:10.5194/gmd-10-4619-2017](https://doi.org/10.5194/gmd-10-4619-2017).
 - Jones, P. W. (1999). First- and second-order conservative remapping schemes for grids in spherical coordinates. *Monthly Weather Review*, 127, 2204–2210. [doi:10.1175/1520-0493(1999)127%3C2204:FASOCR%3E2.0.CO;2](https://doi.org/10.1175/1520-0493%281999%29127%3C2204%3AFASOCR%3E2.0.CO%3B2).
+- Barth, T. J., and Jespersen, D. C. (1989). The design and application of upwind schemes on unstructured meshes. *27th Aerospace Sciences Meeting*. [doi:10.2514/6.1989-366](https://doi.org/10.2514/6.1989-366).
 - Karney, C. F. F. (2013). Algorithms for geodesics. *Journal of Geodesy*, 87, 43–55. [doi:10.1007/s00190-012-0578-z](https://doi.org/10.1007/s00190-012-0578-z).

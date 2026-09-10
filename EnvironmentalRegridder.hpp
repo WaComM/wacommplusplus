@@ -32,6 +32,14 @@ namespace EnvironmentalRegridder {
             const Array::Array3<float>& sourceCellAverage,
             const Array::Array2<double>& targetLonBounds,
             const Array::Array2<double>& targetLatBounds);
+    Array::Array3<float> conservativeCurvilinearGeographicCellAverage(
+            const Array::Array2<double>& sourceLonBounds,
+            const Array::Array2<double>& sourceLatBounds,
+            const Array::Array3<float>& sourceCellAverage,
+            const Array::Array2<double>& sourceActiveFraction,
+            const Array::Array2<double>& targetLonBounds,
+            const Array::Array2<double>& targetLatBounds,
+            bool secondOrder=false);
 }
 
 #endif

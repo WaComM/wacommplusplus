@@ -84,6 +84,84 @@ double sphericalRectangleMeasure(double west,double east,double south,double nor
     return (east-west)*radians*(std::sin(north*radians)-std::sin(south*radians));
 }
 
+struct Point { double x,y; };
+using Polygon=std::vector<Point>;
+
+double cross(const Point& a,const Point& b,const Point& c) {
+    return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+}
+
+double polygonSignedArea(const Polygon& polygon) {
+    double sum=0;
+    for (size_t i=0;i<polygon.size();i++) {
+        const Point& a=polygon[i]; const Point& b=polygon[(i+1)%polygon.size()];
+        sum+=a.x*b.y-b.x*a.y;
+    }
+    return .5*sum;
+}
+
+Point polygonCentroid(const Polygon& polygon) {
+    double area=polygonSignedArea(polygon),x=0,y=0;
+    if (std::abs(area)<1.e-16) throw std::runtime_error("Conservative polygon is singular");
+    for (size_t i=0;i<polygon.size();i++) {
+        const Point& a=polygon[i]; const Point& b=polygon[(i+1)%polygon.size()];
+        double factor=a.x*b.y-b.x*a.y;
+        x+=(a.x+b.x)*factor; y+=(a.y+b.y)*factor;
+    }
+    return {x/(6*area),y/(6*area)};
+}
+
+void validateConvex(Polygon& polygon,const char *grid) {
+    double area=polygonSignedArea(polygon);
+    if (!std::isfinite(area) || std::abs(area)<1.e-16)
+        throw std::runtime_error(std::string("Conservative ")+grid+" grid contains a singular cell");
+    double orientation=area>0 ? 1 : -1;
+    for (size_t i=0;i<polygon.size();i++)
+        if (orientation*cross(polygon[i],polygon[(i+1)%polygon.size()],polygon[(i+2)%polygon.size()])<=1.e-14)
+            throw std::runtime_error(std::string("Conservative ")+grid+" grid contains a non-convex or folded cell");
+    if (area<0) std::reverse(polygon.begin(),polygon.end());
+}
+
+Point segmentIntersection(const Point& a,const Point& b,const Point& c,const Point& d) {
+    double abX=b.x-a.x,abY=b.y-a.y,cdX=d.x-c.x,cdY=d.y-c.y;
+    double denominator=abX*cdY-abY*cdX;
+    if (std::abs(denominator)<1.e-16) return b;
+    double t=((c.x-a.x)*cdY-(c.y-a.y)*cdX)/denominator;
+    return {a.x+t*abX,a.y+t*abY};
+}
+
+Polygon intersectConvex(Polygon subject,const Polygon& clip) {
+    for (size_t edge=0;edge<clip.size() && !subject.empty();edge++) {
+        Point a=clip[edge],b=clip[(edge+1)%clip.size()]; Polygon output;
+        Point previous=subject.back(); bool previousInside=cross(a,b,previous)>=-1.e-14;
+        for (const Point& current:subject) {
+            bool currentInside=cross(a,b,current)>=-1.e-14;
+            if (currentInside!=previousInside) output.push_back(segmentIntersection(previous,current,a,b));
+            if (currentInside) output.push_back(current);
+            previous=current; previousInside=currentInside;
+        }
+        subject=std::move(output);
+    }
+    return subject;
+}
+
+Polygon geographicCell(const Array::Array2<double>& longitude,const Array::Array2<double>& latitude,
+                       int j,int i,double reference,const char *grid) {
+    const double radians=3.14159265358979323846/180;
+    int rows[4]={j,j,j+1,j+1},columns[4]={i,i+1,i+1,i}; Polygon polygon;
+    for (int corner=0;corner<4;corner++) {
+        double lon=longitude(rows[corner],columns[corner]),lat=latitude(rows[corner],columns[corner]);
+        if (!std::isfinite(lon) || !std::isfinite(lat) || lat<-90 || lat>90)
+            throw std::runtime_error(std::string("Conservative ")+grid+" coordinates must be finite geographic degrees");
+        lon=nearLongitude(lon,reference);
+        polygon.push_back({lon*radians,std::sin(lat*radians)});
+    }
+    for (size_t corner=0;corner<polygon.size();corner++)
+        if (std::abs(polygon[(corner+1)%polygon.size()].x-polygon[corner].x)>=3.14159265358979323846-1.e-12)
+            throw std::runtime_error(std::string("Conservative ")+grid+" cell has an ambiguous longitude edge");
+    validateConvex(polygon,grid); return polygon;
+}
+
 struct CurvilinearCell {
     int j,i;
     double minimumX,maximumX,minimumY,maximumY;
@@ -352,6 +430,81 @@ Array::Array3<float> EnvironmentalRegridder::conservativeRectilinearGeographicCe
         if (targetMeasure<=0 || std::abs(covered-targetMeasure)>1.e-10*std::max(1.0,targetMeasure))
             throw std::runtime_error("Conservative target cell is not completely covered by the source grid; extrapolation is prohibited");
         for (int t=0;t<sourceCellAverage.Nx();t++) result(t,tj,ti)=static_cast<float>(totals[t]/targetMeasure);
+    }
+    return result;
+}
+
+Array::Array3<float> EnvironmentalRegridder::conservativeCurvilinearGeographicCellAverage(
+        const Array::Array2<double>& sourceLonBounds,const Array::Array2<double>& sourceLatBounds,
+        const Array::Array3<float>& sourceCellAverage,const Array::Array2<double>& sourceActiveFraction,
+        const Array::Array2<double>& targetLonBounds,const Array::Array2<double>& targetLatBounds,bool secondOrder) {
+    if (sourceLonBounds.Nx()<2 || sourceLonBounds.Ny()<2 ||
+        sourceLatBounds.Nx()!=sourceLonBounds.Nx() || sourceLatBounds.Ny()!=sourceLonBounds.Ny() ||
+        sourceCellAverage.Ny()+1!=sourceLonBounds.Nx() || sourceCellAverage.Nz()+1!=sourceLonBounds.Ny() ||
+        sourceActiveFraction.Nx()!=sourceCellAverage.Ny() || sourceActiveFraction.Ny()!=sourceCellAverage.Nz())
+        throw std::runtime_error("Conservative curvilinear source fields, fractions, and corner bounds have incompatible dimensions");
+    if (targetLonBounds.Nx()<2 || targetLonBounds.Ny()<2 ||
+        targetLatBounds.Nx()!=targetLonBounds.Nx() || targetLatBounds.Ny()!=targetLonBounds.Ny())
+        throw std::runtime_error("Conservative curvilinear target corner bounds have incompatible dimensions");
+    double reference=sourceLonBounds(0,0); int sourceEta=sourceCellAverage.Ny(),sourceXi=sourceCellAverage.Nz();
+    int targetEta=targetLonBounds.Nx()-1,targetXi=targetLonBounds.Ny()-1;
+    std::vector<Polygon> sourcePolygons((size_t)sourceEta*sourceXi);
+    std::vector<Point> sourceCentroids(sourcePolygons.size());
+    for (int j=0;j<sourceEta;j++) for (int i=0;i<sourceXi;i++) {
+        size_t index=(size_t)j*sourceXi+i;
+        sourcePolygons[index]=geographicCell(sourceLonBounds,sourceLatBounds,j,i,reference,"source");
+        sourceCentroids[index]=polygonCentroid(sourcePolygons[index]);
+        double fraction=sourceActiveFraction(j,i);
+        if (!std::isfinite(fraction) || fraction<0 || fraction>1)
+            throw std::runtime_error("Conservative source active fractions must be finite values in [0,1]");
+        for (int t=0;t<sourceCellAverage.Nx();t++)
+            if (fraction>0 && !std::isfinite(sourceCellAverage(t,j,i)))
+                throw std::runtime_error("Active conservative source cell averages must be finite");
+    }
+    std::vector<std::vector<Point>> gradients(sourceCellAverage.Nx(),std::vector<Point>(sourcePolygons.size(),{0,0}));
+    if (secondOrder) for (int t=0;t<sourceCellAverage.Nx();t++) for (int j=0;j<sourceEta;j++) for (int i=0;i<sourceXi;i++) {
+        size_t index=(size_t)j*sourceXi+i; if (sourceActiveFraction(j,i)==0) continue;
+        double q=sourceCellAverage(t,j,i),sxx=0,sxy=0,syy=0,sxq=0,syq=0,qMin=q,qMax=q;
+        int neighbors[4][2]={{j-1,i},{j+1,i},{j,i-1},{j,i+1}};
+        for (auto& neighbor:neighbors) {
+            int nj=neighbor[0],ni=neighbor[1];
+            if (nj<0 || nj>=sourceEta || ni<0 || ni>=sourceXi || sourceActiveFraction(nj,ni)==0) continue;
+            size_t other=(size_t)nj*sourceXi+ni; double dx=sourceCentroids[other].x-sourceCentroids[index].x;
+            double dy=sourceCentroids[other].y-sourceCentroids[index].y,dq=sourceCellAverage(t,nj,ni)-q;
+            sxx+=dx*dx; sxy+=dx*dy; syy+=dy*dy; sxq+=dx*dq; syq+=dy*dq;
+            qMin=std::min(qMin,(double)sourceCellAverage(t,nj,ni)); qMax=std::max(qMax,(double)sourceCellAverage(t,nj,ni));
+        }
+        double determinant=sxx*syy-sxy*sxy;
+        if (std::abs(determinant)>1.e-24) {
+            Point gradient={(syy*sxq-sxy*syq)/determinant,(sxx*syq-sxy*sxq)/determinant}; double limiter=1;
+            for (const Point& vertex:sourcePolygons[index]) {
+                double increment=gradient.x*(vertex.x-sourceCentroids[index].x)+gradient.y*(vertex.y-sourceCentroids[index].y);
+                if (increment>0) limiter=std::min(limiter,(qMax-q)/increment);
+                else if (increment<0) limiter=std::min(limiter,(qMin-q)/increment);
+            }
+            gradients[t][index]={limiter*gradient.x,limiter*gradient.y};
+        }
+    }
+    Array::Array3<float> result(sourceCellAverage.Nx(),targetEta,targetXi);
+    for (int tj=0;tj<targetEta;tj++) for (int ti=0;ti<targetXi;ti++) {
+        Polygon target=geographicCell(targetLonBounds,targetLatBounds,tj,ti,reference,"target");
+        double targetArea=polygonSignedArea(target),covered=0; std::vector<double> totals(sourceCellAverage.Nx(),0);
+        for (size_t index=0;index<sourcePolygons.size();index++) {
+            Polygon overlap=intersectConvex(target,sourcePolygons[index]);
+            if (overlap.size()<3) continue;
+            double area=std::abs(polygonSignedArea(overlap)); if (area<1.e-16) continue; covered+=area;
+            int sj=(int)(index/sourceXi),si=(int)(index%sourceXi); double fraction=sourceActiveFraction(sj,si);
+            if (fraction==0) continue;
+            Point overlapCentroid=polygonCentroid(overlap);
+            for (int t=0;t<sourceCellAverage.Nx();t++) {
+                double reconstructed=sourceCellAverage(t,sj,si)+gradients[t][index].x*(overlapCentroid.x-sourceCentroids[index].x)+
+                                     gradients[t][index].y*(overlapCentroid.y-sourceCentroids[index].y);
+                totals[t]+=fraction*area*reconstructed;
+            }
+        }
+        if (std::abs(covered-targetArea)>1.e-9*std::max(1.0,targetArea))
+            throw std::runtime_error("Conservative curvilinear target cell is not completely and uniquely covered by the source grid");
+        for (int t=0;t<sourceCellAverage.Nx();t++) result(t,tj,ti)=static_cast<float>(totals[t]/targetArea);
     }
     return result;
 }

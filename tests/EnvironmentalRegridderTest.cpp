@@ -1,6 +1,7 @@
 #include "../EnvironmentalRegridder.hpp"
 #include <cassert>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 using namespace Array;
@@ -156,6 +157,73 @@ int main() {
     invalidBoundsLon(1,1)=.5; rejected=false;
     try { EnvironmentalRegridder::conservativeRectilinearGeographicCellAverage(
             invalidBoundsLon,sourceBoundsLat,sourceAverage,targetBoundsLon,targetBoundsLat); }
+    catch (const std::runtime_error&) { rejected=true; }
+    assert(rejected);
+    Array2<double> curvilinearBoundsLon(4,4),curvilinearBoundsLat(4,4),activeFraction(3,3);
+    Array3<float> curvilinearAverage(1,3,3);
+    const double radians=3.14159265358979323846/180;
+    for (int j=0;j<4;j++) for (int i=0;i<4;i++) {
+        curvilinearBoundsLon(j,i)=i; curvilinearBoundsLat(j,i)=j;
+    }
+    activeFraction=1.0;
+    for (int j=0;j<3;j++) for (int i=0;i<3;i++)
+        curvilinearAverage(0,j,i)=static_cast<float>((i+.5)*radians);
+    Array2<double> refinedLon(3,3),refinedLat(3,3);
+    for (int j=0;j<3;j++) for (int i=0;i<3;i++) {
+        refinedLon(j,i)=1+.5*i; refinedLat(j,i)=1+.5*j;
+    }
+    auto firstOrder=EnvironmentalRegridder::conservativeCurvilinearGeographicCellAverage(
+            curvilinearBoundsLon,curvilinearBoundsLat,curvilinearAverage,activeFraction,refinedLon,refinedLat);
+    auto secondOrder=EnvironmentalRegridder::conservativeCurvilinearGeographicCellAverage(
+            curvilinearBoundsLon,curvilinearBoundsLat,curvilinearAverage,activeFraction,refinedLon,refinedLat,true);
+    assert(std::abs(firstOrder(0,0,0)-1.5*radians)<1.e-7);
+    assert(std::abs(secondOrder(0,0,0)-1.25*radians)<1.e-7);
+    assert(std::abs(secondOrder(0,0,1)-1.75*radians)<1.e-7);
+    double firstIntegral=0,secondIntegral=0;
+    for (int j=0;j<2;j++) for (int i=0;i<2;i++) {
+        double area=.5*radians*(std::sin((1+.5*(j+1))*radians)-std::sin((1+.5*j)*radians));
+        firstIntegral+=area*firstOrder(0,j,i); secondIntegral+=area*secondOrder(0,j,i);
+    }
+    assert(std::abs(firstIntegral-secondIntegral)<1.e-12);
+    curvilinearAverage=4.0f; activeFraction=1.0;
+    Array2<double> coarseLon(2,2),coarseLat(2,2);
+    for (int j=0;j<2;j++) for (int i=0;i<2;i++) { coarseLon(j,i)=3*i; coarseLat(j,i)=3*j; }
+    for (int j=1;j<3;j++) for (int i=1;i<3;i++) {
+        curvilinearBoundsLon(j,i)+=.08*j; curvilinearBoundsLat(j,i)+=.04*i;
+    }
+    auto warpedConstant=EnvironmentalRegridder::conservativeCurvilinearGeographicCellAverage(
+            curvilinearBoundsLon,curvilinearBoundsLat,curvilinearAverage,activeFraction,coarseLon,coarseLat);
+    assert(std::abs(warpedConstant(0,0,0)-4)<1.e-6);
+    for (int j=0;j<4;j++) for (int i=0;i<4;i++) {
+        curvilinearBoundsLon(j,i)=i; curvilinearBoundsLat(j,i)=j;
+    }
+    activeFraction(0,0)=.5;
+    auto masked=EnvironmentalRegridder::conservativeCurvilinearGeographicCellAverage(
+            curvilinearBoundsLon,curvilinearBoundsLat,curvilinearAverage,activeFraction,coarseLon,coarseLat);
+    double fullMeasure=3*radians*std::sin(3*radians),maskedMeasure=.5*radians*std::sin(radians);
+    assert(std::abs(masked(0,0,0)-4*(1-maskedMeasure/fullMeasure))<1.e-6);
+    activeFraction=1.0; activeFraction(0,0)=0; curvilinearAverage(0,0,0)=std::numeric_limits<float>::quiet_NaN();
+    masked=EnvironmentalRegridder::conservativeCurvilinearGeographicCellAverage(
+            curvilinearBoundsLon,curvilinearBoundsLat,curvilinearAverage,activeFraction,coarseLon,coarseLat);
+    assert(std::isfinite(masked(0,0,0)) && std::abs(masked(0,0,0)-4*(1-2*maskedMeasure/fullMeasure))<1.e-6);
+    curvilinearAverage=4.0f; activeFraction=1.0;
+    Array2<double> conservativeCyclicLon(2,3),conservativeCyclicLat(2,3),cyclicFraction(1,2);
+    Array2<double> conservativeCyclicTargetLon(2,2),conservativeCyclicTargetLat(2,2);
+    Array3<float> cyclicAverage(1,1,2); cyclicAverage=2.5f; cyclicFraction=1.0;
+    for (int j=0;j<2;j++) {
+        conservativeCyclicLon(j,0)=179; conservativeCyclicLon(j,1)=180; conservativeCyclicLon(j,2)=-179;
+        conservativeCyclicLat(j,0)=j; conservativeCyclicLat(j,1)=j; conservativeCyclicLat(j,2)=j;
+        conservativeCyclicTargetLon(j,0)=179; conservativeCyclicTargetLon(j,1)=-179;
+        conservativeCyclicTargetLat(j,0)=j; conservativeCyclicTargetLat(j,1)=j;
+    }
+    auto cyclicConservative=EnvironmentalRegridder::conservativeCurvilinearGeographicCellAverage(
+            conservativeCyclicLon,conservativeCyclicLat,cyclicAverage,cyclicFraction,
+            conservativeCyclicTargetLon,conservativeCyclicTargetLat);
+    assert(std::abs(cyclicConservative(0,0,0)-2.5)<1.e-6);
+    Array2<double> foldedLon=coarseLon;
+    foldedLon(1,0)=3; foldedLon(1,1)=0; rejected=false;
+    try { EnvironmentalRegridder::conservativeCurvilinearGeographicCellAverage(
+            curvilinearBoundsLon,curvilinearBoundsLat,curvilinearAverage,activeFraction,foldedLon,coarseLat); }
     catch (const std::runtime_error&) { rejected=true; }
     assert(rejected);
 #ifdef WACOMM_USE_PROJ
