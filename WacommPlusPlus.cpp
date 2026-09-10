@@ -9,6 +9,7 @@
 #include "WaveModelAdapterFactory.hpp"
 #include <algorithm>
 #include <stdexcept>
+#include <unordered_map>
 
 #if defined(USE_MPI) || defined(USE_EMPI)
 #define OMPI_SKIP_MPICXX
@@ -88,6 +89,30 @@ void WacommPlusPlus::run() {
 
     int inputDirection=config->Backward() ? -1 : 1;
     int inputFirst=config->Backward() ? (int)config->NcInputs().size()-1 : 0;
+    std::unordered_map<int,std::shared_ptr<OceanModelAdapter>> oceanWindows;
+    std::unordered_map<int,std::shared_ptr<WeatherModelAdapter>> weatherWindows;
+    std::unordered_map<int,std::shared_ptr<WaveModelAdapter>> waveWindows;
+    auto oceanWindow=[&](int index) {
+        auto found=oceanWindows.find(index);
+        if (found!=oceanWindows.end()) return found->second;
+        string& input=config->NcInputs()[index];
+        auto adapter=OceanModelAdapterFactory::create(config->OceanModel(),input);
+        adapter->process(); oceanWindows[index]=adapter; return adapter;
+    };
+    auto weatherWindow=[&](int index) {
+        auto found=weatherWindows.find(index);
+        if (found!=weatherWindows.end()) return found->second;
+        string& input=config->WeatherInputs()[index];
+        auto adapter=WeatherModelAdapterFactory::create(config->WeatherModel(),input,config->WeatherSourceCrs());
+        adapter->process(); weatherWindows[index]=adapter; return adapter;
+    };
+    auto waveWindow=[&](int index) {
+        auto found=waveWindows.find(index);
+        if (found!=waveWindows.end()) return found->second;
+        string& input=config->WaveInputs()[index];
+        auto adapter=WaveModelAdapterFactory::create(config->WaveModel(),input,config->WaveSourceCrs());
+        adapter->process(); waveWindows[index]=adapter; return adapter;
+    };
     for (int inputIdx=inputFirst;inputIdx>=0 && inputIdx<config->NcInputs().size();inputIdx+=inputDirection) {
         string &ncInput=config->NcInputs()[inputIdx];
 
@@ -95,42 +120,29 @@ void WacommPlusPlus::run() {
             LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
         }
 
-        shared_ptr<OceanModelAdapter> oceanModelAdapter=
-                OceanModelAdapterFactory::create(config->OceanModel(),ncInput);
-        oceanModelAdapter->process();
+        shared_ptr<OceanModelAdapter> oceanModelAdapter=oceanWindow(inputIdx);
 
         shared_ptr<WeatherModelAdapter> weatherModelAdapter;
         if (config->WeatherModel()=="WRF") {
-            string &weatherInput=config->WeatherInputs()[inputIdx];
-            weatherModelAdapter=WeatherModelAdapterFactory::create(config->WeatherModel(),weatherInput,config->WeatherSourceCrs());
-            weatherModelAdapter->process();
+            weatherModelAdapter=weatherWindow(inputIdx);
         }
         shared_ptr<WaveModelAdapter> waveModelAdapter;
         if (config->WaveModel()=="WW3") {
-            string &waveInput=config->WaveInputs()[inputIdx];
-            waveModelAdapter=WaveModelAdapterFactory::create(config->WaveModel(),waveInput,config->WaveSourceCrs());
-            waveModelAdapter->process();
+            waveModelAdapter=waveWindow(inputIdx);
         }
 
         int adjacentIdx=inputIdx+inputDirection;
         if (adjacentIdx>=0 && adjacentIdx<config->NcInputs().size()) {
-            string &adjacentInput=config->NcInputs()[adjacentIdx];
-            shared_ptr<OceanModelAdapter> adjacentAdapter=
-                    OceanModelAdapterFactory::create(config->OceanModel(),adjacentInput);
-            adjacentAdapter->process();
+            shared_ptr<OceanModelAdapter> adjacentAdapter=oceanWindow(adjacentIdx);
             int boundaryRecord=config->Backward() ? (int)adjacentAdapter->OceanTime().Nx()-1 : 0;
             oceanModelAdapter->appendBoundaryRecord(*adjacentAdapter,boundaryRecord,config->Backward());
             if (weatherModelAdapter) {
-                string &adjacentWeatherInput=config->WeatherInputs()[adjacentIdx];
-                auto adjacentWeather=WeatherModelAdapterFactory::create(config->WeatherModel(),adjacentWeatherInput,config->WeatherSourceCrs());
-                adjacentWeather->process();
+                auto adjacentWeather=weatherWindow(adjacentIdx);
                 int weatherRecord=config->Backward() ? (int)adjacentWeather->Time().Nx()-1 : 0;
                 weatherModelAdapter->appendBoundaryRecord(*adjacentWeather,weatherRecord,config->Backward());
             }
             if (waveModelAdapter) {
-                string &adjacentWaveInput=config->WaveInputs()[adjacentIdx];
-                auto adjacentWave=WaveModelAdapterFactory::create(config->WaveModel(),adjacentWaveInput,config->WaveSourceCrs());
-                adjacentWave->process();
+                auto adjacentWave=waveWindow(adjacentIdx);
                 int waveRecord=config->Backward() ? (int)adjacentWave->Time().Nx()-1 : 0;
                 waveModelAdapter->appendBoundaryRecord(*adjacentWave,waveRecord,config->Backward());
             }
@@ -246,6 +258,9 @@ void WacommPlusPlus::run() {
         }
         // Go to the next input file
         idx++;
+        oceanWindows.erase(inputIdx);
+        weatherWindows.erase(inputIdx);
+        waveWindows.erase(inputIdx);
     }
 
 #ifdef USE_EMPI

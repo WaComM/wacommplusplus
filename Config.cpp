@@ -3,6 +3,7 @@
 //
 
 #include "Config.hpp"
+#include "EnvironmentalDataAccess.hpp"
 #include "JulianDate.hpp"
 #include <nlohmann/json.hpp>
 #include <cmath>
@@ -704,7 +705,7 @@ void Config::loadFromJson(const string &fileName) {
         if (io.contains("nc_inputs") && io["nc_inputs"].is_array()) {
             for (auto ncInput:io["nc_inputs"]) {
                 string file=ncInput;
-                this->ncInputs.push_back(ncBasePath+"/"+file);
+                this->ncInputs.push_back(EnvironmentalDataAccess::resolve(ncBasePath,file));
             }
         }
     }
@@ -814,7 +815,9 @@ void Config::loadFromJson(const string &fileName) {
                     throw std::runtime_error("Unknown environment.wind.regrid: " + weatherRegridding);
                 if (!wind.contains("nc_inputs") || !wind["nc_inputs"].is_array())
                     throw std::runtime_error("WRF wind requires environment.wind.nc_inputs");
-                for (auto input:wind["nc_inputs"]) weatherInputs.push_back(input);
+                string basePath=wind.value("base_path",ncBasePath);
+                for (auto input:wind["nc_inputs"])
+                    weatherInputs.push_back(EnvironmentalDataAccess::resolve(basePath,input));
             } else if (adapter!="none") throw std::runtime_error("Unknown environment.wind.adapter: " + adapter);
         }
         if (environment.contains("wave")) {
@@ -828,7 +831,9 @@ void Config::loadFromJson(const string &fileName) {
                     throw std::runtime_error("Unknown environment.wave.regrid: " + waveRegridding);
                 if (!wave.contains("nc_inputs") || !wave["nc_inputs"].is_array())
                     throw std::runtime_error("WW3 wave input requires environment.wave.nc_inputs");
-                for (auto input:wave["nc_inputs"]) waveInputs.push_back(input);
+                string basePath=wave.value("base_path",ncBasePath);
+                for (auto input:wave["nc_inputs"])
+                    waveInputs.push_back(EnvironmentalDataAccess::resolve(basePath,input));
             }
         }
     }

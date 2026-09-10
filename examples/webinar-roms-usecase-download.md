@@ -6,11 +6,11 @@ This historical scenario demonstrates forward drift using hourly ROMS forcing on
 
 ## Prerequisites and fields
 
-Build with NetCDF C++4 and verify the historical OPeNDAP endpoint. Inputs require chronological ROMS time, rho-grid geometry, mask and bathymetry, sigma metadata, zeta, staggered U/V, and the W/AKT fields expected by the adapter. The checked-in webinar source has a large sampling rate.
+Build with NetCDF C++4 providing DAP2/DAP4 and verify the historical OPeNDAP endpoint. Inputs require chronological ROMS time, rho-grid geometry, mask and bathymetry, sigma metadata, zeta, staggered U/V, and the W/AKT fields expected by the adapter. The checked-in webinar source has a large sampling rate.
 
 ## Configuration and command
 
-The configuration selects `ROMS`, dry caching, forward tracking, seed 5489, and constraint/kill/reflection closures. Review remote availability and run:
+The configuration selects `ROMS`, a dry adapter-processing run, forward tracking, seed 5489, and constraint/kill/reflection closures. Relative forcing names resolve against the configured HTTP `io.base_path`. WaComM++ opens the current and adjacent ROMS windows on demand, reuses the adjacent normalized adapter for the next interval, and releases the previous window. Review remote availability and run:
 
 ```bash
 ./build/wacommplusplus examples/webinar-roms-usecase-download.json
@@ -18,7 +18,7 @@ The configuration selects `ROMS`, dry caching, forward tracking, seed 5489, and 
 
 ## Expected behavior and validation
 
-The adapter preserves physical signs and chronological data while the solver controls direction. Check download completeness, source mapping, count preservation, interval timestamps and closure events. Run `ctest --test-dir build -R "roms_adapter|particle_physical_interval|concentration" --output-on-failure` and compare a cached rerun.
+The adapter preserves physical signs and chronological data while the solver controls direction. Check source mapping, count preservation, interval timestamps and closure events. Run `ctest --test-dir build -R "roms_adapter|particle_physical_interval|concentration" --output-on-failure`. Configure `BUILD_REMOTE_INTEGRATION_TESTS=ON` and run `ctest --test-dir build -R remote_netcdf_integration --output-on-failure` to verify live OPeNDAP metadata and hyperslab transport independently of this historical endpoint.
 
 ## Limitations, interpretation, and reproducibility
 

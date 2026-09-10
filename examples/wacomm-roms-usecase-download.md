@@ -6,11 +6,11 @@ This historical scenario evaluates forward transport from multiple Campania coas
 
 ## Prerequisites and fields
 
-Build with NetCDF C++4 and verify access to the configured historical OPeNDAP service. Inputs must satisfy the ROMS adapter contract, including chronological time, rho-grid geometry, sigma metadata, zeta and staggered velocity fields. Verify `sources-campania_region.json` points against the actual grid.
+Build with NetCDF C++4 providing DAP2/DAP4 and verify access to the configured historical OPeNDAP service. Inputs must satisfy the ROMS adapter contract, including chronological time, rho-grid geometry, sigma metadata, zeta and staggered velocity fields. Verify `sources-campania_region.json` points against the actual grid.
 
 ## Configuration and command
 
-The scenario selects `ROMS`, dry input caching, forward tracking, a fixed seed, and constraint/kill/reflection closures. Replace an unavailable endpoint before running:
+The scenario selects `ROMS`, a dry adapter-processing run, forward tracking, a fixed seed, and constraint/kill/reflection closures. Relative forcing names resolve against `io.base_path`; current and adjacent windows are opened on demand and the normalized adjacent window is reused once. Replace an unavailable endpoint before running:
 
 ```bash
 ./build/wacommplusplus examples/wacomm-roms-usecase-download.json
@@ -18,7 +18,7 @@ The scenario selects `ROMS`, dry input caching, forward tracking, a fixed seed, 
 
 ## Expected behavior and validation
 
-Files are traversed oldest-to-newest and adapters do not reverse or negate fields. Inspect input caching, source mapping, particle totals, interval boundaries, and outputs. Run `ctest --test-dir build -R "roms_adapter|particle_physical_interval|concentration" --output-on-failure` and compare cached reruns.
+Files are traversed oldest-to-newest and adapters do not reverse or negate fields. Inspect source mapping, particle totals, interval boundaries, and outputs. Run `ctest --test-dir build -R "roms_adapter|particle_physical_interval|concentration" --output-on-failure`. With `BUILD_REMOTE_INTEGRATION_TESTS=ON`, separately run `ctest --test-dir build -R remote_netcdf_integration --output-on-failure` to verify live OPeNDAP transport.
 
 ## Limitations, interpretation, and reproducibility
 

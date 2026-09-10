@@ -14,6 +14,7 @@ option(USE_OMP "Use OpenMP for shared memory parallelism." OFF)
 option(USE_OPENACC "Use OpenACC acceleration." OFF)
 option(USE_CUDA "Use CUDA acceleration." OFF)
 option(USE_PROJ "Use PROJ for explicit environmental coordinate transformations." OFF)
+option(BUILD_REMOTE_INTEGRATION_TESTS "Run network-dependent OPeNDAP integration tests." OFF)
 
 set(WACOMM_GIT_REVISION "unknown")
 find_package(Git QUIET)
@@ -29,7 +30,7 @@ if(Git_FOUND)
     endif()
 endif()
 set(WACOMM_CMAKE_OPTIONS
-        "BUILD_APPLICATION=${BUILD_APPLICATION};BUILD_TESTING=${BUILD_TESTING};DEBUG=${DEBUG};USE_MPI=${USE_MPI};USE_EMPI=${USE_EMPI};USE_OMP=${USE_OMP};USE_OPENACC=${USE_OPENACC};USE_CUDA=${USE_CUDA};USE_PROJ=${USE_PROJ}")
+        "BUILD_APPLICATION=${BUILD_APPLICATION};BUILD_TESTING=${BUILD_TESTING};BUILD_REMOTE_INTEGRATION_TESTS=${BUILD_REMOTE_INTEGRATION_TESTS};DEBUG=${DEBUG};USE_MPI=${USE_MPI};USE_EMPI=${USE_EMPI};USE_OMP=${USE_OMP};USE_OPENACC=${USE_OPENACC};USE_CUDA=${USE_CUDA};USE_PROJ=${USE_PROJ}")
 set(WACOMM_GENERATED_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 configure_file(BuildInfo.hpp.in "${WACOMM_GENERATED_INCLUDE}/BuildInfo.hpp" @ONLY)
 
@@ -69,6 +70,17 @@ if(BUILD_APPLICATION)
         set_target_properties(NetCDF::CXX4 PROPERTIES IMPORTED_LOCATION "${NETCDF_CXX_LIBRARY}"
                 INTERFACE_INCLUDE_DIRECTORIES "${NETCDF_CXX_INCLUDE_DIR}")
         set(WACOMM_DEPENDENCY_LIBRARIES NetCDF::CXX4 PkgConfig::NETCDF PkgConfig::LOG4CPLUS)
+    endif()
+    include(CheckCXXSourceCompiles)
+    set(CMAKE_REQUIRED_INCLUDES "${NETCDF_INCLUDE_DIRS}")
+    check_cxx_source_compiles("#include <netcdf_meta.h>
+        #if !NC_HAS_DAP2 || !NC_HAS_DAP4
+        #error NetCDF remote access is unavailable
+        #endif
+        int main() { return 0; }" WACOMM_NETCDF_HAS_REMOTE_ACCESS)
+    unset(CMAKE_REQUIRED_INCLUDES)
+    if(NOT WACOMM_NETCDF_HAS_REMOTE_ACCESS)
+        message(FATAL_ERROR "WaComM++ remote environmental access requires NetCDF with DAP2 and DAP4 support.")
     endif()
     set(WACOMM_LIBRARIES Threads::Threads ${CMAKE_DL_LIBS}
             nlohmann_json::nlohmann_json ${WACOMM_DEPENDENCY_LIBRARIES})
@@ -160,6 +172,7 @@ if(BUILD_APPLICATION)
     add_executable(wacommplusplus
             main.cpp Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
             Config.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
+            EnvironmentalDataAccess.cpp
             EnvironmentalMetadata.cpp EnvironmentalRegridder.cpp
             WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
             WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
@@ -171,6 +184,15 @@ if(BUILD_APPLICATION)
     install(TARGETS wacommplusplus RUNTIME DESTINATION bin)
 
     if(BUILD_TESTING)
+        add_executable(environmental_data_access_test tests/EnvironmentalDataAccessTest.cpp EnvironmentalDataAccess.cpp)
+        wacomm_enable_test_assertions(environmental_data_access_test)
+        add_test(NAME environmental_data_access COMMAND environmental_data_access_test)
+        if(BUILD_REMOTE_INTEGRATION_TESTS)
+            add_executable(remote_netcdf_integration_test tests/RemoteNetCDFIntegrationTest.cpp)
+            target_link_libraries(remote_netcdf_integration_test PRIVATE ${WACOMM_LIBRARIES})
+            add_test(NAME remote_netcdf_integration COMMAND remote_netcdf_integration_test)
+            set_tests_properties(remote_netcdf_integration PROPERTIES LABELS "integration;network" TIMEOUT 30)
+        endif()
         add_executable(structured_grid_adapter_test tests/StructuredGridAdapterTest.cpp
                 Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/StructuredGridAdapter.cpp)
         wacomm_enable_test_assertions(structured_grid_adapter_test)
@@ -189,13 +211,13 @@ if(BUILD_APPLICATION)
         target_link_libraries(native_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME native_adapter COMMAND native_adapter_test)
 
-        add_executable(config_test tests/ConfigTest.cpp Config.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
+        add_executable(config_test tests/ConfigTest.cpp Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
         wacomm_enable_test_assertions(config_test)
         target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME configuration_round_trip COMMAND config_test)
 
         add_executable(restart_test tests/RestartTest.cpp Particles.cpp Particle.cpp DriftModel.cpp OceanModelAdapter.cpp
-                Config.cpp Utils.cpp JulianDate.cpp)
+                Config.cpp EnvironmentalDataAccess.cpp Utils.cpp JulianDate.cpp)
         target_include_directories(restart_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
         wacomm_enable_test_assertions(restart_test)
         target_link_libraries(restart_test PRIVATE ${WACOMM_LIBRARIES})
@@ -207,7 +229,7 @@ if(BUILD_APPLICATION)
         add_test(NAME particle_physical_interval COMMAND particle_move_test)
 
         add_executable(concentration_test tests/ConcentrationTest.cpp Particles.cpp Particle.cpp DriftModel.cpp
-                OceanModelAdapter.cpp Config.cpp Utils.cpp JulianDate.cpp)
+                OceanModelAdapter.cpp Config.cpp EnvironmentalDataAccess.cpp Utils.cpp JulianDate.cpp)
         target_include_directories(concentration_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
         wacomm_enable_test_assertions(concentration_test)
         target_link_libraries(concentration_test PRIVATE ${WACOMM_LIBRARIES})

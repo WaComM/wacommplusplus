@@ -8,11 +8,13 @@ Despite its historical name, this configuration is passive because it does not s
 
 ## Prerequisites and fields
 
-Build with NetCDF C++4 and ensure the configured OPeNDAP endpoint is reachable. ROMS files must contain chronological `ocean_time`, rho-grid coordinates/mask/bathymetry, sigma metadata, zeta, staggered U/V, and configured W/AKT inputs. The scenario uses `sources-sar.json`.
+Build with NetCDF C++4 providing DAP2/DAP4 and ensure the configured OPeNDAP endpoint is reachable. ROMS files must contain chronological `ocean_time`, rho-grid coordinates/mask/bathymetry, sigma metadata, zeta, staggered U/V, and configured W/AKT inputs. The scenario uses `sources-sar.json`.
+
+This is the documented remote/lazy-access example. Each relative name is resolved against the HTTP `io.base_path`. WaComM++ opens only the current dataset and the adjacent dataset required for boundary interpolation, reuses that adjacent adapter in the following window, and fails if the endpoint or required metadata is unavailable. It does not mirror the archive or substitute stale values.
 
 ## Configuration and command
 
-Review the remote URLs first; historical services can move. The configuration selects `ROMS`, dry input caching, forward tracking, a fixed seed, and constraint/kill/reflection closures. Run:
+Review the remote URLs first; historical services can move. The configuration selects `ROMS`, a dry adapter-processing run, forward tracking, a fixed seed, and constraint/kill/reflection closures. Run:
 
 ```bash
 ./build/wacommplusplus examples/wacomm-roms-sar-download.json
@@ -20,7 +22,7 @@ Review the remote URLs first; historical services can move. The configuration se
 
 ## Expected behavior and validation
 
-The adapter normalizes ROMS fields without changing velocity signs or time direction. Check downloads, source acceptance, chronological boundaries, counts, and closure events. Run `ctest --test-dir build -R "roms_adapter|particle_physical_interval" --output-on-failure` and compare with a cached-input rerun.
+The adapter normalizes ROMS fields without changing velocity signs or time direction. Check source acceptance, chronological boundaries, counts, and closure events. Run `ctest --test-dir build -R "roms_adapter|particle_physical_interval" --output-on-failure`; with `BUILD_REMOTE_INTEGRATION_TESTS=ON`, run `ctest --test-dir build -R remote_netcdf_integration --output-on-failure`. Compare the remote result with a checksum-pinned local rerun.
 
 ## Limitations, interpretation, and reproducibility
 

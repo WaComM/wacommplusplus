@@ -2,7 +2,7 @@
 
 WaComM++ (Water quality COMmunity Model in C++) is a C++17 Lagrangian transport and diffusion framework for marine pollutants and drifting surface objects. Gridded Eulerian ocean forcing drives compact, independently advected particles whose state includes position, emission time, age, health, a stable 64-bit identity, and restart-safe drift-object metadata.
 
-The current release reads ROMS, NEMO, HYCOM, and native WACOMM products through direction-neutral adapters. It supports deterministic forward and backward traversal, configurable stochastic forward diffusion, an explicitly labelled stochastic backward ensemble mode, restart input/output, OpenMP, MPI, FlexMPI/EMPI, OpenACC, and optional CUDA. Unsupported adapter layouts are rejected rather than silently interpreted as another grid.
+The current release reads local or remote ROMS, NEMO, HYCOM, and native WACOMM products through direction-neutral adapters. HTTP, HTTPS, and DAP4 locations use the linked NetCDF transport. Forcing is opened lazily as a bounded current/adjacent pair, and the adjacent normalized window is reused on the next iteration. It supports deterministic forward and backward traversal, configurable stochastic forward diffusion, an explicitly labelled stochastic backward ensemble mode, restart input/output, OpenMP, MPI, FlexMPI/EMPI, OpenACC, and optional CUDA. Unsupported URI schemes, transport capabilities, and adapter layouts are rejected rather than silently interpreted as another source or grid.
 
 Surface-object tracking augments the ambient current with an empirically parameterized leeway velocity resolved into downwind and crosswind components relative to 10 m wind, plus optional surface Stokes drift. Generic weather and wave interfaces keep transport physics independent of forcing products; the initial concrete adapters read WRF wind and WAVEWATCH III Stokes velocity. The first object catalog comprises a person in water, liferafts with and without drogues, a generic vessel, and a shipping container. Opt-in ensembles assign reproducible catalog-residual velocities with a declared correlation, a user-declared Bernoulli prior over initial crosswind side, optional substep-resolved Gaussian wind error, and an optional user-declared hourly jibing transition probability. Passive transport remains the default. Tracking direction remains solver policy; stochastic backward output is a candidate-origin ensemble rather than an exact inverse realization.
 
@@ -16,7 +16,7 @@ A read-only [trajectory diagnostic workflow](docs/trajectory-diagnostics.md) joi
 
 ## Quick start
 
-Install CMake 3.20+, a C++17 compiler, NetCDF C/C++, log4cplus, nlohmann-json, pkg-config, and any requested backend. Then run:
+Install CMake 3.20+, a C++17 compiler, NetCDF C/C++ with DAP2 and DAP4 enabled, log4cplus, nlohmann-json, pkg-config, and any requested backend. Then run:
 
 ```bash
 cmake -S . -B build
@@ -33,7 +33,7 @@ cmake --build build-core
 ctest --test-dir build-core --output-on-failure
 ```
 
-Options include `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA`, `USE_PROJ`, `DEBUG`, `BUILD_APPLICATION`, and `BUILD_TESTING`. MPI and EMPI are mutually exclusive. CUDA is unavailable on modern macOS; PROJ is optional and required only for projected environmental grids.
+Options include `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA`, `USE_PROJ`, `DEBUG`, `BUILD_APPLICATION`, `BUILD_TESTING`, and `BUILD_REMOTE_INTEGRATION_TESTS`. MPI and EMPI are mutually exclusive. CUDA is unavailable on modern macOS; PROJ is optional and required only for projected environmental grids. The network integration test is opt-in so the default suite remains deterministic offline.
 
 ## Reproducible operation
 

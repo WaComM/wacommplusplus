@@ -95,6 +95,15 @@ int main() {
     assert(environmental.WaveRegridding()=="bilinear_geographic" && environmental.WaveSourceCrs().empty());
 #endif
     assert(environmental.WeatherSourceCrs().empty());
+    const string remoteEnvironment="config-test-remote-environment.json";
+    {
+        std::ofstream file(remoteEnvironment);
+        file << R"({"io":{"base_path":"https://ocean.example.test/dap","nc_inputs":["ocean.nc"]},
+          "environment":{"wind":{"adapter":"WRF","base_path":"https://weather.example.test/dap/","nc_inputs":["wrf.nc"]}}})";
+    }
+    Config remote(remoteEnvironment);
+    assert(remote.NcInputs()[0]=="https://ocean.example.test/dap/ocean.nc");
+    assert(remote.WeatherInputs()[0]=="https://weather.example.test/dap/wrf.nc");
     {
         std::ofstream file(invalid);
         file << R"({"physics":{"upper_closure":"unknown"}})";
@@ -193,4 +202,5 @@ int main() {
     std::remove(leeway.c_str());
     std::remove(environment.c_str());
     std::remove(sideEnsemble.c_str());
+    std::remove(remoteEnvironment.c_str());
 }

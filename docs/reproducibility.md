@@ -8,6 +8,8 @@ Every NetCDF particle/restart file and concentration file records `wacomm_git_re
 
 These embedded attributes do not replace an external run manifest. Before a run, archive the complete configuration and calculate SHA-256 checksums for every ocean, weather, wave, source, and restart input. After the run, add output checksums, dependency versions, platform and accelerator details, parallel placement, tolerances, and test results. Paths are identifiers rather than content guarantees, so publish the checksum manifest with the scientific result.
 
+A remote URI identifies a service response, not immutable forcing content. Lazy access does not weaken the checksum requirement: for a reproducible production run, materialize the exact remote ocean, weather, and wave datasets, record retrieval time and service URI, calculate their checksums, and run against that archived copy. HTTP validators and a successful OPeNDAP integration test establish transport behavior but do not identify scientific content. Do not claim reproducibility from a URI alone.
+
 After the outputs and test log exist, create the machine-readable manifest from the same working directory used for the simulation:
 
 ```bash
@@ -22,7 +24,7 @@ python3 tools/reproducibility_manifest.py \
   --manifest run-manifest.json
 ```
 
-The command fails if a declared configuration, forcing, source, restart, output, test log, or CMake cache file is missing. Relative ocean, weather, and wave paths are resolved against `io.base_path`; other relative configuration paths use the run working directory convention. The JSON contains the complete input configuration, SHA-256 and byte size for every discovered file, Git revision and dirty state, selected CMake cache entries, operating system and architecture, relevant MPI/OpenMP/CUDA environment variables, and declared tolerances. Review dependency and GPU/driver details separately when those are not represented in the CMake cache or environment.
+The command fails if a declared configuration, local forcing, source, restart, output, test log, or CMake cache file is missing. Relative ocean, weather, and wave paths are resolved against `io.base_path`; provider-specific remote bases must first be materialized and represented by their archived local copies because the manifest deliberately does not fetch mutable remote content. Other relative configuration paths use the run working directory convention. The JSON contains the complete input configuration, SHA-256 and byte size for every discovered file, Git revision and dirty state, selected CMake cache entries, operating system and architecture, relevant MPI/OpenMP/CUDA environment variables, and declared tolerances. Review dependency and GPU/driver details separately when those are not represented in the CMake cache or environment.
 
 The [trajectory diagnostics](trajectory-diagnostics.md) workflow records the SHA-256 checksum and embedded build provenance of every input snapshot in its JSON product. Because absolute paths are identifiers, relocating inputs can change JSON bytes without changing diagnostic values. Archive both the diagnostic JSON and SVG with the run manifest; neither replaces the simulation outputs from which it was derived.
 
