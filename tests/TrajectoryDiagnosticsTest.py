@@ -32,8 +32,8 @@ with tempfile.TemporaryDirectory() as directory:
     later=root/"later.nc"; earlier=root/"earlier.nc"
     snapshot(earlier,0,[7,8],[40,40],[179.8,-179.8],[1,1])
     snapshot(later,60,[7,8,9],[40.1,40.2,0],[179.9,-179.7,0],[1,1,-1])
-    output_json=root/"diagnostics.json"; output_svg=root/"map.svg"
-    subprocess.run([sys.executable,sys.argv[1],str(later),str(earlier),"--json",str(output_json),"--svg",str(output_svg)],check=True)
+    output_json=root/"diagnostics.json"; output_svg=root/"map.svg"; output_html=root/"map.html"
+    subprocess.run([sys.executable,sys.argv[1],str(later),str(earlier),"--json",str(output_json),"--svg",str(output_svg),"--html",str(output_html)],check=True)
     result=json.loads(output_json.read_text())
     assert result["schema"]=="wacomm-trajectory-diagnostics-v1"
     assert [item["time"] for item in result["diagnostics"]]==[0,60]
@@ -44,6 +44,11 @@ with tempfile.TemporaryDirectory() as directory:
     assert result["inputs"][0]["provenance"]["wacomm_git_revision"]=="test-revision"
     svg=output_svg.read_text()
     assert "EPSG:4326" in svg and "not probability contours" in svg
+    interactive=output_html.read_text()
+    assert 'id="time"' in interactive and 'id="play"' in interactive and 'id="paths"' in interactive
+    assert "EPSG:4326 Plate Carrée" in interactive and "not probabilities" in interactive
+    assert '"id":7' in interactive and interactive.index('"time":0.0')<interactive.index('"time":60.0')
+    assert "<script src=" not in interactive and "<link " not in interactive
 
     included=root/"included.json"
     subprocess.run([sys.executable,sys.argv[1],str(later),"--json",str(included),"--svg",str(root/"included.svg"),

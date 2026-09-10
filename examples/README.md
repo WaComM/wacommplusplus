@@ -6,7 +6,7 @@ For each run, inspect the JSON before use, replace local forcing paths, record i
 
 Every scenario guide states its scientific objective, prerequisites, adapter variables, configuration, exact command, expected behavior, validation, limitations, interpretation, metadata checklist, and related tests. CTest enforces that every checked-in JSON artifact has a same-name Markdown guide.
 
-Completed runs can be inspected with the documented [trajectory diagnostic workflow](../docs/trajectory-diagnostics.md). It consumes multiple single-time WaComM++ NetCDF snapshots and creates machine-readable spread statistics plus an annotated SVG map; it is a postprocessor and cannot change or validate solver physics.
+Completed runs can be inspected with the documented [trajectory diagnostic workflow](../docs/trajectory-diagnostics.md). It consumes multiple single-time WaComM++ NetCDF snapshots and creates machine-readable spread statistics, an annotated SVG map, and optionally a self-contained interactive physical-time viewer; it is a postprocessor and cannot change or validate solver physics.
 
 The release-oriented set is `forward/backward-roms`, `forward/backward-nemo`, `forward/backward-hycom`, `forward/backward-wacomm`, `stochastic-forward`, `stochastic-backward-ensemble`, `restart-forward`, `restart-backward`, and the OpenMP, MPI, and CUDA parallel examples. Files named for historical webinars, oil-spill demonstrations, SAR exercises, or regional use cases retain their original scientific context and require the external datasets stated in their same-name guides. Source-only GeoJSON artifacts are not standalone run configurations; their guides show how to reference them from a complete configuration.
 

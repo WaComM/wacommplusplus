@@ -160,17 +160,55 @@ def render_svg(snapshots,path,width=1000,height=650):
             "coastline":"none","uncertainty_semantics":"Each line is a selected trajectory member; no probability density or confidence region is inferred."}
 
 
+def render_html(snapshots,path,map_metadata):
+    payload={"time_units":TIME_UNITS,"snapshots":[{"time":item["time"],"points":item["points"]} for item in snapshots],
+             "map":map_metadata}
+    encoded=json.dumps(payload,sort_keys=True,separators=(",",":")).replace("<","\\u003c")
+    document="""<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WaComM++ interactive trajectory diagnostic</title>
+<style>
+:root{color-scheme:light dark;--ink:#172033;--water:#e0f2fe;--panel:#f8fafc;--grid:#64748b} @media(prefers-color-scheme:dark){:root{--ink:#e2e8f0;--water:#123047;--panel:#0f172a;--grid:#94a3b8}}
+body{font:15px system-ui,sans-serif;color:var(--ink);background:var(--panel);max-width:1100px;margin:auto;padding:1rem} h1{font-size:1.45rem} .controls{display:flex;gap:1rem;align-items:center;flex-wrap:wrap} input[type=range]{flex:1;min-width:260px} svg{width:100%;height:auto;background:var(--water);border:1px solid var(--grid)} .trajectory{fill:none;stroke-width:2;opacity:.7}.trajectory.dimmed{opacity:.08}.point{stroke:var(--panel);stroke-width:1}.point.dimmed{opacity:.08} table{border-collapse:collapse;margin-top:.75rem}th,td{padding:.3rem .7rem;border:1px solid var(--grid);text-align:right}th:first-child{text-align:left}.note{font-size:.9rem}.focus{stroke-width:5;opacity:1}
+</style></head><body><h1>WaComM++ interactive trajectory diagnostic</h1>
+<p class="note">EPSG:4326 Plate Carrée; no coastline or basemap. Lines are selected trajectory members, not probabilities, confidence regions, or search areas.</p>
+<div class="controls"><label for="time">Physical time</label><input id="time" type="range" min="0" step="1"><output id="time-label"></output><button id="play" type="button">Play</button><label><input id="paths" type="checkbox" checked> Show complete paths</label></div>
+<svg id="map" viewBox="0 0 1000 620" role="img" aria-labelledby="map-title map-description"><title id="map-title">Interactive trajectory ensemble map</title><desc id="map-description">Use the time slider or arrow keys to inspect stable trajectory members. Select a point or table row to highlight its member.</desc><g id="grid"></g><g id="tracks"></g><g id="points"></g></svg>
+<table><thead><tr><th>Selected snapshot</th><th>Members</th><th>Centroid latitude (°N)</th><th>Centroid longitude (°E)</th></tr></thead><tbody><tr><th id="selected-time"></th><td id="member-count"></td><td id="centroid-lat"></td><td id="centroid-lon"></td></tr></tbody></table>
+<p id="selection" aria-live="polite">No member selected.</p><script id="trajectory-data" type="application/json">__DATA__</script>
+<script>
+const data=JSON.parse(document.getElementById('trajectory-data').textContent),svg=document.getElementById('map'),NS='http://www.w3.org/2000/svg',margin=65;
+const ext=data.map.extent,lon=v=>margin+(v-ext.west)/(ext.east-ext.west)*(1000-2*margin),lat=v=>620-margin-(v-ext.south)/(ext.north-ext.south)*(620-2*margin);
+const near=v=>{while(v-ext.west>360)v-=360;while(v<ext.west)v+=360;return v},el=(name,attrs,parent)=>{const n=document.createElementNS(NS,name);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);parent.appendChild(n);return n};
+const grid=document.getElementById('grid');el('rect',{x:margin,y:margin,width:870,height:490,fill:'none',stroke:'var(--grid)'},grid);
+for(let i=0;i<=4;i++){const x=margin+i*870/4,y=margin+i*490/4;el('line',{x1:x,y1:margin,x2:x,y2:555,stroke:'var(--grid)','stroke-opacity':.25},grid);el('line',{x1:margin,y1:y,x2:935,y2:y,stroke:'var(--grid)','stroke-opacity':.25},grid)}
+const members=new Map;data.snapshots.forEach((s,si)=>s.points.forEach(p=>{if(!members.has(p.id))members.set(p.id,[]);members.get(p.id).push({...p,time:s.time,si})}));
+const palette=['#2563eb','#16a34a','#dc2626','#9333ea','#ea580c','#0d9488'],tracks=document.getElementById('tracks'),points=document.getElementById('points');let selected=null,timer=null;
+for(const[id,values]of [...members].sort((a,b)=>a[0]-b[0])){const color=palette[Number(id)%palette.length],line=el('polyline',{points:values.map(p=>`${lon(near(p.longitude))},${lat(p.latitude)}`).join(' '),stroke:color,class:'trajectory','data-id':id},tracks);line.addEventListener('click',()=>select(id));values.forEach(p=>{const c=el('circle',{cx:lon(near(p.longitude)),cy:lat(p.latitude),r:5,fill:color,class:'point','data-id':id,'data-snapshot':p.si,tabindex:0,role:'button','aria-label':`trajectory ${id}, time ${p.time}, latitude ${p.latitude}, longitude ${p.longitude}`},points);c.addEventListener('click',()=>select(id));c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(id)}})})}
+function circular(values){let x=0,y=0;values.forEach(v=>{x+=Math.cos(v*Math.PI/180);y+=Math.sin(v*Math.PI/180)});return Math.atan2(y,x)*180/Math.PI}
+function select(id){selected=id;document.querySelectorAll('[data-id]').forEach(n=>{n.classList.toggle('dimmed',String(n.dataset.id)!==String(id));n.classList.toggle('focus',String(n.dataset.id)===String(id))});document.getElementById('selection').textContent=`Selected trajectory ${id}.`}
+function update(){const i=+slider.value,s=data.snapshots[i],lats=s.points.map(p=>p.latitude),lons=s.points.map(p=>p.longitude);document.querySelectorAll('.point').forEach(n=>n.hidden=+n.dataset.snapshot!==i);document.getElementById('time-label').value=`${s.time} s since 1968-05-23 UTC`;document.getElementById('selected-time').textContent=s.time;document.getElementById('member-count').textContent=s.points.length;document.getElementById('centroid-lat').textContent=lats.length?(lats.reduce((a,b)=>a+b,0)/lats.length).toFixed(6):'—';document.getElementById('centroid-lon').textContent=lons.length?circular(lons).toFixed(6):'—'}
+const slider=document.getElementById('time');slider.max=data.snapshots.length-1;slider.addEventListener('input',update);slider.addEventListener('keydown',e=>{if(e.key==='Home'){slider.value=0;update()}if(e.key==='End'){slider.value=slider.max;update()}});document.getElementById('paths').addEventListener('change',e=>tracks.hidden=!e.target.checked);document.getElementById('play').addEventListener('click',e=>{if(timer){clearInterval(timer);timer=null;e.target.textContent='Play'}else{e.target.textContent='Pause';timer=setInterval(()=>{slider.value=(+slider.value+1)%data.snapshots.length;update()},700)}});update();
+</script></body></html>
+""".replace("__DATA__",encoded)
+    path.write_text(document,encoding="utf-8")
+
+
 def main():
-    parser=argparse.ArgumentParser(description="Create reproducible diagnostics and an SVG map from WaComM++ particle snapshots")
+    parser=argparse.ArgumentParser(description="Create reproducible diagnostics and static or interactive maps from WaComM++ particle snapshots")
     parser.add_argument("inputs",nargs="+",type=pathlib.Path)
     parser.add_argument("--json",required=True,type=pathlib.Path,dest="json_output")
     parser.add_argument("--svg",required=True,type=pathlib.Path)
+    parser.add_argument("--html",type=pathlib.Path,help="write a self-contained interactive HTML diagnostic")
     parser.add_argument("--include-inactive",action="store_true")
     arguments=parser.parse_args()
     try:
         snapshots=read_snapshots(arguments.inputs,arguments.include_inactive)
         arguments.json_output.parent.mkdir(parents=True,exist_ok=True); arguments.svg.parent.mkdir(parents=True,exist_ok=True)
         map_metadata=render_svg(snapshots,arguments.svg)
+        if arguments.html:
+            arguments.html.parent.mkdir(parents=True,exist_ok=True)
+            render_html(snapshots,arguments.html,map_metadata)
         result={"schema":"wacomm-trajectory-diagnostics-v1","inputs":[{"path":item["path"],"sha256":item["sha256"],"provenance":item["provenance"]} for item in snapshots],
                 "selection":{"include_inactive":arguments.include_inactive,"finite_coordinates_required":True},
                 "time_units":TIME_UNITS,"diagnostics":summarize(snapshots),"map":map_metadata}
