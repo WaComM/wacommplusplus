@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="520" viewBox="0 0 1000 520" role="img" aria-labelledby="title description">
+  <title id="title">Reproducible initial crosswind-side assignment</title>
+  <desc id="description">A conceptual configured Bernoulli probability, random seed, and stable particle identity produce one fixed left or right crosswind-side assignment that persists through forward or backward execution and restart.</desc>
+  <rect width="1000" height="520" fill="#f8fbfd"/>
+  <g font-family="Arial,sans-serif" fill="#17324d">
+    <text x="500" y="42" text-anchor="middle" font-size="24" font-weight="700">Keyed initial crosswind-side ensemble</text>
+    <g stroke="#54758a" stroke-width="2" fill="#fff">
+      <rect x="45" y="95" width="220" height="100" rx="12"/>
+      <rect x="45" y="245" width="220" height="100" rx="12"/>
+      <rect x="365" y="170" width="270" height="120" rx="12"/>
+      <rect x="735" y="80" width="220" height="110" rx="12"/>
+      <rect x="735" y="270" width="220" height="110" rx="12"/>
+      <path d="M265 145H330V205H365M265 295H330V255H365M635 210H685V135H735M635 250H685V325H735" fill="none"/>
+    </g>
+    <text x="155" y="132" text-anchor="middle" font-size="17" font-weight="700">Scientific configuration</text>
+    <text x="155" y="163" text-anchor="middle" font-size="15">explicit pᵣ ∈ [0,1]</text>
+    <text x="155" y="282" text-anchor="middle" font-size="17" font-weight="700">Reproducibility key</text>
+    <text x="155" y="313" text-anchor="middle" font-size="15">seed K + identity n</text>
+    <text x="500" y="207" text-anchor="middle" font-size="17" font-weight="700">U(K,n) &lt; pᵣ ?</text>
+    <text x="500" y="241" text-anchor="middle" font-size="15">sample once at emission</text>
+    <text x="500" y="266" text-anchor="middle" font-size="14">disjoint counter-key stream</text>
+    <text x="845" y="120" text-anchor="middle" font-size="18" font-weight="700">RIGHT (+1)</text>
+    <text x="845" y="153" text-anchor="middle" font-size="14">persist resolved side</text>
+    <text x="845" y="310" text-anchor="middle" font-size="18" font-weight="700">LEFT (−1)</text>
+    <text x="845" y="343" text-anchor="middle" font-size="14">persist resolved side</text>
+    <text x="500" y="445" text-anchor="middle" font-size="15">Forward/backward direction does not resample or negate the side.</text>
+    <text x="500" y="480" text-anchor="middle" font-size="14" fill="#6a3b2e">Conceptual and non-georeferenced; not an observed frequency or probability map.</text>
+  </g>
+</svg>

@@ -1,0 +1,9 @@
+{
+  "io": {"ocean_model": "ROMS", "base_path": ".", "nc_inputs": ["forcing.nc"], "nc_output_root": "sar-person-side-ensemble-backward"},
+  "sources": {"active": true, "sources_file": "sources.json"},
+  "restart": {"active": false},
+  "physics": {"random": false, "random_seed": 5489, "dti": 30},
+  "tracking": {"direction": "backward", "backward_diffusion": "none"},
+  "drift": {"model": "leeway", "object_type": "PERSON_IN_WATER", "side": "random", "side_right_probability": 0.5, "coefficient_ensemble": false},
+  "environment": {"wind": {"adapter": "constant", "u10": 5.0, "v10": 0.0}}
+}

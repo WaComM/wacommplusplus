@@ -30,9 +30,11 @@ Surface-object drift is opt-in:
 }
 ```
 
-`drift.model` is `passive` or `leeway`. Passive is the backward-compatible default and does not request atmospheric input. Leeway requires one of `PERSON_IN_WATER`, `LIFERAFT_NO_DROGUE`, `LIFERAFT_DROGUE`, `GENERIC_VESSEL`, or `SHIPPING_CONTAINER`; it also requires `side=left|right`. Stable numeric object identifiers are persisted in restart files, while symbolic names remain the public configuration interface.
+`drift.model` is `passive` or `leeway`. Passive is the backward-compatible default and does not request atmospheric input. Leeway requires one of `PERSON_IN_WATER`, `LIFERAFT_NO_DROGUE`, `LIFERAFT_DROGUE`, `GENERIC_VESSEL`, or `SHIPPING_CONTAINER`; it also requires `side=left|right|random`. Stable numeric object identifiers and resolved sides are persisted in restart files, while symbolic names remain the public configuration interface.
 
 `drift.coefficient_ensemble` defaults to `false`. When true, the catalog standard deviations define independent Gaussian residual velocities in the downwind and crosswind regressions. A residual pair is a deterministic function of `physics.random_seed` and the stable particle identity and remains fixed for that member's trajectory. It is consequently independent of `physics.random`, integration substeps, MPI ranks, OpenMP threads, and CUDA scheduling. The option is invalid for `drift.model=passive`.
+
+`drift.side=random` requires an explicit `side_right_probability` in the closed interval [0,1]. For stable identity $n$, a counter-key uniform variate $U_n$ assigns right when $U_n<p_R$ and left otherwise. This samples an initial categorical modeling prior once; it is not a time-dependent jibing process. Fixed `left` or `right` configurations reject `side_right_probability` so an unused uncertainty parameter cannot be silently archived. The resolved side is stored with each particle and is invariant under direction, restart, rank, thread, and accelerator scheduling.
 
 The first environmental provider is `environment.wind.adapter=constant`. Components `u10` and `v10` are finite eastward and northward 10 m wind velocities in m s-1. This provider is appropriate for analytical verification, controlled sensitivity studies, and spatially uniform forcing intervals. It is not a substitute for resolved atmospheric forcing in operational applications. Unknown models, object types, orientations, wind adapters, missing components, and non-finite winds fail during configuration loading.
 

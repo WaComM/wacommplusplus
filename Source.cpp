@@ -44,7 +44,10 @@ void Source::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particl
                 }
 
                 Particle particle(id, kk, jj, ii, currentOceanTime);
-                particle.Drift(config->DriftObject(),config->DefaultDriftSide());
+                DriftSide side=config->DefaultDriftSide();
+                if (config->LeewayRandomSide())
+                    side=sampleDriftSide(config->RandomSeed(),id,config->LeewayRightSideProbability());
+                particle.Drift(config->DriftObject(),side);
                 particles->push_back(particle);
                 id++;
             }

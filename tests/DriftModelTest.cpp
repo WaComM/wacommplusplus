@@ -23,6 +23,15 @@ int main() {
     assert(std::abs(member.u-(.1+.02+2*.03))<1.e-12);
     assert(std::abs(member.v-(.4+.05-.06))<1.e-12);
 
+    assert(driftSideFromUniform(.2,.3)==DriftSide::RIGHT);
+    assert(driftSideFromUniform(.3,.3)==DriftSide::LEFT);
+    DriftSide sampled=sampleDriftSide(5489,42,.5);
+    assert(sampled==sampleDriftSide(5489,42,.5));
+    assert(sampleDriftSide(5489,42,0)==DriftSide::LEFT);
+    assert(sampleDriftSide(5489,42,1)==DriftSide::RIGHT);
+    assert(NumericalHelpers::uniform(5489,42,LEEWAY_SIDE_RANDOM_INTERVAL,0,0)!=
+           NumericalHelpers::uniform(5489,42,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0));
+
     const auto& person=DriftObjectCatalog::definition(DriftObjectType::PERSON_IN_WATER);
     assert(person.leeway.downwindSlope==.0096);
     assert(DriftObjectCatalog::type("SHIPPING_CONTAINER")==DriftObjectType::SHIPPING_CONTAINER);

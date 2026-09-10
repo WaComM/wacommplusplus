@@ -47,6 +47,17 @@ int main() {
     drift.saveAsJson(saved);
     Config driftRestored(saved);
     assert(driftRestored.LeewayCoefficientEnsemble());
+    const string sideEnsemble="config-test-side-ensemble.json";
+    {
+        std::ofstream file(sideEnsemble);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"random","side_right_probability":0.65},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":1.0}}})";
+    }
+    Config randomSide(sideEnsemble);
+    assert(randomSide.LeewayRandomSide() && randomSide.LeewayRightSideProbability()==.65);
+    randomSide.saveAsJson(saved);
+    Config randomSideRestored(saved);
+    assert(randomSideRestored.LeewayRandomSide() && randomSideRestored.LeewayRightSideProbability()==.65);
     const string environment="config-test-environment.json";
     {
         std::ofstream file(environment);
@@ -105,6 +116,33 @@ int main() {
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
     {
+        std::ofstream file(invalid);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"random"},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":0.0}}})";
+    }
+    rejected=false;
+    try { Config missingSideProbability(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"random","side_right_probability":1.1},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":0.0}}})";
+    }
+    rejected=false;
+    try { Config invalidSideProbability(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right","side_right_probability":0.5},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":0.0}}})";
+    }
+    rejected=false;
+    try { Config unusedSideProbability(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
         std::ofstream file(invalidStep);
         file << R"({"physics":{"dti":0}})";
     }
@@ -116,4 +154,5 @@ int main() {
     std::remove(invalidStep.c_str());
     std::remove(leeway.c_str());
     std::remove(environment.c_str());
+    std::remove(sideEnsemble.c_str());
 }

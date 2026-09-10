@@ -16,7 +16,19 @@ V_leeway = (a_DW |W10| + b_DW + sigma_DW z_DW) w_hat
 
 The coefficients are empirical regression parameters, not universal material constants. Their validity is conditional on object configuration, immersion, loading, environmental range, current reference depth, and observational uncertainty. A catalog choice therefore constitutes a scientific hypothesis that must be recorded with the forcing and numerical configuration.
 
-The ensemble represents residual variability around the fitted leeway regressions. It does not propagate uncertainty in atmospheric or ocean forcing, regression coefficients, object classification, crosswind side, or model discrepancy. Gaussian support is unbounded, so an individual residual may reverse a modeled component; no undocumented clipping is imposed. Independence of the two standardized residuals is an explicit implementation assumption rather than an observationally validated covariance model.
+The coefficient ensemble represents residual variability around the fitted leeway regressions. It does not propagate uncertainty in atmospheric or ocean forcing, regression coefficients, object classification, crosswind side, or model discrepancy. Gaussian support is unbounded, so an individual residual may reverse a modeled component; no undocumented clipping is imposed. Independence of the two standardized residuals is an explicit implementation assumption rather than an observationally validated covariance model.
+
+Crosswind-side uncertainty is a separate initial-condition model. With `side=random` and required $p_R=\mathtt{side\_right\_probability}$,
+
+$$
+S_n=\begin{cases}+1,&U(K,n)<p_R,\\-1,&U(K,n)\ge p_R,\end{cases}
+$$
+
+where $S_n$ is the resolved dimensionless side for stable particle identity $n$, $K$ is the configured integer seed, and $U\in[0,1)$ is the counter-key uniform variate. The user-declared $p_R$ is a prior experiment parameter, not an empirical catalog statistic. Assignment occurs once at emission and the resolved side persists in output and restart state. No transition rate is applied, so this is not jibing.
+
+![Conceptual keyed crosswind-side assignment](figures/leeway-side-ensemble-schema.svg)
+
+The schema is conceptual and non-georeferenced. It illustrates reproducible initial side assignment, not observed side frequencies or a trajectory probability map.
 
 ![Conceptual schema from catalog regression and stable run identity to fixed leeway members](figures/leeway-ensemble-schema.svg)
 
@@ -36,11 +48,11 @@ The drift calculation is direction-neutral. The existing solver multiplies the c
 
 NetCDF restart version 3 stores stable numeric object type and crosswind side for every particle. Version 2 restarts remain readable in passive mode and are rejected for leeway runs because they lack required object state. Text restarts append the same two fields while retaining compatibility with earlier seven-field records.
 
-Ensemble residuals are a stateless function of the configured seed and stored 64-bit particle identity. They are therefore invariant under restart boundaries and MPI/OpenMP/CUDA scheduling. A forward member and a backward member use the same residual pair when seed and identity match; direction is still applied only by the solver.
+Ensemble residuals and initial side assignment are stateless functions of the configured seed and stored 64-bit particle identity. Resolved side is then explicit particle state. They are therefore invariant under restart boundaries and MPI/OpenMP/CUDA scheduling. A forward member and a backward member use the same residual pair and side when seed and identity match; direction is still applied only by the solver.
 
 ## Configuration and limitations
 
-Select `drift.model=leeway`, a supported `object_type`, and `side=left|right`; optionally set `coefficient_ensemble=true`. Missing wind, unknown objects, undefined side, or an ensemble requested for passive transport fails during configuration. Randomized side, jibing, vertical Stokes profiles, conservative vector-flux remapping, and refloating are not yet implemented. Declared projected-coordinate transformation is available, while the first-order conservative operator is deliberately restricted to cell-average scalars and is not a wind or Stokes option. Existing coastline closure behavior applies unchanged.
+Select `drift.model=leeway`, a supported `object_type`, and `side=left|right|random`; optionally set `coefficient_ensemble=true`. Random side additionally requires an explicit probability in [0,1]. Missing wind, unknown objects, undefined side, invalid uncertainty, or an ensemble requested for passive transport fails during configuration. Empirical residual covariance, jibing, vertical Stokes profiles, conservative vector-flux remapping, and refloating are not yet implemented. Declared projected-coordinate transformation is available, while the first-order conservative operator is deliberately restricted to cell-average scalars and is not a wind or Stokes option. Existing coastline closure behavior applies unchanged.
 
 Record the configured wind, random seed, forcing and restart checksums, Git revision, compiler, CMake options, backend settings, tolerances, and output checksums. Deterministic math is shared by serial, OpenMP, and MPI execution. CUDA/OpenACC builds use the same particle representation; operational leeway parity on those backends must be validated before use.
 

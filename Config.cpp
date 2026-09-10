@@ -126,6 +126,8 @@ void Config::setDefault() {
     // Passive particles do not request atmospheric forcing.
     _data.driftModel = 0;
     _data.leewayCoefficientEnsemble = false;
+    _data.leewayRandomSide = false;
+    _data.leewayRightSideProbability = 0.5;
     _data.driftObjectType = static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
     _data.driftSide = static_cast<std::int8_t>(DriftSide::UNDEFINED);
     _data.hasWind = false;
@@ -351,6 +353,8 @@ bool Config::BackwardDiffusion() const { return _data.backwardDiffusion; }
 
 bool Config::Leeway() const { return _data.driftModel==1; }
 bool Config::LeewayCoefficientEnsemble() const { return _data.leewayCoefficientEnsemble; }
+bool Config::LeewayRandomSide() const { return _data.leewayRandomSide; }
+double Config::LeewayRightSideProbability() const { return _data.leewayRightSideProbability; }
 
 DriftObjectType Config::DriftObject() const { return static_cast<DriftObjectType>(_data.driftObjectType); }
 
@@ -624,9 +628,10 @@ string Config::asJson() const {
             { "model", Leeway() ? "leeway" : "passive" },
             { "coefficient_ensemble", LeewayCoefficientEnsemble() },
             { "object_type", DriftObjectCatalog::name(DriftObject()) },
-            { "side", DefaultDriftSide()==DriftSide::LEFT ? "left" :
-                      DefaultDriftSide()==DriftSide::RIGHT ? "right" : "undefined" }
+            { "side", LeewayRandomSide() ? "random" : (DefaultDriftSide()==DriftSide::LEFT ? "left" :
+                      DefaultDriftSide()==DriftSide::RIGHT ? "right" : "undefined") }
     };
+    if (LeewayRandomSide()) drift["side_right_probability"]=LeewayRightSideProbability();
 
     json environment = {
             { "wind", {{"adapter",weatherModel=="WRF" ? "WRF" : (_data.hasWind ? "constant" : "none")},
@@ -751,17 +756,28 @@ void Config::loadFromJson(const string &fileName) {
         else throw std::runtime_error("Unknown drift.model: " + model);
         if (drift.contains("coefficient_ensemble"))
             _data.leewayCoefficientEnsemble=drift["coefficient_ensemble"];
+        if (drift.contains("side_right_probability"))
+            _data.leewayRightSideProbability=drift["side_right_probability"];
         if (drift.contains("object_type")) {
             string objectType=drift["object_type"];
             _data.driftObjectType=static_cast<std::uint16_t>(DriftObjectCatalog::type(objectType.c_str()));
         }
         if (drift.contains("side")) {
             string side=drift["side"];
+            _data.leewayRandomSide=false;
             if (side=="left") _data.driftSide=static_cast<std::int8_t>(DriftSide::LEFT);
             else if (side=="right") _data.driftSide=static_cast<std::int8_t>(DriftSide::RIGHT);
             else if (side=="undefined") _data.driftSide=static_cast<std::int8_t>(DriftSide::UNDEFINED);
+            else if (side=="random") {
+                if (!drift.contains("side_right_probability"))
+                    throw std::runtime_error("drift.side=random requires explicit side_right_probability");
+                _data.driftSide=static_cast<std::int8_t>(DriftSide::UNDEFINED);
+                _data.leewayRandomSide=true;
+            }
             else throw std::runtime_error("Unknown drift.side: " + side);
         }
+        if (drift.contains("side_right_probability") && !_data.leewayRandomSide)
+            throw std::runtime_error("drift.side_right_probability is valid only with drift.side=random");
     }
     if (config.contains("environment")) {
         json environment=config["environment"];
@@ -803,12 +819,15 @@ void Config::loadFromJson(const string &fileName) {
     }
     if (_data.driftModel==1 && static_cast<DriftObjectType>(_data.driftObjectType)==DriftObjectType::PASSIVE)
         throw std::runtime_error("drift.model=leeway requires a non-passive drift.object_type");
-    if (_data.driftModel==1 && _data.driftSide==static_cast<std::int8_t>(DriftSide::UNDEFINED))
-        throw std::runtime_error("drift.model=leeway requires drift.side=left or right");
+    if (_data.driftModel==1 && _data.driftSide==static_cast<std::int8_t>(DriftSide::UNDEFINED) && !_data.leewayRandomSide)
+        throw std::runtime_error("drift.model=leeway requires drift.side=left, right, or random");
     if (_data.driftModel==1 && !_data.hasWind)
         throw std::runtime_error("Leeway drift requires 10 m wind. Configure environment.wind.adapter=constant or WRF");
     if (_data.driftModel!=1 && _data.leewayCoefficientEnsemble)
         throw std::runtime_error("drift.coefficient_ensemble requires drift.model=leeway");
+    if (_data.leewayRandomSide && (_data.driftModel!=1 || !std::isfinite(_data.leewayRightSideProbability) ||
+                                  _data.leewayRightSideProbability<0 || _data.leewayRightSideProbability>1))
+        throw std::runtime_error("drift.side=random requires leeway and side_right_probability in [0,1]");
     if (_data.hasWind && (!std::isfinite(_data.windU10) || !std::isfinite(_data.windV10)))
         throw std::runtime_error("environment.wind.u10 and environment.wind.v10 must be finite values in m/s");
     if (weatherModel=="WRF" && weatherInputs.size()!=ncInputs.size())

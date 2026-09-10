@@ -14,7 +14,7 @@ Projected preprocessing is an optional adapter-layer operation. PROJ transforms 
 
 First-order conservative remapping is a separate shared preprocessing primitive for rectilinear geographic cell averages. Spherical rectangle intersections define sparse conceptual weights before any solver/backend execution. It is not exposed as a weather or wave velocity option because conservation semantics depend on the sampled quantity, staggering, and vector basis.
 
-Surface drift follows the same hierarchy. `DriftObjectType` and `DriftSide` are fixed-width particle state; `DriftObjectCatalog` is the single coefficient source; and the allocation-free leeway function is shared by CPU and CUDA code. Optional coefficient-ensemble residuals use the same counter-key algorithm on both paths and are keyed only by configured seed and stable particle identity. `Config` selects the model and environmental provider before integration. Passive runs follow a configuration-level fast path and do not incur catalog lookup or wind computation.
+Surface drift follows the same hierarchy. `DriftObjectType` and resolved `DriftSide` are fixed-width particle state; `DriftObjectCatalog` is the single coefficient source; and the allocation-free leeway function is shared by CPU and CUDA code. Optional coefficient residuals and initial side selection use disjoint counter-key streams keyed only by configured seed and stable particle identity. Side selection occurs during source emission, before MPI/OpenMP/CUDA integration, and restart stores the resolved value. `Config` selects the model and environmental provider before integration. Passive runs follow a configuration-level fast path and do not incur catalog lookup or wind computation.
 
 ## References
 

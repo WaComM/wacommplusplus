@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cmath>
+#include "NumericalHelpers.hpp"
 
 #ifdef __CUDACC__
 #define WACOMM_HOST_DEVICE __host__ __device__
@@ -47,6 +48,16 @@ struct DriftVelocity {
 };
 
 static constexpr std::int64_t LEEWAY_ENSEMBLE_RANDOM_INTERVAL=(-9223372036854775807LL-1);
+static constexpr std::int64_t LEEWAY_SIDE_RANDOM_INTERVAL=LEEWAY_ENSEMBLE_RANDOM_INTERVAL+1;
+
+WACOMM_HOST_DEVICE inline DriftSide driftSideFromUniform(double uniformValue,double rightProbability) {
+    return uniformValue<rightProbability ? DriftSide::RIGHT : DriftSide::LEFT;
+}
+
+inline DriftSide sampleDriftSide(std::uint64_t seed,std::uint64_t particle,double rightProbability) {
+    return driftSideFromUniform(NumericalHelpers::uniform(seed,particle,LEEWAY_SIDE_RANDOM_INTERVAL,0,0),
+                                rightProbability);
+}
 
 class DriftObjectCatalog {
 public:
