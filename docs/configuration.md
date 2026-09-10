@@ -36,6 +36,8 @@ Surface-object drift is opt-in:
 
 `drift.side=random` requires an explicit `side_right_probability` in the closed interval [0,1]. For stable identity $n$, a counter-key uniform variate $U_n$ assigns right when $U_n<p_R$ and left otherwise. This samples an initial categorical modeling prior once; it is not a time-dependent jibing process. Fixed `left` or `right` configurations reject `side_right_probability` so an unused uncertainty parameter cannot be silently archived. The resolved side is stored with each particle and is invariant under direction, restart, rank, thread, and accelerator scheduling.
 
+`drift.jibe_probability_per_hour` defaults to 0 and accepts [0,1] only for leeway runs. It defines a constant exponential waiting-time hazard, not a universal catalog value. WaComM++ converts it to the probability of a resolved transition over each physical integration step. A successful keyed draw flips the side after that step; at most one transition is resolved per substep. The probability, seed, `dti`, and resolved particle state are therefore required reproducibility metadata.
+
 The first environmental provider is `environment.wind.adapter=constant`. Components `u10` and `v10` are finite eastward and northward 10 m wind velocities in m s-1. This provider is appropriate for analytical verification, controlled sensitivity studies, and spatially uniform forcing intervals. It is not a substitute for resolved atmospheric forcing in operational applications. Unknown models, object types, orientations, wind adapters, missing components, and non-finite winds fail during configuration loading.
 
 Resolved WRF wind and WW3 Stokes drift use parallel forcing lists:
@@ -63,6 +65,7 @@ The complete resolved JSON configuration, including defaults, is embedded in Net
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).
+- Breivik, Ø., and Allen, A. A. (2008). An operational search and rescue model for the Norwegian Sea and the North Sea. *Journal of Marine Systems*, 69, 99–113. [doi:10.1016/j.jmarsys.2007.02.010](https://doi.org/10.1016/j.jmarsys.2007.02.010).
 - Thygesen, U. H. (2011). How to reverse time in stochastic particle tracking models. *Journal of Marine Systems*, 88, 159–168. [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009).
 - Hassell, D., Gregory, J., Blower, J., Lawrence, B. N., and Taylor, K. E. (2017). A data model of the Climate and Forecast metadata conventions (CF-1.6) with a software implementation (cf-python v2.1). *Geoscientific Model Development*, 10, 4619–4646. [doi:10.5194/gmd-10-4619-2017](https://doi.org/10.5194/gmd-10-4619-2017).
 - Jones, P. W. (1999). First- and second-order conservative remapping schemes for grids in spherical coordinates. *Monthly Weather Review*, 127, 2204–2210. [doi:10.1175/1520-0493(1999)127%3C2204:FASOCR%3E2.0.CO;2](https://doi.org/10.1175/1520-0493%281999%29127%3C2204%3AFASOCR%3E2.0.CO%3B2).

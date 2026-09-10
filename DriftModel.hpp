@@ -49,6 +49,7 @@ struct DriftVelocity {
 
 static constexpr std::int64_t LEEWAY_ENSEMBLE_RANDOM_INTERVAL=(-9223372036854775807LL-1);
 static constexpr std::int64_t LEEWAY_SIDE_RANDOM_INTERVAL=LEEWAY_ENSEMBLE_RANDOM_INTERVAL+1;
+static constexpr std::uint64_t LEEWAY_JIBE_RANDOM_COMPONENT=0x4a494245ULL;
 
 WACOMM_HOST_DEVICE inline DriftSide driftSideFromUniform(double uniformValue,double rightProbability) {
     return uniformValue<rightProbability ? DriftSide::RIGHT : DriftSide::LEFT;
@@ -57,6 +58,12 @@ WACOMM_HOST_DEVICE inline DriftSide driftSideFromUniform(double uniformValue,dou
 inline DriftSide sampleDriftSide(std::uint64_t seed,std::uint64_t particle,double rightProbability) {
     return driftSideFromUniform(NumericalHelpers::uniform(seed,particle,LEEWAY_SIDE_RANDOM_INTERVAL,0,0),
                                 rightProbability);
+}
+
+WACOMM_HOST_DEVICE inline double jibeStepProbability(double hourlyProbability,double elapsedSeconds) {
+    if (hourlyProbability<=0 || elapsedSeconds<=0) return 0;
+    if (hourlyProbability>=1) return 1;
+    return 1-std::exp(std::log(1-hourlyProbability)*elapsedSeconds/3600);
 }
 
 class DriftObjectCatalog {

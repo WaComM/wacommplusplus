@@ -4,6 +4,6 @@
   "restart": {"active": false},
   "physics": {"random": false, "random_seed": 5489, "dti": 30},
   "tracking": {"direction": "backward", "backward_diffusion": "none"},
-  "drift": {"model": "leeway", "object_type": "PERSON_IN_WATER", "side": "random", "side_right_probability": 0.5, "coefficient_ensemble": false},
+  "drift": {"model": "leeway", "object_type": "PERSON_IN_WATER", "side": "random", "side_right_probability": 0.5, "jibe_probability_per_hour": 0.04, "coefficient_ensemble": false},
   "environment": {"wind": {"adapter": "constant", "u10": 5.0, "v10": 0.0}}
 }

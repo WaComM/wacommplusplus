@@ -24,11 +24,21 @@ $$
 S_n=\begin{cases}+1,&U(K,n)<p_R,\\-1,&U(K,n)\ge p_R,\end{cases}
 $$
 
-where $S_n$ is the resolved dimensionless side for stable particle identity $n$, $K$ is the configured integer seed, and $U\in[0,1)$ is the counter-key uniform variate. The user-declared $p_R$ is a prior experiment parameter, not an empirical catalog statistic. Assignment occurs once at emission and the resolved side persists in output and restart state. No transition rate is applied, so this is not jibing.
+where $S_n$ is the resolved dimensionless side for stable particle identity $n$, $K$ is the configured integer seed, and $U\in[0,1)$ is the counter-key uniform variate. The user-declared $p_R$ is a prior experiment parameter, not an empirical catalog statistic. Assignment occurs once at emission and the resolved side persists unless the separately configured jibing process changes it.
+
+For an explicitly supplied hourly transition probability $p_h=\mathtt{jibe\_probability\_per\_hour}$, WaComM++ uses a constant exponential waiting-time hazard with at most one resolved transition per integration substep:
+
+$$
+\lambda=-\frac{\ln(1-p_h)}{3600\ \mathrm{s}},\qquad
+p_{\Delta t}=1-\exp(-\lambda|\Delta t|),\qquad
+S\leftarrow-S\ \text{if}\ U(K,n,I,m)<p_{\Delta t},
+$$
+
+where $\lambda$ is the transition hazard in s-1, $\Delta t$ is the completed physical substep in s, $I$ is the forcing interval keyed by its lower physical time, and $m$ is its absolute substep index. The limiting cases $p_h=0$ and 1 mean no transition and one transition after every positive-duration substep. The displacement over a substep uses its incoming side; a successful draw changes subsequent motion. Multiple unresolved flips inside one substep are not represented, so `dti` is part of the scientific configuration. Absolute step duration gives the same transition probability in either tracking direction, but a backward realization is not the pathwise inverse of a forward realization.
 
 ![Conceptual keyed crosswind-side assignment](figures/leeway-side-ensemble-schema.svg)
 
-The schema is conceptual and non-georeferenced. It illustrates reproducible initial side assignment, not observed side frequencies or a trajectory probability map.
+The schema is conceptual and non-georeferenced. It illustrates reproducible initial side assignment, not observed side frequencies or a trajectory probability map. When jibing is enabled, the stored side may subsequently change at completed physical substeps.
 
 ![Conceptual schema from catalog regression and stable run identity to fixed leeway members](figures/leeway-ensemble-schema.svg)
 
@@ -48,17 +58,18 @@ The drift calculation is direction-neutral. The existing solver multiplies the c
 
 NetCDF restart version 3 stores stable numeric object type and crosswind side for every particle. Version 2 restarts remain readable in passive mode and are rejected for leeway runs because they lack required object state. Text restarts append the same two fields while retaining compatibility with earlier seven-field records.
 
-Ensemble residuals and initial side assignment are stateless functions of the configured seed and stored 64-bit particle identity. Resolved side is then explicit particle state. They are therefore invariant under restart boundaries and MPI/OpenMP/CUDA scheduling. A forward member and a backward member use the same residual pair and side when seed and identity match; direction is still applied only by the solver.
+Ensemble residuals and initial side assignment are stateless functions of the configured seed and stored 64-bit particle identity. Resolved side is then explicit particle state. Jibing draws additionally use the forcing interval and absolute substep. They are invariant under MPI/OpenMP/CUDA scheduling, and continuation at a completed substep boundary reproduces an uninterrupted run. Changing `dti` changes the discrete event realization even though the exponential conversion preserves the declared transition law. Without jibing, matching seed and identity recover the same forward/backward residual pair and side; with jibing, backward output must be interpreted as a stochastic candidate-origin ensemble.
 
 ## Configuration and limitations
 
-Select `drift.model=leeway`, a supported `object_type`, and `side=left|right|random`; optionally set `coefficient_ensemble=true`. Random side additionally requires an explicit probability in [0,1]. Missing wind, unknown objects, undefined side, invalid uncertainty, or an ensemble requested for passive transport fails during configuration. Empirical residual covariance, jibing, vertical Stokes profiles, conservative vector-flux remapping, and refloating are not yet implemented. Declared projected-coordinate transformation is available, while the first-order conservative operator is deliberately restricted to cell-average scalars and is not a wind or Stokes option. Existing coastline closure behavior applies unchanged.
+Select `drift.model=leeway`, a supported `object_type`, and `side=left|right|random`; optionally set `coefficient_ensemble=true` and an explicit `jibe_probability_per_hour`. Random side additionally requires an explicit probability in [0,1]. Missing wind, unknown objects, undefined side, invalid uncertainty, or an ensemble requested for passive transport fails during configuration. Empirical residual covariance, object-specific cataloged jibing rates, vertical Stokes profiles, conservative vector-flux remapping, and refloating remain unavailable. Jibing uses a user-declared constant hazard and should not be treated as calibrated outside evidence for the selected object and conditions.
 
 Record the configured wind, random seed, forcing and restart checksums, Git revision, compiler, CMake options, backend settings, tolerances, and output checksums. Deterministic math is shared by serial, OpenMP, and MPI execution. CUDA/OpenACC builds use the same particle representation; operational leeway parity on those backends must be validated before use.
 
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).
+- Breivik, Ø., and Allen, A. A. (2008). An operational search and rescue model for the Norwegian Sea and the North Sea. *Journal of Marine Systems*, 69, 99–113. [doi:10.1016/j.jmarsys.2007.02.010](https://doi.org/10.1016/j.jmarsys.2007.02.010).
 - Breivik, Ø., Allen, A. A., Maisondieu, C., Roth, J.-C., and Forest, B. (2012). The leeway of shipping containers at different immersion levels. *Ocean Dynamics*, 62, 741–752. [doi:10.1007/s10236-012-0522-z](https://doi.org/10.1007/s10236-012-0522-z).
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
 - Thygesen, U. H. (2011). How to reverse time in stochastic particle tracking models. *Journal of Marine Systems*, 88, 159–168. [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009).

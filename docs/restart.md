@@ -8,7 +8,7 @@ Versioned continuation clips each forcing interval by physical time. Forward int
 
 Exact stochastic continuation requires the checkpoint to coincide with a completed integration substep and the forcing bracket, configured `dti`, seed, and particle identities to remain unchanged. The random key uses the absolute forcing-interval time and substep number, so a restart at such a boundary reproduces the uninterrupted stochastic state. A checkpoint inside a stochastic substep changes the step partition and is not claimed to be bitwise equivalent.
 
-Leeway-coefficient ensemble residuals are regenerated from the archived random seed and stored particle identity rather than added to the restart schema. A randomly assigned initial crosswind side is already persisted as the resolved `drift_side` and is never resampled on loading. Because both quantities are constant in physical time, continuation is exact at any deterministic integration checkpoint provided the seed, identity, object type, crosswind side, and resolved configuration are unchanged.
+Leeway-coefficient ensemble residuals are regenerated from the archived random seed and stored particle identity rather than added to the restart schema. Initial assignment and later jibing share the persisted resolved `drift_side`; loading never resamples it. Jibing keys use the physical forcing interval and absolute substep, so continuation is exact at a completed substep boundary when seed, identity, object type, `dti`, hourly probability, side, and resolved configuration are unchanged. A checkpoint inside a jibing substep changes event partitioning and has no bitwise-equivalence claim.
 
 ## References
 

@@ -128,6 +128,7 @@ void Config::setDefault() {
     _data.leewayCoefficientEnsemble = false;
     _data.leewayRandomSide = false;
     _data.leewayRightSideProbability = 0.5;
+    _data.leewayJibeProbabilityHourly = 0;
     _data.driftObjectType = static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
     _data.driftSide = static_cast<std::int8_t>(DriftSide::UNDEFINED);
     _data.hasWind = false;
@@ -355,6 +356,7 @@ bool Config::Leeway() const { return _data.driftModel==1; }
 bool Config::LeewayCoefficientEnsemble() const { return _data.leewayCoefficientEnsemble; }
 bool Config::LeewayRandomSide() const { return _data.leewayRandomSide; }
 double Config::LeewayRightSideProbability() const { return _data.leewayRightSideProbability; }
+double Config::LeewayJibeProbabilityHourly() const { return _data.leewayJibeProbabilityHourly; }
 
 DriftObjectType Config::DriftObject() const { return static_cast<DriftObjectType>(_data.driftObjectType); }
 
@@ -627,6 +629,7 @@ string Config::asJson() const {
     json drift = {
             { "model", Leeway() ? "leeway" : "passive" },
             { "coefficient_ensemble", LeewayCoefficientEnsemble() },
+            { "jibe_probability_per_hour", LeewayJibeProbabilityHourly() },
             { "object_type", DriftObjectCatalog::name(DriftObject()) },
             { "side", LeewayRandomSide() ? "random" : (DefaultDriftSide()==DriftSide::LEFT ? "left" :
                       DefaultDriftSide()==DriftSide::RIGHT ? "right" : "undefined") }
@@ -758,6 +761,8 @@ void Config::loadFromJson(const string &fileName) {
             _data.leewayCoefficientEnsemble=drift["coefficient_ensemble"];
         if (drift.contains("side_right_probability"))
             _data.leewayRightSideProbability=drift["side_right_probability"];
+        if (drift.contains("jibe_probability_per_hour"))
+            _data.leewayJibeProbabilityHourly=drift["jibe_probability_per_hour"];
         if (drift.contains("object_type")) {
             string objectType=drift["object_type"];
             _data.driftObjectType=static_cast<std::uint16_t>(DriftObjectCatalog::type(objectType.c_str()));
@@ -828,6 +833,9 @@ void Config::loadFromJson(const string &fileName) {
     if (_data.leewayRandomSide && (_data.driftModel!=1 || !std::isfinite(_data.leewayRightSideProbability) ||
                                   _data.leewayRightSideProbability<0 || _data.leewayRightSideProbability>1))
         throw std::runtime_error("drift.side=random requires leeway and side_right_probability in [0,1]");
+    if (!std::isfinite(_data.leewayJibeProbabilityHourly) || _data.leewayJibeProbabilityHourly<0 ||
+        _data.leewayJibeProbabilityHourly>1 || (_data.driftModel!=1 && _data.leewayJibeProbabilityHourly!=0))
+        throw std::runtime_error("drift.jibe_probability_per_hour must be in [0,1] and requires drift.model=leeway");
     if (_data.hasWind && (!std::isfinite(_data.windU10) || !std::isfinite(_data.windV10)))
         throw std::runtime_error("environment.wind.u10 and environment.wind.v10 must be finite values in m/s");
     if (weatherModel=="WRF" && weatherInputs.size()!=ncInputs.size())

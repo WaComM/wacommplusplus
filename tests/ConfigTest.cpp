@@ -50,14 +50,16 @@ int main() {
     const string sideEnsemble="config-test-side-ensemble.json";
     {
         std::ofstream file(sideEnsemble);
-        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"random","side_right_probability":0.65},
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"random","side_right_probability":0.65,"jibe_probability_per_hour":0.04},
                      "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":1.0}}})";
     }
     Config randomSide(sideEnsemble);
     assert(randomSide.LeewayRandomSide() && randomSide.LeewayRightSideProbability()==.65);
+    assert(randomSide.LeewayJibeProbabilityHourly()==.04);
     randomSide.saveAsJson(saved);
     Config randomSideRestored(saved);
     assert(randomSideRestored.LeewayRandomSide() && randomSideRestored.LeewayRightSideProbability()==.65);
+    assert(randomSideRestored.LeewayJibeProbabilityHourly()==.04);
     const string environment="config-test-environment.json";
     {
         std::ofstream file(environment);
@@ -140,6 +142,15 @@ int main() {
     }
     rejected=false;
     try { Config unusedSideProbability(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right","jibe_probability_per_hour":1.1},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":0.0}}})";
+    }
+    rejected=false;
+    try { Config invalidJibeProbability(invalid); }
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
     {

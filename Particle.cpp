@@ -696,6 +696,16 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // Decay the particle
             localParticleData.health = health0 * exp(-localParticleData.age / tau0);
+
+            if (configData->leewayJibeProbabilityHourly>0 &&
+                localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE)) {
+                std::int64_t intervalKey=static_cast<std::int64_t>(std::llround(std::min(intervalStart,intervalEnd)));
+                std::uint64_t substep=static_cast<std::uint64_t>(std::floor(elapsed/dti));
+                double probability=jibeStepProbability(configData->leewayJibeProbabilityHourly,stepDt);
+                if (NumericalHelpers::uniform(configData->randomSeed,localParticleData.id,intervalKey,
+                                              substep,LEEWAY_JIBE_RANDOM_COMPONENT)<probability)
+                    localParticleData.driftSide=-localParticleData.driftSide;
+            }
         }
 
 #ifdef DEBUG

@@ -175,6 +175,36 @@ int main() {
     assert(std::abs(ensembleBackward.J()-.25)<1.e-8);
     config.leewayCoefficientEnsemble=false;
 
+    config.leewayJibeProbabilityHourly=1;
+    config.trackingDirection=Config::TRACKING_FORWARD;
+    Particle jibeFull(30,-.5,.25,.25,0),jibeRestarted(30,-.5,.25,.25,0);
+    jibeFull.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    jibeRestarted.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    jibeFull.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    jibeRestarted.move(&config,0,stochasticEarlyTime,mask,lonRad,latRad,sW,depthIntervals,h,
+                       zeta,zeroU,v,w,akt);
+    config.restartCheckpoint=30;
+    jibeRestarted.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,
+                       zeta,zeroU,v,w,akt);
+    assert(jibeFull.I()==jibeRestarted.I() && jibeFull.J()==jibeRestarted.J());
+    assert(jibeFull.Side()==jibeRestarted.Side() && jibeFull.Side()==DriftSide::LEFT);
+    config.trackingDirection=Config::TRACKING_BACKWARD;
+    config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+    Particle jibeBackwardFull(31,-.5,.25,.25,65),jibeBackwardRestarted(31,-.5,.25,.25,65);
+    jibeBackwardFull.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    jibeBackwardRestarted.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    jibeBackwardFull.move(&config,1,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    Array1<double> jibeLateTime(2); jibeLateTime(0)=35; jibeLateTime(1)=65;
+    jibeBackwardRestarted.move(&config,1,jibeLateTime,mask,lonRad,latRad,sW,depthIntervals,h,
+                               zeta,zeroU,v,w,akt);
+    config.restartCheckpoint=35;
+    jibeBackwardRestarted.move(&config,1,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,
+                               zeta,zeroU,v,w,akt);
+    assert(jibeBackwardFull.I()==jibeBackwardRestarted.I() && jibeBackwardFull.J()==jibeBackwardRestarted.J());
+    assert(jibeBackwardFull.Side()==jibeBackwardRestarted.Side());
+    config.leewayJibeProbabilityHourly=0;
+    config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+
     Array3<float> windU(2,2,2),windV(2,2,2),stokesU(2,2,2),stokesV(2,2,2);
     windU=10.0f; windV=0.0f; stokesU=.2f; stokesV=-.1f;
     config.trackingDirection=Config::TRACKING_FORWARD;

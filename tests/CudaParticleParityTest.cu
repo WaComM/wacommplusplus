@@ -67,11 +67,12 @@ int main() {
     config.trackingDirection=Config::TRACKING_FORWARD;
     config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
 
-    for (int mode=0;mode<4;mode++) {
+    for (int mode=0;mode<5;mode++) {
         bool stochastic=mode==1;
         bool leeway=mode>=2;
         config.random=stochastic;
         config.leewayCoefficientEnsemble=mode==3;
+        config.leewayJibeProbabilityHourly=mode==4 ? 1 : 0;
         config.driftModel=leeway ? 1 : 0;
         config.driftObjectType=static_cast<std::uint16_t>(leeway ? DriftObjectType::PERSON_IN_WATER : DriftObjectType::PASSIVE);
         config.driftSide=static_cast<std::int8_t>(leeway ? DriftSide::RIGHT : DriftSide::UNDEFINED);
@@ -106,6 +107,7 @@ int main() {
         assert(close(result.i,cpu.I(),tolerance) && close(result.j,cpu.J(),tolerance));
         assert(close(result.k,cpu.K(),tolerance) && close(result.health,cpu.Health(),tolerance));
         assert(close(result.age,cpu.Age(),tolerance) && close(result.time,cpu.Time(),tolerance));
+        assert(result.driftSide==static_cast<std::int8_t>(cpu.Side()));
 
         cudaFree(deviceConfig); cudaFree(deviceParticle); cudaFree(deviceTime); cudaFree(deviceMask);
         cudaFree(deviceLon); cudaFree(deviceLat); cudaFree(deviceDepth); cudaFree(deviceH);

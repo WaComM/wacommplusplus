@@ -216,7 +216,17 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
                 particle.k=kdet;
             }
         }
-        if (particle.health>0) { particle.age+=stepDt; particle.health=exp(-particle.age/config->tau0); }
+        if (particle.health>0) {
+            particle.age+=stepDt; particle.health=exp(-particle.age/config->tau0);
+            if (config->leewayJibeProbabilityHourly>0 &&
+                particle.driftObjectType!=(unsigned short)DriftObjectType::PASSIVE) {
+                long long intervalKey=llround(fmin(intervalStart,intervalEnd));
+                unsigned long long substep=(unsigned long long)floor(elapsed/config->dti);
+                double probability=jibeStepProbability(config->leewayJibeProbabilityHourly,stepDt);
+                if (uniform(config->randomSeed,particle.id,intervalKey,substep,LEEWAY_JIBE_RANDOM_COMPONENT)<probability)
+                    particle.driftSide=-particle.driftSide;
+            }
+        }
         elapsed+=stepDt;
     }
     particles[idx]=particle;

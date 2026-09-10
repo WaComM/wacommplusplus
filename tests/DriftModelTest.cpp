@@ -31,6 +31,11 @@ int main() {
     assert(sampleDriftSide(5489,42,1)==DriftSide::RIGHT);
     assert(NumericalHelpers::uniform(5489,42,LEEWAY_SIDE_RANDOM_INTERVAL,0,0)!=
            NumericalHelpers::uniform(5489,42,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0));
+    assert(jibeStepProbability(0,3600)==0);
+    assert(jibeStepProbability(1,1)==1);
+    assert(std::abs(jibeStepProbability(.04,3600)-.04)<1.e-12);
+    double halfHour=jibeStepProbability(.04,1800);
+    assert(std::abs((1-halfHour)*(1-halfHour)-.96)<1.e-12);
 
     const auto& person=DriftObjectCatalog::definition(DriftObjectType::PERSON_IN_WATER);
     assert(person.leeway.downwindSlope==.0096);
