@@ -181,7 +181,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     aktVar.putAtt("long_name","temperature vertical diffusion coefficient");
     aktVar.putAtt("units","meter2 second-1");
     aktVar.putAtt("grid","grid");
-    aktVar.putAtt("loction","face");
+    aktVar.putAtt("location","face");
     aktVar.putAtt("coordinates","lon_rho lat_rho s_w ocean_time");
     aktVar.putAtt("field","AKt, scalar, series");
     aktVar.putAtt("time","ocean_time");

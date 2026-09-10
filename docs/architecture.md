@@ -4,6 +4,16 @@
 
 The execution hierarchy is forcing progression, MPI/FlexMPI decomposition, OpenMP particle parallelism, and optional CUDA execution. Backend work distribution may differ, but equations and closures may not.
 
+![Conceptual data and execution hierarchy from normalized forcing to shared particle physics](figures/execution-dataflow-schema.svg)
+
+The diagram is a conceptual software schema, not a model result. Product adapters produce one normalized field contract; MPI/FlexMPI, OpenMP, and CUDA alter ownership and scheduling only. Multidimensional fields use a contiguous row-major backing store. For a five-dimensional field with extents $(N_x,N_y,N_z,N_w,N_v)$, the element $(i,j,k,l,m)$ has linear offset
+
+$$
+q=((((iN_y+j)N_z+k)N_w+l)N_v+m),
+$$
+
+where every index is dimensionless and $0\le q<N_xN_yN_zN_wN_v$. Owning arrays allocate this store; non-owning views retain the caller-supplied pointer and must not outlive it. The `array_storage` regression verifies pointer identity, offset mapping, and traversal of every element, guarding the storage contract used by normalized environmental fields.
+
 Forcing progression keeps the current normalized adapter plus one adjacent adapter long enough to copy a single boundary record. Forward traversal appends the next file's first record; backward traversal prepends the older file's last record. Compatibility checks cover dimensions, sigma coordinates, longitude, latitude, bathymetry, and mask before any dynamic array is indexed.
 
 When explicitly configured, environmental regridding occurs after adjacent-file boundary assembly and before construction of `Wacomm`. Product-specific adapters have therefore already normalized time, units, longitude convention, and vector basis. The shared geographic bilinear operator changes only the horizontal representation; `Wacomm` subsequently applies the same time/grid compatibility checks as for an exact-match run. No regridding branch exists inside `Particle` or any execution backend.
