@@ -39,6 +39,10 @@ int main() {
     double h[4]={100,100,100,100};
     float zeta[8]={};
     float u[16]={},v[16]={},w[24]={},akt[24]={};
+    float windU10[8]={8,9,10,11,12,13,14,15};
+    float windV10[8]={-2,-1,0,1,2,3,4,5};
+    float stokesU[8]={.05f,.06f,.07f,.08f,.09f,.10f,.11f,.12f};
+    float stokesV[8]={-.04f,-.03f,-.02f,-.01f,0,.01f,.02f,.03f};
     for (int index=8;index<16;index++) u[index]=.25f;
     for (float &value:akt) value=.01f;
 
@@ -53,6 +57,12 @@ int main() {
     cpuSW(-2)=-1; cpuSW(-1)=-.5; cpuSW(0)=0;
     cpuDepth(-1)=.5; cpuDepth(0)=.5; cpuDepth(1)=.5;
     Array3<float> cpuZeta(2,2,2); cpuZeta=0.0f;
+    Array3<float> cpuWindU10(2,2,2),cpuWindV10(2,2,2),cpuStokesU(2,2,2),cpuStokesV(2,2,2);
+    for (int t=0;t<2;t++) for (int j=0;j<2;j++) for (int i=0;i<2;i++) {
+        int index=(t*2+j)*2+i;
+        cpuWindU10(t,j,i)=windU10[index]; cpuWindV10(t,j,i)=windV10[index];
+        cpuStokesU(t,j,i)=stokesU[index]; cpuStokesV(t,j,i)=stokesV[index];
+    }
     Array4<float> cpuU(2,2,2,2,0,-1,0,0),cpuV(2,2,2,2,0,-1,0,0);
     Array4<float> cpuW(2,3,2,2,0,-2,0,0),cpuAkt(2,3,2,2,0,-2,0,0);
     cpuU=0.0f; cpuV=0.0f; cpuW=0.0f; cpuAkt=.01f;
@@ -67,7 +77,7 @@ int main() {
     config.trackingDirection=Config::TRACKING_FORWARD;
     config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
 
-    for (int mode=0;mode<7;mode++) {
+    for (int mode=0;mode<11;mode++) {
         bool stochastic=mode==1;
         bool leeway=mode>=2;
         DriftObjectType object=mode==6 ? DriftObjectType::PERSON_IN_WATER_SURVIVAL_SUIT :
@@ -82,10 +92,17 @@ int main() {
         config.driftObjectType=static_cast<std::uint16_t>(object);
         config.driftSide=static_cast<std::int8_t>(side);
         config.hasWind=leeway; config.windU10=10; config.windV10=0;
+        int timeIndex=mode>=9 ? 1 : 0;
+        config.trackingDirection=mode>=9 ? Config::TRACKING_BACKWARD : Config::TRACKING_FORWARD;
+        config.restartCheckpoint=mode==10 ? 35 : std::numeric_limits<double>::quiet_NaN();
         Particle cpu(9007199254740993ULL,-.5,.25,.25,0);
         if (leeway) cpu.Drift(object,side);
-        cpu.move(&config,0,cpuTime,cpuMask,cpuLon,cpuLat,cpuSW,cpuDepth,cpuH,cpuZeta,
-                 cpuU,cpuV,cpuW,cpuAkt);
+        bool dynamicWind=mode>=7,dynamicWave=mode==8;
+        if (mode>=9) dynamicWave=true;
+        cpu.move(&config,timeIndex,cpuTime,cpuMask,cpuLon,cpuLat,cpuSW,cpuDepth,cpuH,cpuZeta,
+                 cpuU,cpuV,cpuW,cpuAkt,dynamicWind ? &cpuWindU10 : nullptr,
+                 dynamicWind ? &cpuWindV10 : nullptr,dynamicWave ? &cpuStokesU : nullptr,
+                 dynamicWave ? &cpuStokesV : nullptr);
         particle_data result=cpu.data();
 
         particle_data initial{9007199254740993ULL,-.5,.25,.25,1,0,0,
@@ -98,12 +115,19 @@ int main() {
         float *deviceZeta=copyToDevice(zeta,8),*deviceU=copyToDevice(u,16);
         float *deviceV=copyToDevice(v,16),*deviceW=copyToDevice(w,24);
         float *deviceAkt=copyToDevice(akt,24);
+        float *deviceWindU10=dynamicWind ? copyToDevice(windU10,8) : nullptr;
+        float *deviceWindV10=dynamicWind ? copyToDevice(windV10,8) : nullptr;
+        float *deviceStokesU=dynamicWave ? copyToDevice(stokesU,8) : nullptr;
+        float *deviceStokesV=dynamicWave ? copyToDevice(stokesV,8) : nullptr;
         assert(deviceConfig && deviceParticle && deviceTime && deviceMask && deviceLon && deviceLat &&
                deviceDepth && deviceH && deviceZeta && deviceU && deviceV && deviceW && deviceAkt);
+        assert(!dynamicWind || (deviceWindU10 && deviceWindV10));
+        assert(!dynamicWave || (deviceStokesU && deviceStokesV));
 
-        assert(cudaMoveParticle(deviceConfig,deviceParticle,0,2,3,2,2,2,deviceTime,deviceMask,
+        assert(cudaMoveParticle(deviceConfig,deviceParticle,timeIndex,2,3,2,2,2,deviceTime,deviceMask,
                                 deviceLon,deviceLat,deviceDepth,deviceH,deviceZeta,deviceU,deviceV,
-                                deviceW,deviceAkt,1,1,1)==cudaSuccess);
+                                deviceW,deviceAkt,deviceWindU10,deviceWindV10,deviceStokesU,
+                                deviceStokesV,1,1,1)==cudaSuccess);
         assert(cudaDeviceSynchronize()==cudaSuccess);
         assert(cudaMemcpy(&result,deviceParticle,sizeof(result),cudaMemcpyDeviceToHost)==cudaSuccess);
 
@@ -117,5 +141,9 @@ int main() {
         cudaFree(deviceConfig); cudaFree(deviceParticle); cudaFree(deviceTime); cudaFree(deviceMask);
         cudaFree(deviceLon); cudaFree(deviceLat); cudaFree(deviceDepth); cudaFree(deviceH);
         cudaFree(deviceZeta); cudaFree(deviceU); cudaFree(deviceV); cudaFree(deviceW); cudaFree(deviceAkt);
+        if (deviceWindU10) cudaFree(deviceWindU10);
+        if (deviceWindV10) cudaFree(deviceWindV10);
+        if (deviceStokesU) cudaFree(deviceStokesU);
+        if (deviceStokesV) cudaFree(deviceStokesV);
     }
 }

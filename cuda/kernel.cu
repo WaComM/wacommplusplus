@@ -100,7 +100,8 @@ __device__ double distance(double lat0, double lon0, double lat1, double lon1) {
 __global__ void move(config_data *config, particle_data *particles, int timeIndex, int oceanTime,
                      int sW, int sRho, int eta, int xi, double *times, double *mask, double *lonRad,
                      double *latRad, double *depthIntervals, double *h, float *zeta, float *u,
-                     float *v, float *w, float *akt, int particleCount) {
+                     float *v, float *w, float *akt, float *windU10, float *windV10,
+                     float *stokesU, float *stokesV, int particleCount) {
     int idx=threadIdx.x+blockIdx.x*blockDim.x;
     if (idx>=particleCount) return;
     particle_data particle=particles[idx];
@@ -154,7 +155,8 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
             LeewayCoefficients coefficients=driftObjectCoefficients((DriftObjectType)particle.driftObjectType);
             long long uncertaintyInterval=llround(fmin(intervalStart,intervalEnd));
             unsigned long long uncertaintySubstep=(unsigned long long)floor(elapsed/config->dti);
-            double windU=config->windU10,windV=config->windV10;
+            double windU=windU10 ? bilinear(windU10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windU10;
+            double windV=windV10 ? bilinear(windV10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windV10;
             if (config->windErrorStdDev>0) {
                 windU+=config->windErrorStdDev*normal(config->randomSeed,particle.id,uncertaintyInterval,
                                                       uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT);
@@ -172,6 +174,10 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
                                                 (DriftSide)particle.driftSide,downwindNormal,crosswindNormal);
             uu+=(float)leeway.u;
             vv+=(float)leeway.v;
+            if (stokesU && stokesV) {
+                uu+=bilinear(stokesU,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha);
+                vv+=bilinear(stokesV,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha);
+            }
         }
         double ww=bilinear(w,timeIndex,nextTime,kI,sW,jI,iI,jF,iF,eta,xi,alpha)*(1.0-kF)+
                   bilinear(w,timeIndex,nextTime,kI-1,sW,jI,iI,jF,iF,eta,xi,alpha)*kF;
@@ -246,12 +252,13 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
 cudaError_t cudaMoveParticle(config_data *config, particle_data *particles, int timeIndex, int oceanTime,
                              int sW, int sRho, int eta, int xi, double *times, double *mask,
                              double *lonRad, double *latRad, double *depthIntervals, double *h,
-                             float *zeta, float *u, float *v, float *w, float *akt, int particleCount,
+                             float *zeta, float *u, float *v, float *w, float *akt,
+                             float *windU10, float *windV10, float *stokesU, float *stokesV, int particleCount,
                              int numThread, int numGPU) {
     (void)mask; (void)numThread; (void)numGPU;
     dim3 threads=512;
     dim3 blocks=particleCount/threads.x+((particleCount%threads.x)==0 ? 0 : 1);
     move<<<blocks,threads>>>(config,particles,timeIndex,oceanTime,sW,sRho,eta,xi,times,mask,lonRad,latRad,
-                            depthIntervals,h,zeta,u,v,w,akt,particleCount);
+                            depthIntervals,h,zeta,u,v,w,akt,windU10,windV10,stokesU,stokesV,particleCount);
     return cudaGetLastError();
 }

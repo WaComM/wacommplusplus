@@ -138,8 +138,6 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         // If a GPU is not present, or a problem occurred, set the number of GPUs as 0;
         num_gpus = 0;
     }
-    if (num_gpus>0 && (weatherModelAdapter || waveModelAdapter))
-        throw std::runtime_error("Dynamic weather/wave adapters are not yet supported by CUDA; run the CPU/OpenMP path or use constant wind");
 #endif
 
     // Get the size of the time axis
@@ -386,6 +384,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 	    typedef struct WacommVariables{
             double *oceanTimeDevice, *depthIntervalsDevice, *lonRadDevice, *latRadDevice, *maskDevice, *hDevice;
             float *zetaDevice, *uDevice, *vDevice, *wDevice, *aktDevice;
+            float *windU10Device, *windV10Device, *stokesUDevice, *stokesVDevice;
             struct config_data *configDevice;
         } WacommVariables;
 
@@ -415,6 +414,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             }
             // For each GPU...
             for (int i=0; i<num_gpus; i++){
+                stateVector[i].windU10Device=nullptr;
+                stateVector[i].windV10Device=nullptr;
+                stateVector[i].stokesUDevice=nullptr;
+                stateVector[i].stokesVDevice=nullptr;
 
                 //set GPU Device
                 gpuErrchk(cudaSetDevice(i));
@@ -435,6 +438,14 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                 gpuErrchk(cudaMalloc((void**) &(stateVector[i].vDevice), oceanModelAdapter->V().Nx() * oceanModelAdapter->V().Ny() * oceanModelAdapter->V().Nz() * oceanModelAdapter->V().N4() * sizeof(float)));
                 gpuErrchk(cudaMalloc((void**) &(stateVector[i].wDevice), oceanModelAdapter->W().Nx() * oceanModelAdapter->W().Ny() * oceanModelAdapter->W().Nz() * oceanModelAdapter->W().N4() * sizeof(float)));
                 gpuErrchk(cudaMalloc((void**) &(stateVector[i].aktDevice), oceanModelAdapter->AKT().Nx() * oceanModelAdapter->AKT().Ny() * oceanModelAdapter->AKT().Nz() * oceanModelAdapter->AKT().N4() * sizeof(float)));
+                if (weatherModelAdapter) {
+                    gpuErrchk(cudaMalloc((void**) &(stateVector[i].windU10Device), weatherModelAdapter->WindU10().Nx() * weatherModelAdapter->WindU10().Ny() * weatherModelAdapter->WindU10().Nz() * sizeof(float)));
+                    gpuErrchk(cudaMalloc((void**) &(stateVector[i].windV10Device), weatherModelAdapter->WindV10().Nx() * weatherModelAdapter->WindV10().Ny() * weatherModelAdapter->WindV10().Nz() * sizeof(float)));
+                }
+                if (waveModelAdapter) {
+                    gpuErrchk(cudaMalloc((void**) &(stateVector[i].stokesUDevice), waveModelAdapter->StokesU().Nx() * waveModelAdapter->StokesU().Ny() * waveModelAdapter->StokesU().Nz() * sizeof(float)));
+                    gpuErrchk(cudaMalloc((void**) &(stateVector[i].stokesVDevice), waveModelAdapter->StokesV().Nx() * waveModelAdapter->StokesV().Ny() * waveModelAdapter->StokesV().Nz() * sizeof(float)));
+                }
                 gpuErrchk(cudaMalloc((void**) &(stateVector[i].configDevice), sizeof(struct config_data)));
 
                 //copy data from host to device
@@ -461,6 +472,14 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                            oceanModelAdapter->AKT().Nx() * oceanModelAdapter->AKT().Ny() * oceanModelAdapter->AKT().Nz() *
                            oceanModelAdapter->AKT().N4() *
                            sizeof(float), cudaMemcpyHostToDevice));
+                if (weatherModelAdapter) {
+                    gpuErrchk(cudaMemcpy(stateVector[i].windU10Device, weatherModelAdapter->WindU10(), weatherModelAdapter->WindU10().Nx() * weatherModelAdapter->WindU10().Ny() * weatherModelAdapter->WindU10().Nz() * sizeof(float), cudaMemcpyHostToDevice));
+                    gpuErrchk(cudaMemcpy(stateVector[i].windV10Device, weatherModelAdapter->WindV10(), weatherModelAdapter->WindV10().Nx() * weatherModelAdapter->WindV10().Ny() * weatherModelAdapter->WindV10().Nz() * sizeof(float), cudaMemcpyHostToDevice));
+                }
+                if (waveModelAdapter) {
+                    gpuErrchk(cudaMemcpy(stateVector[i].stokesUDevice, waveModelAdapter->StokesU(), waveModelAdapter->StokesU().Nx() * waveModelAdapter->StokesU().Ny() * waveModelAdapter->StokesU().Nz() * sizeof(float), cudaMemcpyHostToDevice));
+                    gpuErrchk(cudaMemcpy(stateVector[i].stokesVDevice, waveModelAdapter->StokesV(), waveModelAdapter->StokesV().Nx() * waveModelAdapter->StokesV().Ny() * waveModelAdapter->StokesV().Nz() * sizeof(float), cudaMemcpyHostToDevice));
+                }
                 gpuErrchk(cudaMemcpy(stateVector[i].configDevice, pConfigData, sizeof(struct config_data), cudaMemcpyHostToDevice));
             }
             auto stp = std::chrono::high_resolution_clock::now();
@@ -589,6 +608,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                                 stateVector[gpu_id].vDevice,
                                 stateVector[gpu_id].wDevice,
                                 stateVector[gpu_id].aktDevice,
+                                stateVector[gpu_id].windU10Device,
+                                stateVector[gpu_id].windV10Device,
+                                stateVector[gpu_id].stokesUDevice,
+                                stateVector[gpu_id].stokesVDevice,
                                 GPU_counts[idx], idx, gpu_id));
 
                             gpuErrchk(cudaEventRecord(stop));
@@ -676,6 +699,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                 gpuErrchk(cudaFree(stateVector[i].vDevice));
                 gpuErrchk(cudaFree(stateVector[i].wDevice));
                 gpuErrchk(cudaFree(stateVector[i].aktDevice));
+                if (stateVector[i].windU10Device) gpuErrchk(cudaFree(stateVector[i].windU10Device));
+                if (stateVector[i].windV10Device) gpuErrchk(cudaFree(stateVector[i].windV10Device));
+                if (stateVector[i].stokesUDevice) gpuErrchk(cudaFree(stateVector[i].stokesUDevice));
+                if (stateVector[i].stokesVDevice) gpuErrchk(cudaFree(stateVector[i].stokesVDevice));
                 gpuErrchk(cudaFree(stateVector[i].configDevice));
             }
             delete [] stateVector;
