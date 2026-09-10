@@ -4,6 +4,9 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
+#ifdef WACOMM_USE_PROJ
+#include <proj.h>
+#endif
 
 namespace {
 struct Bracket { int lower; double weight; };
@@ -217,4 +220,61 @@ Array::Array3<float> EnvironmentalRegridder::bilinearCurvilinearGeographic(
                                                         source(t,foundJ+1,foundI),source(t,foundJ+1,foundI+1),foundX,foundY));
     }
     return result;
+}
+
+Array::Array3<float> EnvironmentalRegridder::bilinearProjected(
+        const Array::Array2<double>& sourceX,const Array::Array2<double>& sourceY,
+        const Array::Array3<float>& source,const Array::Array2<double>& targetLon,
+        const Array::Array2<double>& targetLat,const std::string& sourceCrs) {
+#ifndef WACOMM_USE_PROJ
+    (void)sourceX; (void)sourceY; (void)source; (void)targetLon; (void)targetLat; (void)sourceCrs;
+    throw std::runtime_error("Projected environmental regridding requires a build configured with USE_PROJ=ON");
+#else
+    if (sourceCrs.empty()) throw std::runtime_error("Projected environmental regridding requires an explicit source_crs");
+    size_t eta=sourceX.Nx(),xi=sourceX.Ny();
+    if (eta<2 || xi<2 || sourceY.Nx()!=eta || sourceY.Ny()!=xi || source.Ny()!=eta || source.Nz()!=xi)
+        throw std::runtime_error("Environmental projected regridding requires compatible source dimensions of at least 2x2");
+    if (targetLon.Nx()!=targetLat.Nx() || targetLon.Ny()!=targetLat.Ny())
+        throw std::runtime_error("Environmental target longitude and latitude dimensions differ");
+    std::vector<double> xAxis(xi),yAxis(eta);
+    for (int i=0;i<xi;i++) xAxis[i]=sourceX(0,i);
+    for (int j=0;j<eta;j++) yAxis[j]=sourceY(j,0);
+    for (int j=0;j<eta;j++) for (int i=0;i<xi;i++)
+        if (!std::isfinite(sourceX(j,i)) || !std::isfinite(sourceY(j,i)) ||
+            std::abs(sourceX(j,i)-xAxis[i])>1.e-8 || std::abs(sourceY(j,i)-yAxis[j])>1.e-8)
+            throw std::runtime_error("Environmental projected regridding currently requires rectilinear source coordinates");
+    for (int t=0;t<source.Nx();t++) for (int j=0;j<eta;j++) for (int i=0;i<xi;i++)
+        if (!std::isfinite(source(t,j,i))) throw std::runtime_error("Environmental source field must be finite before regridding");
+    PJ_CONTEXT *context=proj_context_create();
+    PJ *raw=context ? proj_create_crs_to_crs(context,"EPSG:4326",sourceCrs.c_str(),nullptr) : nullptr;
+    PJ *transform=raw ? proj_normalize_for_visualization(context,raw) : nullptr;
+    if (raw) proj_destroy(raw);
+    if (!context || !transform) {
+        if (transform) proj_destroy(transform);
+        if (context) proj_context_destroy(context);
+        throw std::runtime_error("Unable to create the declared environmental CRS transformation: " + sourceCrs);
+    }
+    Array::Array3<float> result(source.Nx(),targetLon.Nx(),targetLon.Ny());
+    try {
+        for (int j=0;j<targetLon.Nx();j++) for (int i=0;i<targetLon.Ny();i++) {
+            double longitude=targetLon(j,i),latitude=targetLat(j,i);
+            if (!std::isfinite(longitude) || !std::isfinite(latitude))
+                throw std::runtime_error("Environmental target coordinates must be finite");
+            PJ_COORD projected=proj_trans(transform,PJ_FWD,proj_coord(longitude,latitude,0,0));
+            if (!std::isfinite(projected.xy.x) || !std::isfinite(projected.xy.y))
+                throw std::runtime_error("Environmental CRS transformation produced a non-finite coordinate");
+            Bracket x=bracket(xAxis,projected.xy.x,"projected x");
+            Bracket y=bracket(yAxis,projected.xy.y,"projected y");
+            for (int t=0;t<source.Nx();t++) {
+                double lower=source(t,y.lower,x.lower)*(1-x.weight)+source(t,y.lower,x.lower+1)*x.weight;
+                double upper=source(t,y.lower+1,x.lower)*(1-x.weight)+source(t,y.lower+1,x.lower+1)*x.weight;
+                result(t,j,i)=static_cast<float>(lower*(1-y.weight)+upper*y.weight);
+            }
+        }
+    } catch (...) {
+        proj_destroy(transform); proj_context_destroy(context); throw;
+    }
+    proj_destroy(transform); proj_context_destroy(context);
+    return result;
+#endif
 }

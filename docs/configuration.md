@@ -51,6 +51,8 @@ Environmental variables must carry explicit metadata. Velocity uses `m s-1` or a
 
 `regrid` is `none` by default. `bilinear_geographic` accepts a monotonic rectilinear environmental longitude/latitude grid, including increasing or decreasing axes and longitude axes crossing the antimeridian. `bilinear_curvilinear_geographic` uses inverse bilinear coordinates in a valid, non-folded curvilinear quadrilateral. Both require every ocean-grid point to lie inside the source domain and interpolate already Earth-relative vector components. They reject projected coordinates and extrapolation. Neither operator is conservative; configuration therefore records the scientific choice explicitly.
 
+`bilinear_projected` requires an explicit `source_crs`, for example `"EPSG:3857"`, and `USE_PROJ=ON`. The file must expose rectilinear `x/y` coordinate axes or meshes in meters. PROJ transforms ocean targets from EPSG:4326 into the declared source CRS before bilinear interpolation. A CRS is never inferred. Missing or misplaced CRS declarations, unavailable PROJ support, invalid transforms, non-metric axes, non-rectilinear geometry, and extrapolation are errors.
+
 The complete resolved JSON configuration, including defaults, is embedded in NetCDF outputs. Reproducible experiments should nevertheless archive the original configuration, forcing and restart checksums, build metadata, parallel layout, tolerances, and output checksums.
 
 ## References

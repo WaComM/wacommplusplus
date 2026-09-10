@@ -17,7 +17,7 @@ cmake --build build-core
 ctest --test-dir build-core --output-on-failure
 ```
 
-Optional switches are `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, and `USE_CUDA`. CUDA is unavailable on modern macOS. Configuration fails explicitly when a requested dependency is missing.
+Optional switches are `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA`, and `USE_PROJ`. `USE_PROJ=ON` enables explicitly declared projected environmental grids and requires the PROJ library and coordinate database; it is not required by the portable core or geographic adapters. CUDA is unavailable on modern macOS. Configuration fails explicitly when a requested dependency is missing.
 
 On macOS with AppleClang, install Homebrew's keg-only OpenMP runtime with `brew install libomp`. When `USE_OMP=ON`, configuration obtains the formula prefix from Homebrew and supplies its header, library, and AppleClang frontend flags to CMake's imported `OpenMP::OpenMP_CXX` target. Existing command-line `OpenMP_CXX_*` and `OpenMP_omp_LIBRARY` cache settings take precedence. If Homebrew is unavailable, configure those variables explicitly or select a compiler with its own OpenMP runtime before creating the build directory.
 

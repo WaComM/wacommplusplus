@@ -9,6 +9,9 @@
 #include "Config.hpp"
 
 #include <netcdf>
+#ifdef WACOMM_USE_PROJ
+#include <proj.h>
+#endif
 
 namespace Provenance {
 
@@ -18,6 +21,9 @@ namespace Provenance {
         file.putAtt("wacomm_cmake_options",WACOMM_CMAKE_OPTIONS);
         file.putAtt("wacomm_configuration_file",config.ConfigFile());
         file.putAtt("wacomm_configuration",config.asJson());
+#ifdef WACOMM_USE_PROJ
+        file.putAtt("wacomm_proj_version",proj_info().version);
+#endif
     }
 }
 

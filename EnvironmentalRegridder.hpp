@@ -2,6 +2,7 @@
 #define WACOMMPLUSPLUS_ENVIRONMENTALREGRIDDER_HPP
 
 #include "Array.h"
+#include <string>
 
 namespace EnvironmentalRegridder {
     Array::Array3<float> bilinearGeographic(const Array::Array2<double>& sourceLon,
@@ -14,6 +15,12 @@ namespace EnvironmentalRegridder {
                                                        const Array::Array3<float>& source,
                                                        const Array::Array2<double>& targetLon,
                                                        const Array::Array2<double>& targetLat);
+    Array::Array3<float> bilinearProjected(const Array::Array2<double>& sourceX,
+                                           const Array::Array2<double>& sourceY,
+                                           const Array::Array3<float>& source,
+                                           const Array::Array2<double>& targetLon,
+                                           const Array::Array2<double>& targetLat,
+                                           const std::string& sourceCrs);
 }
 
 #endif

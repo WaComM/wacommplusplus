@@ -32,6 +32,33 @@ void createWW3(const std::string& name,const std::string& velocityUnits="m s-1",
     NcVar stokesV=file.addVar("northward_surface_stokes_drift",ncFloat,dims); stokesV.putAtt("units",velocityUnits); stokesV.putVar(v);
 }
 
+void createProjectedWW3(const std::string& name) {
+    NcFile file(name,NcFile::replace,NcFile::nc4);
+    NcDim time=file.addDim("time",1),y=file.addDim("y",2),x=file.addDim("x",2);
+    double times[1]={0},xs[2]={0,111319.49079327357},ys[2]={0,111325.1428663851};
+    float u[4]={0,1,2,3},v[4]={0,-1,-2,-3};
+    NcVar timeVar=file.addVar("time",ncDouble,time); timeVar.putAtt("units","seconds since 1968-05-23 00:00:00 UTC"); timeVar.putVar(times);
+    NcVar xVar=file.addVar("x",ncDouble,x); xVar.putAtt("units","m"); xVar.putVar(xs);
+    NcVar yVar=file.addVar("y",ncDouble,y); yVar.putAtt("units","m"); yVar.putVar(ys);
+    NcVar stokesU=file.addVar("eastward_surface_stokes_drift",ncFloat,{time,y,x}); stokesU.putAtt("units","m s-1"); stokesU.putVar(u);
+    NcVar stokesV=file.addVar("northward_surface_stokes_drift",ncFloat,{time,y,x}); stokesV.putAtt("units","m s-1"); stokesV.putVar(v);
+}
+
+void createProjectedWRF(const std::string& name) {
+    NcFile file(name,NcFile::replace,NcFile::nc4);
+    NcDim time=file.addDim("Time",1),dateLength=file.addDim("DateStrLen",19);
+    NcDim y=file.addDim("south_north",2),x=file.addDim("west_east",2);
+    const char times[]="2026-01-01_00:00:00";
+    double xs[2]={0,111319.49079327357},ys[2]={0,111325.1428663851};
+    float u[4]={0,1,2,3},v[4]={0,-1,-2,-3},cosine[4]={1,1,1,1},sine[4]={0,0,0,0};
+    file.addVar("Times",ncChar,{time,dateLength}).putVar(times);
+    NcVar xVar=file.addVar("x",ncDouble,x); xVar.putAtt("units","m"); xVar.putVar(xs);
+    NcVar yVar=file.addVar("y",ncDouble,y); yVar.putAtt("units","m"); yVar.putVar(ys);
+    NcVar windU=file.addVar("U10",ncFloat,{time,y,x}); windU.putAtt("units","m s-1"); windU.putVar(u);
+    NcVar windV=file.addVar("V10",ncFloat,{time,y,x}); windV.putAtt("units","m s-1"); windV.putVar(v);
+    file.addVar("COSALPHA",ncFloat,{y,x}).putVar(cosine); file.addVar("SINALPHA",ncFloat,{y,x}).putVar(sine);
+}
+
 int main() {
     std::string wrfFile="wrf-test.nc",ww3File="ww3-test.nc"; createWRF(wrfFile); createWW3(ww3File);
     auto weather=WeatherModelAdapterFactory::create("WRF",wrfFile); weather->process();
@@ -55,6 +82,19 @@ int main() {
     std::string invalidTimeFile="ww3-invalid-time.nc"; createWW3(invalidTimeFile,"m s-1","months since 1968-05-23"); rejected=false;
     try { auto invalid=WaveModelAdapterFactory::create("WW3",invalidTimeFile); invalid->process(); }
     catch (const std::runtime_error&) { rejected=true; } assert(rejected);
+#ifdef WACOMM_USE_PROJ
+    std::string projectedFile="ww3-projected.nc"; createProjectedWW3(projectedFile);
+    auto projectedWave=WaveModelAdapterFactory::create("WW3",projectedFile,"EPSG:3857"); projectedWave->process();
+    Array2<double> projectedTargetLon(1,1),projectedTargetLat(1,1);
+    projectedTargetLon(0,0)=.5; projectedTargetLat(0,0)=.5;
+    projectedWave->regridBilinearProjected(projectedTargetLon,projectedTargetLat,"EPSG:3857");
+    assert(std::abs(projectedWave->StokesU()(0,0,0)-1.49996)<1.e-4);
+    std::string projectedWrfFile="wrf-projected.nc"; createProjectedWRF(projectedWrfFile);
+    auto projectedWeather=WeatherModelAdapterFactory::create("WRF",projectedWrfFile,"EPSG:3857"); projectedWeather->process();
+    projectedWeather->regridBilinearProjected(projectedTargetLon,projectedTargetLat,"EPSG:3857");
+    assert(std::abs(projectedWeather->WindU10()(0,0,0)-1.49996)<1.e-4);
+    std::remove(projectedFile.c_str()); std::remove(projectedWrfFile.c_str());
+#endif
     std::remove(wrfFile.c_str()); std::remove(ww3File.c_str()); std::remove(invalidFile.c_str());
     std::remove(invalidTimeFile.c_str());
 }

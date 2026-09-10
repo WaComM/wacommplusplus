@@ -134,9 +134,11 @@ void Config::setDefault() {
     weatherModel="none";
     weatherInputs.clear();
     weatherRegridding="none";
+    weatherSourceCrs="";
     waveModel="none";
     waveInputs.clear();
     waveRegridding="none";
+    waveSourceCrs="";
 
     // Save processed input files (default false)
     saveInput = false;
@@ -547,9 +549,11 @@ string Config::OceanModel() const {
 string Config::WeatherModel() const { return weatherModel; }
 vector<string>& Config::WeatherInputs() { return weatherInputs; }
 string Config::WeatherRegridding() const { return weatherRegridding; }
+string Config::WeatherSourceCrs() const { return weatherSourceCrs; }
 string Config::WaveModel() const { return waveModel; }
 vector<string>& Config::WaveInputs() { return waveInputs; }
 string Config::WaveRegridding() const { return waveRegridding; }
+string Config::WaveSourceCrs() const { return waveSourceCrs; }
 
 void Config::OceanModel(string value) {
     oceanModel = value;
@@ -627,8 +631,8 @@ string Config::asJson() const {
     json environment = {
             { "wind", {{"adapter",weatherModel=="WRF" ? "WRF" : (_data.hasWind ? "constant" : "none")},
                         {"u10",_data.windU10},{"v10",_data.windV10},
-                        {"nc_inputs",weatherInputs},{"regrid",weatherRegridding}} },
-            { "wave", {{"adapter",waveModel},{"nc_inputs",waveInputs},{"regrid",waveRegridding}} }
+                        {"nc_inputs",weatherInputs},{"regrid",weatherRegridding},{"source_crs",weatherSourceCrs}} },
+            { "wave", {{"adapter",waveModel},{"nc_inputs",waveInputs},{"regrid",waveRegridding},{"source_crs",waveSourceCrs}} }
     };
 
     json config = {
@@ -773,8 +777,9 @@ void Config::loadFromJson(const string &fileName) {
             } else if (adapter=="WRF") {
                 weatherModel=adapter; _data.hasWind=true;
                 weatherRegridding=wind.value("regrid","none");
+                weatherSourceCrs=wind.value("source_crs","");
                 if (weatherRegridding!="none" && weatherRegridding!="bilinear_geographic" &&
-                    weatherRegridding!="bilinear_curvilinear_geographic")
+                    weatherRegridding!="bilinear_curvilinear_geographic" && weatherRegridding!="bilinear_projected")
                     throw std::runtime_error("Unknown environment.wind.regrid: " + weatherRegridding);
                 if (!wind.contains("nc_inputs") || !wind["nc_inputs"].is_array())
                     throw std::runtime_error("WRF wind requires environment.wind.nc_inputs");
@@ -786,8 +791,9 @@ void Config::loadFromJson(const string &fileName) {
             if (waveModel!="none" && waveModel!="WW3") throw std::runtime_error("Unknown environment.wave.adapter: " + waveModel);
             if (waveModel=="WW3") {
                 waveRegridding=wave.value("regrid","none");
+                waveSourceCrs=wave.value("source_crs","");
                 if (waveRegridding!="none" && waveRegridding!="bilinear_geographic" &&
-                    waveRegridding!="bilinear_curvilinear_geographic")
+                    waveRegridding!="bilinear_curvilinear_geographic" && waveRegridding!="bilinear_projected")
                     throw std::runtime_error("Unknown environment.wave.regrid: " + waveRegridding);
                 if (!wave.contains("nc_inputs") || !wave["nc_inputs"].is_array())
                     throw std::runtime_error("WW3 wave input requires environment.wave.nc_inputs");
@@ -809,6 +815,16 @@ void Config::loadFromJson(const string &fileName) {
         throw std::runtime_error("WRF and ocean nc_inputs must contain one matching file per forcing window");
     if (waveModel=="WW3" && waveInputs.size()!=ncInputs.size())
         throw std::runtime_error("WW3 and ocean nc_inputs must contain one matching file per forcing window");
+    if ((weatherRegridding=="bilinear_projected" && weatherSourceCrs.empty()) ||
+        (waveRegridding=="bilinear_projected" && waveSourceCrs.empty()))
+        throw std::runtime_error("bilinear_projected regridding requires an explicit source_crs");
+    if ((!weatherSourceCrs.empty() && weatherRegridding!="bilinear_projected") ||
+        (!waveSourceCrs.empty() && waveRegridding!="bilinear_projected"))
+        throw std::runtime_error("environment source_crs is valid only with regrid=bilinear_projected");
+#ifndef WACOMM_USE_PROJ
+    if (weatherRegridding=="bilinear_projected" || waveRegridding=="bilinear_projected")
+        throw std::runtime_error("bilinear_projected regridding requires a build configured with USE_PROJ=ON");
+#endif
     if (!std::isfinite(_data.dti) || _data.dti<=0) {
         throw std::runtime_error("physics.dti must be a finite value greater than zero");
     }

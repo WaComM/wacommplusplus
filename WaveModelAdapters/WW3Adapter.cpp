@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <vector>
 
-WW3Adapter::WW3Adapter(std::string &fileName): fileName(fileName) {}
+WW3Adapter::WW3Adapter(std::string &fileName,const std::string& sourceCrs): fileName(fileName),sourceCrs(sourceCrs) {}
 
 NcVar WW3Adapter::variable(NcFile &file, const std::vector<std::string>& names) {
     for (const auto& name:names) { NcVar value=file.getVar(name); if (!value.isNull()) return value; }
@@ -13,15 +13,21 @@ NcVar WW3Adapter::variable(NcFile &file, const std::vector<std::string>& names) 
 
 void WW3Adapter::process() {
     NcFile file(fileName,NcFile::read);
-    NcVar time=variable(file,{"time"}),lon=variable(file,{"longitude","lon"}),lat=variable(file,{"latitude","lat"});
+    NcVar time=variable(file,{"time"}),lon=variable(file,sourceCrs.empty() ? std::vector<std::string>{"longitude","lon"} : std::vector<std::string>{"x"}),
+          lat=variable(file,sourceCrs.empty() ? std::vector<std::string>{"latitude","lat"} : std::vector<std::string>{"y"});
     NcVar u=variable(file,{"uuss","ust","stokes_u","eastward_surface_stokes_drift",
                                 "sea_surface_wave_stokes_drift_x_velocity"});
     NcVar v=variable(file,{"vuss","vst","stokes_v","northward_surface_stokes_drift",
                                 "sea_surface_wave_stokes_drift_y_velocity"});
     EnvironmentalMetadata::requireVelocity(u,"WW3 eastward Stokes drift");
     EnvironmentalMetadata::requireVelocity(v,"WW3 northward Stokes drift");
-    EnvironmentalMetadata::requireLongitude(lon,"WW3 longitude");
-    EnvironmentalMetadata::requireLatitude(lat,"WW3 latitude");
+    if (sourceCrs.empty()) {
+        EnvironmentalMetadata::requireLongitude(lon,"WW3 longitude");
+        EnvironmentalMetadata::requireLatitude(lat,"WW3 latitude");
+    } else {
+        EnvironmentalMetadata::requireProjectedCoordinate(lon,"WW3 x");
+        EnvironmentalMetadata::requireProjectedCoordinate(lat,"WW3 y");
+    }
     auto dims=u.getDims();
     if (dims.size()!=3 || v.getDims().size()!=3 || dims[0].getSize()!=v.getDim(0).getSize() ||
         dims[1].getSize()!=v.getDim(1).getSize() || dims[2].getSize()!=v.getDim(2).getSize())
@@ -34,10 +40,10 @@ void WW3Adapter::process() {
     EnvironmentalMetadata::readCfTime(time,Time(),"WW3 time"); u.getVar(StokesU()()); v.getVar(StokesV()());
     if (lon.getDimCount()==1 && lat.getDimCount()==1 && lon.getDim(0).getSize()==xi && lat.getDim(0).getSize()==eta) {
         std::vector<double> x(xi),y(eta); lon.getVar(x.data()); lat.getVar(y.data());
-        for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) { Lon()(j,i)=x[i]>180 ? x[i]-360 : x[i]; Lat()(j,i)=y[j]; }
+        for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) { Lon()(j,i)=sourceCrs.empty() && x[i]>180 ? x[i]-360 : x[i]; Lat()(j,i)=y[j]; }
     } else if (lon.getDimCount()==2 && lat.getDimCount()==2 && lon.getDim(0).getSize()==eta && lon.getDim(1).getSize()==xi) {
         lon.getVar(Lon()()); lat.getVar(Lat()());
     } else throw std::runtime_error("WW3 longitude/latitude dimensions are incompatible with Stokes drift");
-    for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) if (Lon()(j,i)>180) Lon()(j,i)-=360;
+    if (sourceCrs.empty()) for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) if (Lon()(j,i)>180) Lon()(j,i)-=360;
     for (int t=1;t<nt;t++) if (Time()(t)<=Time()(t-1)) throw std::runtime_error("WW3 time must be strictly chronological");
 }

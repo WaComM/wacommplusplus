@@ -102,13 +102,13 @@ void WacommPlusPlus::run() {
         shared_ptr<WeatherModelAdapter> weatherModelAdapter;
         if (config->WeatherModel()=="WRF") {
             string &weatherInput=config->WeatherInputs()[inputIdx];
-            weatherModelAdapter=WeatherModelAdapterFactory::create(config->WeatherModel(),weatherInput);
+            weatherModelAdapter=WeatherModelAdapterFactory::create(config->WeatherModel(),weatherInput,config->WeatherSourceCrs());
             weatherModelAdapter->process();
         }
         shared_ptr<WaveModelAdapter> waveModelAdapter;
         if (config->WaveModel()=="WW3") {
             string &waveInput=config->WaveInputs()[inputIdx];
-            waveModelAdapter=WaveModelAdapterFactory::create(config->WaveModel(),waveInput);
+            waveModelAdapter=WaveModelAdapterFactory::create(config->WaveModel(),waveInput,config->WaveSourceCrs());
             waveModelAdapter->process();
         }
 
@@ -122,14 +122,14 @@ void WacommPlusPlus::run() {
             oceanModelAdapter->appendBoundaryRecord(*adjacentAdapter,boundaryRecord,config->Backward());
             if (weatherModelAdapter) {
                 string &adjacentWeatherInput=config->WeatherInputs()[adjacentIdx];
-                auto adjacentWeather=WeatherModelAdapterFactory::create(config->WeatherModel(),adjacentWeatherInput);
+                auto adjacentWeather=WeatherModelAdapterFactory::create(config->WeatherModel(),adjacentWeatherInput,config->WeatherSourceCrs());
                 adjacentWeather->process();
                 int weatherRecord=config->Backward() ? (int)adjacentWeather->Time().Nx()-1 : 0;
                 weatherModelAdapter->appendBoundaryRecord(*adjacentWeather,weatherRecord,config->Backward());
             }
             if (waveModelAdapter) {
                 string &adjacentWaveInput=config->WaveInputs()[adjacentIdx];
-                auto adjacentWave=WaveModelAdapterFactory::create(config->WaveModel(),adjacentWaveInput);
+                auto adjacentWave=WaveModelAdapterFactory::create(config->WaveModel(),adjacentWaveInput,config->WaveSourceCrs());
                 adjacentWave->process();
                 int waveRecord=config->Backward() ? (int)adjacentWave->Time().Nx()-1 : 0;
                 waveModelAdapter->appendBoundaryRecord(*adjacentWave,waveRecord,config->Backward());
@@ -139,10 +139,14 @@ void WacommPlusPlus::run() {
             weatherModelAdapter->regridBilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
         else if (weatherModelAdapter && config->WeatherRegridding()=="bilinear_curvilinear_geographic")
             weatherModelAdapter->regridBilinearCurvilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
+        else if (weatherModelAdapter && config->WeatherRegridding()=="bilinear_projected")
+            weatherModelAdapter->regridBilinearProjected(oceanModelAdapter->Lon(),oceanModelAdapter->Lat(),config->WeatherSourceCrs());
         if (waveModelAdapter && config->WaveRegridding()=="bilinear_geographic")
             waveModelAdapter->regridBilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
         else if (waveModelAdapter && config->WaveRegridding()=="bilinear_curvilinear_geographic")
             waveModelAdapter->regridBilinearCurvilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
+        else if (waveModelAdapter && config->WaveRegridding()=="bilinear_projected")
+            waveModelAdapter->regridBilinearProjected(oceanModelAdapter->Lon(),oceanModelAdapter->Lat(),config->WaveSourceCrs());
 
         Calendar cal;
 

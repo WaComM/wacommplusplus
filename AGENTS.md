@@ -21,6 +21,8 @@ Regridding is opt-in configuration and must name the numerical operator. Every r
 
 Spatial acceleration structures may reduce candidate discovery but must not change the interpolation operator, tolerance, source-order tie breaking, geometry validation, extrapolation behavior, or vector basis. Index construction and query assumptions, asymptotic limitations, cyclic-coordinate treatment, and equivalence tests belong in the same change.
 
+Coordinate reference systems must be explicit configuration, never inferred from numeric ranges, filenames, products, or units alone. Coordinate transformation and vector-basis rotation are separate operations. Optional CRS libraries must not become portable-core dependencies; record the library/database version and reject unavailable operations, missing resources, ambiguous axes, non-finite transforms, and out-of-domain targets.
+
 All changes must preserve the original WaComM++ repository coding style, including the style, tone, structure, and granularity of existing comments. Contributors and coding agents must not mass-reformat unrelated code or introduce a competing style inside existing source files. Follow nearby code, preserve established terminology, and rewrite legacy comments only when they are incorrect or directly affected.
 
 Restart behavior is defined in physical time and must satisfy, within declared tolerances:

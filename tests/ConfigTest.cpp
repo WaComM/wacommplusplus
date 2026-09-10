@@ -50,22 +50,42 @@ int main() {
     const string environment="config-test-environment.json";
     {
         std::ofstream file(environment);
+#ifdef WACOMM_USE_PROJ
+        file << R"({"io":{"nc_inputs":["ocean.nc"]},
+          "drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"left"},
+          "environment":{"wind":{"adapter":"WRF","nc_inputs":["wrf.nc"],"regrid":"bilinear_curvilinear_geographic"},
+                         "wave":{"adapter":"WW3","nc_inputs":["ww3.nc"],"regrid":"bilinear_projected","source_crs":"EPSG:3857"}}})";
+#else
         file << R"({"io":{"nc_inputs":["ocean.nc"]},
           "drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"left"},
           "environment":{"wind":{"adapter":"WRF","nc_inputs":["wrf.nc"],"regrid":"bilinear_curvilinear_geographic"},
                          "wave":{"adapter":"WW3","nc_inputs":["ww3.nc"],"regrid":"bilinear_geographic"}}})";
+#endif
     }
     Config environmental(environment);
     assert(environmental.WeatherModel()=="WRF" && environmental.WeatherInputs().size()==1);
     assert(environmental.WaveModel()=="WW3" && environmental.WaveInputs().size()==1);
     assert(environmental.WeatherRegridding()=="bilinear_curvilinear_geographic");
-    assert(environmental.WaveRegridding()=="bilinear_geographic");
+#ifdef WACOMM_USE_PROJ
+    assert(environmental.WaveRegridding()=="bilinear_projected" && environmental.WaveSourceCrs()=="EPSG:3857");
+#else
+    assert(environmental.WaveRegridding()=="bilinear_geographic" && environmental.WaveSourceCrs().empty());
+#endif
+    assert(environmental.WeatherSourceCrs().empty());
     {
         std::ofstream file(invalid);
         file << R"({"physics":{"upper_closure":"unknown"}})";
     }
     bool rejected=false;
     try { Config invalidConfig(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"io":{"nc_inputs":["ocean.nc"]},"environment":{"wave":{"adapter":"WW3","nc_inputs":["ww3.nc"],"regrid":"bilinear_projected"}}})";
+    }
+    rejected=false;
+    try { Config missingProjectedCrs(invalid); }
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
     {

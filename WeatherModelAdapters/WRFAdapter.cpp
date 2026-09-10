@@ -5,17 +5,24 @@
 #include <stdexcept>
 #include <vector>
 
-WRFAdapter::WRFAdapter(std::string &fileName): fileName(fileName) {}
+WRFAdapter::WRFAdapter(std::string &fileName,const std::string& sourceCrs): fileName(fileName),sourceCrs(sourceCrs) {}
 
 void WRFAdapter::process() {
     NcFile file(fileName,NcFile::read);
-    NcVar u=file.getVar("U10"),v=file.getVar("V10"),lon=file.getVar("XLONG"),lat=file.getVar("XLAT");
+    NcVar u=file.getVar("U10"),v=file.getVar("V10");
+    NcVar lon=file.getVar(sourceCrs.empty() ? "XLONG" : "x"),lat=file.getVar(sourceCrs.empty() ? "XLAT" : "y");
     if (u.isNull() || v.isNull() || lon.isNull() || lat.isNull())
-        throw std::runtime_error("WRF input requires U10, V10, XLONG, and XLAT");
+        throw std::runtime_error(sourceCrs.empty() ? "WRF input requires U10, V10, XLONG, and XLAT" :
+                                 "Projected WRF input requires U10, V10, x, and y");
     EnvironmentalMetadata::requireVelocity(u,"WRF U10");
     EnvironmentalMetadata::requireVelocity(v,"WRF V10");
-    EnvironmentalMetadata::requireLongitude(lon,"WRF XLONG");
-    EnvironmentalMetadata::requireLatitude(lat,"WRF XLAT");
+    if (sourceCrs.empty()) {
+        EnvironmentalMetadata::requireLongitude(lon,"WRF XLONG");
+        EnvironmentalMetadata::requireLatitude(lat,"WRF XLAT");
+    } else {
+        EnvironmentalMetadata::requireProjectedCoordinate(lon,"WRF x");
+        EnvironmentalMetadata::requireProjectedCoordinate(lat,"WRF y");
+    }
     auto dims=u.getDims();
     if (dims.size()!=3 || v.getDims().size()!=3 || dims[0].getSize()!=v.getDim(0).getSize() ||
         dims[1].getSize()!=v.getDim(1).getSize() || dims[2].getSize()!=v.getDim(2).getSize())
@@ -44,7 +51,11 @@ void WRFAdapter::process() {
         WindU10()(t,j,i)=gridU[index]*cosValues[horizontal]-gridV[index]*sinValues[horizontal];
         WindV10()(t,j,i)=gridV[index]*cosValues[horizontal]+gridU[index]*sinValues[horizontal];
     }
-    if (lon.getDimCount()==3 && lat.getDimCount()==3 && lon.getDim(0).getSize()>0 && lat.getDim(0).getSize()>0 &&
+    if (!sourceCrs.empty() && lon.getDimCount()==1 && lat.getDimCount()==1 &&
+        lon.getDim(0).getSize()==xi && lat.getDim(0).getSize()==eta) {
+        std::vector<double> x(xi),y(eta); lon.getVar(x.data()); lat.getVar(y.data());
+        for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) { Lon()(j,i)=x[i]; Lat()(j,i)=y[j]; }
+    } else if (lon.getDimCount()==3 && lat.getDimCount()==3 && lon.getDim(0).getSize()>0 && lat.getDim(0).getSize()>0 &&
         lon.getDim(1).getSize()==eta && lon.getDim(2).getSize()==xi &&
         lat.getDim(1).getSize()==eta && lat.getDim(2).getSize()==xi) {
         lon.getVar({0,0,0},{1,eta,xi},Lon()()); lat.getVar({0,0,0},{1,eta,xi},Lat()());

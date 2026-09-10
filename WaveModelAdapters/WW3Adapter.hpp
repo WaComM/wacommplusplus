@@ -5,10 +5,11 @@
 
 class WW3Adapter: public WaveModelAdapter {
 public:
-    explicit WW3Adapter(std::string &fileName);
+    explicit WW3Adapter(std::string &fileName,const std::string& sourceCrs="");
     void process() override;
 private:
     std::string &fileName;
+    std::string sourceCrs;
     NcVar variable(NcFile &file, const std::vector<std::string>& names);
 };
 

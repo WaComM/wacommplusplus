@@ -140,9 +140,11 @@ public:
     string WeatherModel() const;
     vector<string>& WeatherInputs();
     string WeatherRegridding() const;
+    string WeatherSourceCrs() const;
     string WaveModel() const;
     vector<string>& WaveInputs();
     string WaveRegridding() const;
+    string WaveSourceCrs() const;
 
     void saveAsJson(const string &fileName);
     string asJson() const;
@@ -178,9 +180,11 @@ private:
     string weatherModel;
     vector<string> weatherInputs;
     string weatherRegridding;
+    string weatherSourceCrs;
     string waveModel;
     vector<string> waveInputs;
     string waveRegridding;
+    string waveSourceCrs;
     string ncBasePath;
     vector<string> ncInputs;
     string ncOutputRoot;

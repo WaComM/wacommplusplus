@@ -1,0 +1,11 @@
+{
+  "io": {"ocean_model": "ROMS", "base_path": ".", "nc_inputs": ["forcing.nc"], "nc_output_root": "sar-person-projected-wave-forward"},
+  "sources": {"active": true, "sources_file": "sources.json"},
+  "physics": {"random": false, "random_seed": 5489, "dti": 30},
+  "tracking": {"direction": "forward", "backward_diffusion": "none"},
+  "drift": {"model": "leeway", "object_type": "PERSON_IN_WATER", "side": "right"},
+  "environment": {
+    "wind": {"adapter": "constant", "u10": 5.0, "v10": 0.0},
+    "wave": {"adapter": "WW3", "nc_inputs": ["ww3-epsg3857.nc"], "regrid": "bilinear_projected", "source_crs": "EPSG:3857"}
+  }
+}

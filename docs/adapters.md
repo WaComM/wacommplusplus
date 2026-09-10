@@ -36,6 +36,12 @@ This is representation normalization only. It does not reorder records or change
 
 Environmental regridding is disabled by default. Setting `regrid` to `bilinear_geographic` applies an explicit interpolation operator only when the environmental source grid is rectilinear in longitude and latitude with strictly monotonic axes. `bilinear_curvilinear_geographic` first queries a uniform bounding-box spatial index, then locates the target inside each candidate non-folded quadrilateral by Newton inversion of the bilinear coordinate map and applies the same four nodal weights. The index changes candidate discovery only; interpolation weights and vector treatment are unchanged. Every ocean-grid target must lie inside a valid source cell; extrapolation is prohibited. Product adapters first normalize vectors to eastward and northward components, after which both components use identical scalar weights.
 
+With `USE_PROJ=ON`, `bilinear_projected` accepts declared projected WRF or WW3 grids containing rectilinear `x/y` coordinates in meters. Ocean targets are transformed from EPSG:4326 into `source_crs`, then bracketed on those axes. WRF still uses `COSALPHA/SINALPHA` to rotate U10/V10 into east/north before interpolation; projected WW3 components must already be eastward/northward. Coordinate transformation never serves as vector rotation.
+
+![Conceptual pipeline for explicit projected-coordinate environmental regridding](figures/projected-regridding-schema.svg)
+
+The schema is conceptual rather than a map or model result. It distinguishes coordinate transformation from interpolation and vector-basis normalization.
+
 For normalized source-cell coordinates `ξ,η∈[0,1]`, each component is evaluated as
 
 $$
@@ -44,7 +50,7 @@ $$
 
 ![Four-point geographic bilinear interpolation and its fail-fast contract](figures/bilinear-regridding-schema.svg)
 
-The rectilinear operator preserves constant fields and is exact for fields affine in longitude and latitude; the curvilinear operator preserves constants and fields bilinear in its local cell coordinates. These properties are regression-tested. A longitude axis or cell crossing the antimeridian is unwrapped onto a local continuous branch. Increasing and decreasing rectilinear axes are both supported. Folded or singular curvilinear cells are rejected. Bilinear interpolation is not locally or globally conservative and introduces smoothing whose magnitude depends on unresolved curvature and scale separation. It is appropriate for point-sampled wind and Stokes velocity when this limitation is scientifically acceptable. It must not be described as conservative flux remapping. Projected coordinate systems, extrapolation, and rotation from an unknown grid basis remain unsupported and fail explicitly. Index construction is linear in the number of source cells; lookup cost depends on bounding-box overlap and may approach a full scan for severely folded-over bounding boxes, although the same geometrically invalid candidate cells remain subject to rejection.
+The rectilinear operator preserves constant fields and is exact for fields affine in its coordinate axes; the curvilinear operator preserves constants and fields bilinear in its local cell coordinates. These properties are regression-tested. A longitude axis or cell crossing the antimeridian is unwrapped onto a local continuous branch. Increasing and decreasing rectilinear axes are both supported. Folded or singular curvilinear cells are rejected. Bilinear interpolation is not locally or globally conservative and introduces smoothing whose magnitude depends on unresolved curvature and scale separation. It is appropriate for point-sampled wind and Stokes velocity when this limitation is scientifically acceptable. It must not be described as conservative flux remapping. Projected curvilinear grids, extrapolation, unavailable datum resources, and rotation from an unknown vector basis remain unsupported and fail explicitly. Index construction is linear in source-cell count; lookup may approach a full scan for highly overlapping bounds.
 
 ## References
 
@@ -55,3 +61,4 @@ The rectilinear operator preserves constant fields and is exact for fields affin
 - Tolman, H. L. (1991). A third-generation model for wind waves on slowly varying, unsteady, and inhomogeneous depths and currents. *Journal of Physical Oceanography*, 21, 782–797. [doi:10.1175/1520-0485(1991)021%3C0782:ATGMFW%3E2.0.CO;2](https://doi.org/10.1175/1520-0485(1991)021%3C0782:ATGMFW%3E2.0.CO;2).
 - Hassell, D., Gregory, J., Blower, J., Lawrence, B. N., and Taylor, K. E. (2017). A data model of the Climate and Forecast metadata conventions (CF-1.6) with a software implementation (cf-python v2.1). *Geoscientific Model Development*, 10, 4619–4646. [doi:10.5194/gmd-10-4619-2017](https://doi.org/10.5194/gmd-10-4619-2017).
 - Jones, P. W. (1999). First- and second-order conservative remapping schemes for grids in spherical coordinates. *Monthly Weather Review*, 127, 2204–2210. [doi:10.1175/1520-0493(1999)127%3C2204:FASOCR%3E2.0.CO;2](https://doi.org/10.1175/1520-0493%281999%29127%3C2204%3AFASOCR%3E2.0.CO%3B2).
+- Karney, C. F. F. (2013). Algorithms for geodesics. *Journal of Geodesy*, 87, 43–55. [doi:10.1007/s00190-012-0578-z](https://doi.org/10.1007/s00190-012-0578-z).

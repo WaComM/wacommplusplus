@@ -87,6 +87,32 @@ int main() {
     for (int j=0;j+1<indexedEta;j++) for (int i=0;i+1<indexedXi;i++)
         assert(std::abs(indexed(0,j,i)-(2*indexedTargetLon(j,i)+3*indexedTargetLat(j,i)))<1.e-4);
 
+    Array2<double> projectedX(2,2),projectedY(2,2),geographicLon(1,1),geographicLat(1,1);
+    Array3<float> projectedField(1,2,2);
+    double x1=111319.49079327357,y1=111325.1428663851;
+    for (int j=0;j<2;j++) for (int i=0;i<2;i++) {
+        projectedX(j,i)=i*x1; projectedY(j,i)=j*y1;
+        projectedField(0,j,i)=static_cast<float>(projectedX(j,i)/1000+2*projectedY(j,i)/1000);
+    }
+    geographicLon(0,0)=.5; geographicLat(0,0)=.5;
+#ifdef WACOMM_USE_PROJ
+    auto projected=EnvironmentalRegridder::bilinearProjected(projectedX,projectedY,projectedField,
+                                                               geographicLon,geographicLat,"EPSG:3857");
+    double targetX=55659.74539663678,targetY=55660.45186542152;
+    assert(std::abs(projected(0,0,0)-(targetX/1000+2*targetY/1000))<1.e-4);
+    rejected=false;
+    try { EnvironmentalRegridder::bilinearProjected(projectedX,projectedY,projectedField,
+                                                      geographicLon,geographicLat,"EPSG:invalid"); }
+    catch (const std::runtime_error&) { rejected=true; }
+    assert(rejected);
+#else
+    rejected=false;
+    try { EnvironmentalRegridder::bilinearProjected(projectedX,projectedY,projectedField,
+                                                      geographicLon,geographicLat,"EPSG:3857"); }
+    catch (const std::runtime_error&) { rejected=true; }
+    assert(rejected);
+#endif
+
     curvedLon(0,0)=0; curvedLon(0,1)=1; curvedLon(1,0)=1; curvedLon(1,1)=0;
     curvedLat(0,0)=0; curvedLat(0,1)=0; curvedLat(1,0)=1; curvedLat(1,1)=1;
     curvedTargetLon(0,0)=.5; curvedTargetLat(0,0)=.5; rejected=false;

@@ -53,6 +53,10 @@ void EnvironmentalMetadata::requireLatitude(NcVar& variable,const std::string& l
     requireOneOf(variable,label,{"degree_north","degrees_north","degree north","degrees north"});
 }
 
+void EnvironmentalMetadata::requireProjectedCoordinate(NcVar& variable,const std::string& label) {
+    requireOneOf(variable,label,{"m","meter","meters","metre","metres"});
+}
+
 void EnvironmentalMetadata::readCfTime(NcVar& variable,Array::Array1<double>& destination,const std::string& label) {
     std::string calendar=normalized(attribute(variable,"calendar"));
     if (!calendar.empty() && calendar!="standard" && calendar!="gregorian" && calendar!="proleptic_gregorian")
