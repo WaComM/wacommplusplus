@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -46,6 +47,77 @@ double nearLongitude(double value,double reference) {
 double bilinear(double f00,double f10,double f01,double f11,double x,double y) {
     return (1-x)*(1-y)*f00+x*(1-y)*f10+(1-x)*y*f01+x*y*f11;
 }
+
+struct CurvilinearCell {
+    int j,i;
+    double minimumX,maximumX,minimumY,maximumY;
+};
+
+class CurvilinearCellIndex {
+public:
+    CurvilinearCellIndex(const Array::Array2<double>& longitude,const Array::Array2<double>& latitude) {
+        double reference=longitude(0,0);
+        if (!std::isfinite(reference))
+            throw std::runtime_error("Environmental curvilinear source coordinates must be finite");
+        for (int j=0;j+1<longitude.Nx();j++) for (int i=0;i+1<longitude.Ny();i++) {
+            double x00=longitude(j,i),x10=nearLongitude(longitude(j,i+1),x00);
+            double x01=nearLongitude(longitude(j+1,i),x00),x11=nearLongitude(longitude(j+1,i+1),x00);
+            double y00=latitude(j,i),y10=latitude(j,i+1),y01=latitude(j+1,i),y11=latitude(j+1,i+1);
+            if (!std::isfinite(x00) || !std::isfinite(x10) || !std::isfinite(x01) || !std::isfinite(x11) ||
+                !std::isfinite(y00) || !std::isfinite(y10) || !std::isfinite(y01) || !std::isfinite(y11))
+                throw std::runtime_error("Environmental curvilinear source coordinates must be finite");
+            double center=.25*(x00+x10+x01+x11);
+            double shift=360*std::round((reference-center)/360);
+            CurvilinearCell cell={j,i,std::min(std::min(x00,x10),std::min(x01,x11))+shift,
+                    std::max(std::max(x00,x10),std::max(x01,x11))+shift,
+                    std::min(std::min(y00,y10),std::min(y01,y11)),
+                    std::max(std::max(y00,y10),std::max(y01,y11))};
+            cells.push_back(cell);
+        }
+        minimumX=cells.front().minimumX; maximumX=cells.front().maximumX;
+        minimumY=cells.front().minimumY; maximumY=cells.front().maximumY;
+        for (const auto& cell:cells) {
+            minimumX=std::min(minimumX,cell.minimumX); maximumX=std::max(maximumX,cell.maximumX);
+            minimumY=std::min(minimumY,cell.minimumY); maximumY=std::max(maximumY,cell.maximumY);
+        }
+        double width=std::max(maximumX-minimumX,1.e-12),height=std::max(maximumY-minimumY,1.e-12);
+        double scale=std::sqrt(cells.size());
+        binsX=std::max(1,(int)std::round(scale*std::sqrt(width/height)));
+        binsY=std::max(1,(int)std::round(scale*std::sqrt(height/width)));
+        binsX=std::min(binsX,(int)cells.size()); binsY=std::min(binsY,(int)cells.size());
+        bins.resize((size_t)binsX*binsY);
+        for (size_t index=0;index<cells.size();index++) {
+            int i0=xBin(cells[index].minimumX),i1=xBin(cells[index].maximumX);
+            int j0=yBin(cells[index].minimumY),j1=yBin(cells[index].maximumY);
+            for (int j=j0;j<=j1;j++) for (int i=i0;i<=i1;i++) bins[(size_t)j*binsX+i].push_back(index);
+        }
+        longitudeReference=reference;
+    }
+
+    const std::vector<size_t>& candidates(double& longitude,double latitude) const {
+        longitude=nearLongitude(longitude,longitudeReference);
+        if (longitude<minimumX-1.e-10 || longitude>maximumX+1.e-10 ||
+            latitude<minimumY-1.e-10 || latitude>maximumY+1.e-10) return empty;
+        return bins[(size_t)yBin(latitude)*binsX+xBin(longitude)];
+    }
+
+    const CurvilinearCell& cell(size_t index) const { return cells[index]; }
+
+private:
+    int xBin(double value) const {
+        if (maximumX==minimumX) return 0;
+        return std::max(0,std::min(binsX-1,(int)((value-minimumX)/(maximumX-minimumX)*binsX)));
+    }
+    int yBin(double value) const {
+        if (maximumY==minimumY) return 0;
+        return std::max(0,std::min(binsY-1,(int)((value-minimumY)/(maximumY-minimumY)*binsY)));
+    }
+    std::vector<CurvilinearCell> cells;
+    std::vector<std::vector<size_t>> bins;
+    std::vector<size_t> empty;
+    double minimumX=0,maximumX=0,minimumY=0,maximumY=0,longitudeReference=0;
+    int binsX=1,binsY=1;
+};
 }
 
 Array::Array3<float> EnvironmentalRegridder::bilinearGeographic(
@@ -97,25 +169,25 @@ Array::Array3<float> EnvironmentalRegridder::bilinearCurvilinearGeographic(
         throw std::runtime_error("Environmental target longitude and latitude dimensions differ");
     for (int t=0;t<source.Nx();t++) for (int j=0;j<eta;j++) for (int i=0;i<xi;i++)
         if (!std::isfinite(source(t,j,i))) throw std::runtime_error("Environmental source field must be finite before regridding");
+    CurvilinearCellIndex cellIndex(sourceLon,sourceLat);
     Array::Array3<float> result(source.Nx(),targetLon.Nx(),targetLon.Ny());
     for (int tj=0;tj<targetLon.Nx();tj++) for (int ti=0;ti<targetLon.Ny();ti++) {
         double targetX=targetLon(tj,ti),targetY=targetLat(tj,ti),foundX=0,foundY=0;
         if (!std::isfinite(targetX) || !std::isfinite(targetY))
             throw std::runtime_error("Environmental target coordinates must be finite");
         int foundJ=-1,foundI=-1;
-        for (int j=0;j+1<eta && foundJ<0;j++) for (int i=0;i+1<xi;i++) {
+        const auto& candidates=cellIndex.candidates(targetX,targetY);
+        for (size_t candidate:candidates) {
+            const auto& indexedCell=cellIndex.cell(candidate);
+            int j=indexedCell.j,i=indexedCell.i;
             double x00=nearLongitude(sourceLon(j,i),targetX),x10=nearLongitude(sourceLon(j,i+1),targetX);
             double x01=nearLongitude(sourceLon(j+1,i),targetX),x11=nearLongitude(sourceLon(j+1,i+1),targetX);
             double y00=sourceLat(j,i),y10=sourceLat(j,i+1),y01=sourceLat(j+1,i),y11=sourceLat(j+1,i+1);
             if (!std::isfinite(x00) || !std::isfinite(x10) || !std::isfinite(x01) || !std::isfinite(x11) ||
                 !std::isfinite(y00) || !std::isfinite(y10) || !std::isfinite(y01) || !std::isfinite(y11))
                 throw std::runtime_error("Environmental curvilinear source coordinates must be finite");
-            double minimumX=std::min(std::min(x00,x10),std::min(x01,x11));
-            double maximumX=std::max(std::max(x00,x10),std::max(x01,x11));
-            double minimumY=std::min(std::min(y00,y10),std::min(y01,y11));
-            double maximumY=std::max(std::max(y00,y10),std::max(y01,y11));
-            if (targetX<minimumX-1.e-10 || targetX>maximumX+1.e-10 ||
-                targetY<minimumY-1.e-10 || targetY>maximumY+1.e-10) continue;
+            if (targetX<indexedCell.minimumX-1.e-10 || targetX>indexedCell.maximumX+1.e-10 ||
+                targetY<indexedCell.minimumY-1.e-10 || targetY>indexedCell.maximumY+1.e-10) continue;
             double x=.5,y=.5;
             for (int iteration=0;iteration<20;iteration++) {
                 double mappedX=bilinear(x00,x10,x01,x11,x,y),mappedY=bilinear(y00,y10,y01,y11,x,y);

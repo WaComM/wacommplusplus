@@ -67,6 +67,26 @@ int main() {
                                                                       curvedTargetLon,curvedTargetLat);
     assert(std::abs(curved(0,0,0)-3.75)<1.e-6);
 
+    const int indexedEta=21,indexedXi=31;
+    Array2<double> indexedLon(indexedEta,indexedXi),indexedLat(indexedEta,indexedXi);
+    Array2<double> indexedTargetLon(indexedEta-1,indexedXi-1),indexedTargetLat(indexedEta-1,indexedXi-1);
+    Array3<float> indexedField(1,indexedEta,indexedXi);
+    for (int j=0;j<indexedEta;j++) for (int i=0;i<indexedXi;i++) {
+        indexedLon(j,i)=170+.08*i+.006*j*j/indexedEta;
+        indexedLat(j,i)=30+.07*j+.004*i*i/indexedXi;
+        indexedField(0,j,i)=static_cast<float>(2*indexedLon(j,i)+3*indexedLat(j,i));
+    }
+    for (int j=0;j+1<indexedEta;j++) for (int i=0;i+1<indexedXi;i++) {
+        indexedTargetLon(j,i)=.63*.38*indexedLon(j,i)+.37*.38*indexedLon(j,i+1)+
+                              .63*.62*indexedLon(j+1,i)+.37*.62*indexedLon(j+1,i+1);
+        indexedTargetLat(j,i)=.63*.38*indexedLat(j,i)+.37*.38*indexedLat(j,i+1)+
+                              .63*.62*indexedLat(j+1,i)+.37*.62*indexedLat(j+1,i+1);
+    }
+    auto indexed=EnvironmentalRegridder::bilinearCurvilinearGeographic(indexedLon,indexedLat,indexedField,
+                                                                        indexedTargetLon,indexedTargetLat);
+    for (int j=0;j+1<indexedEta;j++) for (int i=0;i+1<indexedXi;i++)
+        assert(std::abs(indexed(0,j,i)-(2*indexedTargetLon(j,i)+3*indexedTargetLat(j,i)))<1.e-4);
+
     curvedLon(0,0)=0; curvedLon(0,1)=1; curvedLon(1,0)=1; curvedLon(1,1)=0;
     curvedLat(0,0)=0; curvedLat(0,1)=0; curvedLat(1,0)=1; curvedLat(1,1)=1;
     curvedTargetLon(0,0)=.5; curvedTargetLat(0,0)=.5; rejected=false;

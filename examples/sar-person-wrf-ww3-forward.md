@@ -14,7 +14,7 @@ The deterministic velocity is ocean current plus empirical leeway plus WW3 surfa
 
 ## Limitations, interpretation, and reproducibility
 
-WRF wind and WW3 Stokes components are bilinearly interpolated and therefore smoothed but not conservatively remapped; record source and target grids and quantify resolution sensitivity. Curvilinear cell location is currently a direct search and can dominate preprocessing for large grids. No projected-coordinate transform, coefficient uncertainty, jibing, or depth-dependent Stokes profile is applied. The result is conditional on object class and forcing accuracy and is not an operational search area. Archive all input checksums, resolved configuration, Git revision, compiler and dependencies, CMake options, parallel layout, tolerances, and output checksums. Dynamic WRF/WW3 coupling is not yet supported by CUDA execution.
+WRF wind and WW3 Stokes components are bilinearly interpolated and therefore smoothed but not conservatively remapped; record source and target grids and quantify resolution sensitivity. Curvilinear cell lookup is spatially indexed, but highly overlapping cell bounds can still increase preprocessing cost. No projected-coordinate transform, coefficient uncertainty, jibing, or depth-dependent Stokes profile is applied. The result is conditional on object class and forcing accuracy and is not an operational search area. Archive all input checksums, resolved configuration, Git revision, compiler and dependencies, CMake options, parallel layout, tolerances, and output checksums. Dynamic WRF/WW3 coupling is not yet supported by CUDA execution.
 
 ## References
 

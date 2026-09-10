@@ -19,6 +19,8 @@ Environmental adapters must validate variable identity, dimensions, units, calen
 
 Regridding is opt-in configuration and must name the numerical operator. Every regridding implementation must document its coordinate reference system, stencil, weights, vector basis, domain-of-validity, extrapolation policy, conservation properties, error behavior, and unsupported grids. Tests must cover constants, analytically representable fields, boundaries, invalid geometry, and forward/backward use. A non-conservative interpolant must never be described as conservative, and a projection transform must never be inferred from coordinate values alone.
 
+Spatial acceleration structures may reduce candidate discovery but must not change the interpolation operator, tolerance, source-order tie breaking, geometry validation, extrapolation behavior, or vector basis. Index construction and query assumptions, asymptotic limitations, cyclic-coordinate treatment, and equivalence tests belong in the same change.
+
 All changes must preserve the original WaComM++ repository coding style, including the style, tone, structure, and granularity of existing comments. Contributors and coding agents must not mass-reformat unrelated code or introduce a competing style inside existing source files. Follow nearby code, preserve established terminology, and rewrite legacy comments only when they are incorrect or directly affected.
 
 Restart behavior is defined in physical time and must satisfy, within declared tolerances:

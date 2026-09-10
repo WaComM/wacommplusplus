@@ -8,6 +8,8 @@ Forcing progression keeps the current normalized adapter plus one adjacent adapt
 
 When explicitly configured, environmental regridding occurs after adjacent-file boundary assembly and before construction of `Wacomm`. Product-specific adapters have therefore already normalized time, units, longitude convention, and vector basis. The shared geographic bilinear operator changes only the horizontal representation; `Wacomm` subsequently applies the same time/grid compatibility checks as for an exact-match run. No regridding branch exists inside `Particle` or any execution backend.
 
+Curvilinear preprocessing builds a deterministic uniform spatial index over locally unwrapped cell bounding boxes. Candidate lists retain source row-major order. A target query narrows the candidate set before the original inverse-bilinear Newton solve, residual criterion, and Jacobian-sign fold test; consequently the index cannot select different interpolation equations or backend physics.
+
 Surface drift follows the same hierarchy. `DriftObjectType` and `DriftSide` are fixed-width particle state; `DriftObjectCatalog` is the single coefficient source; and the allocation-free leeway function is shared by CPU and CUDA code. Optional coefficient-ensemble residuals use the same counter-key algorithm on both paths and are keyed only by configured seed and stable particle identity. `Config` selects the model and environmental provider before integration. Passive runs follow a configuration-level fast path and do not incur catalog lookup or wind computation.
 
 ## References
