@@ -22,6 +22,9 @@ int main() {
     DriftVelocity member=computeLeeway(uncertain,10,0,DriftSide::RIGHT,2,-1);
     assert(std::abs(member.u-(.1+.02+2*.03))<1.e-12);
     assert(std::abs(member.v-(.4+.05-.06))<1.e-12);
+    assert(correlatedNormal(2,-1,0)==-1);
+    assert(correlatedNormal(2,-1,1)==2);
+    assert(correlatedNormal(2,-1,-1)==-2);
 
     assert(driftSideFromUniform(.2,.3)==DriftSide::RIGHT);
     assert(driftSideFromUniform(.3,.3)==DriftSide::LEFT);
@@ -31,6 +34,8 @@ int main() {
     assert(sampleDriftSide(5489,42,1)==DriftSide::RIGHT);
     assert(NumericalHelpers::uniform(5489,42,LEEWAY_SIDE_RANDOM_INTERVAL,0,0)!=
            NumericalHelpers::uniform(5489,42,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0));
+    assert(NumericalHelpers::normal(5489,42,0,0,LEEWAY_WIND_ERROR_U_COMPONENT)!=
+           NumericalHelpers::normal(5489,42,0,0,LEEWAY_WIND_ERROR_V_COMPONENT));
     assert(jibeStepProbability(0,3600)==0);
     assert(jibeStepProbability(1,1)==1);
     assert(std::abs(jibeStepProbability(.04,3600)-.04)<1.e-12);

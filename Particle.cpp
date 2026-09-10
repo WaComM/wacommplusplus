@@ -388,12 +388,24 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                 };
                 double windU=windU10 ? environmentAt(windU10) : configData->windU10;
                 double windV=windV10 ? environmentAt(windV10) : configData->windV10;
+                std::int64_t uncertaintyInterval=static_cast<std::int64_t>(std::llround(std::min(intervalStart,intervalEnd)));
+                std::uint64_t uncertaintySubstep=static_cast<std::uint64_t>(std::floor(elapsed/dti));
+                if (configData->windErrorStdDev>0) {
+                    windU+=configData->windErrorStdDev*NumericalHelpers::normal(configData->randomSeed,
+                            localParticleData.id,uncertaintyInterval,uncertaintySubstep,
+                            LEEWAY_WIND_ERROR_U_COMPONENT);
+                    windV+=configData->windErrorStdDev*NumericalHelpers::normal(configData->randomSeed,
+                            localParticleData.id,uncertaintyInterval,uncertaintySubstep,
+                            LEEWAY_WIND_ERROR_V_COMPONENT);
+                }
                 double downwindNormal=0,crosswindNormal=0;
                 if (configData->leewayCoefficientEnsemble) {
                     downwindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
                             LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0);
                     crosswindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
                             LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,1);
+                    crosswindNormal=correlatedNormal(downwindNormal,crosswindNormal,
+                                                     configData->leewayResidualCorrelation);
                 }
                 DriftVelocity leeway=computeLeeway(object.leeway,windU,windV,
                         static_cast<DriftSide>(localParticleData.driftSide),downwindNormal,crosswindNormal);

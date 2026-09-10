@@ -50,6 +50,13 @@ struct DriftVelocity {
 static constexpr std::int64_t LEEWAY_ENSEMBLE_RANDOM_INTERVAL=(-9223372036854775807LL-1);
 static constexpr std::int64_t LEEWAY_SIDE_RANDOM_INTERVAL=LEEWAY_ENSEMBLE_RANDOM_INTERVAL+1;
 static constexpr std::uint64_t LEEWAY_JIBE_RANDOM_COMPONENT=0x4a494245ULL;
+static constexpr std::uint64_t LEEWAY_WIND_ERROR_U_COMPONENT=0x57494e4455ULL;
+static constexpr std::uint64_t LEEWAY_WIND_ERROR_V_COMPONENT=0x57494e4456ULL;
+
+WACOMM_HOST_DEVICE inline double correlatedNormal(double firstNormal,double independentNormal,
+                                                   double correlation) {
+    return correlation*firstNormal+std::sqrt(1-correlation*correlation)*independentNormal;
+}
 
 WACOMM_HOST_DEVICE inline DriftSide driftSideFromUniform(double uniformValue,double rightProbability) {
     return uniformValue<rightProbability ? DriftSide::RIGHT : DriftSide::LEFT;

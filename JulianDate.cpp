@@ -6,6 +6,7 @@
 #include <math.h>
 #include <chrono>
 #include <ctime>
+#include <stdexcept>
 
 double JulianDate::toJulian(Calendar cal) {
     return toJulian(cal.get(Calendar::YEAR),
@@ -167,8 +168,26 @@ string Calendar::format(string format) {
 }
 
 void Calendar::parse(string format, string value) {
-    tm my_tm;
-    strptime(value.c_str(), format.c_str(), &my_tm);
+    tm my_tm{};
+    if (format=="%Y%m%dZ%H" && (value.size()==10 || (value.size()==11 && value[8]=='Z'))) {
+        auto digits=[&](std::size_t offset,std::size_t count) {
+            for (std::size_t index=offset;index<offset+count;index++)
+                if (value[index]<'0' || value[index]>'9')
+                    throw std::invalid_argument("Invalid calendar value: " + value);
+            return std::stoi(value.substr(offset,count));
+        };
+        my_tm.tm_year=digits(0,4)-1900;
+        my_tm.tm_mon=digits(4,2)-1;
+        my_tm.tm_mday=digits(6,2);
+        my_tm.tm_hour=digits(value.size()==10 ? 8 : 9,2);
+    } else {
+        std::istringstream input(value);
+        input >> std::get_time(&my_tm,format.c_str());
+        if (input.fail()) throw std::invalid_argument("Invalid calendar value: " + value);
+    }
+    if (my_tm.tm_mon<0 || my_tm.tm_mon>11 || my_tm.tm_mday<1 || my_tm.tm_mday>31 ||
+        my_tm.tm_hour<0 || my_tm.tm_hour>23)
+        throw std::invalid_argument("Invalid calendar value: " + value);
     _data[YEAR]=my_tm.tm_year+1900;
     _data[MONTH] = my_tm.tm_mon;
     _data[DAY_OF_MONTH] = my_tm.tm_mday;
@@ -217,4 +236,3 @@ void Calendar::set(int idx, int value) { _data[idx] = value;}
 string Calendar::asNCEPdate() {
     return format("%Y%m%dZ%H");
 }
-

@@ -1,4 +1,5 @@
 #include "../Config.hpp"
+#include "../JulianDate.hpp"
 
 #include <cassert>
 #include <cstdio>
@@ -6,6 +7,13 @@
 #include <stdexcept>
 
 int main() {
+    Calendar compact("2020010100"),zulu("20200101Z00");
+    assert(compact.get(Calendar::YEAR)==2020 && compact.get(Calendar::MONTH)==0);
+    assert(zulu.get(Calendar::DAY_OF_MONTH)==1 && zulu.get(Calendar::HOUR_OF_DAY)==0);
+    bool invalidCalendarRejected=false;
+    try { Calendar invalidCalendar("2020130100"); }
+    catch (const std::invalid_argument &) { invalidCalendarRejected=true; }
+    assert(invalidCalendarRejected);
     const string input="config-test-input.json",saved="config-test-saved.json",invalid="config-test-invalid.json";
     const string invalidStep="config-test-invalid-step.json";
     {
@@ -37,16 +45,18 @@ int main() {
     const string leeway="config-test-leeway.json";
     {
         std::ofstream file(leeway);
-        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right","coefficient_ensemble":true},
-                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":1.0}}})";
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right","coefficient_ensemble":true,"residual_correlation":-0.35},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":1.0,"uncertainty_stddev":1.5}}})";
     }
     Config drift(leeway);
     assert(drift.Leeway() && drift.DriftObject()==DriftObjectType::PERSON_IN_WATER);
     assert(drift.DefaultDriftSide()==DriftSide::RIGHT);
     assert(drift.LeewayCoefficientEnsemble());
+    assert(drift.LeewayResidualCorrelation()==-.35 && drift.WindErrorStdDev()==1.5);
     drift.saveAsJson(saved);
     Config driftRestored(saved);
     assert(driftRestored.LeewayCoefficientEnsemble());
+    assert(driftRestored.LeewayResidualCorrelation()==-.35 && driftRestored.WindErrorStdDev()==1.5);
     const string sideEnsemble="config-test-side-ensemble.json";
     {
         std::ofstream file(sideEnsemble);
@@ -115,6 +125,23 @@ int main() {
     }
     rejected=false;
     try { Config invalidPassiveEnsemble(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right","coefficient_ensemble":true,"residual_correlation":1.1},
+                     "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":0.0}}})";
+    }
+    rejected=false;
+    try { Config invalidCorrelation(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"environment":{"wind":{"adapter":"constant","u10":5.0,"v10":0.0,"uncertainty_stddev":1.0}}})";
+    }
+    rejected=false;
+    try { Config invalidPassiveWindError(invalid); }
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
     {

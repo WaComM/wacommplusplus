@@ -175,6 +175,22 @@ int main() {
     assert(std::abs(ensembleBackward.J()-.25)<1.e-8);
     config.leewayCoefficientEnsemble=false;
 
+    config.windErrorStdDev=1.5;
+    config.trackingDirection=Config::TRACKING_FORWARD;
+    Particle forcingFull(22,-.5,.25,.25,0),forcingRestarted(22,-.5,.25,.25,0),forcingOther(23,-.5,.25,.25,0);
+    forcingFull.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    forcingRestarted.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    forcingOther.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+    forcingFull.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    forcingRestarted.move(&config,0,stochasticEarlyTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    config.restartCheckpoint=30;
+    forcingRestarted.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+    forcingOther.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,zeroU,v,w,akt);
+    assert(forcingFull.I()==forcingRestarted.I() && forcingFull.J()==forcingRestarted.J());
+    assert(forcingFull.I()!=forcingOther.I() || forcingFull.J()!=forcingOther.J());
+    config.windErrorStdDev=0;
+
     config.leewayJibeProbabilityHourly=1;
     config.trackingDirection=Config::TRACKING_FORWARD;
     Particle jibeFull(30,-.5,.25,.25,0),jibeRestarted(30,-.5,.25,.25,0);

@@ -67,12 +67,14 @@ int main() {
     config.trackingDirection=Config::TRACKING_FORWARD;
     config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
 
-    for (int mode=0;mode<5;mode++) {
+    for (int mode=0;mode<6;mode++) {
         bool stochastic=mode==1;
         bool leeway=mode>=2;
         config.random=stochastic;
         config.leewayCoefficientEnsemble=mode==3;
         config.leewayJibeProbabilityHourly=mode==4 ? 1 : 0;
+        config.leewayResidualCorrelation=mode==3 ? -.35 : 0;
+        config.windErrorStdDev=mode==5 ? 1.5 : 0;
         config.driftModel=leeway ? 1 : 0;
         config.driftObjectType=static_cast<std::uint16_t>(leeway ? DriftObjectType::PERSON_IN_WATER : DriftObjectType::PASSIVE);
         config.driftSide=static_cast<std::int8_t>(leeway ? DriftSide::RIGHT : DriftSide::UNDEFINED);

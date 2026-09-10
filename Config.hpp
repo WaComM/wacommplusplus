@@ -39,9 +39,11 @@ struct config_data {
     double restartCheckpoint;
     int driftModel;
     bool leewayCoefficientEnsemble;
+    double leewayResidualCorrelation;
     bool leewayRandomSide;
     double leewayRightSideProbability;
     double leewayJibeProbabilityHourly;
+    double windErrorStdDev;
     std::uint16_t driftObjectType;
     std::int8_t driftSide;
     bool hasWind;
@@ -94,9 +96,11 @@ public:
     bool BackwardDiffusion() const;
     bool Leeway() const;
     bool LeewayCoefficientEnsemble() const;
+    double LeewayResidualCorrelation() const;
     bool LeewayRandomSide() const;
     double LeewayRightSideProbability() const;
     double LeewayJibeProbabilityHourly() const;
+    double WindErrorStdDev() const;
     DriftObjectType DriftObject() const;
     DriftSide DefaultDriftSide() const;
     void RestartCheckpoint(double value);
