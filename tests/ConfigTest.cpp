@@ -45,16 +45,17 @@ int main() {
     const string leeway="config-test-leeway.json";
     {
         std::ofstream file(leeway);
-        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right","coefficient_ensemble":true,"residual_correlation":-0.35},
+        file << R"({"drift":{"model":"leeway","object_type":"KAYAK_WITH_PERSON","side":"right","coefficient_ensemble":true,"residual_correlation":-0.35},
                      "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":1.0,"uncertainty_stddev":1.5}}})";
     }
     Config drift(leeway);
-    assert(drift.Leeway() && drift.DriftObject()==DriftObjectType::PERSON_IN_WATER);
+    assert(drift.Leeway() && drift.DriftObject()==DriftObjectType::KAYAK_WITH_PERSON);
     assert(drift.DefaultDriftSide()==DriftSide::RIGHT);
     assert(drift.LeewayCoefficientEnsemble());
     assert(drift.LeewayResidualCorrelation()==-.35 && drift.WindErrorStdDev()==1.5);
     drift.saveAsJson(saved);
     Config driftRestored(saved);
+    assert(driftRestored.DriftObject()==DriftObjectType::KAYAK_WITH_PERSON);
     assert(driftRestored.LeewayCoefficientEnsemble());
     assert(driftRestored.LeewayResidualCorrelation()==-.35 && driftRestored.WindErrorStdDev()==1.5);
     const string sideEnsemble="config-test-side-ensemble.json";

@@ -1,0 +1,9 @@
+{
+  "io": {"ocean_model": "ROMS", "base_path": ".", "nc_inputs": ["forcing.nc"], "nc_output_root": "sar-kayak-forward"},
+  "sources": {"active": true, "sources_file": "sources.json"},
+  "restart": {"active": false},
+  "physics": {"random": false, "random_seed": 5489, "dti": 30},
+  "tracking": {"direction": "forward", "backward_diffusion": "none"},
+  "drift": {"model": "leeway", "object_type": "KAYAK_WITH_PERSON", "side": "right"},
+  "environment": {"wind": {"adapter": "constant", "u10": 5.0, "v10": 0.0}}
+}

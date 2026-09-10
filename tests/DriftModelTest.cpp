@@ -2,23 +2,27 @@
 
 #include <cassert>
 #include <cmath>
+#include <string>
 
 int main() {
-    LeewayCoefficients downwind{.01,0,0,0,0,0};
+    static_assert(static_cast<std::uint16_t>(DriftObjectType::PASSIVE)==0);
+    static_assert(static_cast<std::uint16_t>(DriftObjectType::SHIPPING_CONTAINER)==5);
+    static_assert(static_cast<std::uint16_t>(DriftObjectType::KAYAK_WITH_PERSON)==11);
+    LeewayCoefficients downwind{.01,0,0,0,0,0,0,0,0};
     DriftVelocity calm=computeLeeway(downwind,0,0,DriftSide::RIGHT);
     assert(calm.u==0 && calm.v==0);
 
     DriftVelocity east=computeLeeway(downwind,10,0,DriftSide::RIGHT);
     assert(std::abs(east.u-.1)<1.e-12 && east.v==0);
 
-    LeewayCoefficients crosswind{0,0,0,.01,0,0};
+    LeewayCoefficients crosswind{0,0,0,.01,0,0,-.01,0,0};
     DriftVelocity left=computeLeeway(crosswind,10,0,DriftSide::LEFT);
     DriftVelocity right=computeLeeway(crosswind,10,0,DriftSide::RIGHT);
     assert(left.u==0 && right.u==0);
     assert(std::abs(left.v+right.v)<1.e-12);
     assert(std::abs(left.v)==std::abs(right.v));
 
-    LeewayCoefficients uncertain{.01,.02,.03,.04,.05,.06};
+    LeewayCoefficients uncertain{.01,.02,.03,.04,.05,.06,-.04,-.05,.06};
     DriftVelocity member=computeLeeway(uncertain,10,0,DriftSide::RIGHT,2,-1);
     assert(std::abs(member.u-(.1+.02+2*.03))<1.e-12);
     assert(std::abs(member.v-(.4+.05-.06))<1.e-12);
@@ -45,4 +49,19 @@ int main() {
     const auto& person=DriftObjectCatalog::definition(DriftObjectType::PERSON_IN_WATER);
     assert(person.leeway.downwindSlope==.0096);
     assert(DriftObjectCatalog::type("SHIPPING_CONTAINER")==DriftObjectType::SHIPPING_CONTAINER);
+    const auto& suit=DriftObjectCatalog::definition(DriftObjectType::PERSON_IN_WATER_SURVIVAL_SUIT);
+    assert(std::string(suit.sourceKey)=="PIW-4");
+    DriftVelocity suitRight=computeLeeway(suit.leeway,10,0,DriftSide::RIGHT);
+    DriftVelocity suitLeft=computeLeeway(suit.leeway,10,0,DriftSide::LEFT);
+    assert(std::abs(suitRight.v-(.0136*10-.033))<1.e-12);
+    assert(std::abs(suitLeft.v-(-.0013*10-.0265))<1.e-12);
+    DriftVelocity legacyLeftMember=computeLeeway(person.leeway,10,0,DriftSide::LEFT,0,1);
+    assert(std::abs(legacyLeftMember.v-(-.0054*10-.094))<1.e-12);
+    assert(DriftObjectCatalog::type("KAYAK_WITH_PERSON")==DriftObjectType::KAYAK_WITH_PERSON);
+    assert(DriftObjectCatalog::definition(DriftObjectType::OIL_DRUM).leeway.downwindIntercept==.0266);
+
+    const auto& current=DriftProcessCatalog::definition(DriftProcessType::OCEAN_CURRENT);
+    assert(std::string(current.units)=="m s-1" && !current.stochastic);
+    assert(DriftProcessCatalog::type("jibing")==DriftProcessType::JIBING);
+    assert(DriftProcessCatalog::definition(DriftProcessType::JIBING).stateful);
 }

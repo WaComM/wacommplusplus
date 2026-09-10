@@ -10,6 +10,7 @@ The documentation is organized as a scientific model description rather than sol
 - [Configuration](configuration.md)
 - [Adapters](adapters.md)
 - [OpenDrift comparison and roadmap](opendrift-comparison.md)
+- [Object and process catalogs](catalogs.md)
 - [Backtracking](backtracking.md)
 - [Surface drift objects](sar-drift.md)
 - [Restart](restart.md)

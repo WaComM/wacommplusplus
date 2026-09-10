@@ -67,20 +67,23 @@ int main() {
     config.trackingDirection=Config::TRACKING_FORWARD;
     config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
 
-    for (int mode=0;mode<6;mode++) {
+    for (int mode=0;mode<7;mode++) {
         bool stochastic=mode==1;
         bool leeway=mode>=2;
+        DriftObjectType object=mode==6 ? DriftObjectType::PERSON_IN_WATER_SURVIVAL_SUIT :
+                               (leeway ? DriftObjectType::PERSON_IN_WATER : DriftObjectType::PASSIVE);
+        DriftSide side=mode==6 ? DriftSide::LEFT : (leeway ? DriftSide::RIGHT : DriftSide::UNDEFINED);
         config.random=stochastic;
         config.leewayCoefficientEnsemble=mode==3;
         config.leewayJibeProbabilityHourly=mode==4 ? 1 : 0;
         config.leewayResidualCorrelation=mode==3 ? -.35 : 0;
         config.windErrorStdDev=mode==5 ? 1.5 : 0;
         config.driftModel=leeway ? 1 : 0;
-        config.driftObjectType=static_cast<std::uint16_t>(leeway ? DriftObjectType::PERSON_IN_WATER : DriftObjectType::PASSIVE);
-        config.driftSide=static_cast<std::int8_t>(leeway ? DriftSide::RIGHT : DriftSide::UNDEFINED);
+        config.driftObjectType=static_cast<std::uint16_t>(object);
+        config.driftSide=static_cast<std::int8_t>(side);
         config.hasWind=leeway; config.windU10=10; config.windV10=0;
         Particle cpu(9007199254740993ULL,-.5,.25,.25,0);
-        if (leeway) cpu.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+        if (leeway) cpu.Drift(object,side);
         cpu.move(&config,0,cpuTime,cpuMask,cpuLon,cpuLat,cpuSW,cpuDepth,cpuH,cpuZeta,
                  cpuU,cpuV,cpuW,cpuAkt);
         particle_data result=cpu.data();

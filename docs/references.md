@@ -1,6 +1,7 @@
 # References
 
 - Montella, R., Di Luccio, D., De Vita, C. G., Mellone, G., Lapegna, M., Ortega, G., Marcellino, L., Zambianchi, E., and Giunta, G. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).
+- Breivik, Ø., Allen, A. A., Maisondieu, C., Roth, J.-C., and Forest, B. (2012). The leeway of shipping containers at different immersion levels. *Ocean Dynamics*, 62, 741–752. [doi:10.1007/s10236-012-0522-z](https://doi.org/10.1007/s10236-012-0522-z).
 - Di Luccio, D., Galletti, A., Marcellino, L., Riccio, A., Montella, R., and Brizius, A. (2017). Some remarks about a community open source Lagrangian pollutant transport and dispersion model. *Procedia Computer Science*, 113, 490–495. [doi:10.1016/j.procs.2017.08.308](https://doi.org/10.1016/j.procs.2017.08.308).
 - Bleck, R. (2002). An oceanic general circulation model framed in hybrid isopycnic-Cartesian coordinates. *Ocean Modelling*, 4, 55–88. [doi:10.1016/S1463-5003(01)00012-9](https://doi.org/10.1016/S1463-5003(01)00012-9).
 - Shchepetkin, A. F., and McWilliams, J. C. (2005). The regional oceanic modeling system (ROMS): a split-explicit, free-surface, topography-following-coordinate oceanic model. *Ocean Modelling*, 9, 347–404. [doi:10.1016/j.ocemod.2004.08.002](https://doi.org/10.1016/j.ocemod.2004.08.002).
