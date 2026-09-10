@@ -90,6 +90,23 @@ struct DriftVelocity {
     double w;
 };
 
+// Geographic calibration domains use closed EPSG:4326 longitude/latitude bounds.
+// Regions are validated as non-overlapping, so selection is independent of source order.
+template <typename Region>
+WACOMM_HOST_DEVICE inline int observationalCalibrationRegion(const Region *regions,
+                                                              std::uint32_t count,
+                                                              double longitudeRadians,
+                                                              double latitudeRadians) {
+    constexpr double radiansToDegrees=57.2957795130823208768;
+    double longitude=longitudeRadians*radiansToDegrees;
+    double latitude=latitudeRadians*radiansToDegrees;
+    for (std::uint32_t index=0;index<count;++index)
+        if (longitude>=regions[index].west && longitude<=regions[index].east &&
+            latitude>=regions[index].south && latitude<=regions[index].north)
+            return static_cast<int>(index);
+    return -1;
+}
+
 static constexpr std::int64_t LEEWAY_ENSEMBLE_RANDOM_INTERVAL=(-9223372036854775807LL-1);
 static constexpr std::int64_t LEEWAY_SIDE_RANDOM_INTERVAL=LEEWAY_ENSEMBLE_RANDOM_INTERVAL+1;
 static constexpr std::uint64_t LEEWAY_JIBE_RANDOM_COMPONENT=0x4a494245ULL;

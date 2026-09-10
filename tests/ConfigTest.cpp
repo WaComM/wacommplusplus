@@ -64,6 +64,26 @@ int main() {
     assert(driftRestored.LeewayResidualCorrelation()==-.35 && driftRestored.WindErrorStdDev()==1.5);
     assert(driftRestored.WindErrorComponentCorrelation()==.4 && driftRestored.WindErrorSpatialScale()==10000);
     assert(driftRestored.WindErrorTemporalScale()==3600);
+    const string calibrated="config-test-calibrated.json";
+    {
+        std::ofstream file(calibrated);
+        file << R"({"drift":{"model":"leeway","object_type":"PERSON_IN_WATER","side":"right"},
+          "environment":{"wind":{"adapter":"constant","u10":5.0,"v10":0.0}},
+          "observational_calibration":{"regions":[{"id":"bay-of-naples-piw-v1","crs":"EPSG:4326",
+            "bounds":{"west":13.8,"south":40.5,"east":14.5,"north":41.1},
+            "object_type":"PERSON_IN_WATER","forcing_adapter":"constant",
+            "valid_from":"2020-01-01T00:00:00Z","valid_until":"2024-12-31T23:59:59Z",
+            "estimator":"unbiased residual covariance after paired current-wind subtraction","sample_size":42,
+            "dataset":"doi-archived paired drifter and forcing residuals",
+            "dataset_checksum":"sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+            "doi":"10.0000/example.calibration","wind_error":{"stddev":1.2,"component_correlation":0.25,
+            "spatial_scale":8000.0,"temporal_scale":1800.0}}]}})";
+    }
+    Config regional(calibrated);
+    assert(regional.ObservationalCalibrationRegionCount()==1);
+    regional.saveAsJson(saved);
+    Config regionalRestored(saved);
+    assert(regionalRestored.ObservationalCalibrationRegionCount()==1);
     const string sideEnsemble="config-test-side-ensemble.json";
     {
         std::ofstream file(sideEnsemble);
@@ -227,6 +247,7 @@ int main() {
     std::remove(input.c_str()); std::remove(saved.c_str()); std::remove(invalid.c_str());
     std::remove(invalidStep.c_str());
     std::remove(leeway.c_str());
+    std::remove(calibrated.c_str());
     std::remove(environment.c_str());
     std::remove(sideEnsemble.c_str());
     std::remove(remoteEnvironment.c_str());

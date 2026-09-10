@@ -7,6 +7,8 @@
 #include "JulianDate.hpp"
 #include <nlohmann/json.hpp>
 #include <cmath>
+#include <cctype>
+#include <regex>
 #include <limits>
 
 // for convenience
@@ -135,6 +137,8 @@ void Config::setDefault() {
     _data.windErrorComponentCorrelation = 0;
     _data.windErrorSpatialScale = 0;
     _data.windErrorTemporalScale = 0;
+    _data.observationalCalibrationRegionCount = 0;
+    observationalCalibrationMetadata.clear();
     _data.driftObjectType = static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
     _data.driftSide = static_cast<std::int8_t>(DriftSide::UNDEFINED);
     _data.hasWind = false;
@@ -368,6 +372,9 @@ double Config::WindErrorStdDev() const { return _data.windErrorStdDev; }
 double Config::WindErrorComponentCorrelation() const { return _data.windErrorComponentCorrelation; }
 double Config::WindErrorSpatialScale() const { return _data.windErrorSpatialScale; }
 double Config::WindErrorTemporalScale() const { return _data.windErrorTemporalScale; }
+std::size_t Config::ObservationalCalibrationRegionCount() const {
+    return _data.observationalCalibrationRegionCount;
+}
 
 DriftObjectType Config::DriftObject() const { return static_cast<DriftObjectType>(_data.driftObjectType); }
 
@@ -659,6 +666,25 @@ string Config::asJson() const {
             { "wave", {{"adapter",waveModel},{"nc_inputs",waveInputs},{"regrid",waveRegridding},{"source_crs",waveSourceCrs}} }
     };
 
+    json calibrationRegions=json::array();
+    for (std::uint32_t index=0;index<_data.observationalCalibrationRegionCount;++index) {
+        const auto& region=_data.observationalCalibrationRegions[index];
+        const auto& metadata=observationalCalibrationMetadata[index];
+        calibrationRegions.push_back({
+            {"id",metadata.id}, {"crs","EPSG:4326"},
+            {"bounds",{{"west",region.west},{"south",region.south},{"east",region.east},{"north",region.north}}},
+            {"object_type",DriftObjectCatalog::name(DriftObject())},
+            {"forcing_adapter",weatherModel=="WRF" ? "WRF" : "constant"},
+            {"valid_from",metadata.validFrom},{"valid_until",metadata.validUntil},
+            {"estimator",metadata.estimator},{"sample_size",metadata.sampleSize},
+            {"dataset",metadata.dataset},{"dataset_checksum",metadata.datasetChecksum},{"doi",metadata.doi},
+            {"wind_error",{{"stddev",region.windErrorStdDev},
+                           {"component_correlation",region.windErrorComponentCorrelation},
+                           {"spatial_scale",region.windErrorSpatialScale},
+                           {"temporal_scale",region.windErrorTemporalScale}}}
+        });
+    }
+
     json config = {
             { "simulation", simulation},
             { "io", io},
@@ -668,6 +694,7 @@ string Config::asJson() const {
             { "tracking", tracking},
             { "drift", drift},
             { "environment", environment},
+            { "observational_calibration", {{"regions",calibrationRegions}}},
     };
 
     return config.dump(4);
@@ -852,6 +879,40 @@ void Config::loadFromJson(const string &fileName) {
             }
         }
     }
+    if (config.contains("observational_calibration")) {
+        const json& calibration=config["observational_calibration"];
+        if (!calibration.is_object() || !calibration.contains("regions") || !calibration["regions"].is_array())
+            throw std::runtime_error("observational_calibration.regions must be an array");
+        if (calibration["regions"].size()>MAX_OBSERVATIONAL_CALIBRATION_REGIONS)
+            throw std::runtime_error("observational_calibration supports at most 16 regions");
+        for (const auto& item:calibration["regions"]) {
+            auto requiredString=[&item](const char *key) {
+                if (!item.contains(key) || !item[key].is_string() || item[key].get<string>().empty())
+                    throw std::runtime_error(string("observational calibration requires non-empty ")+key);
+                return item[key].get<string>();
+            };
+            if (requiredString("crs")!="EPSG:4326")
+                throw std::runtime_error("observational calibration crs must be EPSG:4326");
+            if (requiredString("object_type")!=DriftObjectCatalog::name(DriftObject()))
+                throw std::runtime_error("observational calibration object_type must match drift.object_type");
+            string configuredAdapter=weatherModel=="WRF" ? "WRF" : (_data.hasWind ? "constant" : "none");
+            if (requiredString("forcing_adapter")!=configuredAdapter)
+                throw std::runtime_error("observational calibration forcing_adapter must match environment.wind.adapter");
+            if (!item.contains("bounds") || !item["bounds"].is_object() ||
+                !item.contains("wind_error") || !item["wind_error"].is_object())
+                throw std::runtime_error("observational calibration requires bounds and wind_error objects");
+            const auto& bounds=item["bounds"];
+            const auto& wind=item["wind_error"];
+            observational_calibration_region region{
+                bounds.at("west"),bounds.at("south"),bounds.at("east"),bounds.at("north"),
+                wind.at("stddev"),wind.at("component_correlation"),wind.at("spatial_scale"),wind.at("temporal_scale")};
+            ObservationalCalibrationMetadata metadata{requiredString("id"),requiredString("estimator"),
+                requiredString("dataset"),requiredString("dataset_checksum"),requiredString("doi"),
+                requiredString("valid_from"),requiredString("valid_until"),item.at("sample_size")};
+            _data.observationalCalibrationRegions[_data.observationalCalibrationRegionCount++]=region;
+            observationalCalibrationMetadata.push_back(metadata);
+        }
+    }
     if (_data.driftModel==1 && static_cast<DriftObjectType>(_data.driftObjectType)==DriftObjectType::PASSIVE)
         throw std::runtime_error("drift.model=leeway requires a non-passive drift.object_type");
     if (_data.driftModel==1 && _data.driftSide==static_cast<std::int8_t>(DriftSide::UNDEFINED) && !_data.leewayRandomSide)
@@ -886,6 +947,45 @@ void Config::loadFromJson(const string &fileName) {
     if (_data.windErrorStdDev==0 && (_data.windErrorComponentCorrelation!=0 ||
         _data.windErrorSpatialScale!=0 || _data.windErrorTemporalScale!=0))
         throw std::runtime_error("wind-error correlation parameters require environment.wind.uncertainty_stddev > 0");
+    for (std::uint32_t index=0;index<_data.observationalCalibrationRegionCount;++index) {
+        const auto& region=_data.observationalCalibrationRegions[index];
+        const auto& metadata=observationalCalibrationMetadata[index];
+        if (_data.driftModel!=1 || !_data.hasWind)
+            throw std::runtime_error("observational calibration requires leeway and a wind adapter");
+        if (!std::isfinite(region.west) || !std::isfinite(region.east) ||
+            !std::isfinite(region.south) || !std::isfinite(region.north) ||
+            region.west < -180 || region.east > 180 || region.south < -90 || region.north > 90 ||
+            region.west>=region.east || region.south>=region.north)
+            throw std::runtime_error("observational calibration bounds must be finite, ordered EPSG:4326 bounds");
+        if (!std::isfinite(region.windErrorStdDev) || region.windErrorStdDev<=0 ||
+            !std::isfinite(region.windErrorComponentCorrelation) ||
+            region.windErrorComponentCorrelation < -1 || region.windErrorComponentCorrelation > 1 ||
+            !std::isfinite(region.windErrorSpatialScale) || region.windErrorSpatialScale<0 ||
+            !std::isfinite(region.windErrorTemporalScale) || region.windErrorTemporalScale<0)
+            throw std::runtime_error("observational calibration wind_error must define positive stddev, PSD correlation, and nonnegative scales");
+        if (metadata.sampleSize<2)
+            throw std::runtime_error("observational calibration sample_size must be at least 2");
+        if (metadata.datasetChecksum.rfind("sha256:",0)!=0 || metadata.datasetChecksum.size()!=71)
+            throw std::runtime_error("observational calibration dataset_checksum must be sha256:<64 hexadecimal digits>");
+        for (std::size_t digit=7;digit<metadata.datasetChecksum.size();++digit)
+            if (!std::isxdigit(static_cast<unsigned char>(metadata.datasetChecksum[digit])))
+                throw std::runtime_error("observational calibration dataset_checksum must contain hexadecimal digits");
+        if (metadata.doi.rfind("10.",0)!=0)
+            throw std::runtime_error("observational calibration doi must be a DOI beginning with 10.");
+        static const std::regex iso8601("^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$");
+        if (!std::regex_match(metadata.validFrom,iso8601) || !std::regex_match(metadata.validUntil,iso8601) ||
+            metadata.validFrom>=metadata.validUntil)
+            throw std::runtime_error("observational calibration validity must be an ordered UTC ISO-8601 interval");
+        for (std::uint32_t previous=0;previous<index;++previous) {
+            const auto& other=_data.observationalCalibrationRegions[previous];
+            if (metadata.id==observationalCalibrationMetadata[previous].id)
+                throw std::runtime_error("observational calibration region ids must be unique");
+            bool separated=region.east<other.west || region.west>other.east ||
+                           region.north<other.south || region.south>other.north;
+            if (!separated)
+                throw std::runtime_error("observational calibration regions must not overlap or share a boundary");
+        }
+    }
     if (weatherModel=="WRF" && weatherInputs.size()!=ncInputs.size())
         throw std::runtime_error("WRF and ocean nc_inputs must contain one matching file per forcing window");
     if (waveModel=="WW3" && waveInputs.size()!=ncInputs.size())

@@ -42,6 +42,27 @@ The first environmental provider is `environment.wind.adapter=constant`. Compone
 
 `environment.wind.uncertainty_stddev=sigma_W` defaults to zero, is measured in m s-1, and is valid only for leeway runs. `uncertainty_component_correlation=rho_W` defaults to zero and must be finite in [-1,1]; with equal component variance this validates the positive-semidefinite covariance `sigma_W^2 [[1,rho_W],[rho_W,1]]`. `uncertainty_spatial_scale=L_W` in metres and `uncertainty_temporal_scale=T_W` in seconds are finite and nonnegative. Positive scales select a shared piecewise-constant Gaussian field in Earth-relative equirectangular spatial bins and absolute physical-time bins. Samples have perfect covariance inside the same bin and zero covariance across a bin boundary; these are numerical support widths, not e-folding correlation lengths. Longitude is multiplied by cosine(latitude), so this inexpensive operator is unsuitable near the poles or across the antimeridian. Zero spatial or temporal scale retains particle-keyed or integration-substep white noise respectively, and all-zero correlation settings preserve the legacy realization exactly. Nonzero correlation settings require `uncertainty_stddev>0`. These values are sensitivity hypotheses unless their estimator and forcing-specific observational provenance are archived.
 
+`observational_calibration.regions` is an opt-in array of at most 16 non-overlapping, closed EPSG:4326 rectangles. At each substep the particle midpoint selects a region; its `wind_error` values replace the global wind-error standard deviation, component correlation, spatial scale, and temporal scale. Outside all regions the global values apply. Boundary sharing is rejected because closed domains would otherwise be ambiguous; antimeridian-spanning rectangles are unsupported. Selection changes parameters, not the stochastic key, equations, interpolation, vector basis, or direction policy.
+
+Each region requires `id`, `crs="EPSG:4326"`, `bounds` (`west`, `south`, `east`, `north` in degrees), the exact configured `object_type` and `forcing_adapter`, ISO-8601 `valid_from` and `valid_until` provenance strings, a named `estimator`, `sample_size>=2`, dataset identity, `dataset_checksum="sha256:<64 hex digits>"`, a DOI, and `wind_error` containing positive `stddev` (m s-1), PSD `component_correlation`, and nonnegative `spatial_scale` (m) and `temporal_scale` (s). The loader verifies structural consistency, ranges, covariance PSD, and spatial ambiguity; it cannot verify the scientific truth of a DOI, estimator, dataset, period, or geographic applicability. Those remain the investigator's responsibility. A declaration is not a posterior, confidence region, or universal calibration.
+
+```json
+"observational_calibration": {"regions": [{
+  "id": "study-region-object-forcing-v1", "crs": "EPSG:4326",
+  "bounds": {"west": 13.8, "south": 40.5, "east": 14.5, "north": 41.1},
+  "object_type": "PERSON_IN_WATER", "forcing_adapter": "WRF",
+  "valid_from": "2024-01-01T00:00:00Z", "valid_until": "2024-12-31T23:59:59Z",
+  "estimator": "document the residual selection and covariance estimator", "sample_size": 42,
+  "dataset": "persistent archived dataset identifier",
+  "dataset_checksum": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "doi": "10.xxxx/replace-with-the-study-doi",
+  "wind_error": {"stddev": 1.2, "component_correlation": 0.25,
+                 "spatial_scale": 8000.0, "temporal_scale": 1800.0}
+}]}
+```
+
+The block is a schema illustration with placeholder provenance and values, not a calibrated configuration suitable for a scientific run.
+
 Resolved WRF wind and WW3 Stokes drift use parallel forcing lists:
 
 ```json

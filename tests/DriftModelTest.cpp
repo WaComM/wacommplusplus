@@ -48,6 +48,11 @@ int main() {
     double later=forcingErrorNormal(5489,99,9,7,LEEWAY_WIND_ERROR_U_COMPONENT,
                                     .100001,.500001,4800,10000,3600);
     assert(shared0!=later);
+    struct Region { double west,south,east,north; } regions[]={{10,40,12,42},{13,40,15,42}};
+    constexpr double degreesToRadians=.017453292519943295769;
+    assert(observationalCalibrationRegion(regions,2,11*degreesToRadians,41*degreesToRadians)==0);
+    assert(observationalCalibrationRegion(regions,2,14*degreesToRadians,41*degreesToRadians)==1);
+    assert(observationalCalibrationRegion(regions,2,0,0)==-1);
     assert(jibeStepProbability(0,3600)==0);
     assert(jibeStepProbability(1,1)==1);
     assert(std::abs(jibeStepProbability(.04,3600)-.04)<1.e-12);

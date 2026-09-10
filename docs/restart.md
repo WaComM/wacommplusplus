@@ -10,6 +10,8 @@ Exact stochastic continuation requires the checkpoint to coincide with a complet
 
 Leeway-coefficient ensemble residuals are regenerated from the archived random seed and stored particle identity rather than added to the restart schema. Initial assignment and later jibing share the persisted resolved `drift_side`; loading never resamples it. Jibing keys use the physical forcing interval and absolute substep, so continuation is exact at a completed substep boundary when seed, identity, object type, `dti`, hourly probability, side, and resolved configuration are unchanged. A checkpoint inside a jibing substep changes event partitioning and has no bitwise-equivalence claim.
 
+Regional observational calibration adds no restart field. Its wind-error tuple is selected from the restarted physical position and the archived resolved configuration at every substep. Completed-substep restart equivalence therefore requires the identical ordered region definitions and provenance-bearing configuration. Forward and backward selection use the same geographic test; stochastic backward trajectories remain candidate origins rather than inverses.
+
 ## References
 
 - Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

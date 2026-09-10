@@ -26,6 +26,8 @@ $$
 
 where `sigma_W` is the configured component standard deviation in m s-1. With component correlation `rho_W`, `Z_u=X_1` and `Z_v=rho_W X_1+sqrt(1-rho_W^2)X_2`; `X_1,X_2` are independent standard normals. The covariance is `sigma_W^2 [[1,rho_W],[rho_W,1]]`, positive semidefinite exactly when the validated dimensionless `rho_W` lies in [-1,1]. Optional positive `L_W` (m) and `T_W` (s) key the normals by an equirectangular spatial cell and absolute physical-time bin. Two samples have unit stochastic covariance when both bin keys match and zero covariance otherwise. These widths describe compact block support, not isotropic or e-folding correlation lengths. The spatial map uses `x=R lambda cos(phi), y=R phi`, so it is unsuitable near a pole or across the antimeridian. A zero spatial scale keys by stable particle identity; a zero temporal scale keys by lower forcing-interval time and absolute substep. All-zero correlation settings retain the earlier white-noise realization. This is a forcing-error sensitivity model, not an ensemble forecast or observational calibration.
 
+Regional observational calibration may override $(\sigma_W,\rho_W,L_W,T_W)$ inside a closed, non-overlapping EPSG:4326 rectangle selected from the particle's interpolated substep position. The calibrated estimator must be based on residuals for the configured object class and forcing system, with the dataset, SHA-256 checksum, sample size, validity period, and peer-reviewed DOI archived in the resolved configuration. Selection is direction-neutral and uses no random draw. Crossing a boundary changes the parameter tuple discontinuously; this is appropriate only when the study defines piecewise regional regimes and has quantified boundary sensitivity. The loader cannot turn declared metadata into validation evidence.
+
 Crosswind-side uncertainty is a separate initial-condition model. With `side=random` and required $p_R=\mathtt{side\_right\_probability}$,
 
 $$
@@ -67,6 +69,8 @@ The drift calculation is direction-neutral. The existing solver multiplies the c
 NetCDF restart version 3 stores stable numeric object type and crosswind side for every particle. Version 2 restarts remain readable in passive mode and are rejected for leeway runs because they lack required object state. Text restarts append the same two fields while retaining compatibility with earlier seven-field records.
 
 Ensemble residuals and initial side assignment are stateless functions of the configured seed and stored 64-bit particle identity. Correlated wind errors use absolute physical space/time bin keys; zero-scale dimensions use identity or forcing interval/substep keys. Jibing uses interval/substep keys. They are invariant under MPI/OpenMP/CUDA scheduling, and continuation at a completed substep boundary reproduces an uninterrupted run. Changing `dti` changes only wind-error dimensions configured with zero temporal scale and the discrete jibing realization. With wind error or jibing, backward output must be interpreted as a stochastic candidate-origin ensemble rather than a pathwise inverse.
+
+Regional parameter selection is recomputed from physical position after restart and in both tracking directions. No new particle state is stored. Continuous and restarted runs therefore agree at completed substep boundaries when the resolved configuration, position, identity, seed, forcing, and `dti` agree. A trajectory crossing a regional boundary is not the pathwise stochastic inverse of its forward realization.
 
 ## Configuration and limitations
 

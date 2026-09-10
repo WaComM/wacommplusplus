@@ -8,6 +8,7 @@
 #include <string>
 #include <fstream>
 #include <cstdint>
+#include <vector>
 
 #include "Utils.hpp"
 #include "DriftModel.hpp"
@@ -18,6 +19,19 @@ using namespace std;
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
+
+static constexpr std::size_t MAX_OBSERVATIONAL_CALIBRATION_REGIONS=16;
+
+struct observational_calibration_region {
+    double west;
+    double south;
+    double east;
+    double north;
+    double windErrorStdDev;
+    double windErrorComponentCorrelation;
+    double windErrorSpatialScale;
+    double windErrorTemporalScale;
+};
 
 struct config_data {
     bool random;
@@ -47,6 +61,8 @@ struct config_data {
     double windErrorComponentCorrelation;
     double windErrorSpatialScale;
     double windErrorTemporalScale;
+    std::uint32_t observationalCalibrationRegionCount;
+    observational_calibration_region observationalCalibrationRegions[MAX_OBSERVATIONAL_CALIBRATION_REGIONS];
     std::uint16_t driftObjectType;
     std::int8_t driftSide;
     bool hasWind;
@@ -107,6 +123,7 @@ public:
     double WindErrorComponentCorrelation() const;
     double WindErrorSpatialScale() const;
     double WindErrorTemporalScale() const;
+    std::size_t ObservationalCalibrationRegionCount() const;
     DriftObjectType DriftObject() const;
     DriftSide DefaultDriftSide() const;
     void RestartCheckpoint(double value);
@@ -174,6 +191,16 @@ public:
     static const int TRACKING_BACKWARD=-1;
 
 private:
+    struct ObservationalCalibrationMetadata {
+        string id;
+        string estimator;
+        string dataset;
+        string datasetChecksum;
+        string doi;
+        string validFrom;
+        string validUntil;
+        std::uint64_t sampleSize;
+    };
     log4cplus::Logger logger;
 
     std::map<std::string, int> dictionary;
@@ -201,6 +228,7 @@ private:
     vector<string> waveInputs;
     string waveRegridding;
     string waveSourceCrs;
+    vector<ObservationalCalibrationMetadata> observationalCalibrationMetadata;
     string ncBasePath;
     vector<string> ncInputs;
     string ncOutputRoot;

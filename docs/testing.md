@@ -32,6 +32,8 @@ Surface-drift validation adds zero-wind finiteness, pure downwind direction, equ
 
 Correlated forcing-error verification additionally covers shared spatial/physical-time bin keys, distinct-bin draws, component-covariance bounds, configuration round trips, zero-scale legacy behavior, and physical-time restart keying. CUDA parity uses the same binning and Cholesky equations when a capable device is available.
 
+Regional-calibration verification covers geographic inside/outside selection, mandatory provenance, matching object and forcing identities, finite ordered EPSG:4326 bounds, non-overlap, positive standard deviation, PSD correlation, nonnegative support scales, checksum syntax, sample size, resolved-configuration round trips, and the shared CPU/CUDA selector. These tests verify implementation and backend equivalence; they do not validate any external observational estimate.
+
 ## References
 
 - Oberkampf, W. L., and Trucano, T. G. (2002). Verification and validation in computational fluid dynamics. *Progress in Aerospace Sciences*, 38, 209–272. [doi:10.1016/S0376-0421(02)00005-2](https://doi.org/10.1016/S0376-0421(02)00005-2).
