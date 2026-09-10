@@ -1,0 +1,100 @@
+name: Native ARM64 and RISC-V hardware validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Native hardware runner to validate
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - raspberry-pi
+          - riscv64
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-hardware-${{ github.ref }}-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  raspberry-pi:
+    if: inputs.target == 'all' || inputs.target == 'raspberry-pi'
+    runs-on: [self-hosted, linux, ARM64, raspberry-pi]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify native Raspberry Pi hardware
+        run: bash tools/native_hardware_validation.sh raspberry-pi native-hardware-validation.txt
+      - name: Install Raspberry Pi OS dependencies
+        run: >-
+          sudo apt-get update && sudo apt-get install -y cmake g++ pkg-config
+          libnetcdf-dev libnetcdf-c++4-dev liblog4cplus-dev nlohmann-json3-dev
+      - name: Configure, build, and test complete application
+        run: |
+          set -euo pipefail
+          cmake -S . -B build-native -DCMAKE_BUILD_TYPE=Release 2>&1 | tee configure.log
+          cmake --build build-native --parallel 2 2>&1 | tee build.log
+          ctest --test-dir build-native --output-on-failure 2>&1 | tee ctest.log
+          cmake --install build-native --prefix install-native 2>&1 | tee install.log
+          test -x install-native/bin/wacommplusplus
+          ldd install-native/bin/wacommplusplus 2>&1 | tee ldd.log
+          ! grep -q 'not found' ldd.log
+      - name: Complete validation evidence
+        if: always()
+        run: |
+          dpkg-query -W cmake g++ libnetcdf-dev libnetcdf-c++4-dev liblog4cplus-dev nlohmann-json3-dev >> native-hardware-validation.txt 2>&1 || true
+          sha256sum configure.log build.log ctest.log install.log ldd.log >> native-hardware-validation.txt 2>&1 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: raspberry-pi-native-validation-${{ github.sha }}
+          path: |
+            native-hardware-validation.txt
+            configure.log
+            build.log
+            ctest.log
+            install.log
+            ldd.log
+
+  riscv64:
+    if: inputs.target == 'all' || inputs.target == 'riscv64'
+    runs-on: [self-hosted, linux, riscv64, riscv-hardware]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify native RISC-V hardware
+        run: bash tools/native_hardware_validation.sh riscv64 native-hardware-validation.txt
+      - name: Install RV64 Linux dependencies
+        run: >-
+          sudo apt-get update && sudo apt-get install -y cmake g++ pkg-config
+          libnetcdf-dev libnetcdf-c++4-dev liblog4cplus-dev nlohmann-json3-dev
+      - name: Configure, build, and test complete application
+        run: |
+          set -euo pipefail
+          cmake -S . -B build-native -DCMAKE_BUILD_TYPE=Release 2>&1 | tee configure.log
+          cmake --build build-native --parallel 2 2>&1 | tee build.log
+          ctest --test-dir build-native --output-on-failure 2>&1 | tee ctest.log
+          cmake --install build-native --prefix install-native 2>&1 | tee install.log
+          test -x install-native/bin/wacommplusplus
+          ldd install-native/bin/wacommplusplus 2>&1 | tee ldd.log
+          ! grep -q 'not found' ldd.log
+      - name: Complete validation evidence
+        if: always()
+        run: |
+          dpkg-query -W cmake g++ libnetcdf-dev libnetcdf-c++4-dev liblog4cplus-dev nlohmann-json3-dev >> native-hardware-validation.txt 2>&1 || true
+          sha256sum configure.log build.log ctest.log install.log ldd.log >> native-hardware-validation.txt 2>&1 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: riscv64-native-validation-${{ github.sha }}
+          path: |
+            native-hardware-validation.txt
+            configure.log
+            build.log
+            ctest.log
+            install.log
+            ldd.log

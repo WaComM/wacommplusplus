@@ -10,6 +10,8 @@ Every NetCDF particle/restart file and concentration file records `wacomm_git_re
 
 These embedded attributes do not replace an external run manifest. Before a run, archive the complete configuration and calculate SHA-256 checksums for every ocean, weather, wave, source, and restart input. After the run, add output checksums, dependency versions, platform and accelerator details, parallel placement, tolerances, and test results. Paths are identifiers rather than content guarantees, so publish the checksum manifest with the scientific result.
 
+Native Raspberry Pi ARM64 and RV64 platform claims also require the evidence artifact produced by `.github/workflows/native-hardware.yml` for the claimed Git revision. Archive its device-tree model, kernel and OS identity, compiler and dependency versions, configure/build/test/install logs, dynamic-link report, checksums, and workflow URL outside finite CI artifact retention. ARM64 proxy, cross-compile, and QEMU records must remain labelled as such and cannot substitute for native-board execution.
+
 A remote URI identifies a service response, not immutable forcing content. Lazy access does not weaken the checksum requirement: for a reproducible production run, materialize the exact remote ocean, weather, and wave datasets, record retrieval time and service URI, calculate their checksums, and run against that archived copy. HTTP validators and a successful OPeNDAP integration test establish transport behavior but do not identify scientific content. Do not claim reproducibility from a URI alone.
 
 After the outputs and test log exist, create the machine-readable manifest from the same working directory used for the simulation:

@@ -21,6 +21,7 @@ The documentation is organized as a scientific model description rather than sol
 - [Examples](examples.md)
 - [Supported platforms](supported-platforms.md)
 - [Rocky Linux 8.9](rocky-linux.md)
+- [Raspberry Pi OS ARM64](raspberry-pi.md)
 - [RISC-V 64 Linux](riscv64-linux.md)
 - [Scientific product policy](versioned-scientific-product.md)
 - [References](references.md)

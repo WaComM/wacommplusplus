@@ -290,6 +290,9 @@ if(BUILD_TESTING)
         add_test(NAME documentation_visuals COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/DocumentationVisualTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/docs")
+        add_test(NAME native_hardware_validation_contract COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/NativeHardwareValidationTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}")
         add_test(NAME trajectory_diagnostics COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/TrajectoryDiagnosticsTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/trajectory_diagnostics.py")
