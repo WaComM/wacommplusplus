@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(wacommplusplus VERSION 1.0.0 LANGUAGES CXX)
+project(wacommplusplus VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,6 +15,20 @@ option(USE_OPENACC "Use OpenACC acceleration." OFF)
 option(USE_CUDA "Use CUDA acceleration." OFF)
 option(USE_PROJ "Use PROJ for explicit environmental coordinate transformations." OFF)
 option(BUILD_REMOTE_INTEGRATION_TESTS "Run network-dependent OPeNDAP integration tests." OFF)
+set(WACOMM_BOOTSTRAP_DEPENDENCIES "AUTO" CACHE STRING
+        "Dependency policy: AUTO prefers installed packages, ON forces private builds, and OFF requires installed packages.")
+set_property(CACHE WACOMM_BOOTSTRAP_DEPENDENCIES PROPERTY STRINGS AUTO ON OFF)
+string(TOUPPER "${WACOMM_BOOTSTRAP_DEPENDENCIES}" WACOMM_BOOTSTRAP_DEPENDENCIES)
+set(WACOMM_BOOTSTRAP_DEPENDENCIES "${WACOMM_BOOTSTRAP_DEPENDENCIES}" CACHE STRING
+        "Dependency policy: AUTO, ON, or OFF." FORCE)
+if(NOT WACOMM_BOOTSTRAP_DEPENDENCIES MATCHES "^(AUTO|ON|OFF)$")
+    message(FATAL_ERROR "WACOMM_BOOTSTRAP_DEPENDENCIES must be AUTO, ON, or OFF (received '${WACOMM_BOOTSTRAP_DEPENDENCIES}').")
+endif()
+option(WACOMM_BOOTSTRAP_PARALLEL_IO
+        "Build bootstrapped HDF5 and NetCDF-C with MPI parallel I/O support." OFF)
+if(WACOMM_BOOTSTRAP_PARALLEL_IO AND WACOMM_BOOTSTRAP_DEPENDENCIES STREQUAL "OFF")
+    message(FATAL_ERROR "WACOMM_BOOTSTRAP_PARALLEL_IO=ON requires a private HDF5/NetCDF stack; WACOMM_BOOTSTRAP_DEPENDENCIES=OFF forbids it.")
+endif()
 
 set(WACOMM_GIT_REVISION "unknown")
 find_package(Git QUIET)
@@ -30,7 +44,7 @@ if(Git_FOUND)
     endif()
 endif()
 set(WACOMM_CMAKE_OPTIONS
-        "BUILD_APPLICATION=${BUILD_APPLICATION};BUILD_TESTING=${BUILD_TESTING};BUILD_REMOTE_INTEGRATION_TESTS=${BUILD_REMOTE_INTEGRATION_TESTS};DEBUG=${DEBUG};USE_MPI=${USE_MPI};USE_EMPI=${USE_EMPI};USE_OMP=${USE_OMP};USE_OPENACC=${USE_OPENACC};USE_CUDA=${USE_CUDA};USE_PROJ=${USE_PROJ}")
+        "BUILD_APPLICATION=${BUILD_APPLICATION};BUILD_TESTING=${BUILD_TESTING};BUILD_REMOTE_INTEGRATION_TESTS=${BUILD_REMOTE_INTEGRATION_TESTS};DEBUG=${DEBUG};USE_MPI=${USE_MPI};USE_EMPI=${USE_EMPI};USE_OMP=${USE_OMP};USE_OPENACC=${USE_OPENACC};USE_CUDA=${USE_CUDA};USE_PROJ=${USE_PROJ};WACOMM_BOOTSTRAP_DEPENDENCIES=${WACOMM_BOOTSTRAP_DEPENDENCIES};WACOMM_BOOTSTRAP_PARALLEL_IO=${WACOMM_BOOTSTRAP_PARALLEL_IO}")
 set(WACOMM_GENERATED_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 configure_file(BuildInfo.hpp.in "${WACOMM_GENERATED_INCLUDE}/BuildInfo.hpp" @ONLY)
 
@@ -52,36 +66,8 @@ endif()
 
 if(BUILD_APPLICATION)
     find_package(Threads REQUIRED)
-    find_package(nlohmann_json CONFIG REQUIRED)
-    if(WIN32)
-        find_package(netCDFCxx CONFIG REQUIRED)
-        find_package(log4cplus CONFIG REQUIRED)
-        set(WACOMM_DEPENDENCY_LIBRARIES netCDF::netcdf-cxx4 log4cplus::log4cplus)
-    else()
-        find_package(PkgConfig REQUIRED)
-        pkg_check_modules(NETCDF REQUIRED IMPORTED_TARGET netcdf)
-        pkg_check_modules(LOG4CPLUS REQUIRED IMPORTED_TARGET log4cplus)
-        find_path(NETCDF_CXX_INCLUDE_DIR netcdf PATH_SUFFIXES include)
-        find_library(NETCDF_CXX_LIBRARY NAMES netcdf-cxx4 netcdf_c++4)
-        if(NOT NETCDF_CXX_INCLUDE_DIR OR NOT NETCDF_CXX_LIBRARY)
-            message(FATAL_ERROR "NetCDF C++4 headers and library were not found.")
-        endif()
-        add_library(NetCDF::CXX4 UNKNOWN IMPORTED)
-        set_target_properties(NetCDF::CXX4 PROPERTIES IMPORTED_LOCATION "${NETCDF_CXX_LIBRARY}"
-                INTERFACE_INCLUDE_DIRECTORIES "${NETCDF_CXX_INCLUDE_DIR}")
-        set(WACOMM_DEPENDENCY_LIBRARIES NetCDF::CXX4 PkgConfig::NETCDF PkgConfig::LOG4CPLUS)
-    endif()
-    include(CheckCXXSourceCompiles)
-    set(CMAKE_REQUIRED_INCLUDES "${NETCDF_INCLUDE_DIRS}")
-    check_cxx_source_compiles("#include <netcdf_meta.h>
-        #if !NC_HAS_DAP2 || !NC_HAS_DAP4
-        #error NetCDF remote access is unavailable
-        #endif
-        int main() { return 0; }" WACOMM_NETCDF_HAS_REMOTE_ACCESS)
-    unset(CMAKE_REQUIRED_INCLUDES)
-    if(NOT WACOMM_NETCDF_HAS_REMOTE_ACCESS)
-        message(FATAL_ERROR "WaComM++ remote environmental access requires NetCDF with DAP2 and DAP4 support.")
-    endif()
+    include(cmake/WacommDependencies.cmake)
+    wacomm_configure_dependencies(WACOMM_DEPENDENCY_LIBRARIES)
     set(WACOMM_LIBRARIES Threads::Threads ${CMAKE_DL_LIBS}
             nlohmann_json::nlohmann_json ${WACOMM_DEPENDENCY_LIBRARIES})
 

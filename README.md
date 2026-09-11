@@ -16,7 +16,7 @@ A read-only [trajectory diagnostic workflow](docs/trajectory-diagnostics.md) joi
 
 ## Quick start
 
-Install CMake 3.20+, a C++17 compiler, NetCDF C/C++ with DAP2 and DAP4 enabled, log4cplus, nlohmann-json, pkg-config, and any requested backend. Then run:
+Install CMake 3.20+, a C++17 compiler, and any requested backend. The default `WACOMM_BOOTSTRAP_DEPENDENCIES=AUTO` prefers installed application libraries and builds missing pinned dependencies privately below the build tree. Then run:
 
 ```bash
 cmake -S . -B build
@@ -33,7 +33,7 @@ cmake --build build-core
 ctest --test-dir build-core --output-on-failure
 ```
 
-Options include `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA`, `USE_PROJ`, `DEBUG`, `BUILD_APPLICATION`, `BUILD_TESTING`, and `BUILD_REMOTE_INTEGRATION_TESTS`. MPI and EMPI are mutually exclusive. CUDA is unavailable on modern macOS; PROJ is optional and required only for projected environmental grids. The network integration test is opt-in so the default suite remains deterministic offline.
+Options include `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA`, `USE_PROJ`, `DEBUG`, `BUILD_APPLICATION`, `BUILD_TESTING`, and `BUILD_REMOTE_INTEGRATION_TESTS`. `WACOMM_BOOTSTRAP_DEPENDENCIES` accepts `AUTO`, `ON` (force the complete private stack), or `OFF` (installed packages only). `WACOMM_BOOTSTRAP_PARALLEL_IO=ON` builds private MPI-enabled HDF5 and NetCDF-4 independently of `USE_MPI`; see the [build guide](docs/build.md). MPI and EMPI are mutually exclusive. CUDA is unavailable on modern macOS; PROJ is optional and required only for projected environmental grids. The network integration test is opt-in so the default suite remains deterministic offline.
 
 ## Reproducible operation
 
