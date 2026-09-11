@@ -38,6 +38,10 @@ Correlated forcing-error verification additionally covers shared spatial/physica
 
 Regional-calibration verification covers geographic inside/outside selection, mandatory provenance, matching object and forcing identities, finite ordered EPSG:4326 bounds, non-overlap, positive standard deviation, PSD correlation, nonnegative support scales, checksum syntax, sample size, resolved-configuration round trips, and the shared CPU/CUDA selector. These tests verify implementation and backend equivalence; they do not validate any external observational estimate.
 
+Private Unix OpenSSL builds add `openssl_dependency`, which requires exact agreement between the pinned version, compiled headers, linked OpenSSL, and curl's reported TLS backend, and creates a client TLS context. It is an offline dependency-integration check; it does not test remote servers or certificate trust. The portable core does not require OpenSSL, Perl, or make through this dependency path.
+
+`publication_figures` is an optional Python regression requiring the plotting requirements. It checks analytical bin counts and quantiles, signed-depth conversion, masked/inactive selection, exact large integer IDs, duplicate time/ID and invalid unit rejection, deterministic rendering under input permutation, accessible exports, and read-only inputs. A CTest skip means plotting dependencies are absent, not that rendering was verified. The six-hour Slurm run is model execution evidence; the missing forcing hour and source batching are documented in its [guide](../examples/wacomm-sarno-lite.md).
+
 ## References
 
 - Oberkampf, W. L., and Trucano, T. G. (2002). Verification and validation in computational fluid dynamics. *Progress in Aerospace Sciences*, 38, 209–272. [doi:10.1016/S0376-0421(02)00005-2](https://doi.org/10.1016/S0376-0421(02)00005-2).

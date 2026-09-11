@@ -26,6 +26,7 @@ if(NOT WACOMM_BOOTSTRAP_DEPENDENCIES MATCHES "^(AUTO|ON|OFF)$")
 endif()
 option(WACOMM_BOOTSTRAP_PARALLEL_IO
         "Build bootstrapped HDF5 and NetCDF-C with MPI parallel I/O support." OFF)
+set(WACOMM_OPENSSL_VERSION "3.5.8")
 if(WACOMM_BOOTSTRAP_PARALLEL_IO AND WACOMM_BOOTSTRAP_DEPENDENCIES STREQUAL "OFF")
     message(FATAL_ERROR "WACOMM_BOOTSTRAP_PARALLEL_IO=ON requires a private HDF5/NetCDF stack; WACOMM_BOOTSTRAP_DEPENDENCIES=OFF forbids it.")
 endif()
@@ -170,6 +171,14 @@ if(BUILD_APPLICATION)
     install(TARGETS wacommplusplus RUNTIME DESTINATION bin)
 
     if(BUILD_TESTING)
+        if(TARGET wacomm_openssl)
+            add_executable(openssl_dependency_test tests/OpenSSLDependencyTest.cpp)
+            wacomm_enable_test_assertions(openssl_dependency_test)
+            target_link_libraries(openssl_dependency_test PRIVATE ${WACOMM_LIBRARIES})
+            target_compile_definitions(openssl_dependency_test PRIVATE
+                    WACOMM_EXPECTED_OPENSSL="${WACOMM_OPENSSL_VERSION}")
+            add_test(NAME openssl_dependency COMMAND openssl_dependency_test)
+        endif()
         add_executable(environmental_data_access_test tests/EnvironmentalDataAccessTest.cpp EnvironmentalDataAccess.cpp)
         wacomm_enable_test_assertions(environmental_data_access_test)
         add_test(NAME environmental_data_access COMMAND environmental_data_access_test)
@@ -287,5 +296,9 @@ if(BUILD_TESTING)
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/TrajectoryDiagnosticsTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/trajectory_diagnostics.py")
         set_tests_properties(trajectory_diagnostics PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME publication_figures COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/PublicationFiguresTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/publication_figures.py")
+        set_tests_properties(publication_figures PROPERTIES SKIP_RETURN_CODE 77)
     endif()
 endif()

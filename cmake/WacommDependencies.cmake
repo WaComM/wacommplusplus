@@ -59,7 +59,8 @@ function(wacomm_configure_dependencies result)
         endif()
     endif()
 
-    set(common -DCMAKE_INSTALL_PREFIX:PATH=${prefix} -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
+    set(common -DCMAKE_INSTALL_PREFIX:PATH=${prefix} -DCMAKE_INSTALL_LIBDIR:PATH=lib
+            -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
             -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_TESTING:BOOL=OFF
             -DCMAKE_POLICY_VERSION_MINIMUM:STRING=3.5)
     if(CMAKE_CONFIGURATION_TYPES)
@@ -107,6 +108,7 @@ function(wacomm_configure_dependencies result)
                 BUILD_BYPRODUCTS "${sz}")
         set(curl_tls)
         set(curl_system)
+        set(curl_dependencies wacomm_zlib)
         if(WIN32)
             # Schannel keeps HTTPS enabled without requiring OpenSSL on MSVC.
             set(curl_tls -DCURL_USE_SCHANNEL:BOOL=ON -DCURL_USE_OPENSSL:BOOL=OFF)
@@ -119,8 +121,37 @@ function(wacomm_configure_dependencies result)
             set(curl_system ${WACOMM_SECURITY_FRAMEWORK} ${WACOMM_COREFOUNDATION_FRAMEWORK}
                     ${WACOMM_SYSTEMCONFIGURATION_FRAMEWORK})
         else()
-            find_package(OpenSSL REQUIRED)
-            set(curl_tls -DCURL_USE_OPENSSL:BOOL=ON)
+            find_package(Perl REQUIRED)
+            find_program(WACOMM_OPENSSL_MAKE NAMES gmake make REQUIRED)
+            if(CMAKE_CROSSCOMPILING)
+                message(FATAL_ERROR "Private OpenSSL requires a native Unix build; use installed dependencies for cross-compilation.")
+            endif()
+            set(openssl_ssl "${prefix}/lib/libssl.a")
+            set(openssl_crypto "${prefix}/lib/libcrypto.a")
+            ExternalProject_Add(wacomm_openssl
+                    URL https://github.com/openssl/openssl/releases/download/openssl-${WACOMM_OPENSSL_VERSION}/openssl-${WACOMM_OPENSSL_VERSION}.tar.gz
+                    URL_HASH SHA256=a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2
+                    DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/openssl" BINARY_DIR "${build}/openssl"
+                    CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env "CC=${CMAKE_C_COMPILER}"
+                        "AR=${CMAKE_AR}" "RANLIB=${CMAKE_RANLIB}"
+                        ${PERL_EXECUTABLE} <SOURCE_DIR>/Configure
+                        --prefix=${prefix} --openssldir=${prefix}/ssl --libdir=lib
+                        no-shared no-module no-tests -fPIC
+                    BUILD_COMMAND ${WACOMM_OPENSSL_MAKE}
+                    INSTALL_COMMAND ${WACOMM_OPENSSL_MAKE} install_sw
+                    BUILD_BYPRODUCTS "${openssl_ssl}" "${openssl_crypto}")
+            # Pin both headers and archives so a loaded module cannot supply
+            # a different OpenSSL ABI to curl or the final application.
+            # Normal include paths take precedence over module-provided CPATH.
+            set(curl_tls -DCURL_USE_OPENSSL:BOOL=ON -DOPENSSL_ROOT_DIR:PATH=${prefix}
+                    -DOPENSSL_INCLUDE_DIR:PATH=${prefix}/include
+                    -DOPENSSL_SSL_LIBRARY:FILEPATH=${openssl_ssl}
+                    -DOPENSSL_CRYPTO_LIBRARY:FILEPATH=${openssl_crypto}
+                    -DOPENSSL_USE_STATIC_LIBS:BOOL=ON
+                    -DCMAKE_NO_SYSTEM_FROM_IMPORTED:BOOL=ON)
+            set(curl_system "${openssl_ssl}" "${openssl_crypto}" Threads::Threads ${CMAKE_DL_LIBS})
+            list(APPEND curl_dependencies wacomm_openssl)
+            message(STATUS "WaComM++ private OpenSSL=${WACOMM_OPENSSL_VERSION}")
         endif()
         ExternalProject_Add(wacomm_curl URL https://curl.se/download/curl-8.7.1.tar.xz
                 URL_HASH SHA256=6fea2aac6a4610fbd0400afb0bcddbe7258a64c63f1f68e5855ebc0c659710cd
@@ -130,7 +161,7 @@ function(wacomm_configure_dependencies result)
                     -DCURL_USE_LIBSSH2:BOOL=OFF -DCURL_USE_LIBSSH:BOOL=OFF
                     -DCURL_USE_LIBPSL:BOOL=OFF -DUSE_LIBIDN2:BOOL=OFF
                     -DCURL_BROTLI:BOOL=OFF -DCURL_ZSTD:BOOL=OFF -DCURL_DISABLE_LDAP:BOOL=ON
-                BUILD_COMMAND ${build_cmd} INSTALL_COMMAND ${install_cmd} DEPENDS wacomm_zlib
+                BUILD_COMMAND ${build_cmd} INSTALL_COMMAND ${install_cmd} DEPENDS ${curl_dependencies}
                 BUILD_BYPRODUCTS "${curl}")
         set(hdf5_parallel -DHDF5_ENABLE_PARALLEL:BOOL=OFF -DHDF5_BUILD_CPP_LIB:BOOL=ON)
         set(netcdf_parallel -DENABLE_PARALLEL4:BOOL=OFF)
@@ -190,9 +221,6 @@ function(wacomm_configure_dependencies result)
         target_include_directories(wacomm_private_io INTERFACE "${prefix}/include")
         target_link_libraries(wacomm_private_io INTERFACE "${netcdf_cxx}" "${netcdf}" "${hdf5_hl}"
                 "${hdf5}" "${curl}" "${zlib}" "${sz}" ${curl_system})
-        if(NOT WIN32 AND NOT APPLE)
-            target_link_libraries(wacomm_private_io INTERFACE OpenSSL::SSL OpenSSL::Crypto)
-        endif()
         # Static parallel I/O carries MPI symbols even if solver decomposition
         # is disabled, so the dependency propagates independently of USE_MPI.
         if(WACOMM_BOOTSTRAP_PARALLEL_IO)

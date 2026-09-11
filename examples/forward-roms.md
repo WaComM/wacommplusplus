@@ -6,7 +6,7 @@ Determine where particles released from known sources travel under a ROMS circul
 
 ## Prerequisites and required fields
 
-Build with NetCDF C++4 and provide `forcing.nc` plus `sources.json`. ROMS input requires `ocean_time`, `s_rho`, `s_w`, `mask_rho`, `mask_u`, `mask_v`, `lat_rho`, `lon_rho`, `lat_v`, `lon_u`, bathymetry `h`, `zeta`, staggered `u/v`, rho-grid `w`, and `AKt`. Records must be chronological and adjacent files must have compatible grids.
+For a serial build with private OpenSSL 3.5.8, follow the [build example](../docs/build.md#serial-build-with-private-openssl), which includes dependency prerequisites and verification commands. Build with NetCDF C++4 and provide `forcing.nc` plus `sources.json`. ROMS input requires `ocean_time`, `s_rho`, `s_w`, `mask_rho`, `mask_u`, `mask_v`, `lat_rho`, `lon_rho`, `lat_v`, `lon_u`, bathymetry `h`, `zeta`, staggered `u/v`, rho-grid `w`, and `AKt`. Records must be chronological and adjacent files must have compatible grids.
 
 ## Configuration and run
 

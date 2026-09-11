@@ -23,7 +23,7 @@ Optional switches are `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA
 
 ## Dependency bootstrap
 
-`WACOMM_BOOTSTRAP_DEPENDENCIES` is a three-state cache string. `AUTO` is the default and prefers a usable installed stack. If installed NetCDF-C, NetCDF-C++4, or DAP support is missing, it builds a coherent private zlib, libaec/SZIP, TLS-enabled curl, HDF5, NetCDF-C, and NetCDF-C++4 chain; JSON and log4cplus fall back independently. `ON` bypasses installed copies and always uses the pinned private stack. `OFF` performs no dependency downloads and fails during configuration when a required installed package or DAP capability is unavailable. Private files remain under `<build>/external` and are never installed globally.
+`WACOMM_BOOTSTRAP_DEPENDENCIES` is a three-state cache string. `AUTO` is the default and prefers a usable installed stack. If installed NetCDF-C, NetCDF-C++4, or DAP support is missing, it builds a coherent private zlib, libaec/SZIP, TLS-enabled curl, HDF5, NetCDF-C, and NetCDF-C++4 chain, including OpenSSL 3.5.8 on Unix other than macOS; JSON and log4cplus fall back independently. `ON` bypasses installed copies and always uses the pinned private stack. `OFF` performs no dependency downloads and fails during configuration when a required installed package or DAP capability is unavailable. Private files remain under `<build>/external` and are never installed globally.
 
 ```bash
 cmake -S . -B build -DWACOMM_BOOTSTRAP_DEPENDENCIES=AUTO
@@ -31,7 +31,27 @@ cmake -S . -B build-private -DWACOMM_BOOTSTRAP_DEPENDENCIES=ON
 cmake -S . -B build-system -DWACOMM_BOOTSTRAP_DEPENDENCIES=OFF
 ```
 
-The private curl retains HTTPS: Schannel is used on Windows, Secure Transport on macOS, and OpenSSL on other Unix platforms. Windows dependencies use native CMake builds with Visual Studio or Ninja; libaec supplies the SZIP-compatible `libsz` interface. A forced Unix private build therefore also requires OpenSSL development files. PROJ, OpenMP, CUDA, and FlexMPI remain optional system/toolchain facilities rather than members of the private stack.
+The private curl retains HTTPS: Schannel is used on Windows, Secure Transport on macOS, and OpenSSL on other Unix platforms. Windows dependencies use native CMake builds with Visual Studio or Ninja; libaec supplies the SZIP-compatible `libsz` interface. On Unix other than macOS, the private stack builds SHA-256-pinned OpenSSL 3.5.8 with Perl and make through `ExternalProject_Add`; installed OpenSSL development files are not required. The build uses static position-independent libraries without dynamically loaded providers, and curl receives explicit private header and archive paths. Its imported include paths use normal include precedence so module-provided `CPATH` entries cannot override the private OpenSSL headers. Windows and macOS retain their native TLS backends. Private OpenSSL supports native builds; cross-compilation must use an installed dependency stack with `WACOMM_BOOTSTRAP_DEPENDENCIES=OFF`. HTTPS still requires a usable system CA trust store; the bootstrap does not install trust certificates. PROJ, OpenMP, CUDA, and FlexMPI remain optional system/toolchain facilities rather than members of the private stack.
+
+### Serial build with private OpenSSL
+
+This example verifies application dependency integration with MPI, OpenMP, CUDA, EMPI, OpenACC, and parallel I/O disabled. It requires a native Unix C/C++17 toolchain, CMake, Perl, make, and network access for the pinned source archives. No forcing files are needed for compilation or the offline tests.
+
+```bash
+module load openssl/openssl-4.0.2
+module load cmake/cmake-4.4.3
+module load gcc-12.2.1/ompi-4.1.4_nccl
+module load nvidia/cuda-12.8.0
+cmake -S . -B build -DWACOMM_BOOTSTRAP_DEPENDENCIES=ON \
+  -DUSE_MPI=OFF -DUSE_OMP=OFF -DUSE_CUDA=OFF \
+  -DUSE_EMPI=OFF -DUSE_OPENACC=OFF -DWACOMM_BOOTSTRAP_PARALLEL_IO=OFF
+cmake --build build --parallel 8
+ctest --test-dir build --output-on-failure
+```
+
+The module commands apply to the host providing these module names; elsewhere use the native toolchain. The loaded OpenSSL module is not the private curl's TLS dependency. Expected artifacts include `build/wacommplusplus`, `build/external/lib/libssl.a`, and `build/external/lib/libcrypto.a`. Configuration reports `private OpenSSL=3.5.8`. The `openssl_dependency` test checks exact header/library version agreement, TLS context creation, and curl's TLS backend. Private dependency archives install under `external/lib` on both `lib` and `lib64` hosts. Check the curl sub-build cache for private `OPENSSL_INCLUDE_DIR`, `OPENSSL_SSL_LIBRARY`, and `OPENSSL_CRYPTO_LIBRARY` paths, and require every offline test to pass at its checked-in tolerance. Forward/backward and restart tests verify the same serial solver; this build is not observational validation or a parallel-backend test. For a forcing-driven run, follow the [forward ROMS example](../examples/forward-roms.md).
+
+Archive the Git revision and working diff, module list, compiler/CMake versions, CMake caches, configure/build/test logs, pinned source hashes, and executable checksum. OpenSSL source and build provenance are under `build/external/src/openssl` and `build/external/build/openssl`. Preserve these with the scientific run metadata described below.
 
 `WACOMM_BOOTSTRAP_PARALLEL_IO=ON` forces the private HDF5/NetCDF portion even in `AUTO`, requires discoverable MPI C and C++ support, enables parallel HDF5 and NetCDF-4 I/O, and propagates MPI for their static libraries independently of solver-level `USE_MPI`. `WACOMM_BOOTSTRAP_DEPENDENCIES=OFF` with parallel bootstrap is rejected explicitly. This option controls library capability; `USE_MPI` separately controls WaComM++ particle decomposition.
 
@@ -61,7 +81,11 @@ ctest --test-dir build -C Release --output-on-failure
 `USE_EMPI=ON` requires an MPI implementation plus a real FlexMPI installation. Configuration searches for `empi.h` and the EMPI library and fails clearly if either is absent. Pass its installation prefix through `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH`, or `CMAKE_LIBRARY_PATH` when it is outside the system search path.
 
 
+For the six-hour serial Slurm execution and optional Python 3.11 plotting environment, follow the [Sarno guide](../examples/wacomm-sarno-lite.md). `tools/requirements-figures.txt` pins the rendering dependencies; these are separate from the C++ build and are not required by the portable core.
+
 ## References
 
 - Sandve, G. K., Nekrutenko, A., Taylor, J., and Hovig, E. (2013). Ten simple rules for reproducible computational research. *PLoS Computational Biology*, 9, e1003285. [doi:10.1371/journal.pcbi.1003285](https://doi.org/10.1371/journal.pcbi.1003285).
 - Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).
+
+- OpenSSL Project. [OpenSSL release archives and checksums](https://www.openssl-library.org/source/). Software dependency provenance, not scientific validation.

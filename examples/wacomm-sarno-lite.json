@@ -4,29 +4,33 @@
       "institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
       "url": "https://meteo.uniparthenope.it",
       "start": "20210701Z09",
-      "end": "20210701Z11",
-      "dry": true
+      "end": "20210701Z15",
+      "dry": false
     },
     "io": {
-      "base_path": "processed/",
+      "base_path": "roms/",
       "nc_inputs": [
-        "ocm3_d03_20210701Z0900.nc",
-        "ocm3_d03_20210701Z1000.nc",
-        "ocm3_d03_20210701Z1100.nc"
+        "rms3_d03_20210701Z0900.nc",
+        "rms3_d03_20210701Z1000.nc",
+        "rms3_d03_20210701Z1100.nc",
+        "rms3_d03_20210701Z1300.nc",
+        "rms3_d03_20210701Z1400.nc",
+        "rms3_d03_20210701Z1500.nc"
 
       ],
-      "ocean_model": "WaComM",
-      "nc_output_root": "output/wacomm_his_",
+      "ocean_model": "ROMS",
+      "nc_output_root": "output-6h/wacomm_his_",
       "mask_output": true,
       "timestep": 3600,
-      "save_input": false,
-      "save_history": "",
-      "history_root": "restart/WACOMM_rst_",
-      "nc_input_root": "processed/ocm3_d03_"
+      "save_input": true,
+      "save_history": "nc",
+      "history_root": "snapshots-6h/WACOMM_rst_",
+      "nc_input_root": "processed-6h/ocm3_d03_"
     },
     "restart": {
       "active": false,
-      "restart_file": ""
+      "restart_file": "",
+      "interval": 3600
     },
     "sources": {
       "active": true,

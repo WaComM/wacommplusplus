@@ -20,3 +20,11 @@
 - Sandve, G. K., Nekrutenko, A., Taylor, J., and Hovig, E. (2013). Ten simple rules for reproducible computational research. *PLoS Computational Biology*, 9, e1003285. [doi:10.1371/journal.pcbi.1003285](https://doi.org/10.1371/journal.pcbi.1003285).
 
 Thygesen (2011) is the basis for treating stochastic backward trajectories as conditional candidate-origin ensembles rather than exact inverses. Visser (1997) motivates care when diffusivity varies spatially. Breivik et al. (2011, 2012) support the leeway definition and container parameterization, while Dagestad et al. (2018) establishes the modular Lagrangian modeling context. The current WaComM++ stochastic specification is documented in [model.md](model.md) and must not be represented as implementing terms absent from the source.
+
+## Build dependency provenance
+
+- OpenSSL Project. [OpenSSL release archives and checksums](https://www.openssl-library.org/source/). The private Unix TLS dependency is OpenSSL 3.5.8, SHA-256 `a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2`. This is software provenance, not support for a physical or numerical claim.
+
+## Diagnostic presentation provenance
+
+- OpenDrift Project. [Example gallery](https://opendrift.github.io/gallery/index.html), [ROMS native reader](https://opendrift.github.io/gallery/example_roms_native.html), and [vertical mixing](https://opendrift.github.io/gallery/example_vertical_mixing.html), consulted 11 September 2026. Map/profile presentation inspiration; the Sarno figures are WaComM++ results and do not establish observational validation or OpenDrift equivalence. Peer-reviewed model context is provided by Dagestad et al. (2018), cited above.

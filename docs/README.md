@@ -26,6 +26,8 @@ The documentation is organized as a scientific model description rather than sol
 - [Scientific product policy](versioned-scientific-product.md)
 - [References](references.md)
 
+The [six-hour Sarno result](../examples/wacomm-sarno-lite.md) includes publication maps and profiles, downloadable vector figures, a serial Slurm workflow, and archived provenance.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
