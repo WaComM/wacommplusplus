@@ -157,11 +157,11 @@ Principal limitations are offline one-way coupling, interpolation error inherite
 
 The private Unix build (other than macOS) uses pinned OpenSSL 3.5.8 for HTTPS forcing transport, as documented in the [build guide](build.md). This dependency belongs to data access and does not change the governing equations, physical time, tracking direction, or restart state.
 
-The [six-hour Sarno diagnostic](../examples/wacomm-sarno-lite.md) illustrates the existing model without changing its equations. The missing 12:00 record is interpolated across 11:00–13:00; source emission occurs at available interval starts, yielding five batches. Profile depth is the exported bathymetry/sigma coordinate, with no instantaneous sea-level term. The [diagnostic estimators](trajectory-diagnostics.md#publication-maps-and-profiles) distinguish counts, radial distances, and member quantiles from mass or calibrated probability.
+The [six-hour Sarno diagnostic](../examples/wacomm-sarno-lite/README.md) illustrates the existing model without changing its equations. The missing 12:00 record is interpolated across 11:00–13:00; source emission occurs at available interval starts, yielding five batches. Profile depth is the exported bathymetry/sigma coordinate, with no instantaneous sea-level term. The [diagnostic estimators](trajectory-diagnostics.md#publication-maps-and-profiles) distinguish counts, radial distances, and member quantiles from mass or calibrated probability.
 
 The documented two-process MPI Sarno execution reproduces every stored serial particle variable exactly at the five saved times. This verifies backend agreement for this case without changing the governing model or providing observational validation.
 
-The [MPI/OpenMP Sarno scaling experiment](../examples/wacomm-sarno-lite.md#mpiopenmp-strong-scaling) changes execution resources only, preserving the six-hour forcing, source schedule, seed, and boundary configuration. Solver timing uses MPI barriers around monotonic clock measurements to exclude forcing work; separate application timing includes native I/O. These synchronization and diagnostic operations leave physical time, particle state, and random coordinates unchanged. Timing ratios characterize the measured execution scope; they neither change the physical model nor constitute observational validation.
+The [MPI/OpenMP Sarno scaling experiment](../examples/wacomm-sarno-lite/README.md#mpiopenmp-strong-scaling) changes execution resources only, preserving the six-hour forcing, source schedule, seed, and boundary configuration. Solver timing uses MPI barriers around monotonic clock measurements to exclude forcing work; separate application timing includes native I/O. These synchronization and diagnostic operations leave physical time, particle state, and random coordinates unchanged. Timing ratios characterize the measured execution scope; they neither change the physical model nor constitute observational validation.
 
 ### Native boundary replay
 
@@ -173,7 +173,7 @@ $$
 
 Equality of the endpoint time and dynamic fields is exact numeric equality after the existing geometry checks. A conflicting equal-time record is rejected. This identity operation preserves the original interpolation interval, source emission schedule, and stochastic coordinates; it introduces no zero-duration interval or additional release. It applies to either endpoint chosen by the solver, preserving forward/backward and restarted forcing support. The [native adapter regression](testing.md) exercises both endpoint choices with restart equivalence. This is a correction to replay of already-normalized data, not a new physical parameterization.
 
-The [OpenMP/MPI comparison](../examples/wacomm-sarno-lite.md#openmp-strong-scaling-and-mpi-comparison) holds the governing model and forcing fixed. Different thread/process decompositions are verified through exact stored-particle comparisons; measured speedup and efficiency concern computation, not physical accuracy or observational validation.
+The [OpenMP/MPI comparison](../examples/wacomm-sarno-lite/README.md#openmp-strong-scaling-and-mpi-comparison) holds the governing model and forcing fixed. Different thread/process decompositions are verified through exact stored-particle comparisons; measured speedup and efficiency concern computation, not physical accuracy or observational validation.
 
 ## References
 

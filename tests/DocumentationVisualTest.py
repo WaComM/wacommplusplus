@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 root=pathlib.Path(sys.argv[1])
 figure_directory=root/"figures"
-documents=list(root.glob("*.md"))+list((root.parent/"examples").glob("*.md"))
+documents=list(root.glob("*.md"))+list((root.parent/"examples").rglob("*.md"))
 markdown="\n".join(document.read_text(encoding="utf-8") for document in documents)
 figures=list(figure_directory.rglob("*.svg"))
 assert figures, "documentation must contain versioned SVG figures"

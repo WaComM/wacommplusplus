@@ -49,7 +49,7 @@ cmake --build build --parallel 8
 ctest --test-dir build --output-on-failure
 ```
 
-The module commands apply to the host providing these module names; elsewhere use the native toolchain. The loaded OpenSSL module is not the private curl's TLS dependency. Expected artifacts include `build/wacommplusplus`, `build/external/lib/libssl.a`, and `build/external/lib/libcrypto.a`. Configuration reports `private OpenSSL=3.5.8`. The `openssl_dependency` test checks exact header/library version agreement, TLS context creation, and curl's TLS backend. Private dependency archives install under `external/lib` on both `lib` and `lib64` hosts. Check the curl sub-build cache for private `OPENSSL_INCLUDE_DIR`, `OPENSSL_SSL_LIBRARY`, and `OPENSSL_CRYPTO_LIBRARY` paths, and require every offline test to pass at its checked-in tolerance. Forward/backward and restart tests verify the same serial solver; this build is not observational validation or a parallel-backend test. For a forcing-driven run, follow the [forward ROMS example](../examples/forward-roms.md).
+The module commands apply to the host providing these module names; elsewhere use the native toolchain. The loaded OpenSSL module is not the private curl's TLS dependency. Expected artifacts include `build/wacommplusplus`, `build/external/lib/libssl.a`, and `build/external/lib/libcrypto.a`. Configuration reports `private OpenSSL=3.5.8`. The `openssl_dependency` test checks exact header/library version agreement, TLS context creation, and curl's TLS backend. Private dependency archives install under `external/lib` on both `lib` and `lib64` hosts. Check the curl sub-build cache for private `OPENSSL_INCLUDE_DIR`, `OPENSSL_SSL_LIBRARY`, and `OPENSSL_CRYPTO_LIBRARY` paths, and require every offline test to pass at its checked-in tolerance. Forward/backward and restart tests verify the same serial solver; this build is not observational validation or a parallel-backend test. For a forcing-driven run, follow the [forward ROMS example](../examples/forward-roms/README.md).
 
 Archive the Git revision and working diff, module list, compiler/CMake versions, CMake caches, configure/build/test logs, pinned source hashes, and executable checksum. OpenSSL source and build provenance are under `build/external/src/openssl` and `build/external/build/openssl`. Preserve these with the scientific run metadata described below.
 
@@ -81,7 +81,7 @@ ctest --test-dir build -C Release --output-on-failure
 `USE_EMPI=ON` requires an MPI implementation plus a real FlexMPI installation. Configuration searches for `empi.h` and the EMPI library and fails clearly if either is absent. Pass its installation prefix through `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH`, or `CMAKE_LIBRARY_PATH` when it is outside the system search path.
 
 
-For the six-hour serial or two-process MPI Slurm execution and optional Python 3.11 plotting environment, follow the [Sarno guide](../examples/wacomm-sarno-lite.md). `tools/requirements-figures.txt` pins the rendering dependencies; these are separate from the C++ build and are not required by the portable core.
+For the six-hour serial or two-process MPI Slurm execution and optional Python 3.11 plotting environment, follow the [Sarno guide](../examples/wacomm-sarno-lite/README.md). `tools/requirements-figures.txt` pins the rendering dependencies; these are separate from the C++ build and are not required by the portable core.
 
 ### MPI build for the Sarno Slurm run
 
@@ -96,11 +96,11 @@ ctest --test-dir build --output-on-failure
 bash tools/run_sarno_lite.sh --mpi
 ```
 
-The verified toolchain is GNU 12.2.1, CMake 4.4.3, and OpenMPI 4.1.4. Loaded CUDA and OpenSSL modules do not enable accelerator execution or replace private OpenSSL 3.5.8. MPI discovery and tests must run where MPI can initialize its communication resources. If a failed discovery left invalid wrapper paths in the cache, repeat configuration with `-U 'MPI_*'`. Serial HDF5/NetCDF remains sufficient for this solver run; MPI particle decomposition does not require parallel I/O. See the [example](../examples/wacomm-sarno-lite.md#two-process-mpi-calculation) for resources and exact comparison evidence.
+The verified toolchain is GNU 12.2.1, CMake 4.4.3, and OpenMPI 4.1.4. Loaded CUDA and OpenSSL modules do not enable accelerator execution or replace private OpenSSL 3.5.8. MPI discovery and tests must run where MPI can initialize its communication resources. If a failed discovery left invalid wrapper paths in the cache, repeat configuration with `-U 'MPI_*'`. Serial HDF5/NetCDF remains sufficient for this solver run; MPI particle decomposition does not require parallel I/O. See the [example](../examples/wacomm-sarno-lite/README.md#two-process-mpi-calculation) for resources and exact comparison evidence.
 
 ### Combined MPI and OpenMP scaling build
 
-For the [Sarno strong-scaling sweep](../examples/wacomm-sarno-lite.md#mpiopenmp-strong-scaling), load the same four host modules, then build:
+For the [Sarno strong-scaling sweep](../examples/wacomm-sarno-lite/README.md#mpiopenmp-strong-scaling), load the same four host modules, then build:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=ON -DUSE_OMP=ON -DUSE_CUDA=OFF \
@@ -116,7 +116,7 @@ This enables the OpenMP implementation but gives each MPI rank exactly one OpenM
 
 ### OpenMP thread sweep with one MPI process
 
-The [OpenMP Sarno comparison](../examples/wacomm-sarno-lite.md#openmp-strong-scaling-and-mpi-comparison) reuses the exact Release MPI/OpenMP binary from the MPI experiment; CUDA remains disabled. Run `bash tools/run_sarno_openmp_scaling.sh high-wn` after the native preparation and MPI sweep. The wrapper rejects an executable that differs from the archived MPI one-process binary so changes in optimization or provenance cannot silently change the comparison. It varies Slurm CPUs per task and OpenMP threads over 1, 2, 4, 8, 16, and 32 while keeping one MPI process. Python plotting dependencies remain optional and separate from the portable core.
+The [OpenMP Sarno comparison](../examples/wacomm-sarno-lite/README.md#openmp-strong-scaling-and-mpi-comparison) reuses the exact Release MPI/OpenMP binary from the MPI experiment; CUDA remains disabled. Run `bash tools/run_sarno_openmp_scaling.sh high-wn` after the native preparation and MPI sweep. The wrapper rejects an executable that differs from the archived MPI one-process binary so changes in optimization or provenance cannot silently change the comparison. It varies Slurm CPUs per task and OpenMP threads over 1, 2, 4, 8, 16, and 32 while keeping one MPI process. Python plotting dependencies remain optional and separate from the portable core.
 
 ## References
 

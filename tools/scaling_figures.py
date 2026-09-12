@@ -71,7 +71,7 @@ def collect(root):
         omp=(provenance/"openmp.txt").read_text().splitlines()
         if "OMP_NUM_THREADS=1" not in omp or "OMP_THREAD_LIMIT=1" not in omp:
             raise ValueError(f"{run}: unverified OpenMP thread count")
-        for name in ("wacommplusplus","wacomm-sarno-lite-6h.json","examples/sources-sarno_river.json"):
+        for name in ("wacommplusplus","wacomm-sarno-lite-6h.json","examples/sources-sarno_river/sources-sarno_river.json"):
             if checksum(run/name)!=checksum(baseline/name): raise ValueError(f"{run}: inconsistent {name}")
         stdout=(run/"run.out").read_text()
         if f"Using 1/{processes} processes, each on 1 threads." not in stdout:

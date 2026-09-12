@@ -9,10 +9,13 @@ def main():
     examples = Path(sys.argv[1])
     missing = []
 
-    for configuration in sorted(examples.glob("*.json")):
-        guide = configuration.with_suffix(".md")
+    for configuration in sorted(examples.glob("*/*.json")):
+        guide = configuration.parent / "README.md"
+        if not (configuration.parent / "docs" / "figures").is_dir():
+            print(f"Missing docs/figures directory in {configuration.parent.name}")
+            return 1
         if not guide.is_file():
-            missing.append(guide.name)
+            missing.append(str(guide.relative_to(examples)))
         else:
             text = guide.read_text()
             if "## References" not in text:

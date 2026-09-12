@@ -36,8 +36,9 @@ for hour in 09 10 11 13 14 15; do
     fi
     ncdump -h "$run/roms/$file" > "$run/provenance/$file.header.txt"
 done
-cp "$repository/examples/wacomm-sarno-lite.json" "$run/wacomm-sarno-lite-6h.json"
-cp "$repository/examples/sources-sarno_river.json" "$run/examples/"
+cp "$repository/examples/wacomm-sarno-lite/wacomm-sarno-lite.json" "$run/wacomm-sarno-lite-6h.json"
+mkdir -p "$run/examples/sources-sarno_river"
+cp "$repository/examples/sources-sarno_river/sources-sarno_river.json" "$run/examples/sources-sarno_river/"
 cp "$repository/build/wacommplusplus" "$run/wacommplusplus"
 cp "$repository/tools/sarno_lite_job.sh" "$run/submit-6h.sh"
 cp "$repository/build/CMakeCache.txt" "$run/provenance/"

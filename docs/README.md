@@ -26,7 +26,7 @@ The documentation is organized as a scientific model description rather than sol
 - [Scientific product policy](versioned-scientific-product.md)
 - [References](references.md)
 
-The [six-hour Sarno result](../examples/wacomm-sarno-lite.md) includes publication maps and profiles, downloadable vector figures, a serial Slurm workflow, and archived provenance.
+The [six-hour Sarno result](../examples/wacomm-sarno-lite/README.md) includes publication maps and profiles, downloadable vector figures, a serial Slurm workflow, and archived provenance.
 
 ## References
 

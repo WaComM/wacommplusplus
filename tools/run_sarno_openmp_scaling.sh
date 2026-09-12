@@ -36,9 +36,10 @@ for threads in 1 2 4 8 16 32; do
     ln -s ../../processed-6h "$run/processed-6h"
     cp "$repository/build/wacommplusplus" "$run/"
     cp "$root/scaling/p1/wacomm-sarno-lite-6h.json" "$run/wacomm-sarno-lite-6h.json"
-    cp "$repository/examples/sources-sarno_river.json" "$run/examples/"
+    mkdir -p "$run/examples/sources-sarno_river"
+    cp "$repository/examples/sources-sarno_river/sources-sarno_river.json" "$run/examples/sources-sarno_river/"
     cp "$repository/tools/sarno_openmp_scaling_job.sh" "$run/submit.sh"
-    (cd "$run" && sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river.json submit.sh) > "$run/provenance/inputs.sha256"
+    (cd "$run" && sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river/sources-sarno_river.json submit.sh) > "$run/provenance/inputs.sha256"
     dependency=()
     if [ -n "$previous" ]; then dependency=(--dependency="afterany:$previous"); fi
     job=$(sbatch --parsable --partition="$partition" --nodes=1 --ntasks=1 \

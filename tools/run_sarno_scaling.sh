@@ -32,16 +32,17 @@ for processes in 1 2 4 8 16 32; do
     mkdir -p "$run"/{provenance,examples,output-6h,snapshots-6h}
     ln -s ../../processed-6h "$run/processed-6h"
     cp "$repository/build/wacommplusplus" "$run/"
-    python3 - "$repository/examples/wacomm-sarno-lite.json" "$run/wacomm-sarno-lite-6h.json" <<'PYTHON'
+    python3 - "$repository/examples/wacomm-sarno-lite/wacomm-sarno-lite.json" "$run/wacomm-sarno-lite-6h.json" <<'PYTHON'
 import json,sys
 with open(sys.argv[1]) as stream: config=json.load(stream)
 config["io"].update(ocean_model="WaComM",base_path="processed-6h/",save_input=False,
                      nc_inputs=["ocm3_d03_20210701Z"+hour+".nc" for hour in ("09","10","11","13","14","15")])
 with open(sys.argv[2],"w") as stream: json.dump(config,stream,indent=2);stream.write("\n")
 PYTHON
-    cp "$repository/examples/sources-sarno_river.json" "$run/examples/"
+    mkdir -p "$run/examples/sources-sarno_river"
+    cp "$repository/examples/sources-sarno_river/sources-sarno_river.json" "$run/examples/sources-sarno_river/"
     cp "$repository/tools/sarno_scaling_job.sh" "$run/submit.sh"
-    (cd "$run" && sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river.json submit.sh) > "$run/provenance/inputs.sha256"
+    (cd "$run" && sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river/sources-sarno_river.json submit.sh) > "$run/provenance/inputs.sha256"
     dependency=()
     if [ -n "$previous" ]; then dependency=(--dependency="afterany:$previous"); fi
     job=$(sbatch --parsable --partition=high-wn --nodes=1 --ntasks="$processes" \

@@ -1,0 +1,50 @@
+{
+	"simulation": {
+		"name": "Drift",
+		"institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
+		"url": "https://meteo.uniparthenope.it",
+		"start": "20190401Z08",
+		"end": "20190401Z10"
+	},
+	"io": {
+		"base_path": "processed/",
+		"nc_inputs": [
+			"ocm3_d03_20190401Z08.nc",
+			"ocm3_d03_20190401Z09.nc",
+			"ocm3_d03_20190401Z10.nc"
+		],
+		"ocean_model":"WaComM",
+		"nc_output_root": "output/wacomm_his_",
+		"mask_output": true,
+		"timestep": 3600,
+		"save_input": false,
+		"save_history": "nc",
+		"history_root": "restart/WACOMM_rst_",
+		"nc_input_root":"processed/ocm3_d03_"
+	},
+	"restart": {
+		"active": false,
+		"restart_file": "",
+		"interval": 7200
+	},
+	"sources": {
+		"active": true,
+		"sources_file": "examples/sources-webinar/sources-webinar.json"
+	},
+	"physics": {
+		"random": true,
+		"random_sources": true,
+		"random_seed": 5489,
+		"tau0": 86400.0,
+		"survprob": 1.0e-4,
+		"sigma": 3.46,
+		"shore_limit": 0.5,
+		"sv": 0,
+		"upper_closure": "reflection",
+		"lower_closure": "kill",
+		"horizontal_closure": "kill"
+	},
+	"tracking": {
+		"direction": "forward"
+	}
+}

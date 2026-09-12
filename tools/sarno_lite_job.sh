@@ -9,7 +9,7 @@ module list > "provenance/modules-${SLURM_JOB_ID}.txt" 2>&1
 uname -a > "provenance/platform-${SLURM_JOB_ID}.txt"
 mpirun --version > "provenance/mpi-${SLURM_JOB_ID}.txt"
 scontrol show job "$SLURM_JOB_ID" > "provenance/slurm-${SLURM_JOB_ID}.txt"
-sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river.json \
+sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river/sources-sarno_river.json \
     roms/rms3_d03_20210701Z*.nc > "provenance/inputs-${SLURM_JOB_ID}.sha256"
 set +e
 if [ "${SLURM_NTASKS:-1}" -gt 1 ]; then

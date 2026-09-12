@@ -56,7 +56,7 @@ def collect(root,mpi_root):
     for threads in THREADS:
         run=root/f"t{threads}";provenance=run/"provenance"
         if int((provenance/"exit.txt").read_text())!=0: raise ValueError(f"{run}: failed application")
-        for name in ("wacommplusplus","wacomm-sarno-lite-6h.json","examples/sources-sarno_river.json"):
+        for name in ("wacommplusplus","wacomm-sarno-lite-6h.json","examples/sources-sarno_river/sources-sarno_river.json"):
             if checksum(run/name)!=checksum(reference/name): raise ValueError(f"{run}: differs from MPI reference: {name}")
         omp=(provenance/"openmp.txt").read_text().splitlines()
         for expected in (f"OMP_NUM_THREADS={threads}",f"OMP_THREAD_LIMIT={threads}","OMP_DYNAMIC=FALSE","OMP_PROC_BIND=SPREAD","OMP_PLACES=cores"):
