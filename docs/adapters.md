@@ -84,6 +84,14 @@ The figure is a conceptual, non-georeferenced schema rather than a model result.
 
 As a reproducible verification example, `tests/EnvironmentalRegridderTest.cpp` aggregates four 1° source-cell means onto one 2° target cell. It also refines the central cell of a 3×3 grid, verifies a linear longitude field under second-order reconstruction, compares first- and second-order integrals, applies a fractional mask, and rejects folded and uncovered geometry. Configure and execute it with `cmake -S . -B build && cmake --build build && ctest --test-dir build -R environmental_regridding --output-on-failure`. Passing establishes these numerical identities within the asserted tolerances, not observational validity for an environmental product.
 
+## Reusing saved native boundary records
+
+Native files saved from a multi-file run can already include the adjacent boundary record. The shared `OceanModelAdapter::appendBoundaryRecord` first applies its existing horizontal/vertical grid compatibility checks. If the incoming record time equals the relevant existing endpoint exactly, it retains that endpoint only when surface elevation, both horizontal velocities, vertical velocity, and vertical diffusivity agree numerically at every stored cell/level (zero absolute and relative tolerance). Conflicting values fail explicitly; other overlapping/nonchronological records remain errors. A later or earlier new boundary follows the existing append/prepend path. No velocity sign, time unit, calendar, interpolation weight, or tracking policy changes. The solver chooses which endpoint is needed.
+
+The [Sarno native-forcing scaling example](../examples/wacomm-sarno-lite.md#mpiopenmp-strong-scaling) uses the original `processed-6h/` files directly with `save_input=false`; no file rewriting or implicit regridding is required. Native regression fixtures check forward and backward endpoint reuse, rejection of conflicts in each of the five dynamic fields, and forward/backward restart equivalence. All execution backends use this shared operator.
+
+The native adapter accepts both `WACOMM` and the historical documented spelling `WaComM`; both select the same implementation and field conventions.
+
 ## References
 
 - Shchepetkin, A. F., and McWilliams, J. C. (2005). The regional oceanic modeling system (ROMS): a split-explicit, free-surface, topography-following-coordinate oceanic model. *Ocean Modelling*, 9, 347–404. [doi:10.1016/j.ocemod.2004.08.002](https://doi.org/10.1016/j.ocemod.2004.08.002).

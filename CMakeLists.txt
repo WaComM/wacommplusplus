@@ -201,7 +201,8 @@ if(BUILD_APPLICATION)
         add_test(NAME roms_adapter COMMAND roms_adapter_test)
 
         add_executable(native_adapter_test tests/NativeAdapterTest.cpp
-                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/WacommAdapter.cpp)
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
+                OceanModelAdapterFactory.cpp OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/StructuredGridAdapter.cpp)
         wacomm_enable_test_assertions(native_adapter_test)
         target_link_libraries(native_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME native_adapter COMMAND native_adapter_test)
@@ -304,5 +305,9 @@ if(BUILD_TESTING)
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ParticleSnapshotComparisonTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/compare_particle_snapshots.py")
         set_tests_properties(particle_snapshot_comparison PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME scaling_figures COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/ScalingFiguresTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/scaling_figures.py")
+        set_tests_properties(scaling_figures PROPERTIES SKIP_RETURN_CODE 77)
     endif()
 endif()

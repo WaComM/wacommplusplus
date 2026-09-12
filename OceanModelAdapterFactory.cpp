@@ -11,6 +11,6 @@ std::shared_ptr<OceanModelAdapter> OceanModelAdapterFactory::create(const std::s
     if (model == "ROMS") return std::make_shared<ROMSAdapter>(fileName);
     if (model == "NEMO") return std::make_shared<NEMOAdapter>(fileName);
     if (model == "HYCOM") return std::make_shared<HYCOMAdapter>(fileName);
-    if (model == "WACOMM") return std::make_shared<WacommAdapter>(fileName);
+    if (model == "WACOMM" || model == "WaComM") return std::make_shared<WacommAdapter>(fileName);
     throw std::runtime_error("Unknown or unavailable ocean model adapter: " + model);
 }

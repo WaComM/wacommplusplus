@@ -94,6 +94,12 @@ The six-hour [Sarno example](../examples/wacomm-sarno-lite.md) sets `simulation.
 
 The MPI Sarno workflow uses the identical scientific configuration and a separate `data/wacomm-sarno-lite/mpi2/` run root; process count is selected by the Slurm wrapper, not a tracking or adapter option.
 
+The MPI/OpenMP scaling sweep derives a native-forcing configuration from the Sarno example, with `ocean_model="WaComM"`, `base_path="processed-6h/"`, the six `ocm3_d03_20210701ZHH.nc` inputs, and `save_input=false`. It uses the same `dry=false` six-hour scientific settings at every process count. Only Slurm and OpenMP execution settings vary; runtime roots are `data/wacomm-sarno-lite/scaling/pN/`. Particle and gridded writes remain enabled; normalized forcing is read-only and is not rewritten.
+
+Saved native windows can contain an adjacent boundary already used for interpolation. Equal-time endpoint records are reused only when all five stored dynamic fields agree exactly; conflicting overlaps fail. `save_input=false` prevents rewriting the shared forcing in the scaling workflow. See [native boundary replay](adapters.md#reusing-saved-native-boundary-records).
+
+The native adapter accepts both `WACOMM` and the historical documented spelling `WaComM`; both select the same implementation and field conventions.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

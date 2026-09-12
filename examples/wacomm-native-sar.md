@@ -27,6 +27,8 @@ Particles emit at 2021-07-01 09:00 UTC and traverse forcing chronologically. Che
 This scenario omits object leeway and observational uncertainty and is not operational rescue guidance. External forcing is not bundled. Results are candidate drift conditional on forcing and model settings. Archive revision, resolved configuration, source/forcing checksums, seed, compiler/dependencies, CMake options, platform/backend layout, tolerances, tests, and outputs.
 
 
+The historical `WaComM` selector used here and uppercase `WACOMM` select the same native adapter. When replaying saved windows with an already-present adjacent boundary, the shared loader reuses equal-time records only if all stored dynamic fields agree exactly; conflicting overlaps fail. See [native replay](../docs/adapters.md#reusing-saved-native-boundary-records) and the [regenerated-forcing scaling workflow](wacomm-sarno-lite.md#mpiopenmp-strong-scaling).
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

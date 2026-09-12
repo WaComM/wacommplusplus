@@ -28,3 +28,5 @@ Thygesen (2011) is the basis for treating stochastic backward trajectories as co
 ## Diagnostic presentation provenance
 
 - OpenDrift Project. [Example gallery](https://opendrift.github.io/gallery/index.html), [ROMS native reader](https://opendrift.github.io/gallery/example_roms_native.html), and [vertical mixing](https://opendrift.github.io/gallery/example_vertical_mixing.html), consulted 11 September 2026. Map/profile presentation inspiration; the Sarno figures are WaComM++ results and do not establish observational validation or OpenDrift equivalence. Peer-reviewed model context is provided by Dagestad et al. (2018), cited above.
+
+- Amdahl, G. M. (1967). Validity of the single processor approach to achieving large scale computing capabilities. *AFIPS Conference Proceedings*, 30 (Spring Joint Computer Conference), 483–485. [doi:10.1145/1465482.1465560](https://doi.org/10.1145/1465482.1465560).

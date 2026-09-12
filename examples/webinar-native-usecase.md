@@ -25,6 +25,8 @@ The configured source maps to a wet cell and repeat runs with identical seed/inp
 External data is not bundled, and the sampling density is not a physical flux. Confirm the actual `ocean_time` values against the declared 08:00-10:00 UTC simulation before scientific use. Archive resolved configuration, all inputs/checksums, revision, seed, toolchain, backend layout, tolerances, tests, restarts, and outputs.
 
 
+The historical `WaComM` selector used here and uppercase `WACOMM` select the same native adapter. When replaying saved windows with an already-present adjacent boundary, the shared loader reuses equal-time records only if all stored dynamic fields agree exactly; conflicting overlaps fail. See [native replay](../docs/adapters.md#reusing-saved-native-boundary-records) and the [regenerated-forcing scaling workflow](wacomm-sarno-lite.md#mpiopenmp-strong-scaling).
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

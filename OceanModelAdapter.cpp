@@ -211,6 +211,26 @@ void OceanModelAdapter::appendBoundaryRecord(OceanModelAdapter &adapter, int rec
             std::abs(_data.h(j,i)-adapter.H()(j,i))>1e-8 || _data.mask(j,i)!=adapter.Mask()(j,i))
             throw std::runtime_error("Adjacent forcing files have incompatible horizontal grids");
 
+    // Saved native windows can already contain the adjacent boundary record.
+    int endpoint=prepend ? 0 : (int)_data.oceanTime.Nx()-1;
+    if (endpoint>=0 && _data.oceanTime(endpoint)==adapter.OceanTime()(record)) {
+        for (int j=0;j<_data.mask.Nx();j++) for (int i=0;i<_data.mask.Ny();i++) {
+            if (_data.zeta(endpoint,j,i)!=adapter.Zeta()(record,j,i))
+                throw std::runtime_error("Duplicate forcing boundary has conflicting surface elevation");
+            for (int k=-(int)_data.sRho.Nx()+1;k<=0;k++) {
+                if (_data.u(endpoint,k,j,i)!=adapter.U()(record,k,j,i) ||
+                    _data.v(endpoint,k,j,i)!=adapter.V()(record,k,j,i))
+                    throw std::runtime_error("Duplicate forcing boundary has conflicting horizontal velocity");
+            }
+            for (int k=-(int)_data.sW.Nx()+1;k<=0;k++) {
+                if (_data.w(endpoint,k,j,i)!=adapter.W()(record,k,j,i) ||
+                    _data.akt(endpoint,k,j,i)!=adapter.AKT()(record,k,j,i))
+                    throw std::runtime_error("Duplicate forcing boundary has conflicting vertical fields");
+            }
+        }
+        return;
+    }
+
     size_t oldTime=_data.oceanTime.Nx(),newTime=oldTime+1,sRho=_data.sRho.Nx(),sW=_data.sW.Nx();
     size_t eta=_data.mask.Nx(),xi=_data.mask.Ny();
     Array1<double> oceanTime(newTime);

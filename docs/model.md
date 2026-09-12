@@ -161,6 +161,18 @@ The [six-hour Sarno diagnostic](../examples/wacomm-sarno-lite.md) illustrates th
 
 The documented two-process MPI Sarno execution reproduces every stored serial particle variable exactly at the five saved times. This verifies backend agreement for this case without changing the governing model or providing observational validation.
 
+The [MPI/OpenMP Sarno scaling experiment](../examples/wacomm-sarno-lite.md#mpiopenmp-strong-scaling) changes execution resources only, preserving the six-hour forcing, source schedule, seed, and boundary configuration. Solver timing uses MPI barriers around monotonic clock measurements to exclude forcing work; separate application timing includes native I/O. These synchronization and diagnostic operations leave physical time, particle state, and random coordinates unchanged. Timing ratios characterize the measured execution scope; they neither change the physical model nor constitute observational validation.
+
+### Native boundary replay
+
+For an existing forcing window $W$, let $t_e$ be the solver-selected endpoint time and $t_b$ the adjacent record time, both in seconds since the declared epoch. Let $F=(\zeta,u,v,w,K_z)$ denote elevation (m), Earth-relative horizontal/vertical velocities (m s$^{-1}$), and vertical diffusivity (m$^2$ s$^{-1}$) at every stored grid location. A saved native boundary already present in $W$ is reused according to
+
+$$
+W \oplus (t_b,F_b)=W \quad\text{if}\quad t_b=t_e\ \text{and}\ F_b=F_e.
+$$
+
+Equality of the endpoint time and dynamic fields is exact numeric equality after the existing geometry checks. A conflicting equal-time record is rejected. This identity operation preserves the original interpolation interval, source emission schedule, and stochastic coordinates; it introduces no zero-duration interval or additional release. It applies to either endpoint chosen by the solver, preserving forward/backward and restarted forcing support. The [native adapter regression](testing.md) exercises both endpoint choices with restart equivalence. This is a correction to replay of already-normalized data, not a new physical parameterization.
+
 ## References
 
 - Dimou, K. N., and Adams, E. E. (1993). A random-walk, particle tracking model for well-mixed estuaries and coastal waters. *Estuarine, Coastal and Shelf Science*, 37, 99–110. [doi:10.1006/ecss.1993.1044](https://doi.org/10.1006/ecss.1993.1044).

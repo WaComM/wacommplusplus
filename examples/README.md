@@ -16,6 +16,8 @@ The leeway-enabled reference set includes catalog-mean, coefficient-ensemble, co
 
 The Sarno wrapper also supports `--mpi` for two processes on `high-wn`, with outputs under `data/wacomm-sarno-lite/mpi2/`.
 
+The Sarno `tools/run_sarno_scaling.sh` workflow uses an MPI/OpenMP build with CUDA disabled and one OpenMP thread per rank at 1, 2, 4, 8, 16, and 32 ranks. It reads shared native forcing from `data/wacomm-sarno-lite/processed-6h/` and stages isolated results under `data/wacomm-sarno-lite/scaling/`; see its guide for elapsed-time definitions, speedup/efficiency plots, and limitations.
+
 ## References
 
 The example narratives distinguish numerical verification from scientific validation and cite only peer-reviewed journal articles or peer-reviewed proceedings. Core references are Montella et al. (2023), [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012); Dagestad et al. (2018), [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018); Breivik et al. (2011), [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005); and Thygesen (2011), [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009). Each scenario guide selects the subset relevant to its modeled process.

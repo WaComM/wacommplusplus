@@ -98,6 +98,22 @@ bash tools/run_sarno_lite.sh --mpi
 
 The verified toolchain is GNU 12.2.1, CMake 4.4.3, and OpenMPI 4.1.4. Loaded CUDA and OpenSSL modules do not enable accelerator execution or replace private OpenSSL 3.5.8. MPI discovery and tests must run where MPI can initialize its communication resources. If a failed discovery left invalid wrapper paths in the cache, repeat configuration with `-U 'MPI_*'`. Serial HDF5/NetCDF remains sufficient for this solver run; MPI particle decomposition does not require parallel I/O. See the [example](../examples/wacomm-sarno-lite.md#two-process-mpi-calculation) for resources and exact comparison evidence.
 
+### Combined MPI and OpenMP scaling build
+
+For the [Sarno strong-scaling sweep](../examples/wacomm-sarno-lite.md#mpiopenmp-strong-scaling), load the same four host modules, then build:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=ON -DUSE_OMP=ON -DUSE_CUDA=OFF \
+  -DUSE_EMPI=OFF -DUSE_OPENACC=OFF -DWACOMM_BOOTSTRAP_PARALLEL_IO=OFF
+cmake --build build --parallel 8
+OMP_NUM_THREADS=1 ctest --test-dir build --output-on-failure
+bash tools/prepare_sarno_scaling.sh
+# After successful preparation and checksum collection:
+bash tools/run_sarno_scaling.sh
+```
+
+This enables the OpenMP implementation but gives each MPI rank exactly one OpenMP worker during the benchmark. It does not measure multi-thread scaling. The executable retains private OpenSSL and serial NetCDF/HDF5. Preparation requires the six downloaded ROMS files under `data/wacomm-sarno-lite/roms/`; it regenerates `processed-6h/` in a separate one-process job. The sweep requires that preparation to finish successfully, GNU `time`, Slurm, and disk space for six sets of particle/gridded outputs (native forcing is shared). It refuses to reuse an existing `scaling/` directory. CMake must discover the optional plotting environment to run `scaling_figures`; see the example for Python dependencies.
+
 ## References
 
 - Sandve, G. K., Nekrutenko, A., Taylor, J., and Hovig, E. (2013). Ten simple rules for reproducible computational research. *PLoS Computational Biology*, 9, e1003285. [doi:10.1371/journal.pcbi.1003285](https://doi.org/10.1371/journal.pcbi.1003285).

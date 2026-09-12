@@ -6,6 +6,7 @@
 #include "Concentration.hpp"
 
 #include <chrono>
+#include <iomanip>
 #include <utility>
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "JulianDate.hpp"
@@ -196,8 +197,15 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         if (!NumericalHelpers::activeInterval(intervalStart,intervalEnd,config->RestartCheckpoint()))
             continue;
 
+        // Exclude forcing preparation on every rank from the solver interval timing.
+#ifdef USE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+#ifdef USE_EMPI
+        MPI_Barrier(ADM_COMM_WORLD);
+#endif
         // Record start time
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = std::chrono::steady_clock::now();
 
 #if defined(USE_MPI) || defined(USE_EMPI)
         // Define a vector of integers hosting the number of particles for each processor
@@ -797,7 +805,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         if (world_rank==0) {
 
             // Record the process with world_rank==0 end time
-            auto finish = std::chrono::high_resolution_clock::now();
+            auto finish = std::chrono::steady_clock::now();
 
             // Calculate the wall clock
             std::chrono::duration<double> elapsed = finish - start;
@@ -808,7 +816,16 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             part = nParticlesPerSecond;
 
             LOG4CPLUS_INFO(logger, "Processed " << nParticles << " in " << elapsed.count() << " seconds ("<< nParticlesPerSecond <<" particles/second).");
+            LOG4CPLUS_INFO(logger, "Solver interval: start=" << std::setprecision(17) << intervalStart
+                                                             << " end=" << intervalEnd << " seconds=" << elapsed.count());
         }
+        // Keep the next forcing load outside the current solver interval on every rank.
+#ifdef USE_MPI
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
+#ifdef USE_EMPI
+        MPI_Barrier(ADM_COMM_WORLD);
+#endif
     }
 
     // Check if this is the process with world_rank==0

@@ -1,0 +1,51 @@
+Test project /home/montella/devel/wacommplusplus/build
+      Start  1: openssl_dependency
+ 1/23 Test  #1: openssl_dependency ....................   Passed    0.03 sec
+      Start  2: environmental_data_access
+ 2/23 Test  #2: environmental_data_access .............   Passed    0.00 sec
+      Start  3: structured_grid_adapters
+ 3/23 Test  #3: structured_grid_adapters ..............   Passed    0.07 sec
+      Start  4: roms_adapter
+ 4/23 Test  #4: roms_adapter ..........................   Passed    0.06 sec
+      Start  5: native_adapter
+ 5/23 Test  #5: native_adapter ........................   Passed    0.08 sec
+      Start  6: configuration_round_trip
+ 6/23 Test  #6: configuration_round_trip ..............   Passed    0.04 sec
+      Start  7: restart_format
+ 7/23 Test  #7: restart_format ........................   Passed    0.05 sec
+      Start  8: particle_physical_interval
+ 8/23 Test  #8: particle_physical_interval ............   Passed    0.02 sec
+      Start  9: concentration_preservation
+ 9/23 Test  #9: concentration_preservation ............   Passed    0.07 sec
+      Start 10: mpi_decomposition_parity
+10/23 Test #10: mpi_decomposition_parity ..............   Passed    0.88 sec
+      Start 11: drift_model
+11/23 Test #11: drift_model ...........................   Passed    0.00 sec
+      Start 12: environment_adapters
+12/23 Test #12: environment_adapters ..................   Passed    0.06 sec
+      Start 13: numerical_helpers
+13/23 Test #13: numerical_helpers .....................   Passed    0.00 sec
+      Start 14: array_storage
+14/23 Test #14: array_storage .........................   Passed    0.00 sec
+      Start 15: environmental_regridding
+15/23 Test #15: environmental_regridding ..............   Passed    0.01 sec
+      Start 16: reproducibility_manifest
+16/23 Test #16: reproducibility_manifest ..............   Passed    0.09 sec
+      Start 17: example_documentation
+17/23 Test #17: example_documentation .................   Passed    0.03 sec
+      Start 18: documentation_visuals
+18/23 Test #18: documentation_visuals .................   Passed    0.05 sec
+      Start 19: native_hardware_validation_contract
+19/23 Test #19: native_hardware_validation_contract ...   Passed    0.02 sec
+      Start 20: trajectory_diagnostics
+20/23 Test #20: trajectory_diagnostics ................   Passed    0.53 sec
+      Start 21: publication_figures
+21/23 Test #21: publication_figures ...................   Passed    8.11 sec
+      Start 22: particle_snapshot_comparison
+22/23 Test #22: particle_snapshot_comparison ..........   Passed    0.14 sec
+      Start 23: scaling_figures
+23/23 Test #23: scaling_figures .......................   Passed    1.36 sec
+
+100% tests passed out of 23
+
+Total Test time (real) =  11.73 sec

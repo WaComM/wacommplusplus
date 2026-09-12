@@ -1,9 +1,11 @@
 #include "../OceanModelAdapters/WacommAdapter.hpp"
 #include "AdapterRestartEquivalence.hpp"
+#include "../OceanModelAdapterFactory.hpp"
 
 #include <cassert>
 #include <cstdio>
 #include <fstream>
+#include <stdexcept>
 
 class FixtureAdapter: public OceanModelAdapter {
 public:
@@ -28,6 +30,13 @@ int main() {
     fixture.AKT().Allocate(2,3,2,2,0,-2,0,0); fixture.AKT()=.01f;
     string output=fileName;
     fixture.saveAsNetCDF(output);
+
+    for (const string model: {"WACOMM","WaComM"}) {
+        auto selected=OceanModelAdapterFactory::create(model,output);
+        selected->process();
+        assert(selected->OceanTime().Nx()==2 && selected->U()(1,-1,1,1)==.25f);
+        assertAdapterRestartEquivalence(*selected);
+    }
 
     WacommAdapter adapter(output);
     adapter.process();
@@ -57,6 +66,29 @@ int main() {
         double times[2]={5400,7200}; file.getVar("ocean_time").putVar(times);
     }
     WacommAdapter next(nextFile); next.process();
+    next.OceanTime()(0)=3600;
+    adapter.appendBoundaryRecord(next,0,false);
+    assert(adapter.OceanTime().Nx()==2);
+    assertAdapterRestartEquivalence(adapter);
+    next.OceanTime()(1)=0;
+    adapter.appendBoundaryRecord(next,1,true);
+    assert(adapter.OceanTime().Nx()==2);
+    assertAdapterRestartEquivalence(adapter);
+    for (bool prepend: {false,true}) {
+        int record=prepend ? 1 : 0;
+        float* fields[]={&next.Zeta()(record,0,0),&next.U()(record,-1,0,0),
+                         &next.V()(record,-1,0,0),&next.W()(record,-2,0,0),
+                         &next.AKT()(record,-2,0,0)};
+        for (float* field: fields) {
+            float original=*field; *field=original+1.0f;
+            bool rejected=false;
+            try { adapter.appendBoundaryRecord(next,record,prepend); }
+            catch (const std::runtime_error&) { rejected=true; }
+            assert(rejected && adapter.OceanTime().Nx()==2);
+            *field=original;
+        }
+    }
+    next.OceanTime()(0)=5400; next.OceanTime()(1)=7200;
     adapter.appendBoundaryRecord(next,0,false);
     assert(adapter.OceanTime().Nx()==3 && adapter.OceanTime()(2)==5400);
     assert(adapter.U()(2,-1,1,1)==.25f);

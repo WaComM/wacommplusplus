@@ -25,6 +25,8 @@ The solver traverses the hourly records in chronological physical time and emits
 The source rates are sampling rates rather than calibrated fluxes. External forcing is not distributed. Interpret output as transport conditional on forcing, grid resolution, closure and decay choices. Archive revision, complete configuration, source/forcing checksums, seed, toolchain, dependencies, backend settings, tolerances, tests, and output checksums.
 
 
+The historical `WaComM` selector used here and uppercase `WACOMM` select the same native adapter. When replaying saved windows with an already-present adjacent boundary, the shared loader reuses equal-time records only if all stored dynamic fields agree exactly; conflicting overlaps fail. See [native replay](../docs/adapters.md#reusing-saved-native-boundary-records) and the [regenerated-forcing scaling workflow](wacomm-sarno-lite.md#mpiopenmp-strong-scaling).
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
