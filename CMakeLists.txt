@@ -212,6 +212,10 @@ if(BUILD_APPLICATION)
         target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME configuration_round_trip COMMAND config_test)
 
+        add_executable(example_config_test tests/ExampleConfigTest.cpp Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
+        target_link_libraries(example_config_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME example_configurations COMMAND example_config_test "${CMAKE_CURRENT_SOURCE_DIR}/examples")
+
         add_executable(restart_test tests/RestartTest.cpp Particles.cpp Particle.cpp DriftModel.cpp OceanModelAdapter.cpp
                 Config.cpp EnvironmentalDataAccess.cpp Utils.cpp JulianDate.cpp)
         target_include_directories(restart_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
