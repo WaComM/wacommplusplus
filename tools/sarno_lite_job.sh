@@ -7,10 +7,17 @@ module load gcc-12.2.1/ompi-4.1.4_nccl
 module load nvidia/cuda-12.8.0
 module list > "provenance/modules-${SLURM_JOB_ID}.txt" 2>&1
 uname -a > "provenance/platform-${SLURM_JOB_ID}.txt"
+mpirun --version > "provenance/mpi-${SLURM_JOB_ID}.txt"
+scontrol show job "$SLURM_JOB_ID" > "provenance/slurm-${SLURM_JOB_ID}.txt"
 sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river.json \
     roms/rms3_d03_20210701Z*.nc > "provenance/inputs-${SLURM_JOB_ID}.sha256"
 set +e
-./wacommplusplus wacomm-sarno-lite-6h.json
+if [ "${SLURM_NTASKS:-1}" -gt 1 ]; then
+    mpirun --np "$SLURM_NTASKS" --bind-to core --report-bindings \
+        ./wacommplusplus wacomm-sarno-lite-6h.json
+else
+    ./wacommplusplus wacomm-sarno-lite-6h.json
+fi
 run_status=$?
 printf '%s\n' "$run_status" > "provenance/exit-${SLURM_JOB_ID}.txt"
 set -e

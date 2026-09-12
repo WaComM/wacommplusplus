@@ -14,6 +14,8 @@ The release-oriented set is `forward/backward-roms`, `forward/backward-nemo`, `f
 
 The leeway-enabled reference set includes catalog-mean, coefficient-ensemble, correlated-residual/wind-error, crosswind-side ensemble, coupled WRF/WW3, and projected-wave forward/backward pairs. `sar-kayak-forward` demonstrates a broader catalog class whose offset-bearing regression is not interchangeable with the generic person class. The uncertainty examples declare sensitivity parameters rather than inferred empirical statistics. `sar-person-projected-wave-forward` and `sar-person-projected-wave-backward` require `USE_PROJ=ON` and demonstrate an explicit EPSG:3857 WW3 grid without implying that Web Mercator is scientifically preferred. Other historical files containing `sar` remain passive unless their JSON explicitly selects `drift.model=leeway`.
 
+The Sarno wrapper also supports `--mpi` for two processes on `high-wn`, with outputs under `data/wacomm-sarno-lite/mpi2/`.
+
 ## References
 
 The example narratives distinguish numerical verification from scientific validation and cite only peer-reviewed journal articles or peer-reviewed proceedings. Core references are Montella et al. (2023), [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012); Dagestad et al. (2018), [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018); Breivik et al. (2011), [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005); and Thygesen (2011), [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009). Each scenario guide selects the subset relevant to its modeled process.

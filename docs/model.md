@@ -159,6 +159,8 @@ The private Unix build (other than macOS) uses pinned OpenSSL 3.5.8 for HTTPS fo
 
 The [six-hour Sarno diagnostic](../examples/wacomm-sarno-lite.md) illustrates the existing model without changing its equations. The missing 12:00 record is interpolated across 11:00–13:00; source emission occurs at available interval starts, yielding five batches. Profile depth is the exported bathymetry/sigma coordinate, with no instantaneous sea-level term. The [diagnostic estimators](trajectory-diagnostics.md#publication-maps-and-profiles) distinguish counts, radial distances, and member quantiles from mass or calibrated probability.
 
+The documented two-process MPI Sarno execution reproduces every stored serial particle variable exactly at the five saved times. This verifies backend agreement for this case without changing the governing model or providing observational validation.
+
 ## References
 
 - Dimou, K. N., and Adams, E. E. (1993). A random-walk, particle tracking model for well-mixed estuaries and coastal waters. *Estuarine, Coastal and Shelf Science*, 37, 99–110. [doi:10.1006/ecss.1993.1044](https://doi.org/10.1006/ecss.1993.1044).

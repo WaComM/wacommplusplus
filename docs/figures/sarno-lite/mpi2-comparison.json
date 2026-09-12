@@ -1,0 +1,146 @@
+{
+  "absolute_tolerance": 0,
+  "comparison": "exact numeric equality after integer-ID ordering",
+  "equal": true,
+  "metadata": "variable units, sign, calendar, type and dimensions compared; global build/configuration attributes excluded",
+  "relative_tolerance": 0,
+  "schema": "wacomm-particle-equivalence-v1",
+  "selection": "all stored particles, including inactive; identical masks required",
+  "snapshots": [
+    {
+      "candidate": {
+        "name": "WACOMM_rst_20210701Z10.nc",
+        "sha256": "e032fb64d41bc5b7950ad4fb3f18654e5f5463faf52cf5bba42cf0ef5c5ba95d"
+      },
+      "particle_time": 1675936800.0,
+      "particles": 9926,
+      "reference": {
+        "name": "WACOMM_rst_20210701Z10.nc",
+        "sha256": "48a9d9e35a4ae833a26853ff781571abcc830c13cfee91a6e73756914ab211fc"
+      },
+      "variables": [
+        "age",
+        "depth",
+        "drift_side",
+        "health",
+        "i",
+        "id",
+        "j",
+        "k",
+        "lat",
+        "lon",
+        "object_type",
+        "particle_time",
+        "time"
+      ]
+    },
+    {
+      "candidate": {
+        "name": "WACOMM_rst_20210701Z11.nc",
+        "sha256": "8fd1a8aa9e17bd0364a09f9af24665fb481487e618dfa4f7c416cfd2e46b29e9"
+      },
+      "particle_time": 1675940400.0,
+      "particles": 19003,
+      "reference": {
+        "name": "WACOMM_rst_20210701Z11.nc",
+        "sha256": "b3be68c9ca624b2ae9a43211f34784614066aa155cc4ea0ec90ef8e4a71fd4fc"
+      },
+      "variables": [
+        "age",
+        "depth",
+        "drift_side",
+        "health",
+        "i",
+        "id",
+        "j",
+        "k",
+        "lat",
+        "lon",
+        "object_type",
+        "particle_time",
+        "time"
+      ]
+    },
+    {
+      "candidate": {
+        "name": "WACOMM_rst_20210701Z13.nc",
+        "sha256": "cfa8bf7654f6cf09c95beb561f0c2a8e45b6a2fdfa1f8371aa4346cb752dd9f7"
+      },
+      "particle_time": 1675947600.0,
+      "particles": 24561,
+      "reference": {
+        "name": "WACOMM_rst_20210701Z13.nc",
+        "sha256": "29247db3e5de3c5f36759aefa3b546854beaea749a49c459c52fedcf743e0fbf"
+      },
+      "variables": [
+        "age",
+        "depth",
+        "drift_side",
+        "health",
+        "i",
+        "id",
+        "j",
+        "k",
+        "lat",
+        "lon",
+        "object_type",
+        "particle_time",
+        "time"
+      ]
+    },
+    {
+      "candidate": {
+        "name": "WACOMM_rst_20210701Z14.nc",
+        "sha256": "9ee9cf1b2ae921fa0254bc7b83d8cbc2850bd9cd49ddf3ae6667e9ee1e110821"
+      },
+      "particle_time": 1675951200.0,
+      "particles": 32393,
+      "reference": {
+        "name": "WACOMM_rst_20210701Z14.nc",
+        "sha256": "e711ccc3bd892a531d63ceea5466fa8cbfeb34d3d75333bfadd088015a012871"
+      },
+      "variables": [
+        "age",
+        "depth",
+        "drift_side",
+        "health",
+        "i",
+        "id",
+        "j",
+        "k",
+        "lat",
+        "lon",
+        "object_type",
+        "particle_time",
+        "time"
+      ]
+    },
+    {
+      "candidate": {
+        "name": "WACOMM_rst_20210701Z15.nc",
+        "sha256": "1a944e3cad2323ca8c1ba8c3566c757a94c0c1fee41caf35072ef3d0afd4fb65"
+      },
+      "particle_time": 1675954800.0,
+      "particles": 40109,
+      "reference": {
+        "name": "WACOMM_rst_20210701Z15.nc",
+        "sha256": "122e954d7e763f4821940e894e46ffe411a9c95008fe1c23db1cd0776d16c243"
+      },
+      "variables": [
+        "age",
+        "depth",
+        "drift_side",
+        "health",
+        "i",
+        "id",
+        "j",
+        "k",
+        "lat",
+        "lon",
+        "object_type",
+        "particle_time",
+        "time"
+      ]
+    }
+  ]
+}

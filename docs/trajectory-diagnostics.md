@@ -62,6 +62,10 @@ The explicit `--map-crs EPSG:4326` selects Plate Carrée with equal plotted angu
 
 The OpenDrift [ROMS gallery](https://opendrift.github.io/gallery/example_roms_native.html) and [vertical mixing gallery](https://opendrift.github.io/gallery/example_vertical_mixing.html) informed the map-plus-profile presentation. The implementation reads WaComM output directly; these are not comparative OpenDrift runs or evidence of model equivalence. Scientific interpretation remains subject to the model assumptions and peer-reviewed discussion below.
 
+## Exact particle snapshot comparison
+
+`tools/compare_particle_snapshots.py REFERENCE CANDIDATE --json REPORT` uses the optional NumPy/NetCDF4 environment above. It compares all stored particles, including inactive members, by exact integer identity and physical time, without spatial projection or interpolation. Times must be finite singleton values with the native Gregorian epoch metadata. Duplicate IDs/times, different times, schemas, units, sign conventions, calendars, masks, or non-finite unmasked values fail. Masked values are excluded only when both masks agree. Every remaining variable value must be numerically equal (absolute and relative tolerances zero); identifiers remain integers beyond 2^53. Global attributes are excluded so build provenance can differ. This is a state-equivalence check, not a statistical estimator, file-byte comparison, or observational validation. It does not compare gridded output or native forcing. Inputs remain read-only, and the report cannot overwrite an input. See the [two-process Sarno example](../examples/wacomm-sarno-lite.md#two-process-mpi-calculation) for the exact command and evidence.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

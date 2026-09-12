@@ -42,6 +42,10 @@ Private Unix OpenSSL builds add `openssl_dependency`, which requires exact agree
 
 `publication_figures` is an optional Python regression requiring the plotting requirements. It checks analytical bin counts and quantiles, signed-depth conversion, masked/inactive selection, exact large integer IDs, duplicate time/ID and invalid unit rejection, deterministic rendering under input permutation, accessible exports, and read-only inputs. A CTest skip means plotting dependencies are absent, not that rendering was verified. The six-hour Slurm run is model execution evidence; the missing forcing hour and source batching are documented in its [guide](../examples/wacomm-sarno-lite.md).
 
+The GNU 12.2.1/OpenMPI 4.1.4 build passed all 22 CTest checks without skips; the [validation log](figures/sarno-lite/mpi2-validation.log) includes MPI decomposition, restart, adapters, numerical tests, documentation, and figures.
+
+`particle_snapshot_comparison` requires NumPy and NetCDF4 (skip code 77 when absent). It verifies read-only input handling, row-order independence with exact IDs above 2^53, and rejection of altered values, duplicate identifiers, and mismatched physical times. The [MPI Sarno report](figures/sarno-lite/mpi2-comparison.json) additionally verifies all stored particle variables at five physical times against serial execution with zero numeric tolerance. Global build attributes are excluded; gridded counts and normalized forcing are not compared by this test.
+
 ## References
 
 - Oberkampf, W. L., and Trucano, T. G. (2002). Verification and validation in computational fluid dynamics. *Progress in Aerospace Sciences*, 38, 209–272. [doi:10.1016/S0376-0421(02)00005-2](https://doi.org/10.1016/S0376-0421(02)00005-2).

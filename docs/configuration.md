@@ -92,6 +92,8 @@ The private Unix application dependency stack (other than macOS) includes OpenSS
 
 The six-hour [Sarno example](../examples/wacomm-sarno-lite.md) sets `simulation.dry=false`, `simulation.end="20210701Z15"`, `io.ocean_model="ROMS"`, `io.save_input=true`, and `io.save_history="nc"`. `history_root` stores physical-time particle snapshots separately from `nc_output_root` gridded counts. The explicit available input list controls the intervals; the missing 12:00 record produces a two-hour interpolation interval and no source batch at 12:00. Example runtime roots are `data/<example_name>/`. Saved native filenames use hour-only stamps.
 
+The MPI Sarno workflow uses the identical scientific configuration and a separate `data/wacomm-sarno-lite/mpi2/` run root; process count is selected by the Slurm wrapper, not a tracking or adapter option.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

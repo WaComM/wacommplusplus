@@ -1,0 +1,100 @@
+{
+  "application_exit_code": 0,
+  "binding_and_runtime_stderr": "Loading gcc-12.2.1/ompi-4.1.4_nccl\n  Loading requirement: gcc-12.1.1/gcc gcc-8.5.0/ucc-2023.01.18_nccl\n    gcc-8.5.0/slurm-23.11.3\n[wn01.e4.cluster:2864711] MCW rank 0 bound to socket 0[core 0[hwt 0]]: [B/.][]\n[wn01.e4.cluster:2864711] MCW rank 1 bound to socket 0[core 1[hwt 0]]: [./B][]\n--------------------------------------------------------------------------\nWARNING: There was an error initializing an OpenFabrics device.\n\n  Local host:   wn01\n  Local device: mlx5_0\n--------------------------------------------------------------------------\n[wn01.e4.cluster:2864711] 1 more process has sent help message help-mpi-btl-openib.txt / error in device init\n[wn01.e4.cluster:2864711] Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages\n",
+  "build_cache_sha256": "cdb69e59e6ed8ae06d1349c102d2e59309eaba4743b2ae8189f13b6fc3d7dda0",
+  "build_dependencies": {
+    "HDF5": "1.12.0",
+    "MPI": "OpenMPI 4.1.4",
+    "OpenSSL": "3.5.8 static",
+    "cmake": "4.4.3",
+    "compiler": "GNU 12.2.1",
+    "curl": "8.7.1",
+    "libaec": "1.1.3",
+    "log4cplus": "2.1.1",
+    "netCDF-C": "4.8.1",
+    "netCDF-C++4": "4.3.1",
+    "nlohmann_json": "3.11.3",
+    "zlib": "1.3.1"
+  },
+  "cmake_options": {
+    "CMAKE_BUILD_TYPE:STRING": "",
+    "CMAKE_CXX_COMPILER:FILEPATH": "/opt/rh/gcc-toolset-12/root/usr/bin/c++",
+    "USE_CUDA:BOOL": "OFF",
+    "USE_EMPI:BOOL": "OFF",
+    "USE_MPI:BOOL": "ON",
+    "USE_OMP:BOOL": "OFF",
+    "USE_OPENACC:BOOL": "OFF",
+    "USE_PROJ:BOOL": "OFF",
+    "WACOMM_BOOTSTRAP_DEPENDENCIES-STRINGS:INTERNAL": "AUTO;ON;OFF",
+    "WACOMM_BOOTSTRAP_DEPENDENCIES:STRING": "AUTO",
+    "WACOMM_BOOTSTRAP_PARALLEL_IO:BOOL": "OFF"
+  },
+  "comparison": "mpi2-comparison.json",
+  "configuration": {
+    "io": {
+      "base_path": "roms/",
+      "history_root": "snapshots-6h/WACOMM_rst_",
+      "mask_output": true,
+      "nc_input_root": "processed-6h/ocm3_d03_",
+      "nc_inputs": [
+        "rms3_d03_20210701Z0900.nc",
+        "rms3_d03_20210701Z1000.nc",
+        "rms3_d03_20210701Z1100.nc",
+        "rms3_d03_20210701Z1300.nc",
+        "rms3_d03_20210701Z1400.nc",
+        "rms3_d03_20210701Z1500.nc"
+      ],
+      "nc_output_root": "output-6h/wacomm_his_",
+      "ocean_model": "ROMS",
+      "save_history": "nc",
+      "save_input": true,
+      "timestep": 3600
+    },
+    "physics": {
+      "horizontal_closure": "kill",
+      "lower_closure": "constraint",
+      "random": true,
+      "random_seed": 5489,
+      "random_sources": false,
+      "shore_limit": 0.5,
+      "sigma": 3.46,
+      "survprob": 0.0001,
+      "sv": 0,
+      "tau0": 86400,
+      "upper_closure": "reflection"
+    },
+    "restart": {
+      "active": false,
+      "interval": 3600,
+      "restart_file": ""
+    },
+    "simulation": {
+      "dry": false,
+      "end": "20210701Z15",
+      "institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
+      "name": "Sarno lite emission",
+      "start": "20210701Z09",
+      "url": "https://meteo.uniparthenope.it"
+    },
+    "sources": {
+      "active": true,
+      "sources_file": "examples/sources-sarno_river.json"
+    },
+    "tracking": {
+      "direction": "forward"
+    }
+  },
+  "job_id": 6222,
+  "provenance": {
+    "inputs-6222.sha256": "082a0cb41e20450b3be6bbef5c50a2b66837b68cd8185d0aa0bd2cd342ec3004  wacommplusplus\n8cdbf719721cffcdef254b0efe61da6ded2b2e7860360fb860ff331c19cc868f  wacomm-sarno-lite-6h.json\nf7c04c9f3b7397a3334100886eda74b311b0daf07c63530a8d2c1076e5fe9687  examples/sources-sarno_river.json\n7fd6f78b1717156077ac850bbc4572f2122a190e9fed29c23505319160186c79  roms/rms3_d03_20210701Z0900.nc\nee91aee5dc7f5b29f37aecc6a7e2813a27a7a0140a5875e7c568869036c997fb  roms/rms3_d03_20210701Z1000.nc\n77e2fa50d1b7cfb1b23edf2f5daf9e322a4cd92028bbed3adf0d86d2c1544a1b  roms/rms3_d03_20210701Z1100.nc\nd55687b41d0212825641876dc8c4c28035b39211877ead73186d8d9c891d7085  roms/rms3_d03_20210701Z1300.nc\n35e5c2d217902c3660f87c64beac00b4cf379ee07e062aabe23d88b4cda91cd9  roms/rms3_d03_20210701Z1400.nc\nc9dd9e1642625d86473ca56b6d24272582be9b5d7f54cfb8b738178e1b8739dc  roms/rms3_d03_20210701Z1500.nc\n",
+    "modules-6222.txt": "Currently Loaded Modulefiles:\n 1) nvidia/cuda-12.8.0       7) openssl/openssl-4.0.2          \n 2) gcc-8.5.0/hwloc-2.10.0   8) cmake/cmake-4.4.3              \n 3) gcc-8.5.0/pmix-5.0.1     9) gcc-12.1.1/gcc                 \n 4) gcc-8.5.0/ucx-1.15.0    10) gcc-8.5.0/ucc-2023.01.18_nccl  \n 5) slurm                   11) gcc-8.5.0/slurm-23.11.3        \n 6) node/node-24            12) gcc-12.2.1/ompi-4.1.4_nccl     \n",
+    "mpi-6222.txt": "mpirun (Open MPI) 4.1.4\n\nReport bugs to http://www.open-mpi.org/community/help/\n",
+    "outputs-6222.sha256": "fe3dc728999004fd835f123da2f5629988d3ae92ab40fbe22bcc1dc2db745c16  output-6h/wacomm_his_20210701Z09.nc\ndb27f4107aab6bb2b99fe90200ff15fae36dbb63aa1ae89b4c377793fcb4f670  output-6h/wacomm_his_20210701Z10.nc\nf69138750197a9e99f5223557cb61e55d92330eb2a8598f546c442bbb549b42c  output-6h/wacomm_his_20210701Z11.nc\n907b798606c4403824aa61f0a6903bbeb939eaf8271de524ba385410fe271ed7  output-6h/wacomm_his_20210701Z13.nc\nc1ccd08a943fd8e8f8d4ab28f35b57c12fabf5d6d0cc5cfcc08ddd21c09bee54  output-6h/wacomm_his_20210701Z14.nc\ne032fb64d41bc5b7950ad4fb3f18654e5f5463faf52cf5bba42cf0ef5c5ba95d  snapshots-6h/WACOMM_rst_20210701Z10.nc\n8fd1a8aa9e17bd0364a09f9af24665fb481487e618dfa4f7c416cfd2e46b29e9  snapshots-6h/WACOMM_rst_20210701Z11.nc\ncfa8bf7654f6cf09c95beb561f0c2a8e45b6a2fdfa1f8371aa4346cb752dd9f7  snapshots-6h/WACOMM_rst_20210701Z13.nc\n9ee9cf1b2ae921fa0254bc7b83d8cbc2850bd9cd49ddf3ae6667e9ee1e110821  snapshots-6h/WACOMM_rst_20210701Z14.nc\n1a944e3cad2323ca8c1ba8c3566c757a94c0c1fee41caf35072ef3d0afd4fb65  snapshots-6h/WACOMM_rst_20210701Z15.nc\n9694d10993b32888adfe1a15ae4ef1ae5e9ec414a8694343fbdb23be7d9e7430  processed-6h/ocm3_d03_20210701Z09.nc\ncdd7e137ace1126f163c61b4a85fb30fc11fa50b1b5b05fd95d67a17561fb2de  processed-6h/ocm3_d03_20210701Z10.nc\n45adc8b355074adc928a1bb69bef008296ecb75dc9f78c9dad52f70592961965  processed-6h/ocm3_d03_20210701Z11.nc\na48b4f0a70dec08fcc580e05c24cd64e81aa59166f7c44340d53ccc2620ed0f0  processed-6h/ocm3_d03_20210701Z13.nc\nd0143e1b44e5b937456ee090618697c09389cb97545623d2953eb1682ece4d7c  processed-6h/ocm3_d03_20210701Z14.nc\n017e294da9d31c2c373698700a3652d25722c98aea58101437f4f72518458347  processed-6h/ocm3_d03_20210701Z15.nc\n",
+    "platform-6222.txt": "Linux wn01.e4.cluster 4.18.0-553.104.1.el8_10.x86_64 #1 SMP Fri Feb 13 15:51:56 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n",
+    "revision.txt": "b23279c452ecb7bdb4d44b9a9bc549e56bc4d555\n",
+    "slurm-6222.txt": "JobId=6222 JobName=wacomm-sarno-lite\n   UserId=montella(60009) GroupId=montella(60009) MCS_label=N/A\n   Priority=2000 Nice=0 Account=(null) QOS=(null)\n   JobState=RUNNING Reason=None Dependency=(null)\n   Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0\n   RunTime=00:00:00 TimeLimit=01:00:00 TimeMin=N/A\n   SubmitTime=2026-09-11T20:06:55 EligibleTime=2026-09-11T20:06:55\n   AccrueTime=2026-09-11T20:06:55\n   StartTime=2026-09-11T20:06:56 EndTime=2026-09-11T21:06:56 Deadline=N/A\n   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-09-11T20:06:56 Scheduler=Main\n   Partition=high-wn AllocNode:Sid=fesrv:359013\n   ReqNodeList=(null) ExcNodeList=(null)\n   NodeList=wn01\n   BatchHost=wn01\n   NumNodes=1 NumCPUs=2 NumTasks=2 CPUs/Task=1 ReqB:S:C:T=0:0:*:*\n   ReqTRES=cpu=2,mem=64G,node=1,billing=2\n   AllocTRES=cpu=2,mem=64G,node=1,billing=2\n   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*\n   MinCPUsNode=1 MinMemoryNode=64G MinTmpDiskNode=0\n   Features=(null) DelayBoot=00:00:00\n   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)\n   Command=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/mpi2/submit-6h.sh\n   WorkDir=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/mpi2\n   StdErr=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/mpi2/six-hour-6222.err\n   StdIn=/dev/null\n   StdOut=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/mpi2/six-hour-6222.out\n   Power=\n   TresPerTask=cpu:1\n   \n\n",
+    "working-tree.patch": "diff --git a/tools/run_sarno_lite.sh b/tools/run_sarno_lite.sh\nindex 3986a383..d835cb30 100644\n--- a/tools/run_sarno_lite.sh\n+++ b/tools/run_sarno_lite.sh\n@@ -1,9 +1,27 @@\n #!/bin/bash\n set -euo pipefail\n \n-# Stage the six-hour example below the repository and submit a serial Slurm job.\n+# Stage the six-hour example below the repository and submit a Slurm job.\n repository=$(cd \"$(dirname \"$0\")/..\" && pwd)\n run=\"$repository/data/wacomm-sarno-lite\"\n+processes=1\n+memory=32G\n+mpi=OFF\n+if [ \"$#\" -eq 1 ] && [ \"$1\" = \"--mpi\" ]; then\n+    processes=2\n+    memory=64G\n+    mpi=ON\n+    mkdir -p \"$run/roms\" \"$run/mpi2\"\n+    run=\"$run/mpi2\"\n+    if [ ! -e \"$run/roms\" ]; then ln -s ../roms \"$run/roms\"; fi\n+elif [ \"$#\" -ne 0 ]; then\n+    echo \"Usage: bash tools/run_sarno_lite.sh [--mpi]\" >&2\n+    exit 1\n+fi\n+if ! grep -qx \"USE_MPI:BOOL=$mpi\" \"$repository/build/CMakeCache.txt\"; then\n+    echo \"Configure and build with USE_MPI=$mpi before submitting this mode.\" >&2\n+    exit 1\n+fi\n mkdir -p \"$run/roms\" \"$run/processed-6h\" \"$run/output-6h\" \"$run/snapshots-6h\" \"$run/examples\" \"$run/provenance\"\n if compgen -G \"$run/snapshots-6h/*.nc\" > /dev/null || compgen -G \"$run/output-6h/*.nc\" > /dev/null; then\n     echo \"Archive existing six-hour outputs before submitting another run.\" >&2\n@@ -25,7 +43,7 @@ cp \"$repository/tools/sarno_lite_job.sh\" \"$run/submit-6h.sh\"\n cp \"$repository/build/CMakeCache.txt\" \"$run/provenance/\"\n git -C \"$repository\" rev-parse HEAD > \"$run/provenance/revision.txt\"\n git -C \"$repository\" diff HEAD > \"$run/provenance/working-tree.patch\"\n-sbatch --parsable --partition=high-wn --nodes=1 --ntasks=1 --cpus-per-task=1 \\\n-    --mem=32G --time=01:00:00 --job-name=wacomm-sarno-lite \\\n+sbatch --parsable --partition=high-wn --nodes=1 --ntasks=\"$processes\" --cpus-per-task=1 \\\n+    --mem=\"$memory\" --time=01:00:00 --job-name=wacomm-sarno-lite \\\n     --chdir=\"$run\" --output=\"$run/six-hour-%j.out\" --error=\"$run/six-hour-%j.err\" \\\n     \"$run/submit-6h.sh\" | tee \"$run/provenance/six-hour-job-id.txt\"\ndiff --git a/tools/sarno_lite_job.sh b/tools/sarno_lite_job.sh\nindex 8036fd4b..5e627cba 100644\n--- a/tools/sarno_lite_job.sh\n+++ b/tools/sarno_lite_job.sh\n@@ -7,10 +7,17 @@ module load gcc-12.2.1/ompi-4.1.4_nccl\n module load nvidia/cuda-12.8.0\n module list > \"provenance/modules-${SLURM_JOB_ID}.txt\" 2>&1\n uname -a > \"provenance/platform-${SLURM_JOB_ID}.txt\"\n+mpirun --version > \"provenance/mpi-${SLURM_JOB_ID}.txt\"\n+scontrol show job \"$SLURM_JOB_ID\" > \"provenance/slurm-${SLURM_JOB_ID}.txt\"\n sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river.json \\\n     roms/rms3_d03_20210701Z*.nc > \"provenance/inputs-${SLURM_JOB_ID}.sha256\"\n set +e\n-./wacommplusplus wacomm-sarno-lite-6h.json\n+if [ \"${SLURM_NTASKS:-1}\" -gt 1 ]; then\n+    mpirun --np \"$SLURM_NTASKS\" --bind-to core --report-bindings \\\n+        ./wacommplusplus wacomm-sarno-lite-6h.json\n+else\n+    ./wacommplusplus wacomm-sarno-lite-6h.json\n+fi\n run_status=$?\n printf '%s\\n' \"$run_status\" > \"provenance/exit-${SLURM_JOB_ID}.txt\"\n set -e\n"
+  },
+  "schema": "wacomm-sarno-mpi-run-v1",
+  "scope": "Single-node two-rank particle-state equivalence; no inter-node or observational validation"
+}

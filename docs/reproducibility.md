@@ -32,6 +32,8 @@ The command fails if a declared configuration, local forcing, source, restart, o
 
 The [trajectory diagnostics](trajectory-diagnostics.md) workflow records the SHA-256 checksum and embedded build provenance of every input snapshot in its JSON product. Because absolute paths are identifiers, relocating inputs can change JSON bytes without changing diagnostic values. Archive both the diagnostic JSON and SVG with the run manifest; neither replaces the simulation outputs from which it was derived.
 
+For the [MPI Sarno run](../examples/wacomm-sarno-lite.md#two-process-mpi-calculation), the wrapper preserves serial output and stages the two-rank run under `data/wacomm-sarno-lite/mpi2/`. It records the Slurm allocation, MPI implementation, core bindings, application exit status, complete input/output checksums, build cache, revision, and working diff. The versioned MPI run record and exact particle comparison retain verification evidence without adding the large forcing/output files to Git. Matching numerical values do not imply matching file checksums because global build metadata differs.
+
 ## References
 
 - Peng, R. D. (2011). Reproducible research in computational science. *Science*, 334, 1226–1227. [doi:10.1126/science.1213847](https://doi.org/10.1126/science.1213847).

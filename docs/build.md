@@ -81,7 +81,22 @@ ctest --test-dir build -C Release --output-on-failure
 `USE_EMPI=ON` requires an MPI implementation plus a real FlexMPI installation. Configuration searches for `empi.h` and the EMPI library and fails clearly if either is absent. Pass its installation prefix through `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH`, or `CMAKE_LIBRARY_PATH` when it is outside the system search path.
 
 
-For the six-hour serial Slurm execution and optional Python 3.11 plotting environment, follow the [Sarno guide](../examples/wacomm-sarno-lite.md). `tools/requirements-figures.txt` pins the rendering dependencies; these are separate from the C++ build and are not required by the portable core.
+For the six-hour serial or two-process MPI Slurm execution and optional Python 3.11 plotting environment, follow the [Sarno guide](../examples/wacomm-sarno-lite.md). `tools/requirements-figures.txt` pins the rendering dependencies; these are separate from the C++ build and are not required by the portable core.
+
+### MPI build for the Sarno Slurm run
+
+Load the same four modules shown above, then configure the application with MPI particle decomposition and the other execution backends disabled:
+
+```bash
+cmake -S . -B build -DWACOMM_BOOTSTRAP_DEPENDENCIES=ON \
+  -DUSE_MPI=ON -DUSE_OMP=OFF -DUSE_CUDA=OFF \
+  -DUSE_EMPI=OFF -DUSE_OPENACC=OFF -DWACOMM_BOOTSTRAP_PARALLEL_IO=OFF
+cmake --build build --parallel 8
+ctest --test-dir build --output-on-failure
+bash tools/run_sarno_lite.sh --mpi
+```
+
+The verified toolchain is GNU 12.2.1, CMake 4.4.3, and OpenMPI 4.1.4. Loaded CUDA and OpenSSL modules do not enable accelerator execution or replace private OpenSSL 3.5.8. MPI discovery and tests must run where MPI can initialize its communication resources. If a failed discovery left invalid wrapper paths in the cache, repeat configuration with `-U 'MPI_*'`. Serial HDF5/NetCDF remains sufficient for this solver run; MPI particle decomposition does not require parallel I/O. See the [example](../examples/wacomm-sarno-lite.md#two-process-mpi-calculation) for resources and exact comparison evidence.
 
 ## References
 

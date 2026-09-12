@@ -300,5 +300,9 @@ if(BUILD_TESTING)
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/PublicationFiguresTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/publication_figures.py")
         set_tests_properties(publication_figures PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME particle_snapshot_comparison COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/ParticleSnapshotComparisonTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/compare_particle_snapshots.py")
+        set_tests_properties(particle_snapshot_comparison PROPERTIES SKIP_RETURN_CODE 77)
     endif()
 endif()
