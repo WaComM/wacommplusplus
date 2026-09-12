@@ -132,7 +132,7 @@ def render(records,output):
                 text=path.read_text();start=text.index('>',text.index('<svg'))+1
                 description=f"Measured solver and full-application {kind} for 1, 2, 4, 8, 16, and 32 MPI processes, one OpenMP thread each. Both axes use logarithmic scales. Single samples, no uncertainty estimates."
                 text=text[:start]+f"\n<title>Sarno lite strong-scaling {kind}</title>\n<desc>{description}</desc>"+text[start:]
-                path.write_text(text)
+                path.write_text("\n".join(line.rstrip() for line in text.splitlines())+"\n")
                 ET.parse(path)
             artifacts.append({"name":path.name,"sha256":checksum(path)})
         plt.close(fig)

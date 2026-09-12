@@ -63,11 +63,11 @@
   "figures": [
     {
       "name": "sarno-speedup.svg",
-      "sha256": "96ff145831ba3544c05892526fac6327834dd6ef377f6953ce956137403be3df"
+      "sha256": "2a07c029fa9fb4f5b70e0220ee094d37baffeda6d1e84a9b5cd6d4dd7636772a"
     },
     {
       "name": "sarno-speedup.pdf",
-      "sha256": "989bd626d2c7d46acd3cde4e0756d7cc96870ff9f4b219c97dd5120a67f289ac"
+      "sha256": "d839f2411f940e12e1e65fa6548d2f644abd6f49684378870120bc1dfbba7d18"
     },
     {
       "name": "sarno-speedup.png",
@@ -75,11 +75,11 @@
     },
     {
       "name": "sarno-efficiency.svg",
-      "sha256": "4baa71000b5246bad2d0f283f6cdf604e501c53f0d66cf138ea3bb4b9ad6179c"
+      "sha256": "119163c87078eecdff6c19383b8675a771f958b1c23ed58849a9c39f96a18211"
     },
     {
       "name": "sarno-efficiency.pdf",
-      "sha256": "dfba230011685886697e88880ab4964932f1afda905e642cb7e7103a345c2b6c"
+      "sha256": "b612df1b106ee46aabafd9a9447cff699e0bdfc53b4a1df6c8c3fb3d4d5c00e2"
     },
     {
       "name": "sarno-efficiency.png",
@@ -92,7 +92,7 @@
     "netCDF4": "1.7.4",
     "numpy": "2.4.6",
     "python": "3.11.7 (main, Jan 26 2024, 20:24:17) [GCC 8.5.0 20210514 (Red Hat 8.5.0-21)]",
-    "script_sha256": "06cc8976ac16f8c52a6674b74e736c4102761431e17ce522b5326fcfba81ef5f"
+    "script_sha256": "f761bbd3b59d199a87e8160946c51f34c9d390944fae47cb5432048bf7f5677a"
   },
   "preparation": {
     "configuration": {
