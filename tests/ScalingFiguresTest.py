@@ -26,6 +26,8 @@ records=[{"processes":p,"threads_per_process":1,"elapsed_seconds":128/p,"solver_
 result=scaling.metrics(list(reversed(records)))
 assert [r["speedup"] for r in result]==scaling.PROCESSES
 assert all(r["efficiency"]==1 for r in result)
+extended=records+[dict(records[0],processes=64,elapsed_seconds=2,solver_seconds=1)]
+assert scaling.metrics(extended)[-1]["speedup"]==64
 records[-1]["solver_seconds"]=4
 assert scaling.metrics(records)[-1]["speedup"]==16
 assert scaling.metrics(records)[-1]["efficiency"]==0.5

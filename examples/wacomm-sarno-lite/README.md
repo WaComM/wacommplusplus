@@ -172,6 +172,42 @@ These measurements favor 16 ranks for the solver phase and four ranks for this c
 
 **Reproducibility metadata.** The [scaling report](docs/figures/scaling/scaling-results.json) contains preparation and performance job IDs, per-interval solver times, full elapsed times, ratios, complete configuration, compiler flags and CMake cache, Git revision and working diff, staged submission scripts, CPU topology, MPI/OpenMP environment, binding records, input/output checksums, exact particle comparisons, and plot hashes. GNU Release uses `-O3 -DNDEBUG` with `-fopenmp` and no fast-math option. Preserve all runtime data separately from Git. Earlier default-build, ROMS-forcing, and pre-fix native-boundary pilots were cancelled and excluded; they remain locally archived for traceability.
 
+## Extended MPI performance test: 1–64 processes
+
+**Question and method.** This repeat of the fixed six-hour passive Sarno calculation tests whether adding ranks beyond one 32-core node reduces solver time. The scientific configuration, saved native forcing, executable, seed, five physical intervals, and one OpenMP thread per MPI process are unchanged from the preceding sweep. Jobs **6285–6291** ran sequentially on `norm-wn`: 1–32 ranks used one exclusive 32-core node (`wn01`), while 64 ranks used two exclusive nodes (`wn01–wn02`). The 64-rank point therefore changes node count and communication topology as well as rank count. It is a two-node result, not a same-node continuation.
+
+**Prerequisites and exact commands.** Use the Release MPI/OpenMP build, six prepared `processed-6h/` native files, and successful preparation checksums specified above. The wrapper refuses an existing suite directory. From the repository root, after the preparation job has completed:
+
+```bash
+bash tools/run_sarno_scaling.sh scaling-64 norm-wn
+# Wait for jobs 6285–6291 (or the newly submitted IDs) to finish.
+MPLCONFIGDIR=/tmp/wacomm-mpl data/wacomm-sarno-lite/venv/bin/python \
+  tools/scaling_figures.py data/wacomm-sarno-lite/scaling-64 \
+  --output-dir examples/wacomm-sarno-lite/docs/figures/scaling-64
+```
+
+The same five-interval solver timer $T_p$ (seconds), full `mpirun` elapsed timer $A_p$ (seconds), and dimensionless estimators $S_p=T_1/T_p$ and $E_p=S_p/p$ apply. Preparation, downloading, and queue wait are excluded from both timers; native reads and writes are included only in $A_p$. The collector requires successful exits, expected rank/thread allocations, matching executable/configuration/source hashes, five positive physical-interval durations, and exact equality of all saved particle states by identity and physical time against the one-rank run. Its zero-tolerance comparison is numerical verification, not observational validation. Gridded outputs and forcing are outside the particle-state comparison; prepared forcing checksums are verified before submission. The complete [run report](docs/figures/scaling-64/scaling-results.json) records job and input/output checksums, allocation, software and build provenance, interval times, comparisons, and figure hashes.
+
+![Computational diagnostic of Sarno solver and application speedup for one through 64 MPI processes; 64 processes use two nodes.](docs/figures/scaling-64/sarno-speedup.svg)
+
+**Figure 7 — Computational diagnostic.** Blue is solver speedup, orange is full-application speedup, and gray is the ideal linear reference. The 64-rank point uses two nodes. Both axes are logarithmic; each point is one run without uncertainty bars. [PDF](docs/figures/scaling-64/sarno-speedup.pdf) · [400 dpi PNG](docs/figures/scaling-64/sarno-speedup.png).
+
+![Computational diagnostic of Sarno solver and application efficiency for one through 64 MPI processes; 64 processes use two nodes.](docs/figures/scaling-64/sarno-efficiency.svg)
+
+**Figure 8 — Computational diagnostic.** Efficiency is $100T_1/(pT_p)$ percent for the solver and analogously $100A_1/(pA_p)$ percent for the complete application. The dashed line is ideal 100% efficiency, not a fitted prediction. [PDF](docs/figures/scaling-64/sarno-efficiency.pdf) · [400 dpi PNG](docs/figures/scaling-64/sarno-efficiency.png).
+
+| MPI processes | Nodes | Job | Solver time (s) | Solver speedup | Solver efficiency | Application time (s) | Application speedup |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 1 | 6285 | 10.4496 | 1.000× | 100.00% | 23.16 | 1.000× |
+| 2 | 1 | 6286 | 5.7743 | 1.810× | 90.48% | 21.58 | 1.073× |
+| 4 | 1 | 6287 | 3.3649 | 3.105× | 77.64% | 18.79 | 1.233× |
+| 8 | 1 | 6288 | 2.1829 | 4.787× | 59.84% | 19.85 | 1.167× |
+| 16 | 1 | 6289 | 1.6458 | 6.349× | 39.68% | 28.33 | 0.818× |
+| 32 | 1 | 6290 | 1.2022 | 8.692× | 27.16% | 27.51 | 0.842× |
+| 64 | 2 | 6291 | 1.0540 | 9.914× | 15.49% | 79.05 | 0.293× |
+
+**Discussion and limits.** The fastest measured solver point is 64 ranks at 1.0540 s, 9.91× faster than one rank, but the gain from 32 to 64 ranks is only 0.1482 s while efficiency drops from 27.16% to 15.49%. The full invocation is fastest at four ranks (18.79 s); it takes 79.05 s at 64 ranks. At 64 ranks, solver intervals account for about 1.3% of full elapsed time. Every rank loads ocean windows, and the two-node run introduces inter-node communication and shared-storage traffic; these measurements do not isolate either cost or show which dominates. MPI emitted OpenFabrics initialization warnings, retained in the report, yet all jobs exited zero and particle states matched exactly. This is one ascending sweep with one sample per count and uncontrolled cache, I/O, and system variation. The difference from the earlier 1–32 sweep, especially at 32 ranks, shows why neither sweep establishes a stable performance optimum. These results do not validate multi-node scaling beyond two nodes or predict performance on other hardware.
+
 ## OpenMP strong scaling and MPI comparison
 
 **Question and fixed workload.** Compare one MPI process with 1, 2, 4, 8, 16, and 32 OpenMP threads against the MPI sweep above at the same active core counts. The physical question, six-hour window, seed 5489, five source batches, native fields and units, boundaries, and missing 12:00 forcing limitation are unchanged. This is computational verification and performance evidence for the passive-release configuration, not observational validation.

@@ -51,6 +51,8 @@ The [six-hour Sarno example](examples/wacomm-sarno-lite/README.md) includes seri
 
 The [one-process OpenMP sweep](examples/wacomm-sarno-lite/README.md#openmp-strong-scaling-and-mpi-comparison) compares 1–32 threads with the MPI experiment, using the same native forcing and executable. It reports solver and application timing separately, with efficiency/speedup figures and exact particle-state verification.
 
+An [extended Sarno MPI sweep](examples/wacomm-sarno-lite/README.md#extended-mpi-performance-test-164-processes) measures 1–64 ranks with one OpenMP thread each on `norm-wn`; the 64-rank case uses two nodes. Its separate plots and report retain timing, allocation, and exact particle-state evidence.
+
 ## References
 
 Montella, R., et al. (2023), “A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment,” *31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing*, 17–26. Earlier WaComM publications and ocean-model references are listed in [references](docs/references.md).

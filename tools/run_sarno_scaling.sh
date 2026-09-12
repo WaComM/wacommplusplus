@@ -4,8 +4,10 @@ set -euo pipefail
 # Run a fixed six-hour workload sequentially on an exclusive Slurm node.
 repository=$(cd "$(dirname "$0")/.." && pwd)
 root="$repository/data/wacomm-sarno-lite"
-suite="$root/scaling"
-if [ "$#" -ne 0 ]; then echo "Usage: bash tools/run_sarno_scaling.sh" >&2; exit 1; fi
+suite_name="${1:-scaling}"
+partition="${2:-high-wn}"
+if [ "$#" -gt 2 ] || [[ ! "$suite_name" =~ ^[a-zA-Z0-9-]+$ ]]; then echo "Usage: bash tools/run_sarno_scaling.sh [suite-name [partition]]" >&2; exit 1; fi
+suite="$root/$suite_name"
 for option in USE_MPI:BOOL=ON USE_OMP:BOOL=ON USE_CUDA:BOOL=OFF CMAKE_BUILD_TYPE:STRING=Release; do
     if ! grep -qx "$option" "$repository/build/CMakeCache.txt"; then
         echo "Build requires $option" >&2; exit 1
@@ -27,7 +29,9 @@ cp "$repository/tools/run_sarno_scaling.sh" "$suite/provenance/"
 cp "$root/preparation/provenance/job-id.txt" "$suite/provenance/preparation-job-id.txt"
 cp "$root/preparation/provenance/prepared-forcing.sha256" "$suite/provenance/forcing.sha256"
 previous=""
-for processes in 1 2 4 8 16 32; do
+counts=(1 2 4 8 16 32)
+if [ "$suite_name" != scaling ]; then counts+=(64); fi
+for processes in "${counts[@]}"; do
     run="$suite/p$processes"
     mkdir -p "$run"/{provenance,examples,output-6h,snapshots-6h}
     ln -s ../../processed-6h "$run/processed-6h"
@@ -45,7 +49,9 @@ PYTHON
     (cd "$run" && sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river/sources-sarno_river.json submit.sh) > "$run/provenance/inputs.sha256"
     dependency=()
     if [ -n "$previous" ]; then dependency=(--dependency="afterany:$previous"); fi
-    job=$(sbatch --parsable --partition=high-wn --nodes=1 --ntasks="$processes" \
+    nodes=1
+    if [ "$processes" -gt 32 ]; then nodes=2; fi
+    job=$(sbatch --parsable --partition="$partition" --nodes="$nodes" --ntasks="$processes" \
         --cpus-per-task=1 --exclusive --mem=0 --time=01:00:00 \
         --job-name="sarno-p$processes" --chdir="$run" \
         --output="$run/run.out" --error="$run/run.err" "${dependency[@]}" "$run/submit.sh")

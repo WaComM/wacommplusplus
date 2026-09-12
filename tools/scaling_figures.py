@@ -24,9 +24,15 @@ from trajectory_diagnostics import checksum
 PROCESSES=[1,2,4,8,16,32]
 
 
+def process_counts(root):
+    if root.name=="scaling-64" and not (root/"p64").is_dir():
+        raise ValueError("scaling-64 requires a 64-process run")
+    return PROCESSES+[64] if (root/"p64").is_dir() else PROCESSES
+
+
 def metrics(records):
     counts=[r["processes"] for r in records]
-    if sorted(counts)!=PROCESSES: raise ValueError("requires exactly 1, 2, 4, 8, 16, 32 processes")
+    if sorted(counts) not in (PROCESSES,PROCESSES+[64]): raise ValueError("requires 1, 2, 4, 8, 16, 32 processes, optionally with 64")
     ordered=sorted(records,key=lambda r:r["processes"])
     for record in ordered:
         if record["threads_per_process"]!=1: raise ValueError("requires one OpenMP thread per process")
@@ -64,7 +70,7 @@ def collect(root):
     records=[]
     baseline=root/"p1"
     validate_forcing(json.loads((baseline/"wacomm-sarno-lite-6h.json").read_text()))
-    for processes in PROCESSES:
+    for processes in process_counts(root):
         run=root/f"p{processes}"
         provenance=run/"provenance"
         if int((provenance/"exit.txt").read_text())!=0: raise ValueError(f"{run}: failed application")
@@ -123,14 +129,15 @@ def render(records,output):
         ax.spines[["top","right"]].set_visible(False)
         ax.legend(loc="lower left" if kind=="efficiency" else "upper left",frameon=False,fontsize=9)
         fig.get_layout_engine().set(rect=(0,0.12,1,0.88))
-        fig.text(0.02,0.025,f"high-wn · exclusive node · 1 run per point · solver baseline {records[0]['solver_seconds']:.3f} s\n"
+        layout="norm-wn · exclusive nodes · 64 ranks use two nodes" if 64 in counts else "high-wn · exclusive node"
+        fig.text(0.02,0.025,f"{layout} · 1 run per point · solver baseline {records[0]['solver_seconds']:.3f} s\n"
                  "No download or ROMS preparation in any timed run. Single samples; no uncertainty bars.",fontsize=9,color="#39434d")
         for extension in ("svg","pdf","png"):
             path=output/f"sarno-{kind}.{extension}"
             fig.savefig(path,dpi=400,metadata={"Creator":"WaComM++ scaling_figures.py"})
             if extension=="svg":
                 text=path.read_text();start=text.index('>',text.index('<svg'))+1
-                description=f"Measured solver and full-application {kind} for 1, 2, 4, 8, 16, and 32 MPI processes, one OpenMP thread each. Both axes use logarithmic scales. Single samples, no uncertainty estimates."
+                description=f"Measured solver and full-application {kind} for {', '.join(map(str,counts))} MPI processes, one OpenMP thread each. Both axes use logarithmic scales. Single samples, no uncertainty estimates."
                 text=text[:start]+f"\n<title>Sarno lite strong-scaling {kind}</title>\n<desc>{description}</desc>"+text[start:]
                 path.write_text("\n".join(line.rstrip() for line in text.splitlines())+"\n")
                 ET.parse(path)
@@ -154,7 +161,7 @@ def main():
                 "workload":"2021-07-01 09:00–15:00 UTC, native WaComM forcing from processed-6h, dry=false, seed 5489; unchanged scientific configuration",
                 "timing":{"primary":"Sum of five rank-zero steady-clock solver interval durations, bounded by MPI barriers; excludes forcing download, preparation, loading and file writes; includes source emission, scatter/gather, particle updates and concentration", "secondary":"GNU time elapsed seconds around mpirun; includes startup, native forcing reads, solver and writes; excludes downloading, ROMS preparation, staging, queue wait and checksums"},
                 "estimators":{"speedup":"T1/Tp","efficiency":"T1/(p*Tp)","T":"sum of solver interval seconds; separate ratios also computed from full application elapsed seconds","time_units":"seconds","samples_per_process_count":1},
-                "limitations":"Single sequential ascending sweep on one exclusive node. Cache, memory bandwidth, I/O and system variation are uncontrolled. No uncertainty or multi-thread scaling estimate; efficiency uses active MPI ranks, not all reserved node cores.",
+                "limitations":("Single sequential ascending sweep; 1–32 ranks use one exclusive node and 64 ranks use two exclusive nodes. " if 64 in process_counts(root) else "Single sequential ascending sweep on one exclusive node. ")+"Cache, memory bandwidth, I/O and system variation are uncontrolled. No uncertainty or multi-thread scaling estimate; efficiency uses active MPI ranks, not all reserved node cores.",
                 "configuration":json.loads((root/"p1/wacomm-sarno-lite-6h.json").read_text()),
                 "preparation":{"configuration":json.loads((root.parent/"preparation/wacomm-sarno-lite-6h.json").read_text()),
                                "submission_script":(root.parent/"preparation/submit.sh").read_text(),

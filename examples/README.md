@@ -10,6 +10,12 @@ For each run, inspect the JSON before use, replace local forcing paths, record i
 
 Every scenario guide states its scientific objective, prerequisites, adapter variables, configuration, exact command, expected behavior, validation, limitations, interpretation, metadata checklist, and related tests. CTest enforces that every checked-in JSON artifact has a directory `README.md` guide.
 
+## Testing the example catalog
+
+Run `ctest --test-dir build -R 'example_documentation|documentation_visuals' --output-on-failure` after configuring the application build. The `example_documentation` test checks every top-level example JSON for valid syntax and a companion guide with a peer-reviewed reference; `documentation_visuals` checks versioned figures and their references. Run `ctest --test-dir build --output-on-failure` for the full configured application and backend test suite, and `ctest --test-dir build-core --output-on-failure` for the portable-core suite. MPI parity needs a runtime that permits local MPI/PMIx sockets.
+
+These checks do not execute every scenario. Most example configurations name forcing, source, restart, or hardware resources that are not bundled with the repository. For a physical run, stage the inputs listed in its guide and use that guide's command and verification procedure. The Sarno lite guide also records a completed seven-point MPI run and its exact particle-state comparison.
+
 Completed runs can be inspected with the documented [trajectory diagnostic workflow](../docs/trajectory-diagnostics.md). It consumes multiple single-time WaComM++ NetCDF snapshots and creates machine-readable spread statistics, an annotated SVG map, and optionally a self-contained interactive physical-time viewer; it is a postprocessor and cannot change or validate solver physics.
 
 The release-oriented set is `forward/backward-roms`, `forward/backward-nemo`, `forward/backward-hycom`, `forward/backward-wacomm`, `stochastic-forward`, `stochastic-backward-ensemble`, `restart-forward`, `restart-backward`, and the OpenMP, MPI, and CUDA parallel examples. Files named for historical webinars, oil-spill demonstrations, SAR exercises, or regional use cases retain their original scientific context and require the external datasets stated in their directory guides. Source-only GeoJSON artifacts are not standalone run configurations; their guides show how to reference them from a complete configuration.
