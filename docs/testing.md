@@ -52,6 +52,12 @@ The native-adapter regression reads a real fixture through both `WACOMM` and his
 
 The final native-replay/timing change passed all [22 serial application checks](figures/sarno-lite/scaling/validation-serial.log), [23 MPI/OpenMP checks](figures/sarno-lite/scaling/validation-mpi-openmp.log), and [12 portable-core/diagnostic checks](figures/sarno-lite/scaling/validation-core.log), without skips. Archived solver logs for each process count and the scaling report record the actual six-hour verification evidence.
 
+`openmp_scaling_figures` checks exact thread-count coverage, one-process enforcement, ideal and nonideal speedup/efficiency, input-order independence, rejection of invalid times, and accessible SVG/PDF/PNG exports. Missing optional plotting dependencies produce skip code 77. The actual [OpenMP sweep](../examples/wacomm-sarno-lite.md#openmp-strong-scaling-and-mpi-comparison) additionally checks particle-state equivalence to the MPI one-process run, common forcing/configuration/binary identity, runtime thread settings, and complete physical-interval timing records. No model source changes are needed for this experiment.
+
+OpenMP affinity verification requires one hardware thread per physical core, distinct runtime worker affinities for multi-thread runs, and a single resolved OpenMP place plus MPI binding for the one-thread case. This collector is intentionally limited to the recorded non-SMT topology; it does not infer physical-core equivalence on an SMT host.
+
+The OpenMP experiment passed all [13 portable-core and diagnostic CTest checks](figures/sarno-lite/openmp-scaling/validation-core-diagnostics.log), including the new plotting regression, with no skips. All six actual one-process runs completed and matched the MPI reference particle states exactly.
+
 ## References
 
 - Oberkampf, W. L., and Trucano, T. G. (2002). Verification and validation in computational fluid dynamics. *Progress in Aerospace Sciences*, 38, 209–272. [doi:10.1016/S0376-0421(02)00005-2](https://doi.org/10.1016/S0376-0421(02)00005-2).

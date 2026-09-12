@@ -173,6 +173,8 @@ $$
 
 Equality of the endpoint time and dynamic fields is exact numeric equality after the existing geometry checks. A conflicting equal-time record is rejected. This identity operation preserves the original interpolation interval, source emission schedule, and stochastic coordinates; it introduces no zero-duration interval or additional release. It applies to either endpoint chosen by the solver, preserving forward/backward and restarted forcing support. The [native adapter regression](testing.md) exercises both endpoint choices with restart equivalence. This is a correction to replay of already-normalized data, not a new physical parameterization.
 
+The [OpenMP/MPI comparison](../examples/wacomm-sarno-lite.md#openmp-strong-scaling-and-mpi-comparison) holds the governing model and forcing fixed. Different thread/process decompositions are verified through exact stored-particle comparisons; measured speedup and efficiency concern computation, not physical accuracy or observational validation.
+
 ## References
 
 - Dimou, K. N., and Adams, E. E. (1993). A random-walk, particle tracking model for well-mixed estuaries and coastal waters. *Estuarine, Coastal and Shelf Science*, 37, 99–110. [doi:10.1006/ecss.1993.1044](https://doi.org/10.1006/ecss.1993.1044).

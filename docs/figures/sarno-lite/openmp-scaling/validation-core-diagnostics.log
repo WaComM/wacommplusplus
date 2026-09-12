@@ -1,0 +1,31 @@
+Test project /home/montella/devel/wacommplusplus/build-core
+      Start  1: drift_model
+ 1/13 Test  #1: drift_model ...........................   Passed    0.00 sec
+      Start  2: numerical_helpers
+ 2/13 Test  #2: numerical_helpers .....................   Passed    0.00 sec
+      Start  3: array_storage
+ 3/13 Test  #3: array_storage .........................   Passed    0.00 sec
+      Start  4: environmental_regridding
+ 4/13 Test  #4: environmental_regridding ..............   Passed    0.00 sec
+      Start  5: reproducibility_manifest
+ 5/13 Test  #5: reproducibility_manifest ..............   Passed    0.08 sec
+      Start  6: example_documentation
+ 6/13 Test  #6: example_documentation .................   Passed    0.03 sec
+      Start  7: documentation_visuals
+ 7/13 Test  #7: documentation_visuals .................   Passed    0.05 sec
+      Start  8: native_hardware_validation_contract
+ 8/13 Test  #8: native_hardware_validation_contract ...   Passed    0.02 sec
+      Start  9: trajectory_diagnostics
+ 9/13 Test  #9: trajectory_diagnostics ................   Passed    0.66 sec
+      Start 10: publication_figures
+10/13 Test #10: publication_figures ...................   Passed    6.35 sec
+      Start 11: particle_snapshot_comparison
+11/13 Test #11: particle_snapshot_comparison ..........   Passed    0.15 sec
+      Start 12: scaling_figures
+12/13 Test #12: scaling_figures .......................   Passed    1.36 sec
+      Start 13: openmp_scaling_figures
+13/13 Test #13: openmp_scaling_figures ................   Passed    1.45 sec
+
+100% tests passed out of 13
+
+Total Test time (real) =  10.20 sec

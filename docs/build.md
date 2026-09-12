@@ -114,6 +114,10 @@ bash tools/run_sarno_scaling.sh
 
 This enables the OpenMP implementation but gives each MPI rank exactly one OpenMP worker during the benchmark. It does not measure multi-thread scaling. The executable retains private OpenSSL and serial NetCDF/HDF5. Preparation requires the six downloaded ROMS files under `data/wacomm-sarno-lite/roms/`; it regenerates `processed-6h/` in a separate one-process job. The sweep requires that preparation to finish successfully, GNU `time`, Slurm, and disk space for six sets of particle/gridded outputs (native forcing is shared). It refuses to reuse an existing `scaling/` directory. CMake must discover the optional plotting environment to run `scaling_figures`; see the example for Python dependencies.
 
+### OpenMP thread sweep with one MPI process
+
+The [OpenMP Sarno comparison](../examples/wacomm-sarno-lite.md#openmp-strong-scaling-and-mpi-comparison) reuses the exact Release MPI/OpenMP binary from the MPI experiment; CUDA remains disabled. Run `bash tools/run_sarno_openmp_scaling.sh high-wn` after the native preparation and MPI sweep. The wrapper rejects an executable that differs from the archived MPI one-process binary so changes in optimization or provenance cannot silently change the comparison. It varies Slurm CPUs per task and OpenMP threads over 1, 2, 4, 8, 16, and 32 while keeping one MPI process. Python plotting dependencies remain optional and separate from the portable core.
+
 ## References
 
 - Sandve, G. K., Nekrutenko, A., Taylor, J., and Hovig, E. (2013). Ten simple rules for reproducible computational research. *PLoS Computational Biology*, 9, e1003285. [doi:10.1371/journal.pcbi.1003285](https://doi.org/10.1371/journal.pcbi.1003285).

@@ -100,6 +100,8 @@ Saved native windows can contain an adjacent boundary already used for interpola
 
 The native adapter accepts both `WACOMM` and the historical documented spelling `WaComM`; both select the same implementation and field conventions.
 
+The OpenMP scaling sweep changes only Slurm CPUs per task and OpenMP thread settings, keeping one MPI process and the identical native-forcing scientific configuration from the MPI sweep. Its roots are `data/wacomm-sarno-lite/openmp-scaling/tN/`. No adapter, seed, tracking, restart, source, or output option is changed.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

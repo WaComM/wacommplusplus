@@ -172,6 +172,59 @@ These measurements favor 16 ranks for the solver phase and four ranks for this c
 
 **Reproducibility metadata.** The [scaling report](../docs/figures/sarno-lite/scaling/scaling-results.json) contains preparation and performance job IDs, per-interval solver times, full elapsed times, ratios, complete configuration, compiler flags and CMake cache, Git revision and working diff, staged submission scripts, CPU topology, MPI/OpenMP environment, binding records, input/output checksums, exact particle comparisons, and plot hashes. GNU Release uses `-O3 -DNDEBUG` with `-fopenmp` and no fast-math option. Preserve all runtime data separately from Git. Earlier default-build, ROMS-forcing, and pre-fix native-boundary pilots were cancelled and excluded; they remain locally archived for traceability.
 
+## OpenMP strong scaling and MPI comparison
+
+**Question and fixed workload.** Compare one MPI process with 1, 2, 4, 8, 16, and 32 OpenMP threads against the MPI sweep above at the same active core counts. The physical question, six-hour window, seed 5489, five source batches, native fields and units, boundaries, and missing 12:00 forcing limitation are unchanged. This is computational verification and performance evidence for the passive-release configuration, not observational validation.
+
+**Prerequisites and exact command.** Reuse the Release MPI/OpenMP executable with CUDA disabled, the successful one-process preparation job, and its six `processed-6h/` files. The wrapper requires the build executable to be byte-identical to `scaling/p1/wacommplusplus`; a rebuilt binary with different provenance or compiler settings requires a new matched MPI baseline. Native inputs are checked against preparation checksums before submission. The partition is `high-wn`; `high-w` is not a configured partition on this host.
+
+```bash
+bash tools/run_sarno_openmp_scaling.sh high-wn
+```
+
+The wrapper stages `data/wacomm-sarno-lite/openmp-scaling/tN/`, copies the exact MPI scientific configuration, and submits jobs sequentially with `--nodes=1 --ntasks=1 --cpus-per-task=N --exclusive --mem=0 --time=01:00:00`. Each job reserves the full node; efficiency divides by active threads, not all reserved cores. It launches `mpirun --np 1 --map-by slot:PE=N --bind-to core --report-bindings`, with `OMP_NUM_THREADS=N`, `OMP_THREAD_LIMIT=N`, `OMP_DYNAMIC=FALSE`, `OMP_PROC_BIND=SPREAD`, and `OMP_PLACES=cores`. The OpenMP runtime displays its environment and thread affinity for verification. These settings spread threads within the process's allocated core set; they do not promise equal NUMA locality of every array. The 32-core node has two 16-core Intel Xeon Gold 5218 sockets. Existing OpenMP run directories must be archived before a repeat.
+
+**Outputs, timing, and verification.** Runs read shared native forcing with `ocean_model="WaComM"` and `save_input=false`, retaining particle snapshots and gridded counts. There is no downloading or forcing regeneration in this sweep. The same synchronized solver timers exclude forcing loading/preparation and file writes; the secondary full-application timer includes native reads, initialization, and output. Let $n$ be the dimensionless OpenMP thread count and $T_n$ the sum of five solver durations in seconds. Speedup is $T_1/T_n$ and efficiency is $T_1/(nT_n)$, displayed in percent. Each sweep uses its own one-core baseline; absolute times are also reported to expose baseline differences. Full-application ratios use a separate full-runtime baseline.
+
+```bash
+MPLCONFIGDIR=/tmp/wacomm-mpl data/wacomm-sarno-lite/venv/bin/python \
+  tools/openmp_scaling_figures.py data/wacomm-sarno-lite/openmp-scaling \
+  --mpi-root data/wacomm-sarno-lite/scaling \
+  --mpi-report docs/figures/sarno-lite/scaling/scaling-results.json \
+  --output-dir docs/figures/sarno-lite/openmp-scaling
+```
+
+The collector requires all six successful runs, positive finite durations for the five physical intervals, one process, recorded thread/allocation settings, and identical executable/configuration/source hashes to the MPI reference. It compares every saved particle variable to MPI one-process output by exact integer identity and physical time, with zero numeric tolerance and identical masks. Global build attributes, gridded fields, and native forcing are outside that particle comparison. Forcing manifest equality and archived MPI log hashes are checked separately. No missing point is imputed. The [OpenMP report](../docs/figures/sarno-lite/openmp-scaling/openmp-scaling-results.json) archives the complete configuration, timing intervals, job IDs, allocation, affinity, module/platform/build provenance, hashes, comparisons, and figure hashes.
+
+![Computational diagnostic comparing OpenMP solver and full-application speedup with the MPI solver at identical active core counts.](../docs/figures/sarno-lite/openmp-scaling/sarno-openmp-speedup.svg)
+
+**Figure 5 — Computational diagnostic.** One MPI process, six OpenMP thread counts; blue measures the solver with forcing excluded, orange measures full application elapsed time, and green shows the historical MPI solver at matching active cores. Each series uses its own one-core baseline. The dashed gray line is ideal linear scaling; both axes are logarithmic. [PDF](../docs/figures/sarno-lite/openmp-scaling/sarno-openmp-speedup.pdf) · [400 dpi PNG](../docs/figures/sarno-lite/openmp-scaling/sarno-openmp-speedup.png).
+
+![Computational diagnostic comparing OpenMP solver and full-application efficiency with the MPI solver efficiency at identical active core counts.](../docs/figures/sarno-lite/openmp-scaling/sarno-openmp-efficiency.svg)
+
+**Figure 6 — Computational diagnostic.** Efficiency divides the independently normalized speedup by active threads or ranks. The gray 100% line is ideal scaling, not a fitted result. There is one observation per point and no uncertainty estimate. [PDF](../docs/figures/sarno-lite/openmp-scaling/sarno-openmp-efficiency.pdf) · [400 dpi PNG](../docs/figures/sarno-lite/openmp-scaling/sarno-openmp-efficiency.png).
+
+**Measured results.** Jobs **6262–6267** completed on `wn01` in `high-wn`, all with exit code zero. All five saved particle snapshots match the MPI one-process reference exactly at every thread count. All [13 core/diagnostic checks](../docs/figures/sarno-lite/openmp-scaling/validation-core-diagnostics.log) passed without skips. Affinity records place the workers on distinct cores: counts through 16 use cores on the first socket, and 32 threads span both sockets. GNU OpenMP does not print a level-1 team-affinity line for its one-thread execution; its single resolved OpenMP place and OpenMPI core binding verify that case.
+
+| OpenMP threads | Job | Solver time (s) | Solver speedup | Solver efficiency | Application time (s) | Application speedup |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 6262 | 10.9269 | 1.000× | 100.00% | 24.41 | 1.000× |
+| 2 | 6263 | 5.4651 | 1.999× | 99.97% | 16.46 | 1.483× |
+| 4 | 6264 | 2.9034 | 3.763× | 94.09% | 13.41 | 1.820× |
+| 8 | 6265 | 1.6090 | 6.791× | 84.89% | 12.88 | 1.895× |
+| 16 | 6266 | 0.9667 | 11.303× | 70.65% | 12.01 | 2.032× |
+| 32 | 6267 | 0.5139 | 21.261× | 66.44% | 11.70 | 2.086× |
+
+**Observed scaling.** Solver time falls from **10.9269 s** at one thread to **0.5139 s** at 32 threads, a **21.26× speedup with 66.44% efficiency**. Two threads are nearly ideal (99.97% efficiency); efficiency then decreases as overhead and work that does not scale perfectly become more important. Unlike the MPI sweep, OpenMP continues improving from 16 to 32 active cores in this experiment. The full application improves from **24.41 s to 11.70 s (2.09×)**, but gains after four threads are much smaller than solver gains. At 32 threads only about 4.4% of full runtime lies inside the measured solver intervals; native I/O, initialization, allocation, synchronization outside the interval, and output remain outside that primary timer. None of the benchmark times includes downloading or the separate forcing-regeneration job.
+
+**Comparison with MPI.** At 16 active cores, OpenMP uses 0.9667 s for the solver versus MPI's 1.6399 s. At 32, the measured absolute solver-time ratio is **3.42× in favor of OpenMP** (0.5139 s versus 1.7583 s), and the application-time ratio is **3.06×** (11.70 s versus 35.76 s). MPI solver speedup peaks at 16 ranks (6.44×), then drops to 6.01× at 32; OpenMP reaches 21.26× at 32. MPI's best observed full-runtime point was four ranks (18.80 s), whereas OpenMP's lowest full runtime is at 32 threads (11.70 s). These are single-sweep observations, not statistically established optima.
+
+The independently measured one-core solver baselines differ by **3.46%**: OpenMP 10.9269 s versus MPI 10.5618 s, even though the binary and physical results are identical. Separately normalized speedups therefore must not be divided and interpreted directly as absolute runtime ratios. The absolute 32-core comparison above avoids that baseline effect. Both sweeps show lower efficiency at larger core counts and much weaker full-application speedup than solver speedup; the major difference is OpenMP's continued solver improvement across the second socket, while the one-thread-per-rank MPI run levels off.
+
+**Similarities, differences, and interpretation.** Both experiments use the same solver equations, seeded particles, forcing, binary, node, and physical intervals. Both retain work that does not divide perfectly with active core count, so ideal linear scaling is a reference rather than an expectation (Amdahl, 1967). MPI distributes particles among processes with separate ocean-array copies and scatter/gather communication; OpenMP threads share the one process's ocean arrays and particle storage. OpenMP also parallelizes concentration/mask loops that used one thread on MPI rank zero in the earlier sweep. Thus identical core counts do not imply identical memory traffic, communication, or available parallel work. These architectural differences can explain different scaling shapes, but the two elapsed-time measures do not identify individual bottleneck costs.
+
+The MPI reference is historical, not interleaved or rerun alongside OpenMP. Each count has one sample, and filesystem caches, CPU frequency, NUMA first-touch placement, and background system behavior are uncontrolled. Affinity settings differ between processes and threads and are archived; runtime diagnostic overhead is not separately subtracted. Comparisons describe this fixed workload and execution policy, not statistically established superiority or a general recommendation for other particle counts, grids, or machines. No hybrid multi-rank/multi-thread or multi-node experiment is implied. Preserve the ignored runtime directories separately from Git for reproducibility.
+
 ## References
 
 

@@ -309,5 +309,9 @@ if(BUILD_TESTING)
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ScalingFiguresTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/scaling_figures.py")
         set_tests_properties(scaling_figures PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME openmp_scaling_figures COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/OpenMPScalingFiguresTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/openmp_scaling_figures.py")
+        set_tests_properties(openmp_scaling_figures PROPERTIES SKIP_RETURN_CODE 77)
     endif()
 endif()
