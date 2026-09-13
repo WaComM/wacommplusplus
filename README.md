@@ -53,7 +53,7 @@ The [one-process OpenMP sweep](examples/wacomm-sarno-lite/README.md#openmp-stron
 
 An [extended Sarno MPI sweep](examples/wacomm-sarno-lite/README.md#extended-mpi-performance-test-164-processes) measures 1–64 ranks with one OpenMP thread each on `norm-wn`; the 64-rank case uses two nodes. Its separate plots and report retain timing, allocation, and exact particle-state evidence.
 
-A [Sarno CUDA performance diagnostic](examples/wacomm-sarno-lite/README.md#mpi-openmp-and-cuda-performance-diagnostic-on-low-gn) measures one, two, and four MPI ranks with one V100 GPU and one OpenMP thread per rank on `low-gn`. Those archived application outputs have not been rerun after the grid-metric and interpolation corrections. A subsequent synthetic CPU/CUDA particle parity test passed on one V100 in Slurm job 6358; the historical Sarno plots remain performance diagnostics rather than a validated CPU–CUDA application comparison.
+A [Sarno CUDA performance diagnostic](examples/wacomm-sarno-lite/README.md#mpi-openmp-and-cuda-performance-diagnostic-on-low-gn) measures one, two, and four MPI ranks with one V100 GPU and one OpenMP thread per rank on `low-gn`. Those archived performance outputs predate the grid-metric and interpolation corrections. After synthetic parity passed in Slurm job 6358, a fresh six-hour Sarno CPU/CUDA comparison on `gn03` (jobs 6360 and 6361) passed declared numerical state tolerances and matched all gridded variables exactly; see the [consistency report](examples/wacomm-sarno-lite/docs/figures/gn03-cpu-gpu-consistency.json). The historical plots remain performance diagnostics from the earlier implementation.
 
 ## References
 
