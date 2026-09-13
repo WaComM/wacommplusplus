@@ -21,6 +21,10 @@ The adapter preserves chronological time and velocity sign; the solver visits re
 Closures, decay, and numerical error are not necessarily invertible, and missing fields remove modeled processes. Report candidate origins conditional on the forcing. Archive revision, configuration, endpoint/forcing checksums, seed, toolchain, dependencies, platform/backend settings, tolerances, tests, and outputs.
 
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

@@ -16,6 +16,10 @@ The solver applies negative temporal orientation to the complete current-plus-le
 
 The result is a sensitivity ensemble conditional on the empirical Gaussian residual model, not a Bayesian posterior or proof of a unique origin. It excludes forcing uncertainty, side uncertainty, jibing, turbulent diffusion, Stokes drift, and boundary irreversibility. Gaussian tails are unbounded. Archive the Git revision, complete JSON, endpoint/source and forcing checksums, seed and particle identities, compiler/dependencies, CMake/backend options, platform and parallel layout, tolerances, and output checksums.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).

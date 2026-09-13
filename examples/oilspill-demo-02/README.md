@@ -25,6 +25,10 @@ Particles should initialize within the polygon on supported wet cells. Overlay t
 Near-shore behavior is sensitive to grid resolution and closure settings. The scenario contains no oil weathering, mass, windage, or observations and cannot support impact claims by itself. Archive source/configuration and forcing checksums, revision, seed, compiler, dependencies, backend layout, tolerances, tests, and outputs. See [adapters](../../docs/adapters.md) and [reproducibility](../../docs/reproducibility.md).
 
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

@@ -25,6 +25,10 @@ Files are traversed oldest-to-newest and adapters do not reverse or negate field
 The external archive and source rates are not controlled or calibrated by this repository. Results are conditional on the forcing version, resolution and model closures. Preserve downloaded forcing and checksums, source/configuration checksums, revision, seed, toolchain, backend layout, tolerances, tests, and output checksums.
 
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

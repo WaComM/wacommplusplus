@@ -64,6 +64,8 @@ OpenMP affinity verification requires one hardware thread per physical core, dis
 
 The OpenMP experiment passed all [13 portable-core and diagnostic CTest checks](../examples/wacomm-sarno-lite/docs/figures/openmp-scaling/validation-core-diagnostics.log), including the new plotting regression, with no skips. All six actual one-process runs completed and matched the MPI reference particle states exactly.
 
+The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
+
 ## References
 
 - Oberkampf, W. L., and Trucano, T. G. (2002). Verification and validation in computational fluid dynamics. *Progress in Aerospace Sciences*, 38, 209–272. [doi:10.1016/S0376-0421(02)00005-2](https://doi.org/10.1016/S0376-0421(02)00005-2).

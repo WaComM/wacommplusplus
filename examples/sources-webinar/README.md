@@ -25,6 +25,10 @@ The run should accept the point as wet and emit at the requested rate. Check log
 This is a demonstration sampling density, not a measured discharge. The external 2019 forcing is not distributed here. Record all configuration/source changes, input checksums, revision, seed, compiler, dependencies, backend layout, tolerances, tests, and output checksums. See [parallelism](../../docs/parallelism.md) and [reproducibility](../../docs/reproducibility.md).
 
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

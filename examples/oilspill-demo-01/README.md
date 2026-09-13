@@ -25,6 +25,10 @@ Initial particles should sample the polygon and valid wet cells. Plot the initia
 This hypothetical release does not specify oil chemistry, weathering, windage, mass, or observations. Interpret it only as particle transport under the configured model. Archive the polygon, configuration, forcing checksums, revision, seed, toolchain, backend settings, tolerances, test results, and output checksums. See [configuration](../../docs/configuration.md) and [model](../../docs/model.md).
 
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

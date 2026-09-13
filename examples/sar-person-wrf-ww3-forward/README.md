@@ -16,6 +16,10 @@ The deterministic velocity is ocean current plus empirical leeway plus WW3 surfa
 
 WRF wind and WW3 Stokes components are bilinearly interpolated and therefore smoothed but not conservatively remapped; record source and target grids and quantify resolution sensitivity. Curvilinear cell lookup is spatially indexed, but highly overlapping cell bounds can still increase preprocessing cost. No projected-coordinate transform, coefficient uncertainty, jibing, or depth-dependent Stokes profile is applied. The result is conditional on object class and forcing accuracy and is not an operational search area. CUDA accelerates common-grid sampling and particle integration but does not accelerate NetCDF reading, metadata validation, vector rotation, or regridding. Archive all input checksums, resolved configuration, Git revision, compiler and dependencies, CMake options, parallel layout, CUDA toolkit/driver/GPU where applicable, tolerances, and output checksums.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).

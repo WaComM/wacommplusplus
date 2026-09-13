@@ -16,6 +16,10 @@ Each stable identity receives one keyed initial side. At every completed substep
 
 The initial 0.5 prior and hourly 0.04 transition probability are user-declared illustrative assumptions, not observational calibration, posterior probability, confidence statement, or search-area estimate. The constant hazard omits environmental or object-state dependence, permits repeated transitions across steps, and resolves at most one transition within a substep. This example omits coefficient, forcing, object-class, release-position, and shoreline uncertainty. Archive the Git revision, complete configuration, source/forcing checksums, seed and stable identities, `dti`, resolved side values, compiler/dependencies, CMake/backend options, platform layout, tolerances, and output checksums.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).

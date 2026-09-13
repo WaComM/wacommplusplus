@@ -16,6 +16,10 @@ The same seed and identity produce reproducible initial-side and substep-transit
 
 The output is a conditional sensitivity ensemble, not a unique inverse trajectory, calibrated posterior, confidence region, or operational search area. Both probabilities are explicit experiment assumptions. The constant-hazard law omits dependence on sea state, object attitude, or elapsed state duration and resolves at most one transition per substep. Archive revision, resolved configuration, endpoint/forcing/restart checksums, seed, stable identities, `dti`, resolved sides, compiler/dependencies, CMake/backend options, execution layout, tolerances, and output checksums.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).

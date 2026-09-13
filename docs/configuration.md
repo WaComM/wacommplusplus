@@ -102,6 +102,8 @@ The native adapter accepts both `WACOMM` and the historical documented spelling 
 
 The OpenMP scaling sweep changes only Slurm CPUs per task and OpenMP thread settings, keeping one MPI process and the identical native-forcing scientific configuration from the MPI sweep. Its roots are `data/wacomm-sarno-lite/openmp-scaling/tN/`. No adapter, seed, tracking, restart, source, or output option is changed.
 
+The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

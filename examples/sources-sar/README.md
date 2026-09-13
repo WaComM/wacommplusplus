@@ -29,6 +29,10 @@ Particles appear only at the declared timestamp and then follow the configured p
 The point and ensemble do not encode observational uncertainty, windage, object leeway, or rescue probability. Interpret output as candidate drift under the selected circulation and closures. Archive the source/configuration and forcing checksums, revision, seed, toolchain, backend settings, tolerances, tests, and output checksums. Related guidance is in [model](../../docs/model.md), [configuration](../../docs/configuration.md), and [reproducibility](../../docs/reproducibility.md).
 
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

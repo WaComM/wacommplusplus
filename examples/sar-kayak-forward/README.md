@@ -16,6 +16,10 @@ The run writes snapshots rooted at `sar-kayak-forward`. In zero current, the cat
 
 The coefficient class describes a specific experimental distress configuration and is not a universal kayak model. Constant wind omits meteorological structure; the run also omits coefficient uncertainty, wind error, waves, jibing, classification uncertainty, and operational search-area inference. Interpret output as a deterministic sensitivity trajectory conditional on the class and forcing. Archive the Git revision, complete configuration, forcing/source checksums, object source key, compiler and dependencies, CMake options, platform/backend layout, tolerances, and output checksums.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100--109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).

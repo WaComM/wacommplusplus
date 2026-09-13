@@ -16,6 +16,10 @@ The solver traverses the chronological forcing in reverse while the WRF and WW3 
 
 Deterministic backtracking is a kinematic reconstruction conditional on forcing and object coefficients, not a posterior probability distribution. WRF wind and WW3 Stokes components are bilinearly interpolated and therefore smoothed but not conservatively remapped; record source and target grids and quantify resolution sensitivity. Curvilinear cell lookup is spatially indexed, but highly overlapping cell bounds can still increase preprocessing cost. No projected-coordinate transform, coefficient uncertainty, jibing, or depth-dependent Stokes profile is applied. Classical leeway coefficients may already contain wave-correlated motion, so explicit Stokes addition requires observational calibration to avoid double counting. CUDA accelerates common-grid sampling and integration, not adapter normalization. Archive all ocean, WRF, and WW3 checksums, resolved configuration, Git revision, compiler and dependencies, CMake options, parallel layout, CUDA toolkit/driver/GPU where applicable, tolerances, and output checksums.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).

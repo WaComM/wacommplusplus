@@ -16,6 +16,10 @@ Particles sharing object class, side, forcing, and release state acquire distinc
 
 This ensemble samples independent Gaussian regression residuals; it does not sample forcing error, object misclassification, crosswind-side uncertainty, jibing, coastline uncertainty, or Stokes drift. Members are conditional trajectory hypotheses, not calibrated probabilities or an operational search area. Gaussian residuals are unbounded and may reverse a component for an individual draw. Record the Git revision, complete JSON, source/forcing checksums, particle identities, seed, compiler and dependencies, CMake/backend options, platform and parallel layout, numerical tolerances, and output checksums.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).

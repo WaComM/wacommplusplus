@@ -30,3 +30,7 @@ Thygesen (2011) is the basis for treating stochastic backward trajectories as co
 - OpenDrift Project. [Example gallery](https://opendrift.github.io/gallery/index.html), [ROMS native reader](https://opendrift.github.io/gallery/example_roms_native.html), and [vertical mixing](https://opendrift.github.io/gallery/example_vertical_mixing.html), consulted 11 September 2026. Map/profile presentation inspiration; the Sarno figures are WaComM++ results and do not establish observational validation or OpenDrift equivalence. Peer-reviewed model context is provided by Dagestad et al. (2018), cited above.
 
 - Amdahl, G. M. (1967). Validity of the single processor approach to achieving large scale computing capabilities. *AFIPS Conference Proceedings*, 30 (Spring Joint Computer Conference), 483–485. [doi:10.1145/1465482.1465560](https://doi.org/10.1145/1465482.1465560).
+
+## Performance evaluation
+
+- Hoefler, T., and Belli, R. (2015). Scientific benchmarking of parallel computing systems: twelve ways to tell the masses when reporting performance results. *Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis*, article 73, 1–12. [doi:10.1145/2807591.2807644](https://doi.org/10.1145/2807591.2807644). Repeated measurements, controlled conditions, and honest presentation of variability support the [shared performance protocol](performance-evaluation.md).

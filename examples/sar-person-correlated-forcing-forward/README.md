@@ -16,6 +16,10 @@ The run writes NetCDF output rooted at `sar-person-correlated-forcing-forward`. 
 
 The wind process is a discontinuous block field: covariance is perfect within a common configured bin and zero across its boundary. The equirectangular metre bins are inappropriate near poles or across the antimeridian, and support widths are not e-folding lengths. It omits current, wave, model-structure, object-class, and initial-condition uncertainty. The ensemble is a sensitivity experiment and is neither an observationally calibrated posterior nor a search-area probability. Archive the configuration and its scientific rationale, seed, identities, input and output checksums, Git revision, toolchain, backend layout, and tolerances.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Coppini, G., Jansen, E., Turrisi, G., Creti, S., Shchekinova, E. Y., Pinardi, N., Lecci, R., Carluccio, I., Kumkar, Y. V., D'Anca, A., Mannarini, G., Martinelli, S., Marra, P., Capodiferro, T., and Gismondi, T. (2016). A new search-and-rescue service in the Mediterranean Sea: a demonstration of the operational capability and an evaluation of its performance using real case scenarios. *Natural Hazards and Earth System Sciences*, 16, 2713–2727. [doi:10.5194/nhess-16-2713-2016](https://doi.org/10.5194/nhess-16-2713-2016).

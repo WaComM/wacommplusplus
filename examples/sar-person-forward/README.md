@@ -17,6 +17,10 @@ The run emits source particles, adds right-of-downwind person-in-water leeway to
 This example uses spatially uniform wind and deterministic mean coefficients; it does not represent wind uncertainty, jibing, Stokes drift, survival, or operational search planning. Interpret the result as a modeled future trajectory under those assumptions. Record the Git revision, complete JSON, forcing and source checksums, compiler/dependencies, CMake/backend options, platform, particle/thread/rank counts, numerical tolerances, and output checksums.
 
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

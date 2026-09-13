@@ -38,6 +38,8 @@ The [Sarno strong-scaling workflow](../examples/wacomm-sarno-lite/README.md#mpio
 
 The one-process OpenMP comparison stages `data/wacomm-sarno-lite/openmp-scaling/tN/`, shares the checksum-verified native forcing, and requires a byte-identical executable to the MPI baseline. Archive Slurm CPUs per task, MPI process core mask, `OMP_NUM_THREADS`, `OMP_THREAD_LIMIT`, `OMP_DYNAMIC`, `OMP_PROC_BIND`, `OMP_PLACES`, and runtime affinity diagnostics. Use each sweep's own baseline and retain absolute times when comparing the historical MPI results; one sample per count cannot quantify run-to-run variability. See the [OpenMP guide](../examples/wacomm-sarno-lite/README.md#openmp-strong-scaling-and-mpi-comparison).
 
+The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
+
 ## References
 
 - Peng, R. D. (2011). Reproducible research in computational science. *Science*, 334, 1226–1227. [doi:10.1126/science.1213847](https://doi.org/10.1126/science.1213847).

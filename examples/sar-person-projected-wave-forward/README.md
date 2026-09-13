@@ -16,6 +16,10 @@ PROJ transforms every ocean-grid longitude/latitude point from EPSG:4326 into EP
 
 Coordinate transformation does not rotate vector components or make interpolation conservative. The input components must already be eastward and northward; projected grid-relative vectors are unsupported. EPSG:3857 distorts scale and area and is used here as a verifiable example, not a recommendation for regional ocean products. No extrapolation occurs. This deterministic trajectory is conditional on forcing and object coefficients, not an operational search area. Archive CRS definition and PROJ version/database, Git revision, configuration, all checksums, seed, compiler/dependencies, CMake options, parallel layout, tolerances, and output checksums.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Karney, C. F. F. (2013). Algorithms for geodesics. *Journal of Geodesy*, 87, 43–55. [doi:10.1007/s00190-012-0578-z](https://doi.org/10.1007/s00190-012-0578-z).

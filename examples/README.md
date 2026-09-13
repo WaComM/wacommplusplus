@@ -30,6 +30,8 @@ The Sarno `tools/run_sarno_scaling.sh` workflow uses an MPI/OpenMP build with CU
 
 The [Sarno OpenMP comparison](wacomm-sarno-lite/README.md#openmp-strong-scaling-and-mpi-comparison) uses one process and 1, 2, 4, 8, 16, or 32 threads on `high-wn`, with native forcing and the MPI experiment's exact binary. It adds thread-scaling figures and compares equal active core counts with the MPI sweep.
 
+All runnable examples follow the [shared performance-evaluation protocol](../docs/performance-evaluation.md), including scientific equivalence and a Codex review note for every performance test.
+
 ## References
 
 The example narratives distinguish numerical verification from scientific validation and cite only peer-reviewed journal articles or peer-reviewed proceedings. Core references are Montella et al. (2023), [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012); Dagestad et al. (2018), [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018); Breivik et al. (2011), [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005); and Thygesen (2011), [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009). Each scenario guide selects the subset relevant to its modeled process.

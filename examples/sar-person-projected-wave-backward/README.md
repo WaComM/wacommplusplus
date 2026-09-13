@@ -16,6 +16,10 @@ Adapters preserve chronological forcing and vector signs. PROJ maps ocean-grid E
 
 This is a conditional kinematic reconstruction, not a unique origin or posterior distribution. Bilinear interpolation is non-conservative, no extrapolation is allowed, and the transformation does not rotate projected grid-relative vectors. EPSG:3857 is materially distorted at high latitude. Archive the CRS text, PROJ version/database, Git revision, resolved configuration, forcing/source/output checksums, seed, toolchain, CMake options, backend layout, and numerical tolerances.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Thygesen, U. H. (2011). How to reverse time in stochastic particle tracking models. *Journal of Marine Systems*, 88, 159–168. [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009).

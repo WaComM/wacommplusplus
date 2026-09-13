@@ -21,6 +21,10 @@ Repeat with seed `5489` and compare outputs, then change the seed and compare th
 Record revision, configuration, forcing/restart checksums, seed, toolchain, dependencies, platform, backend settings, tolerances, tests, ensemble size, and output checksums. See [backtracking](../../docs/backtracking.md), [restart](../../docs/restart.md), and [references](../../docs/references.md).
 
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

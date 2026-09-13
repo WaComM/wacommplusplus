@@ -55,6 +55,8 @@ An [extended Sarno MPI sweep](examples/wacomm-sarno-lite/README.md#extended-mpi-
 
 A [Sarno CUDA performance diagnostic](examples/wacomm-sarno-lite/README.md#mpi-openmp-and-cuda-performance-diagnostic-on-low-gn) measures one, two, and four MPI ranks with one V100 GPU and one OpenMP thread per rank on `low-gn`. Those archived performance outputs predate the grid-metric and interpolation corrections. After synthetic parity passed in Slurm job 6358, a fresh six-hour Sarno CPU/CUDA comparison on `gn03` (jobs 6360 and 6361) passed declared numerical state tolerances and matched all gridded variables exactly; see the [consistency report](examples/wacomm-sarno-lite/docs/figures/gn03-cpu-gpu-consistency.json). The historical plots remain performance diagnostics from the earlier implementation.
 
+The [shared performance-evaluation protocol](docs/performance-evaluation.md) applies to every runnable example and use case; it defines the CPU/GPU resource matrix, scientific equivalence gate, repeat measurements, charts, and per-test Codex review notes.
+
 ## References
 
 Montella, R., et al. (2023), “A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment,” *31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing*, 17–26. Earlier WaComM publications and ocean-model references are listed in [references](docs/references.md).

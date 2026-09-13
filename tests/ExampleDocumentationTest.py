@@ -18,6 +18,9 @@ def main():
             missing.append(str(guide.relative_to(examples)))
         else:
             text = guide.read_text()
+            if "performance-evaluation.md" not in text:
+                print(f"Missing shared performance protocol in {guide.name}")
+                return 1
             if "## References" not in text:
                 print(f"Missing References section in {guide.name}")
                 return 1

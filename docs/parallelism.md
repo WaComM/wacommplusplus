@@ -18,6 +18,8 @@ The [MPI/OpenMP Sarno sweep](../examples/wacomm-sarno-lite/README.md#mpiopenmp-s
 
 The [OpenMP Sarno sweep](../examples/wacomm-sarno-lite/README.md#openmp-strong-scaling-and-mpi-comparison) uses one MPI process with 1–32 OpenMP threads. Slurm allocates `--cpus-per-task=N`; OpenMPI binds its single process to `N` cores using `--map-by slot:PE=N --bind-to core`. `OMP_PROC_BIND=SPREAD`, `OMP_PLACES=cores`, fixed thread count, and disabled dynamic teams keep workers inside that allocation. This avoids confining all OpenMP workers to a single MPI-bound core. Affinity logs record the actual placement. Threads share environmental arrays and parallelize concentration/mask work, whereas the preceding one-thread-per-rank MPI sweep replicates arrays and uses scatter/gather. Compare the separately normalized ratios and absolute times; a single historical sweep cannot establish a causal bottleneck or universal backend ranking.
 
+The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
+
 ## References
 
 - Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

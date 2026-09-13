@@ -16,6 +16,10 @@ The run writes NetCDF output rooted at `sar-person-correlated-forcing-backward`.
 
 Each member is a conditional candidate-origin history, not the unique past path. The Gaussian block wind-error model is not a meteorological ensemble and carries no calibrated coverage probability. Its covariance is perfect inside common space/time bins and zero across boundaries; equirectangular bins are unsuitable near poles and the antimeridian. It excludes current and wave error, object misclassification, and observation error. Archive parameter provenance, seed, identities, configuration, forcing/restart/output checksums, revision, dependencies, backend settings, and tolerances.
 
+## Performance evaluation
+
+Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+
 ## References
 
 - Coppini, G., Jansen, E., Turrisi, G., Creti, S., Shchekinova, E. Y., Pinardi, N., Lecci, R., Carluccio, I., Kumkar, Y. V., D'Anca, A., Mannarini, G., Martinelli, S., Marra, P., Capodiferro, T., and Gismondi, T. (2016). A new search-and-rescue service in the Mediterranean Sea: a demonstration of the operational capability and an evaluation of its performance using real case scenarios. *Natural Hazards and Earth System Sciences*, 16, 2713–2727. [doi:10.5194/nhess-16-2713-2016](https://doi.org/10.5194/nhess-16-2713-2016).
