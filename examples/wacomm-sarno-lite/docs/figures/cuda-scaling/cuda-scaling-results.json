@@ -1,0 +1,781 @@
+{
+  "backend_equivalence": {
+    "active_particles_at_14": {
+      "cpu": 32393,
+      "cuda": 32394
+    },
+    "cpu_reference": "scaling-64/p1",
+    "cuda_particle_parity_test": "failed position assertion on Tesla V100",
+    "equal": false,
+    "first_difference": "2021-07-01 10:00 UTC: depth values differ under zero-tolerance particle comparison",
+    "max_absolute_difference_at_10": {
+      "depth_metres": 9.534231152339735e-08,
+      "latitude_degrees": 8.359890557585459e-10,
+      "longitude_degrees": 1.273975236415481e-08
+    }
+  },
+  "configuration": {
+    "io": {
+      "base_path": "processed-6h/",
+      "history_root": "snapshots-6h/WACOMM_rst_",
+      "mask_output": true,
+      "nc_input_root": "processed-6h/ocm3_d03_",
+      "nc_inputs": [
+        "ocm3_d03_20210701Z09.nc",
+        "ocm3_d03_20210701Z10.nc",
+        "ocm3_d03_20210701Z11.nc",
+        "ocm3_d03_20210701Z13.nc",
+        "ocm3_d03_20210701Z14.nc",
+        "ocm3_d03_20210701Z15.nc"
+      ],
+      "nc_output_root": "output-6h/wacomm_his_",
+      "ocean_model": "WaComM",
+      "save_history": "nc",
+      "save_input": false,
+      "timestep": 3600
+    },
+    "physics": {
+      "horizontal_closure": "kill",
+      "lower_closure": "constraint",
+      "random": true,
+      "random_seed": 5489,
+      "random_sources": false,
+      "shore_limit": 0.5,
+      "sigma": 3.46,
+      "survprob": 0.0001,
+      "sv": 0,
+      "tau0": 86400,
+      "upper_closure": "reflection"
+    },
+    "restart": {
+      "active": false,
+      "interval": 3600,
+      "restart_file": ""
+    },
+    "simulation": {
+      "dry": false,
+      "end": "20210701Z15",
+      "institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
+      "name": "Sarno lite emission",
+      "start": "20210701Z09",
+      "url": "https://meteo.uniparthenope.it"
+    },
+    "sources": {
+      "active": true,
+      "sources_file": "examples/sources-sarno_river/sources-sarno_river.json"
+    },
+    "tracking": {
+      "direction": "forward"
+    }
+  },
+  "estimators": {
+    "efficiency": "T1/(p*Tp)",
+    "samples_per_count": 1,
+    "speedup": "T1/Tp"
+  },
+  "figures": [
+    {
+      "name": "sarno-cuda-speedup.svg",
+      "sha256": "fd85235925f1ffc64376b62f2695b35235a51b385d8d1ae404bab4e5c0044aff"
+    },
+    {
+      "name": "sarno-cuda-speedup.pdf",
+      "sha256": "a9dc6b574bbe479abf81ed7b37e0cf1dfff20d11993d8bb0674e34f5ab56826f"
+    },
+    {
+      "name": "sarno-cuda-speedup.png",
+      "sha256": "f60d7c796c42d669b8754c7677a1cf507e3ae44ec260ea9449e2671e5b3e16df"
+    },
+    {
+      "name": "sarno-cuda-efficiency.svg",
+      "sha256": "19b92d3a1086e08f56b19a471701ff65deb2e9421d1540006ef182dfeb99e895"
+    },
+    {
+      "name": "sarno-cuda-efficiency.pdf",
+      "sha256": "9b3707c9e4588841354701aceabfb5a07830efebfafbaef2ae77a83f7d4ef898"
+    },
+    {
+      "name": "sarno-cuda-efficiency.png",
+      "sha256": "2d45938e51c1cff809f8e58801f994a63447f488d7500c5fbc2ba4d998e4857b"
+    }
+  ],
+  "limitations": "One ascending sweep on one exclusive low-gn node. GPU/CPU particle states differ, so this is a computational diagnostic rather than backend-validated scientific performance. No timing uncertainty estimate.",
+  "plotting": {
+    "matplotlib": "3.11.1",
+    "python": "3.11.7 (main, Jan 26 2024, 20:24:17) [GCC 8.5.0 20210514 (Red Hat 8.5.0-21)]",
+    "script_sha256": "084a38cd0c48003c4fae81cad747765904c92c1cc638630c5001681a660d5029"
+  },
+  "records": [
+    {
+      "application_efficiency": 1.0,
+      "application_speedup": 1.0,
+      "checksums": {
+        "inputs.sha256": "61cc3b14abd8f47a8f89c1be927b37cec0bdfa4ac6e1239bd810351651152883  wacommplusplus\n17df9ec6c8e360d2b6bdc3df00a6da545a57bfd4e2440f9208e2aba58b5c722d  wacomm-sarno-lite-6h.json\nf7c04c9f3b7397a3334100886eda74b311b0daf07c63530a8d2c1076e5fe9687  examples/sources-sarno_river/sources-sarno_river.json\n369de6c021bd1ce551feb24c464342e05cacf1c442c9a5c6e1615a69b9f434ee  submit.sh\n",
+        "outputs.sha256": "9900f51369f9b2e9f68b85dd54c99ddd52f569d7ea33ce5618186d71df57f01f  output-6h/wacomm_his_20210701Z09.nc\n91d15ea622fd2c8dd5ed084bad503452672b00ef2243c5e10c03aa47bd3c4c71  output-6h/wacomm_his_20210701Z10.nc\n03683ac8ca9a9c572d850ea9d3eb210d2d1ac14e86c28384187638b696b0ca8f  output-6h/wacomm_his_20210701Z11.nc\nca499752524bbbb206570db50bc38a1beb592edd46ae51ce2d391f010a3c467b  output-6h/wacomm_his_20210701Z13.nc\n86a9217a94ba965be9134babcebb1ca38a9426bc730507feab3410d12c71b9f1  output-6h/wacomm_his_20210701Z14.nc\ncd1fc3c56f3fbdc21953a1590b1f723b9bc6a58810dfce3d7e73eed69ce7f58d  snapshots-6h/WACOMM_rst_20210701Z10.nc\n40fde31b6251c7cdcb9bf9b68f7ff465975fcb56e4457a653c925066be5042f3  snapshots-6h/WACOMM_rst_20210701Z11.nc\n436ced8f45bcc2fad8756b6504309fc26133f0d4444a5a44d3056ea2348c775e  snapshots-6h/WACOMM_rst_20210701Z13.nc\n44618904eaf47ab29875687ad8a06210a67a19abc730b5fad06b5f8afe62893e  snapshots-6h/WACOMM_rst_20210701Z14.nc\na0a2e6d73798af73a500804464b15afa13a6ef88ab10345d7c7d6faae4208382  snapshots-6h/WACOMM_rst_20210701Z15.nc\n"
+      },
+      "elapsed_seconds": 52.35,
+      "gpu_bindings": [
+        [
+          "0",
+          "gn02.e4.cluster",
+          "0"
+        ]
+      ],
+      "gpus_per_process": 1,
+      "job_id": 6346,
+      "nodes": 1,
+      "particle_comparison": {
+        "absolute_tolerance": 0,
+        "comparison": "exact numeric equality after integer-ID ordering",
+        "equal": true,
+        "metadata": "variable units, sign, calendar, type and dimensions compared; global build/configuration attributes excluded",
+        "relative_tolerance": 0,
+        "schema": "wacomm-particle-equivalence-v1",
+        "selection": "all stored particles, including inactive; identical masks required",
+        "snapshots": [
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "cd1fc3c56f3fbdc21953a1590b1f723b9bc6a58810dfce3d7e73eed69ce7f58d"
+            },
+            "particle_time": 1675936800.0,
+            "particles": 9926,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "cd1fc3c56f3fbdc21953a1590b1f723b9bc6a58810dfce3d7e73eed69ce7f58d"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "40fde31b6251c7cdcb9bf9b68f7ff465975fcb56e4457a653c925066be5042f3"
+            },
+            "particle_time": 1675940400.0,
+            "particles": 19003,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "40fde31b6251c7cdcb9bf9b68f7ff465975fcb56e4457a653c925066be5042f3"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "436ced8f45bcc2fad8756b6504309fc26133f0d4444a5a44d3056ea2348c775e"
+            },
+            "particle_time": 1675947600.0,
+            "particles": 24561,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "436ced8f45bcc2fad8756b6504309fc26133f0d4444a5a44d3056ea2348c775e"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "44618904eaf47ab29875687ad8a06210a67a19abc730b5fad06b5f8afe62893e"
+            },
+            "particle_time": 1675951200.0,
+            "particles": 32394,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "44618904eaf47ab29875687ad8a06210a67a19abc730b5fad06b5f8afe62893e"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "a0a2e6d73798af73a500804464b15afa13a6ef88ab10345d7c7d6faae4208382"
+            },
+            "particle_time": 1675954800.0,
+            "particles": 40109,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "a0a2e6d73798af73a500804464b15afa13a6ef88ab10345d7c7d6faae4208382"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          }
+        ]
+      },
+      "processes": 1,
+      "provenance": {
+        "cpu.txt": "Architecture:        x86_64\nCPU op-mode(s):      32-bit, 64-bit\nByte Order:          Little Endian\nCPU(s):              32\nOn-line CPU(s) list: 0-31\nThread(s) per core:  1\nCore(s) per socket:  16\nSocket(s):           2\nNUMA node(s):        2\nVendor ID:           GenuineIntel\nCPU family:          6\nModel:               85\nModel name:          Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz\nStepping:            7\nCPU MHz:             3900.000\nCPU max MHz:         3900.0000\nCPU min MHz:         1000.0000\nBogoMIPS:            4600.00\nVirtualization:      VT-x\nL1d cache:           32K\nL1i cache:           32K\nL2 cache:            1024K\nL3 cache:            22528K\nNUMA node0 CPU(s):   0-15\nNUMA node1 CPU(s):   16-31\nFlags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single intel_ppin ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke avx512_vnni md_clear flush_l1d arch_capabilities\n",
+        "cuda.txt": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Wed_Jan_15_19:20:09_PST_2025\nCuda compilation tools, release 12.8, V12.8.61\nBuild cuda_12.8.r12.8/compiler.35404655_0\n",
+        "elapsed-seconds.txt": "52.35\n",
+        "exit.txt": "0\n",
+        "gpus.txt": "GPU 0: Tesla V100-SXM2-32GB (UUID: GPU-ccac4d1e-4b03-fba1-affe-1dfd4b912bcd)\nGPU 1: Tesla V100-SXM2-32GB (UUID: GPU-0a6f179c-47f0-4ce4-c539-d35c17b95b8c)\nGPU 2: Tesla V100-SXM2-32GB (UUID: GPU-2d6c7b6d-3b60-fe13-8a93-4f403e9a35b7)\nGPU 3: Tesla V100-SXM2-32GB (UUID: GPU-ab1fe95b-4c60-1983-87c1-e7fb86e4f638)\n",
+        "job-id.txt": "6346\n",
+        "modules.txt": "Currently Loaded Modulefiles:\n 1) nvidia/cuda-12.8.0       7) openssl/openssl-4.0.2          \n 2) gcc-8.5.0/hwloc-2.10.0   8) cmake/cmake-4.4.3              \n 3) gcc-8.5.0/pmix-5.0.1     9) gcc-12.1.1/gcc                 \n 4) gcc-8.5.0/ucx-1.15.0    10) gcc-8.5.0/ucc-2023.01.18_nccl  \n 5) slurm                   11) gcc-8.5.0/slurm-23.11.3        \n 6) node/node-24            12) gcc-12.2.1/ompi-4.1.4_nccl     \n",
+        "mpi.txt": "mpirun (Open MPI) 4.1.4\n\nReport bugs to http://www.open-mpi.org/community/help/\n",
+        "openmp.txt": "OMP_DYNAMIC=FALSE\nOMP_NUM_THREADS=1\nOMP_PLACES=cores\nOMP_PROC_BIND=TRUE\nOMP_THREAD_LIMIT=1\n",
+        "platform.txt": "Linux gn02.e4.cluster 4.18.0-553.104.1.el8_10.x86_64 #1 SMP Fri Feb 13 15:51:56 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n",
+        "slurm.txt": "JobId=6346 JobName=sarno-cuda-p1\n   UserId=montella(60009) GroupId=montella(60009) MCS_label=N/A\n   Priority=250 Nice=0 Account=(null) QOS=(null)\n   JobState=RUNNING Reason=None Dependency=(null)\n   Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0\n   RunTime=00:00:01 TimeLimit=01:00:00 TimeMin=N/A\n   SubmitTime=2026-09-13T09:47:08 EligibleTime=2026-09-13T09:47:08\n   AccrueTime=2026-09-13T09:47:08\n   StartTime=2026-09-13T09:47:08 EndTime=2026-09-13T10:47:08 Deadline=N/A\n   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-09-13T09:47:08 Scheduler=Main\n   Partition=low-gn AllocNode:Sid=fesrv:910927\n   ReqNodeList=(null) ExcNodeList=(null)\n   NodeList=gn02\n   BatchHost=gn02\n   NumNodes=1 NumCPUs=32 NumTasks=1 CPUs/Task=1 ReqB:S:C:T=0:0:*:*\n   ReqTRES=cpu=1,mem=178000M,node=1,billing=1\n   AllocTRES=cpu=32,mem=178000M,node=1,billing=32\n   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*\n   MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0\n   Features=(null) DelayBoot=00:00:00\n   OverSubscribe=NO Contiguous=0 Licenses=(null) Network=(null)\n   Command=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p1/submit.sh\n   WorkDir=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p1\n   StdErr=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p1/run.err\n   StdIn=/dev/null\n   StdOut=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p1/run.out\n   Power=\n   TresPerNode=gres/gpu:tesla:4\n   TresPerTask=cpu:1\n   \n\n"
+      },
+      "runtime_stderr": "Loading gcc-12.2.1/ompi-4.1.4_nccl\n  Loading requirement: gcc-12.1.1/gcc gcc-8.5.0/ucc-2023.01.18_nccl\n    gcc-8.5.0/slurm-23.11.3\n[gn02.e4.cluster:662804] MCW rank 0 bound to socket 0[core 0[hwt 0]]: [B/././././././././././././././.][./././././././././././././././.]\n--------------------------------------------------------------------------\nWARNING: There was an error initializing an OpenFabrics device.\n\n  Local host:   gn02\n  Local device: mlx5_0\n--------------------------------------------------------------------------\n",
+      "solver_efficiency": 1.0,
+      "solver_intervals": [
+        {
+          "end": 1675936800.0,
+          "seconds": 0.587250221,
+          "start": 1675933200.0
+        },
+        {
+          "end": 1675940400.0,
+          "seconds": 0.653317531,
+          "start": 1675936800.0
+        },
+        {
+          "end": 1675947600.0,
+          "seconds": 0.503824642,
+          "start": 1675940400.0
+        },
+        {
+          "end": 1675951200.0,
+          "seconds": 0.660170302,
+          "start": 1675947600.0
+        },
+        {
+          "end": 1675954800.0,
+          "seconds": 0.548920017,
+          "start": 1675951200.0
+        }
+      ],
+      "solver_seconds": 2.953482713,
+      "solver_speedup": 1.0,
+      "stdout_sha256": "b49644cd94fca41eae5c06b3f53d6ced2585ae5d5e788bd5c233155ea4679344",
+      "threads_per_process": 1
+    },
+    {
+      "application_efficiency": 1.3354591836734693,
+      "application_speedup": 2.6709183673469385,
+      "checksums": {
+        "inputs.sha256": "61cc3b14abd8f47a8f89c1be927b37cec0bdfa4ac6e1239bd810351651152883  wacommplusplus\n17df9ec6c8e360d2b6bdc3df00a6da545a57bfd4e2440f9208e2aba58b5c722d  wacomm-sarno-lite-6h.json\nf7c04c9f3b7397a3334100886eda74b311b0daf07c63530a8d2c1076e5fe9687  examples/sources-sarno_river/sources-sarno_river.json\n369de6c021bd1ce551feb24c464342e05cacf1c442c9a5c6e1615a69b9f434ee  submit.sh\n",
+        "outputs.sha256": "9900f51369f9b2e9f68b85dd54c99ddd52f569d7ea33ce5618186d71df57f01f  output-6h/wacomm_his_20210701Z09.nc\n91d15ea622fd2c8dd5ed084bad503452672b00ef2243c5e10c03aa47bd3c4c71  output-6h/wacomm_his_20210701Z10.nc\n03683ac8ca9a9c572d850ea9d3eb210d2d1ac14e86c28384187638b696b0ca8f  output-6h/wacomm_his_20210701Z11.nc\nca499752524bbbb206570db50bc38a1beb592edd46ae51ce2d391f010a3c467b  output-6h/wacomm_his_20210701Z13.nc\n86a9217a94ba965be9134babcebb1ca38a9426bc730507feab3410d12c71b9f1  output-6h/wacomm_his_20210701Z14.nc\ncd1fc3c56f3fbdc21953a1590b1f723b9bc6a58810dfce3d7e73eed69ce7f58d  snapshots-6h/WACOMM_rst_20210701Z10.nc\n40fde31b6251c7cdcb9bf9b68f7ff465975fcb56e4457a653c925066be5042f3  snapshots-6h/WACOMM_rst_20210701Z11.nc\n436ced8f45bcc2fad8756b6504309fc26133f0d4444a5a44d3056ea2348c775e  snapshots-6h/WACOMM_rst_20210701Z13.nc\n44618904eaf47ab29875687ad8a06210a67a19abc730b5fad06b5f8afe62893e  snapshots-6h/WACOMM_rst_20210701Z14.nc\na0a2e6d73798af73a500804464b15afa13a6ef88ab10345d7c7d6faae4208382  snapshots-6h/WACOMM_rst_20210701Z15.nc\n"
+      },
+      "elapsed_seconds": 19.6,
+      "gpu_bindings": [
+        [
+          "0",
+          "gn02.e4.cluster",
+          "0"
+        ],
+        [
+          "1",
+          "gn02.e4.cluster",
+          "1"
+        ]
+      ],
+      "gpus_per_process": 1,
+      "job_id": 6347,
+      "nodes": 1,
+      "particle_comparison": {
+        "absolute_tolerance": 0,
+        "comparison": "exact numeric equality after integer-ID ordering",
+        "equal": true,
+        "metadata": "variable units, sign, calendar, type and dimensions compared; global build/configuration attributes excluded",
+        "relative_tolerance": 0,
+        "schema": "wacomm-particle-equivalence-v1",
+        "selection": "all stored particles, including inactive; identical masks required",
+        "snapshots": [
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "cd1fc3c56f3fbdc21953a1590b1f723b9bc6a58810dfce3d7e73eed69ce7f58d"
+            },
+            "particle_time": 1675936800.0,
+            "particles": 9926,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "cd1fc3c56f3fbdc21953a1590b1f723b9bc6a58810dfce3d7e73eed69ce7f58d"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "40fde31b6251c7cdcb9bf9b68f7ff465975fcb56e4457a653c925066be5042f3"
+            },
+            "particle_time": 1675940400.0,
+            "particles": 19003,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "40fde31b6251c7cdcb9bf9b68f7ff465975fcb56e4457a653c925066be5042f3"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "436ced8f45bcc2fad8756b6504309fc26133f0d4444a5a44d3056ea2348c775e"
+            },
+            "particle_time": 1675947600.0,
+            "particles": 24561,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "436ced8f45bcc2fad8756b6504309fc26133f0d4444a5a44d3056ea2348c775e"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "44618904eaf47ab29875687ad8a06210a67a19abc730b5fad06b5f8afe62893e"
+            },
+            "particle_time": 1675951200.0,
+            "particles": 32394,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "44618904eaf47ab29875687ad8a06210a67a19abc730b5fad06b5f8afe62893e"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "a0a2e6d73798af73a500804464b15afa13a6ef88ab10345d7c7d6faae4208382"
+            },
+            "particle_time": 1675954800.0,
+            "particles": 40109,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "a0a2e6d73798af73a500804464b15afa13a6ef88ab10345d7c7d6faae4208382"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          }
+        ]
+      },
+      "processes": 2,
+      "provenance": {
+        "cpu.txt": "Architecture:        x86_64\nCPU op-mode(s):      32-bit, 64-bit\nByte Order:          Little Endian\nCPU(s):              32\nOn-line CPU(s) list: 0-31\nThread(s) per core:  1\nCore(s) per socket:  16\nSocket(s):           2\nNUMA node(s):        2\nVendor ID:           GenuineIntel\nCPU family:          6\nModel:               85\nModel name:          Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz\nStepping:            7\nCPU MHz:             3900.000\nCPU max MHz:         3900.0000\nCPU min MHz:         1000.0000\nBogoMIPS:            4600.00\nVirtualization:      VT-x\nL1d cache:           32K\nL1i cache:           32K\nL2 cache:            1024K\nL3 cache:            22528K\nNUMA node0 CPU(s):   0-15\nNUMA node1 CPU(s):   16-31\nFlags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single intel_ppin ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke avx512_vnni md_clear flush_l1d arch_capabilities\n",
+        "cuda.txt": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Wed_Jan_15_19:20:09_PST_2025\nCuda compilation tools, release 12.8, V12.8.61\nBuild cuda_12.8.r12.8/compiler.35404655_0\n",
+        "elapsed-seconds.txt": "19.60\n",
+        "exit.txt": "0\n",
+        "gpus.txt": "GPU 0: Tesla V100-SXM2-32GB (UUID: GPU-ccac4d1e-4b03-fba1-affe-1dfd4b912bcd)\nGPU 1: Tesla V100-SXM2-32GB (UUID: GPU-0a6f179c-47f0-4ce4-c539-d35c17b95b8c)\nGPU 2: Tesla V100-SXM2-32GB (UUID: GPU-2d6c7b6d-3b60-fe13-8a93-4f403e9a35b7)\nGPU 3: Tesla V100-SXM2-32GB (UUID: GPU-ab1fe95b-4c60-1983-87c1-e7fb86e4f638)\n",
+        "job-id.txt": "6347\n",
+        "modules.txt": "Currently Loaded Modulefiles:\n 1) nvidia/cuda-12.8.0       7) openssl/openssl-4.0.2          \n 2) gcc-8.5.0/hwloc-2.10.0   8) cmake/cmake-4.4.3              \n 3) gcc-8.5.0/pmix-5.0.1     9) gcc-12.1.1/gcc                 \n 4) gcc-8.5.0/ucx-1.15.0    10) gcc-8.5.0/ucc-2023.01.18_nccl  \n 5) slurm                   11) gcc-8.5.0/slurm-23.11.3        \n 6) node/node-24            12) gcc-12.2.1/ompi-4.1.4_nccl     \n",
+        "mpi.txt": "mpirun (Open MPI) 4.1.4\n\nReport bugs to http://www.open-mpi.org/community/help/\n",
+        "openmp.txt": "OMP_DYNAMIC=FALSE\nOMP_NUM_THREADS=1\nOMP_PLACES=cores\nOMP_PROC_BIND=TRUE\nOMP_THREAD_LIMIT=1\n",
+        "platform.txt": "Linux gn02.e4.cluster 4.18.0-553.104.1.el8_10.x86_64 #1 SMP Fri Feb 13 15:51:56 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n",
+        "slurm.txt": "JobId=6347 JobName=sarno-cuda-p2\n   UserId=montella(60009) GroupId=montella(60009) MCS_label=N/A\n   Priority=250 Nice=0 Account=(null) QOS=(null)\n   JobState=RUNNING Reason=None Dependency=(null)\n   Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0\n   RunTime=00:00:00 TimeLimit=01:00:00 TimeMin=N/A\n   SubmitTime=2026-09-13T09:47:08 EligibleTime=2026-09-13T09:48:10\n   AccrueTime=Unknown\n   StartTime=2026-09-13T09:48:10 EndTime=2026-09-13T10:48:10 Deadline=N/A\n   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-09-13T09:48:10 Scheduler=Main\n   Partition=low-gn AllocNode:Sid=fesrv:910927\n   ReqNodeList=(null) ExcNodeList=(null)\n   NodeList=gn02\n   BatchHost=gn02\n   NumNodes=1 NumCPUs=32 NumTasks=2 CPUs/Task=1 ReqB:S:C:T=0:0:*:*\n   ReqTRES=cpu=2,mem=178000M,node=1,billing=2\n   AllocTRES=cpu=32,mem=178000M,node=1,billing=32\n   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*\n   MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0\n   Features=(null) DelayBoot=00:00:00\n   OverSubscribe=NO Contiguous=0 Licenses=(null) Network=(null)\n   Command=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p2/submit.sh\n   WorkDir=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p2\n   StdErr=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p2/run.err\n   StdIn=/dev/null\n   StdOut=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p2/run.out\n   Power=\n   TresPerNode=gres/gpu:tesla:4\n   TresPerTask=cpu:1\n   \n\n"
+      },
+      "runtime_stderr": "Loading gcc-12.2.1/ompi-4.1.4_nccl\n  Loading requirement: gcc-12.1.1/gcc gcc-8.5.0/ucc-2023.01.18_nccl\n    gcc-8.5.0/slurm-23.11.3\n[gn02.e4.cluster:662970] MCW rank 0 bound to socket 0[core 0[hwt 0]]: [B/././././././././././././././.][./././././././././././././././.]\n[gn02.e4.cluster:662970] MCW rank 1 bound to socket 0[core 1[hwt 0]]: [./B/./././././././././././././.][./././././././././././././././.]\n--------------------------------------------------------------------------\nWARNING: There was an error initializing an OpenFabrics device.\n\n  Local host:   gn02\n  Local device: mlx5_0\n--------------------------------------------------------------------------\n[gn02.e4.cluster:662970] 1 more process has sent help message help-mpi-btl-openib.txt / error in device init\n[gn02.e4.cluster:662970] Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages\n",
+      "solver_efficiency": 0.44843742627347966,
+      "solver_intervals": [
+        {
+          "end": 1675936800.0,
+          "seconds": 0.806527689,
+          "start": 1675933200.0
+        },
+        {
+          "end": 1675940400.0,
+          "seconds": 0.74733724,
+          "start": 1675936800.0
+        },
+        {
+          "end": 1675947600.0,
+          "seconds": 0.59962347,
+          "start": 1675940400.0
+        },
+        {
+          "end": 1675951200.0,
+          "seconds": 0.609873515,
+          "start": 1675947600.0
+        },
+        {
+          "end": 1675954800.0,
+          "seconds": 0.529720398,
+          "start": 1675951200.0
+        }
+      ],
+      "solver_seconds": 3.293082312,
+      "solver_speedup": 0.8968748525469593,
+      "stdout_sha256": "a19d9cc1546683d9b117439e385448fbf2d850e077cd32bf16550ec4305e9c2a",
+      "threads_per_process": 1
+    },
+    {
+      "application_efficiency": 0.6127106741573034,
+      "application_speedup": 2.4508426966292136,
+      "checksums": {
+        "inputs.sha256": "61cc3b14abd8f47a8f89c1be927b37cec0bdfa4ac6e1239bd810351651152883  wacommplusplus\n17df9ec6c8e360d2b6bdc3df00a6da545a57bfd4e2440f9208e2aba58b5c722d  wacomm-sarno-lite-6h.json\nf7c04c9f3b7397a3334100886eda74b311b0daf07c63530a8d2c1076e5fe9687  examples/sources-sarno_river/sources-sarno_river.json\n369de6c021bd1ce551feb24c464342e05cacf1c442c9a5c6e1615a69b9f434ee  submit.sh\n",
+        "outputs.sha256": "9900f51369f9b2e9f68b85dd54c99ddd52f569d7ea33ce5618186d71df57f01f  output-6h/wacomm_his_20210701Z09.nc\n91d15ea622fd2c8dd5ed084bad503452672b00ef2243c5e10c03aa47bd3c4c71  output-6h/wacomm_his_20210701Z10.nc\n03683ac8ca9a9c572d850ea9d3eb210d2d1ac14e86c28384187638b696b0ca8f  output-6h/wacomm_his_20210701Z11.nc\nca499752524bbbb206570db50bc38a1beb592edd46ae51ce2d391f010a3c467b  output-6h/wacomm_his_20210701Z13.nc\n86a9217a94ba965be9134babcebb1ca38a9426bc730507feab3410d12c71b9f1  output-6h/wacomm_his_20210701Z14.nc\ncd1fc3c56f3fbdc21953a1590b1f723b9bc6a58810dfce3d7e73eed69ce7f58d  snapshots-6h/WACOMM_rst_20210701Z10.nc\n40fde31b6251c7cdcb9bf9b68f7ff465975fcb56e4457a653c925066be5042f3  snapshots-6h/WACOMM_rst_20210701Z11.nc\n436ced8f45bcc2fad8756b6504309fc26133f0d4444a5a44d3056ea2348c775e  snapshots-6h/WACOMM_rst_20210701Z13.nc\n44618904eaf47ab29875687ad8a06210a67a19abc730b5fad06b5f8afe62893e  snapshots-6h/WACOMM_rst_20210701Z14.nc\na0a2e6d73798af73a500804464b15afa13a6ef88ab10345d7c7d6faae4208382  snapshots-6h/WACOMM_rst_20210701Z15.nc\n"
+      },
+      "elapsed_seconds": 21.36,
+      "gpu_bindings": [
+        [
+          "0",
+          "gn02.e4.cluster",
+          "0"
+        ],
+        [
+          "1",
+          "gn02.e4.cluster",
+          "1"
+        ],
+        [
+          "2",
+          "gn02.e4.cluster",
+          "2"
+        ],
+        [
+          "3",
+          "gn02.e4.cluster",
+          "3"
+        ]
+      ],
+      "gpus_per_process": 1,
+      "job_id": 6348,
+      "nodes": 1,
+      "particle_comparison": {
+        "absolute_tolerance": 0,
+        "comparison": "exact numeric equality after integer-ID ordering",
+        "equal": true,
+        "metadata": "variable units, sign, calendar, type and dimensions compared; global build/configuration attributes excluded",
+        "relative_tolerance": 0,
+        "schema": "wacomm-particle-equivalence-v1",
+        "selection": "all stored particles, including inactive; identical masks required",
+        "snapshots": [
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "cd1fc3c56f3fbdc21953a1590b1f723b9bc6a58810dfce3d7e73eed69ce7f58d"
+            },
+            "particle_time": 1675936800.0,
+            "particles": 9926,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "cd1fc3c56f3fbdc21953a1590b1f723b9bc6a58810dfce3d7e73eed69ce7f58d"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "40fde31b6251c7cdcb9bf9b68f7ff465975fcb56e4457a653c925066be5042f3"
+            },
+            "particle_time": 1675940400.0,
+            "particles": 19003,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "40fde31b6251c7cdcb9bf9b68f7ff465975fcb56e4457a653c925066be5042f3"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "436ced8f45bcc2fad8756b6504309fc26133f0d4444a5a44d3056ea2348c775e"
+            },
+            "particle_time": 1675947600.0,
+            "particles": 24561,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "436ced8f45bcc2fad8756b6504309fc26133f0d4444a5a44d3056ea2348c775e"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "44618904eaf47ab29875687ad8a06210a67a19abc730b5fad06b5f8afe62893e"
+            },
+            "particle_time": 1675951200.0,
+            "particles": 32394,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "44618904eaf47ab29875687ad8a06210a67a19abc730b5fad06b5f8afe62893e"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          },
+          {
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "a0a2e6d73798af73a500804464b15afa13a6ef88ab10345d7c7d6faae4208382"
+            },
+            "particle_time": 1675954800.0,
+            "particles": 40109,
+            "reference": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "a0a2e6d73798af73a500804464b15afa13a6ef88ab10345d7c7d6faae4208382"
+            },
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ]
+          }
+        ]
+      },
+      "processes": 4,
+      "provenance": {
+        "cpu.txt": "Architecture:        x86_64\nCPU op-mode(s):      32-bit, 64-bit\nByte Order:          Little Endian\nCPU(s):              32\nOn-line CPU(s) list: 0-31\nThread(s) per core:  1\nCore(s) per socket:  16\nSocket(s):           2\nNUMA node(s):        2\nVendor ID:           GenuineIntel\nCPU family:          6\nModel:               85\nModel name:          Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz\nStepping:            7\nCPU MHz:             3900.000\nCPU max MHz:         3900.0000\nCPU min MHz:         1000.0000\nBogoMIPS:            4600.00\nVirtualization:      VT-x\nL1d cache:           32K\nL1i cache:           32K\nL2 cache:            1024K\nL3 cache:            22528K\nNUMA node0 CPU(s):   0-15\nNUMA node1 CPU(s):   16-31\nFlags:               fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cdp_l3 invpcid_single intel_ppin ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm mpx rdt_a avx512f avx512dq rdseed adx smap clflushopt clwb intel_pt avx512cd avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local dtherm ida arat pln pts pku ospke avx512_vnni md_clear flush_l1d arch_capabilities\n",
+        "cuda.txt": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Wed_Jan_15_19:20:09_PST_2025\nCuda compilation tools, release 12.8, V12.8.61\nBuild cuda_12.8.r12.8/compiler.35404655_0\n",
+        "elapsed-seconds.txt": "21.36\n",
+        "exit.txt": "0\n",
+        "gpus.txt": "GPU 0: Tesla V100-SXM2-32GB (UUID: GPU-ccac4d1e-4b03-fba1-affe-1dfd4b912bcd)\nGPU 1: Tesla V100-SXM2-32GB (UUID: GPU-0a6f179c-47f0-4ce4-c539-d35c17b95b8c)\nGPU 2: Tesla V100-SXM2-32GB (UUID: GPU-2d6c7b6d-3b60-fe13-8a93-4f403e9a35b7)\nGPU 3: Tesla V100-SXM2-32GB (UUID: GPU-ab1fe95b-4c60-1983-87c1-e7fb86e4f638)\n",
+        "job-id.txt": "6348\n",
+        "modules.txt": "Currently Loaded Modulefiles:\n 1) nvidia/cuda-12.8.0       7) openssl/openssl-4.0.2          \n 2) gcc-8.5.0/hwloc-2.10.0   8) cmake/cmake-4.4.3              \n 3) gcc-8.5.0/pmix-5.0.1     9) gcc-12.1.1/gcc                 \n 4) gcc-8.5.0/ucx-1.15.0    10) gcc-8.5.0/ucc-2023.01.18_nccl  \n 5) slurm                   11) gcc-8.5.0/slurm-23.11.3        \n 6) node/node-24            12) gcc-12.2.1/ompi-4.1.4_nccl     \n",
+        "mpi.txt": "mpirun (Open MPI) 4.1.4\n\nReport bugs to http://www.open-mpi.org/community/help/\n",
+        "openmp.txt": "OMP_DYNAMIC=FALSE\nOMP_NUM_THREADS=1\nOMP_PLACES=cores\nOMP_PROC_BIND=TRUE\nOMP_THREAD_LIMIT=1\n",
+        "platform.txt": "Linux gn02.e4.cluster 4.18.0-553.104.1.el8_10.x86_64 #1 SMP Fri Feb 13 15:51:56 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n",
+        "slurm.txt": "JobId=6348 JobName=sarno-cuda-p4\n   UserId=montella(60009) GroupId=montella(60009) MCS_label=N/A\n   Priority=250 Nice=0 Account=(null) QOS=(null)\n   JobState=RUNNING Reason=None Dependency=(null)\n   Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0\n   RunTime=00:00:00 TimeLimit=01:00:00 TimeMin=N/A\n   SubmitTime=2026-09-13T09:47:09 EligibleTime=2026-09-13T09:48:40\n   AccrueTime=Unknown\n   StartTime=2026-09-13T09:48:40 EndTime=2026-09-13T10:48:40 Deadline=N/A\n   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-09-13T09:48:40 Scheduler=Main\n   Partition=low-gn AllocNode:Sid=fesrv:910927\n   ReqNodeList=(null) ExcNodeList=(null)\n   NodeList=gn02\n   BatchHost=gn02\n   NumNodes=1 NumCPUs=32 NumTasks=4 CPUs/Task=1 ReqB:S:C:T=0:0:*:*\n   ReqTRES=cpu=4,mem=178000M,node=1,billing=4\n   AllocTRES=cpu=32,mem=178000M,node=1,billing=32\n   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*\n   MinCPUsNode=1 MinMemoryNode=0 MinTmpDiskNode=0\n   Features=(null) DelayBoot=00:00:00\n   OverSubscribe=NO Contiguous=0 Licenses=(null) Network=(null)\n   Command=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p4/submit.sh\n   WorkDir=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p4\n   StdErr=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p4/run.err\n   StdIn=/dev/null\n   StdOut=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/cuda-scaling/p4/run.out\n   Power=\n   TresPerNode=gres/gpu:tesla:4\n   TresPerTask=cpu:1\n   \n\n"
+      },
+      "runtime_stderr": "Loading gcc-12.2.1/ompi-4.1.4_nccl\n  Loading requirement: gcc-12.1.1/gcc gcc-8.5.0/ucc-2023.01.18_nccl\n    gcc-8.5.0/slurm-23.11.3\n[gn02.e4.cluster:663144] MCW rank 0 bound to socket 0[core 0[hwt 0]]: [B/././././././././././././././.][./././././././././././././././.]\n[gn02.e4.cluster:663144] MCW rank 1 bound to socket 0[core 1[hwt 0]]: [./B/./././././././././././././.][./././././././././././././././.]\n[gn02.e4.cluster:663144] MCW rank 2 bound to socket 0[core 2[hwt 0]]: [././B/././././././././././././.][./././././././././././././././.]\n[gn02.e4.cluster:663144] MCW rank 3 bound to socket 0[core 3[hwt 0]]: [./././B/./././././././././././.][./././././././././././././././.]\n--------------------------------------------------------------------------\nWARNING: There was an error initializing an OpenFabrics device.\n\n  Local host:   gn02\n  Local device: mlx5_0\n--------------------------------------------------------------------------\n[gn02.e4.cluster:663144] 3 more processes have sent help message help-mpi-btl-openib.txt / error in device init\n[gn02.e4.cluster:663144] Set MCA parameter \"orte_base_help_aggregate\" to 0 to see all help / error messages\n",
+      "solver_efficiency": 0.18336759588039953,
+      "solver_intervals": [
+        {
+          "end": 1675936800.0,
+          "seconds": 0.892283695,
+          "start": 1675933200.0
+        },
+        {
+          "end": 1675940400.0,
+          "seconds": 0.850523995,
+          "start": 1675936800.0
+        },
+        {
+          "end": 1675947600.0,
+          "seconds": 0.757457042,
+          "start": 1675940400.0
+        },
+        {
+          "end": 1675951200.0,
+          "seconds": 0.797812066,
+          "start": 1675947600.0
+        },
+        {
+          "end": 1675954800.0,
+          "seconds": 0.728647088,
+          "start": 1675951200.0
+        }
+      ],
+      "solver_seconds": 4.026723886,
+      "solver_speedup": 0.7334703835215981,
+      "stdout_sha256": "83d864b3b402109cdcef619cf2457a971b387dc5cb435ddd399a4ad0ccaab11d",
+      "threads_per_process": 1
+    }
+  ],
+  "schema": "wacomm-cuda-scaling-v1",
+  "suite_provenance": {
+    "CMakeCache.txt": "# This is the CMakeCache file.\n# For build in directory: /home/montella/devel/wacommplusplus/build-cuda\n# It was generated by CMake: /opt/share/sw/cmake/cmake-4.4.3/bin/cmake\n# You can edit this file to change values found and used by cmake.\n# If you do not want to change any of the values, simply exit the editor.\n# If you do want to change a value, simply edit, save, and exit the editor.\n# The syntax for the file is as follows:\n# KEY:TYPE=VALUE\n# KEY is the name of a variable in the cache.\n# TYPE is a hint to GUIs for the type of VALUE, DO NOT EDIT TYPE!.\n# VALUE is the current value for the KEY.\n\n########################\n# EXTERNAL cache entries\n########################\n\n//Build the WaComM++ application.\nBUILD_APPLICATION:BOOL=ON\n\n//Run network-dependent OPeNDAP integration tests.\nBUILD_REMOTE_INTEGRATION_TESTS:BOOL=OFF\n\n//Build the testing tree.\nBUILD_TESTING:BOOL=ON\n\n//Path to a program.\nCMAKE_ADDR2LINE:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/addr2line\n\n//Path to a program.\nCMAKE_AR:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/ar\n\n//Choose the type of build, options are: None Debug Release RelWithDebInfo\n// MinSizeRel ...\nCMAKE_BUILD_TYPE:STRING=Release\n\n//Enable/Disable color output during build.\nCMAKE_COLOR_MAKEFILE:BOOL=ON\n\n//Default GPU architectures for CUDA compilation\nCMAKE_CUDA_ARCHITECTURES:UNINITIALIZED=70\n\n//CUDA compiler\nCMAKE_CUDA_COMPILER:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/bin/nvcc\n\n//Flags used by the CUDA compiler during all build types.\nCMAKE_CUDA_FLAGS:STRING=\n\n//Flags used by the CUDA compiler during DEBUG builds.\nCMAKE_CUDA_FLAGS_DEBUG:STRING=-g\n\n//Flags used by the CUDA compiler during MINSIZEREL builds.\nCMAKE_CUDA_FLAGS_MINSIZEREL:STRING=-O1 -DNDEBUG\n\n//Flags used by the CUDA compiler during RELEASE builds.\nCMAKE_CUDA_FLAGS_RELEASE:STRING=-O3 -DNDEBUG\n\n//Flags used by the CUDA compiler during RELWITHDEBINFO builds.\nCMAKE_CUDA_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG\n\n//CXX compiler\nCMAKE_CXX_COMPILER:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/c++\n\n//A wrapper around 'ar' adding the appropriate '--plugin' option\n// for the GCC compiler\nCMAKE_CXX_COMPILER_AR:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/gcc-ar\n\n//A wrapper around 'ranlib' adding the appropriate '--plugin' option\n// for the GCC compiler\nCMAKE_CXX_COMPILER_RANLIB:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/gcc-ranlib\n\n//Flags used by the CXX compiler during all build types.\nCMAKE_CXX_FLAGS:STRING=\n\n//Flags used by the CXX compiler during DEBUG builds.\nCMAKE_CXX_FLAGS_DEBUG:STRING=-g\n\n//Flags used by the CXX compiler during MINSIZEREL builds.\nCMAKE_CXX_FLAGS_MINSIZEREL:STRING=-Os -DNDEBUG\n\n//Flags used by the CXX compiler during RELEASE builds.\nCMAKE_CXX_FLAGS_RELEASE:STRING=-O3 -DNDEBUG\n\n//Flags used by the CXX compiler during RELWITHDEBINFO builds.\nCMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG\n\n//No help, variable specified on the command line.\nCMAKE_CXX_STANDARD_LIBRARIES:UNINITIALIZED=/home/montella/devel/wacommplusplus/build/external/lib/libhdf5_hl.a /home/montella/devel/wacommplusplus/build/external/lib/libhdf5.a /home/montella/devel/wacommplusplus/build/external/lib/libcurl.a /home/montella/devel/wacommplusplus/build/external/lib/libz.a /home/montella/devel/wacommplusplus/build/external/lib/libsz.a /home/montella/devel/wacommplusplus/build/external/lib/libssl.a /home/montella/devel/wacommplusplus/build/external/lib/libcrypto.a -ldl\n\n//C compiler\nCMAKE_C_COMPILER:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/cc\n\n//A wrapper around 'ar' adding the appropriate '--plugin' option\n// for the GCC compiler\nCMAKE_C_COMPILER_AR:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/gcc-ar\n\n//A wrapper around 'ranlib' adding the appropriate '--plugin' option\n// for the GCC compiler\nCMAKE_C_COMPILER_RANLIB:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/gcc-ranlib\n\n//Flags used by the C compiler during all build types.\nCMAKE_C_FLAGS:STRING=\n\n//Flags used by the C compiler during DEBUG builds.\nCMAKE_C_FLAGS_DEBUG:STRING=-g\n\n//Flags used by the C compiler during MINSIZEREL builds.\nCMAKE_C_FLAGS_MINSIZEREL:STRING=-Os -DNDEBUG\n\n//Flags used by the C compiler during RELEASE builds.\nCMAKE_C_FLAGS_RELEASE:STRING=-O3 -DNDEBUG\n\n//Flags used by the C compiler during RELWITHDEBINFO builds.\nCMAKE_C_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG\n\n//Path to a program.\nCMAKE_DLLTOOL:FILEPATH=CMAKE_DLLTOOL-NOTFOUND\n\n//Flags used by the linker during all build types.\nCMAKE_EXE_LINKER_FLAGS:STRING=\n\n//Flags used by the linker during DEBUG builds.\nCMAKE_EXE_LINKER_FLAGS_DEBUG:STRING=\n\n//Flags used by the linker during MINSIZEREL builds.\nCMAKE_EXE_LINKER_FLAGS_MINSIZEREL:STRING=\n\n//Flags used by the linker during RELEASE builds.\nCMAKE_EXE_LINKER_FLAGS_RELEASE:STRING=\n\n//Flags used by the linker during RELWITHDEBINFO builds.\nCMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO:STRING=\n\n//Enable/Disable output of compile commands during generation.\nCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=\n\n//Value Computed by CMake.\nCMAKE_FIND_PACKAGE_REDIRECTS_DIR:STATIC=/home/montella/devel/wacommplusplus/build-cuda/CMakeFiles/pkgRedirects\n\n//User executables (bin)\nCMAKE_INSTALL_BINDIR:PATH=bin\n\n//Read-only architecture-independent data (DATAROOTDIR)\nCMAKE_INSTALL_DATADIR:PATH=\n\n//Read-only architecture-independent data root (share)\nCMAKE_INSTALL_DATAROOTDIR:PATH=share\n\n//Documentation root (DATAROOTDIR/doc/PROJECT_NAME)\nCMAKE_INSTALL_DOCDIR:PATH=\n\n//C header files (include)\nCMAKE_INSTALL_INCLUDEDIR:PATH=include\n\n//Info documentation (DATAROOTDIR/info)\nCMAKE_INSTALL_INFODIR:PATH=\n\n//Object code libraries (lib64)\nCMAKE_INSTALL_LIBDIR:PATH=lib64\n\n//Program executables (libexec)\nCMAKE_INSTALL_LIBEXECDIR:PATH=libexec\n\n//Locale-dependent data (DATAROOTDIR/locale)\nCMAKE_INSTALL_LOCALEDIR:PATH=\n\n//Modifiable single-machine data (var)\nCMAKE_INSTALL_LOCALSTATEDIR:PATH=var\n\n//Man documentation (DATAROOTDIR/man)\nCMAKE_INSTALL_MANDIR:PATH=\n\n//C header files for non-gcc (/usr/include)\nCMAKE_INSTALL_OLDINCLUDEDIR:PATH=/usr/include\n\n//Install path prefix, prepended onto install directories.\nCMAKE_INSTALL_PREFIX:PATH=/usr/local\n\n//Run-time variable data (LOCALSTATEDIR/run)\nCMAKE_INSTALL_RUNSTATEDIR:PATH=\n\n//System admin executables (sbin)\nCMAKE_INSTALL_SBINDIR:PATH=sbin\n\n//Modifiable architecture-independent data (com)\nCMAKE_INSTALL_SHAREDSTATEDIR:PATH=com\n\n//Read-only single-machine data (etc)\nCMAKE_INSTALL_SYSCONFDIR:PATH=etc\n\n//Path to a program.\nCMAKE_LINKER:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/ld\n\n//Path to a program.\nCMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/gmake\n\n//Flags used by the linker during the creation of modules during\n// all build types.\nCMAKE_MODULE_LINKER_FLAGS:STRING=\n\n//Flags used by the linker during the creation of modules during\n// DEBUG builds.\nCMAKE_MODULE_LINKER_FLAGS_DEBUG:STRING=\n\n//Flags used by the linker during the creation of modules during\n// MINSIZEREL builds.\nCMAKE_MODULE_LINKER_FLAGS_MINSIZEREL:STRING=\n\n//Flags used by the linker during the creation of modules during\n// RELEASE builds.\nCMAKE_MODULE_LINKER_FLAGS_RELEASE:STRING=\n\n//Flags used by the linker during the creation of modules during\n// RELWITHDEBINFO builds.\nCMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO:STRING=\n\n//Path to a program.\nCMAKE_NM:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/nm\n\n//Path to a program.\nCMAKE_OBJCOPY:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/objcopy\n\n//Path to a program.\nCMAKE_OBJDUMP:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/objdump\n\n//Semicolon-separated list of installation prefixes searched by\n// find_package(), find_program(), find_library(), find_file(),\n// and find_path(). Empty by default; intended to be set by the\n// project or the user.\nCMAKE_PREFIX_PATH:UNINITIALIZED=/home/montella/devel/wacommplusplus/build/external\n\n//Value Computed by CMake\nCMAKE_PROJECT_COMPAT_VERSION:STATIC=\n\n//Value Computed by CMake\nCMAKE_PROJECT_DESCRIPTION:STATIC=\n\n//Value Computed by CMake\nCMAKE_PROJECT_HOMEPAGE_URL:STATIC=\n\n//Value Computed by CMake\nCMAKE_PROJECT_NAME:STATIC=wacommplusplus\n\n//Value Computed by CMake\nCMAKE_PROJECT_SPDX_LICENSE:STATIC=\n\n//Value Computed by CMake\nCMAKE_PROJECT_VERSION:STATIC=1.0.0\n\n//Value Computed by CMake\nCMAKE_PROJECT_VERSION_MAJOR:STATIC=1\n\n//Value Computed by CMake\nCMAKE_PROJECT_VERSION_MINOR:STATIC=0\n\n//Value Computed by CMake\nCMAKE_PROJECT_VERSION_PATCH:STATIC=0\n\n//Value Computed by CMake\nCMAKE_PROJECT_VERSION_TWEAK:STATIC=\n\n//Path to a program.\nCMAKE_RANLIB:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/ranlib\n\n//Path to a program.\nCMAKE_READELF:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/readelf\n\n//Flags used by the linker during the creation of shared libraries\n// during all build types.\nCMAKE_SHARED_LINKER_FLAGS:STRING=\n\n//Flags used by the linker during the creation of shared libraries\n// during DEBUG builds.\nCMAKE_SHARED_LINKER_FLAGS_DEBUG:STRING=\n\n//Flags used by the linker during the creation of shared libraries\n// during MINSIZEREL builds.\nCMAKE_SHARED_LINKER_FLAGS_MINSIZEREL:STRING=\n\n//Flags used by the linker during the creation of shared libraries\n// during RELEASE builds.\nCMAKE_SHARED_LINKER_FLAGS_RELEASE:STRING=\n\n//Flags used by the linker during the creation of shared libraries\n// during RELWITHDEBINFO builds.\nCMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO:STRING=\n\n//If set, runtime paths are not added when installing shared libraries,\n// but are added when building.\nCMAKE_SKIP_INSTALL_RPATH:BOOL=NO\n\n//If set, runtime paths are not added when using shared libraries.\nCMAKE_SKIP_RPATH:BOOL=NO\n\n//Flags used by the archiver during the creation of static libraries\n// during all build types.\nCMAKE_STATIC_LINKER_FLAGS:STRING=\n\n//Flags used by the archiver during the creation of static libraries\n// during DEBUG builds.\nCMAKE_STATIC_LINKER_FLAGS_DEBUG:STRING=\n\n//Flags used by the archiver during the creation of static libraries\n// during MINSIZEREL builds.\nCMAKE_STATIC_LINKER_FLAGS_MINSIZEREL:STRING=\n\n//Flags used by the archiver during the creation of static libraries\n// during RELEASE builds.\nCMAKE_STATIC_LINKER_FLAGS_RELEASE:STRING=\n\n//Flags used by the archiver during the creation of static libraries\n// during RELWITHDEBINFO builds.\nCMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO:STRING=\n\n//Path to a program.\nCMAKE_STRIP:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/strip\n\n//Path to a program.\nCMAKE_TAPI:FILEPATH=CMAKE_TAPI-NOTFOUND\n\n//If this value is on, makefiles will be generated without the\n// .SILENT directive, and all commands will be echoed to the console\n// during the make.  This is useful for debugging only. With Visual\n// Studio IDE projects all commands are done without /nologo.\nCMAKE_VERBOSE_MAKEFILE:BOOL=FALSE\n\n//Path to the coverage program that CTest uses for performing coverage\n// inspection\nCOVERAGE_COMMAND:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/bin/gcov\n\n//Extra command line flags to pass to the coverage tool\nCOVERAGE_EXTRA_FLAGS:STRING=-l\n\n//How many times to retry timed-out CTest submissions.\nCTEST_SUBMIT_RETRY_COUNT:STRING=3\n\n//How long to wait between timed-out CTest submissions.\nCTEST_SUBMIT_RETRY_DELAY:STRING=5\n\n//Path to a file.\nCUDAToolkit_CUPTI_INCLUDE_DIR:PATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/include/../../../extras/CUPTI/include\n\n//Path to a library.\nCUDAToolkit_rt_LIBRARY:FILEPATH=/usr/lib64/librt.so\n\n//Path to a library.\nCUDA_CUDART:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcudart.so\n\n//Path to a library.\nCUDA_OpenCL_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libOpenCL.so\n\n//Path to a program.\nCUDA_bin2c_EXECUTABLE:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/bin/bin2c\n\n//Path to a library.\nCUDA_cuFile_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufile.so\n\n//Path to a library.\nCUDA_cuFile_rdma_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufile_rdma.so\n\n//Path to a library.\nCUDA_cuFile_rdma_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufile_rdma_static.a\n\n//Path to a library.\nCUDA_cuFile_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufile_static.a\n\n//Path to a library.\nCUDA_cublasLt_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcublasLt.so\n\n//Path to a library.\nCUDA_cublasLt_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcublasLt_static.a\n\n//Path to a library.\nCUDA_cublas_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcublas.so\n\n//Path to a library.\nCUDA_cublas_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcublas_static.a\n\n//Path to a library.\nCUDA_cuda_driver_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/stubs/libcuda.so\n\n//Path to a library.\nCUDA_cudart_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcudart.so\n\n//Path to a library.\nCUDA_cudart_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcudart_static.a\n\n//Path to a library.\nCUDA_cudla_LIBRARY:FILEPATH=CUDA_cudla_LIBRARY-NOTFOUND\n\n//Path to a library.\nCUDA_cufft_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufft.so\n\n//Path to a library.\nCUDA_cufft_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufft_static.a\n\n//Path to a library.\nCUDA_cufft_static_nocallback_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufft_static_nocallback.a\n\n//Path to a library.\nCUDA_cufftw_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufftw.so\n\n//Path to a library.\nCUDA_cufftw_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufftw_static.a\n\n//Path to a library.\nCUDA_cufilt_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcufilt.a\n\n//Path to a library.\nCUDA_culibos_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libculibos.a\n\n//Path to a library.\nCUDA_cupti_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/extras/CUPTI/lib64/libcupti.so\n\n//Path to a library.\nCUDA_cupti_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/extras/CUPTI/lib64/libcupti_static.a\n\n//Path to a library.\nCUDA_curand_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcurand.so\n\n//Path to a library.\nCUDA_curand_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcurand_static.a\n\n//Path to a library.\nCUDA_cusolver_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcusolver.so\n\n//Path to a library.\nCUDA_cusolver_lapack_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcusolver_lapack_static.a\n\n//Path to a library.\nCUDA_cusolver_metis_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcusolver_metis_static.a\n\n//Path to a library.\nCUDA_cusolver_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcusolver_static.a\n\n//Path to a library.\nCUDA_cusparse_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcusparse.so\n\n//Path to a library.\nCUDA_cusparse_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcusparse_static.a\n\n//Path to a library.\nCUDA_nppc_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppc.so\n\n//Path to a library.\nCUDA_nppc_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppc_static.a\n\n//Path to a library.\nCUDA_nppial_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppial.so\n\n//Path to a library.\nCUDA_nppial_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppial_static.a\n\n//Path to a library.\nCUDA_nppicc_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppicc.so\n\n//Path to a library.\nCUDA_nppicc_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppicc_static.a\n\n//Path to a library.\nCUDA_nppicom_LIBRARY:FILEPATH=CUDA_nppicom_LIBRARY-NOTFOUND\n\n//Path to a library.\nCUDA_nppicom_static_LIBRARY:FILEPATH=CUDA_nppicom_static_LIBRARY-NOTFOUND\n\n//Path to a library.\nCUDA_nppidei_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppidei.so\n\n//Path to a library.\nCUDA_nppidei_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppidei_static.a\n\n//Path to a library.\nCUDA_nppif_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppif.so\n\n//Path to a library.\nCUDA_nppif_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppif_static.a\n\n//Path to a library.\nCUDA_nppig_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppig.so\n\n//Path to a library.\nCUDA_nppig_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppig_static.a\n\n//Path to a library.\nCUDA_nppim_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppim.so\n\n//Path to a library.\nCUDA_nppim_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppim_static.a\n\n//Path to a library.\nCUDA_nppist_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppist.so\n\n//Path to a library.\nCUDA_nppist_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppist_static.a\n\n//Path to a library.\nCUDA_nppisu_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppisu.so\n\n//Path to a library.\nCUDA_nppisu_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppisu_static.a\n\n//Path to a library.\nCUDA_nppitc_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppitc.so\n\n//Path to a library.\nCUDA_nppitc_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnppitc_static.a\n\n//Path to a library.\nCUDA_npps_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnpps.so\n\n//Path to a library.\nCUDA_npps_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnpps_static.a\n\n//Path to a library.\nCUDA_nvJitLink_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvJitLink.so\n\n//Path to a library.\nCUDA_nvJitLink_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvJitLink_static.a\n\n//Path to a library.\nCUDA_nvToolsExt_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvToolsExt.so\n\n//Path to a library.\nCUDA_nvfatbin_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvfatbin.so\n\n//Path to a library.\nCUDA_nvfatbin_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvfatbin_static.a\n\n//Path to a library.\nCUDA_nvgraph_LIBRARY:FILEPATH=CUDA_nvgraph_LIBRARY-NOTFOUND\n\n//Path to a library.\nCUDA_nvgraph_static_LIBRARY:FILEPATH=CUDA_nvgraph_static_LIBRARY-NOTFOUND\n\n//Path to a library.\nCUDA_nvjpeg_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvjpeg.so\n\n//Path to a library.\nCUDA_nvjpeg_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvjpeg_static.a\n\n//Path to a library.\nCUDA_nvml_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/stubs/libnvidia-ml.so\n\n//Path to a library.\nCUDA_nvml_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/stubs/libnvidia-ml.a\n\n//Path to a library.\nCUDA_nvperf_host_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/extras/CUPTI/lib64/libnvperf_host.so\n\n//Path to a library.\nCUDA_nvperf_host_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/extras/CUPTI/lib64/libnvperf_host_static.a\n\n//Path to a library.\nCUDA_nvperf_target_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/extras/CUPTI/lib64/libnvperf_target.so\n\n//Path to a library.\nCUDA_nvptxcompiler_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvptxcompiler_static.a\n\n//Path to a library.\nCUDA_nvrtc_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvrtc.so\n\n//Path to a library.\nCUDA_nvrtc_builtins_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvrtc-builtins.so\n\n//Path to a library.\nCUDA_nvrtc_builtins_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvrtc-builtins_static.a\n\n//Path to a library.\nCUDA_nvrtc_static_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libnvrtc_static.a\n\n//Path to a library.\nCUDA_pcsamplingutil_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/extras/CUPTI/lib64/libpcsamplingutil.so\n\n//Path to a library.\nCUDA_sanitizer_LIBRARY:FILEPATH=/opt/share/libs/nvidia/cuda-12.8.0/compute-sanitizer/libsanitizer-public.so\n\n//Maximum time allowed before CTest will kill the test.\nDART_TESTING_TIMEOUT:STRING=1500\n\n//Compile logging information in performance-critical classes.\nDEBUG:BOOL=OFF\n\n//Directory under which to collect all populated content\nFETCHCONTENT_BASE_DIR:PATH=/home/montella/devel/wacommplusplus/build-cuda/_deps\n\n//Disables all attempts to download or update content and assumes\n// source dirs already exist\nFETCHCONTENT_FULLY_DISCONNECTED:BOOL=OFF\n\n//Enables QUIET option for all content population\nFETCHCONTENT_QUIET:BOOL=ON\n\n//When not empty, overrides where to find pre-populated content\n// for wacomm_json\nFETCHCONTENT_SOURCE_DIR_WACOMM_JSON:PATH=/home/montella/devel/wacommplusplus/build/_deps/wacomm_json-src\n\n//Enables UPDATE_DISCONNECTED behavior for all content population\nFETCHCONTENT_UPDATES_DISCONNECTED:BOOL=OFF\n\n//Enables UPDATE_DISCONNECTED behavior just for population of wacomm_json\nFETCHCONTENT_UPDATES_DISCONNECTED_WACOMM_JSON:BOOL=OFF\n\n//Path to a program.\nGITCOMMAND:FILEPATH=/usr/bin/git\n\n//Git command line client\nGIT_EXECUTABLE:FILEPATH=/usr/bin/git\n\n//Build the unit tests when BUILD_TESTING is enabled.\nJSON_BuildTests:BOOL=OFF\n\n//Enable CI build targets.\nJSON_CI:BOOL=OFF\n\n//Use extended diagnostic messages.\nJSON_Diagnostics:BOOL=OFF\n\n//Disable default integer enum serialization.\nJSON_DisableEnumSerialization:BOOL=OFF\n\n//Place use-defined string literals in the global namespace.\nJSON_GlobalUDLs:BOOL=ON\n\n//Enable implicit conversions.\nJSON_ImplicitConversions:BOOL=ON\n\n//Install CMake targets during install step.\nJSON_Install:BOOL=OFF\n\n//Enable legacy discarded value comparison.\nJSON_LegacyDiscardedValueComparison:BOOL=OFF\n\n//Use non-amalgamated version of the library.\nJSON_MultipleHeaders:BOOL=ON\n\n//Include as system headers (skip for clang-tidy).\nJSON_SystemInclude:BOOL=OFF\n\n//Command to build the project\nMAKECOMMAND:STRING=/opt/share/sw/cmake/cmake-4.4.3/bin/cmake --build . --config \"${CTEST_CONFIGURATION_TYPE}\"\n\n//Path to the memory checking command, used for memory error detection.\nMEMORYCHECK_COMMAND:FILEPATH=/usr/bin/valgrind\n\n//File that contains suppressions for the memory checker\nMEMORYCHECK_SUPPRESSIONS_FILE:FILEPATH=\n\n//Executable for running MPI programs.\nMPIEXEC_EXECUTABLE:FILEPATH=/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/bin/mpiexec\n\n//Maximum number of processors available to run MPI applications.\nMPIEXEC_MAX_NUMPROCS:STRING=32\n\n//Flag used by MPI to specify the number of processes for mpiexec;\n// the next option will be the number of processes.\nMPIEXEC_NUMPROC_FLAG:STRING=-n\n\n//These flags will be placed after all flags passed to mpiexec.\nMPIEXEC_POSTFLAGS:STRING=\n\n//These flags will be directly before the executable that is being\n// run by mpiexec.\nMPIEXEC_PREFLAGS:STRING=\n\n//MPI CXX additional include directories\nMPI_CXX_ADDITIONAL_INCLUDE_DIRS:STRING=\n\n//MPI compiler for CXX\nMPI_CXX_COMPILER:FILEPATH=/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/bin/mpicxx\n\n//MPI CXX compiler wrapper include directories\nMPI_CXX_COMPILER_INCLUDE_DIRS:STRING=/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/include;/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/include/openmpi;/opt/share/libs/gcc-8.5.0/hwloc-2.10.0/include\n\n//MPI CXX compilation definitions\nMPI_CXX_COMPILE_DEFINITIONS:STRING=\n\n//MPI CXX compilation options\nMPI_CXX_COMPILE_OPTIONS:STRING=-fexceptions;-pthread\n\n//Path to a file.\nMPI_CXX_HEADER_DIR:PATH=/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/include\n\n//MPI CXX libraries to link against\nMPI_CXX_LIB_NAMES:STRING=xpmem;mpi_cxx;mpi\n\n//MPI CXX linker flags\nMPI_CXX_LINK_FLAGS:STRING=-Wl,-rpath -Wl,/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/lib -Wl,-rpath -Wl,/opt/share/libs/gcc-8.5.0/hwloc-2.10.0/lib -Wl,-rpath -Wl,/opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib -Wl,-rpath -Wl,/opt/share/libs/gcc-8.5.0/pmix-5.0.1/lib -Wl,-rpath -Wl,/opt/mellanox/hcoll/lib -Wl,-rpath -Wl,/opt/share/libs/gcc-8.5.0/ucc-2023.01.18_nccl/lib -Wl,--enable-new-dtags -L/opt/share/libs/gcc-8.5.0/hwloc-2.10.0/lib -L/opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib -L/opt/share/libs/gcc-8.5.0/pmix-5.0.1/lib -L/opt/mellanox/hcoll/lib -L/opt/share/libs/gcc-8.5.0/ucc-2023.01.18_nccl/lib -pthread\n\n//If true, the MPI-2 C++ bindings are disabled using definitions.\nMPI_CXX_SKIP_MPICXX:BOOL=OFF\n\n//Location of the mpi library for MPI\nMPI_mpi_LIBRARY:FILEPATH=/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/lib/libmpi.so\n\n//Location of the mpi_cxx library for MPI\nMPI_mpi_cxx_LIBRARY:FILEPATH=/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/lib/libmpi_cxx.so\n\n//Location of the xpmem library for MPI\nMPI_xpmem_LIBRARY:FILEPATH=/lib64/libxpmem.so\n\n//CXX compiler flags for OpenMP parallelization\nOpenMP_CXX_FLAGS:STRING=-fopenmp\n\n//CXX compiler libraries for OpenMP parallelization\nOpenMP_CXX_LIB_NAMES:STRING=gomp;pthread\n\n//C compiler flags for OpenMP parallelization\nOpenMP_C_FLAGS:STRING=-fopenmp\n\n//C compiler libraries for OpenMP parallelization\nOpenMP_C_LIB_NAMES:STRING=gomp;pthread\n\n//Path to the gomp library for OpenMP\nOpenMP_gomp_LIBRARY:FILEPATH=/opt/rh/gcc-toolset-12/root/usr/lib/gcc/x86_64-redhat-linux/12/libgomp.so\n\n//Path to the pthread library for OpenMP\nOpenMP_pthread_LIBRARY:FILEPATH=/lib64/libpthread.so\n\n//Arguments to supply to pkg-config\nPKG_CONFIG_ARGN:STRING=\n\n//pkg-config executable\nPKG_CONFIG_EXECUTABLE:FILEPATH=/usr/bin/pkg-config\n\n//Name of the computer/site where compile is being run\nSITE:STRING=fesrv.e4.cluster\n\n//Use CUDA acceleration.\nUSE_CUDA:BOOL=ON\n\n//Use FlexMPI/EMPI for malleable distributed memory parallelism.\nUSE_EMPI:BOOL=OFF\n\n//Use MPI for distributed memory parallelism.\nUSE_MPI:BOOL=ON\n\n//Use OpenMP for shared memory parallelism.\nUSE_OMP:BOOL=ON\n\n//Use OpenACC acceleration.\nUSE_OPENACC:BOOL=OFF\n\n//Use PROJ for explicit environmental coordinate transformations.\nUSE_PROJ:BOOL=OFF\n\n//Dependency policy: AUTO, ON, or OFF.\nWACOMM_BOOTSTRAP_DEPENDENCIES:STRING=AUTO\n\n//Build bootstrapped HDF5 and NetCDF-C with MPI parallel I/O support.\nWACOMM_BOOTSTRAP_PARALLEL_IO:BOOL=OFF\n\n//Path to a file.\nWACOMM_NETCDF_CXX_INCLUDE:PATH=/home/montella/devel/wacommplusplus/build/external/include\n\n//Path to a library.\nWACOMM_NETCDF_CXX_LIBRARY:FILEPATH=/home/montella/devel/wacommplusplus/build/external/lib/libnetcdf-cxx4.a\n\n//The directory containing a CMake configuration file for log4cplus.\nlog4cplus_DIR:PATH=/home/montella/devel/wacommplusplus/build/external/lib64/cmake/log4cplus\n\n//Value Computed by CMake\nnlohmann_json_BINARY_DIR:STATIC=/home/montella/devel/wacommplusplus/build-cuda/_deps/wacomm_json-build\n\n//The directory containing a CMake configuration file for nlohmann_json.\nnlohmann_json_DIR:PATH=nlohmann_json_DIR-NOTFOUND\n\n//Value Computed by CMake\nnlohmann_json_IS_TOP_LEVEL:STATIC=OFF\n\n//Value Computed by CMake\nnlohmann_json_SOURCE_DIR:STATIC=/home/montella/devel/wacommplusplus/build/_deps/wacomm_json-src\n\n//Path to a library.\npkgcfg_lib_WACOMM_LOG4CPLUS_log4cplus:FILEPATH=pkgcfg_lib_WACOMM_LOG4CPLUS_log4cplus-NOTFOUND\n\n//Path to a library.\npkgcfg_lib_WACOMM_NETCDF_netcdf:FILEPATH=/home/montella/devel/wacommplusplus/build/external/lib/libnetcdf.a\n\n//Value Computed by CMake\nwacommplusplus_BINARY_DIR:STATIC=/home/montella/devel/wacommplusplus/build-cuda\n\n//Value Computed by CMake\nwacommplusplus_IS_TOP_LEVEL:STATIC=ON\n\n//Value Computed by CMake\nwacommplusplus_SOURCE_DIR:STATIC=/home/montella/devel/wacommplusplus\n\n\n########################\n# INTERNAL cache entries\n########################\n\n//ADVANCED property for variable: CMAKE_ADDR2LINE\nCMAKE_ADDR2LINE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_AR\nCMAKE_AR-ADVANCED:INTERNAL=1\n//This is the directory where this CMakeCache.txt was created\nCMAKE_CACHEFILE_DIR:INTERNAL=/home/montella/devel/wacommplusplus/build-cuda\n//Major version of cmake used to create the current loaded cache\nCMAKE_CACHE_MAJOR_VERSION:INTERNAL=4\n//Minor version of cmake used to create the current loaded cache\nCMAKE_CACHE_MINOR_VERSION:INTERNAL=4\n//Patch version of cmake used to create the current loaded cache\nCMAKE_CACHE_PATCH_VERSION:INTERNAL=3\n//ADVANCED property for variable: CMAKE_COLOR_MAKEFILE\nCMAKE_COLOR_MAKEFILE-ADVANCED:INTERNAL=1\n//Path to CMake executable.\nCMAKE_COMMAND:INTERNAL=/opt/share/sw/cmake/cmake-4.4.3/bin/cmake\n//Path to cpack program executable.\nCMAKE_CPACK_COMMAND:INTERNAL=/opt/share/sw/cmake/cmake-4.4.3/bin/cpack\n//ADVANCED property for variable: CMAKE_CTEST_COMMAND\nCMAKE_CTEST_COMMAND-ADVANCED:INTERNAL=1\n//Path to ctest program executable.\nCMAKE_CTEST_COMMAND:INTERNAL=/opt/share/sw/cmake/cmake-4.4.3/bin/ctest\n//ADVANCED property for variable: CMAKE_CUDA_COMPILER\nCMAKE_CUDA_COMPILER-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CUDA_FLAGS\nCMAKE_CUDA_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CUDA_FLAGS_DEBUG\nCMAKE_CUDA_FLAGS_DEBUG-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CUDA_FLAGS_MINSIZEREL\nCMAKE_CUDA_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CUDA_FLAGS_RELEASE\nCMAKE_CUDA_FLAGS_RELEASE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CUDA_FLAGS_RELWITHDEBINFO\nCMAKE_CUDA_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CXX_COMPILER\nCMAKE_CXX_COMPILER-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CXX_COMPILER_AR\nCMAKE_CXX_COMPILER_AR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CXX_COMPILER_RANLIB\nCMAKE_CXX_COMPILER_RANLIB-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CXX_FLAGS\nCMAKE_CXX_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CXX_FLAGS_DEBUG\nCMAKE_CXX_FLAGS_DEBUG-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CXX_FLAGS_MINSIZEREL\nCMAKE_CXX_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CXX_FLAGS_RELEASE\nCMAKE_CXX_FLAGS_RELEASE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_CXX_FLAGS_RELWITHDEBINFO\nCMAKE_CXX_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_C_COMPILER\nCMAKE_C_COMPILER-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_C_COMPILER_AR\nCMAKE_C_COMPILER_AR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_C_COMPILER_RANLIB\nCMAKE_C_COMPILER_RANLIB-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_C_FLAGS\nCMAKE_C_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_C_FLAGS_DEBUG\nCMAKE_C_FLAGS_DEBUG-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_C_FLAGS_MINSIZEREL\nCMAKE_C_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_C_FLAGS_RELEASE\nCMAKE_C_FLAGS_RELEASE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_C_FLAGS_RELWITHDEBINFO\nCMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1\n//Set initial state for CMake diagnostics; used to persist state\n// set by command-line options across invocations.\nCMAKE_DIAGNOSTIC_INIT:INTERNAL=CMD_AUTHOR=WARN;CMD_DEPRECATED=WARN;CMD_EXPERIMENTAL=WARN;CMD_INSTALL_ABSOLUTE_DESTINATION=IGNORE;CMD_POLICY=WARN;CMD_UNINITIALIZED=IGNORE;CMD_UNUSED_CLI=WARN\n//ADVANCED property for variable: CMAKE_DLLTOOL\nCMAKE_DLLTOOL-ADVANCED:INTERNAL=1\n//Path to cache edit program executable.\nCMAKE_EDIT_COMMAND:INTERNAL=/opt/share/sw/cmake/cmake-4.4.3/bin/ccmake\n//Deprecated.  Use -W[no-]error=deprecated instead.\nCMAKE_ERROR_DEPRECATED:INTERNAL=OFF\n//Executable file format\nCMAKE_EXECUTABLE_FORMAT:INTERNAL=ELF\n//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS\nCMAKE_EXE_LINKER_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_DEBUG\nCMAKE_EXE_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_MINSIZEREL\nCMAKE_EXE_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_RELEASE\nCMAKE_EXE_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO\nCMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_EXPORT_COMPILE_COMMANDS\nCMAKE_EXPORT_COMPILE_COMMANDS-ADVANCED:INTERNAL=1\n//Name of external makefile project generator.\nCMAKE_EXTRA_GENERATOR:INTERNAL=\n//Name of generator.\nCMAKE_GENERATOR:INTERNAL=Unix Makefiles\n//Generator instance identifier.\nCMAKE_GENERATOR_INSTANCE:INTERNAL=\n//Name of generator platform.\nCMAKE_GENERATOR_PLATFORM:INTERNAL=\n//Name of generator toolset.\nCMAKE_GENERATOR_TOOLSET:INTERNAL=\n//Test CMAKE_HAVE_LIBC_PTHREAD\nCMAKE_HAVE_LIBC_PTHREAD:INTERNAL=\n//Have library pthreads\nCMAKE_HAVE_PTHREADS_CREATE:INTERNAL=\n//Have library pthread\nCMAKE_HAVE_PTHREAD_CREATE:INTERNAL=1\n//Source directory with the top level CMakeLists.txt file for this\n// project\nCMAKE_HOME_DIRECTORY:INTERNAL=/home/montella/devel/wacommplusplus\n//ADVANCED property for variable: CMAKE_INSTALL_BINDIR\nCMAKE_INSTALL_BINDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_DATADIR\nCMAKE_INSTALL_DATADIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_DATAROOTDIR\nCMAKE_INSTALL_DATAROOTDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_DOCDIR\nCMAKE_INSTALL_DOCDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_INCLUDEDIR\nCMAKE_INSTALL_INCLUDEDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_INFODIR\nCMAKE_INSTALL_INFODIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_LIBDIR\nCMAKE_INSTALL_LIBDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_LIBEXECDIR\nCMAKE_INSTALL_LIBEXECDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_LOCALEDIR\nCMAKE_INSTALL_LOCALEDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_LOCALSTATEDIR\nCMAKE_INSTALL_LOCALSTATEDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_MANDIR\nCMAKE_INSTALL_MANDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_OLDINCLUDEDIR\nCMAKE_INSTALL_OLDINCLUDEDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_RUNSTATEDIR\nCMAKE_INSTALL_RUNSTATEDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_SBINDIR\nCMAKE_INSTALL_SBINDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_INSTALL_SHAREDSTATEDIR\nCMAKE_INSTALL_SHAREDSTATEDIR-ADVANCED:INTERNAL=1\n//Install .so files without execute permission.\nCMAKE_INSTALL_SO_NO_EXE:INTERNAL=0\n//ADVANCED property for variable: CMAKE_INSTALL_SYSCONFDIR\nCMAKE_INSTALL_SYSCONFDIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_LINKER\nCMAKE_LINKER-ADVANCED:INTERNAL=1\n//Name of CMakeLists files to read\nCMAKE_LIST_FILE_NAME:INTERNAL=CMakeLists.txt\n//ADVANCED property for variable: CMAKE_MAKE_PROGRAM\nCMAKE_MAKE_PROGRAM-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS\nCMAKE_MODULE_LINKER_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_DEBUG\nCMAKE_MODULE_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL\nCMAKE_MODULE_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_RELEASE\nCMAKE_MODULE_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO\nCMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_NM\nCMAKE_NM-ADVANCED:INTERNAL=1\n//number of local generators\nCMAKE_NUMBER_OF_MAKEFILES:INTERNAL=2\n//ADVANCED property for variable: CMAKE_OBJCOPY\nCMAKE_OBJCOPY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_OBJDUMP\nCMAKE_OBJDUMP-ADVANCED:INTERNAL=1\n//Platform information initialized\nCMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_RANLIB\nCMAKE_RANLIB-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_READELF\nCMAKE_READELF-ADVANCED:INTERNAL=1\n//Path to CMake installation.\nCMAKE_ROOT:INTERNAL=/opt/share/sw/cmake/cmake-4.4.3/share/cmake-4.4\n//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS\nCMAKE_SHARED_LINKER_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_DEBUG\nCMAKE_SHARED_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL\nCMAKE_SHARED_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_RELEASE\nCMAKE_SHARED_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO\nCMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_SKIP_INSTALL_RPATH\nCMAKE_SKIP_INSTALL_RPATH-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_SKIP_RPATH\nCMAKE_SKIP_RPATH-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS\nCMAKE_STATIC_LINKER_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_DEBUG\nCMAKE_STATIC_LINKER_FLAGS_DEBUG-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL\nCMAKE_STATIC_LINKER_FLAGS_MINSIZEREL-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_RELEASE\nCMAKE_STATIC_LINKER_FLAGS_RELEASE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO\nCMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_STRIP\nCMAKE_STRIP-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CMAKE_TAPI\nCMAKE_TAPI-ADVANCED:INTERNAL=1\n//uname command\nCMAKE_UNAME:INTERNAL=/usr/bin/uname\n//ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE\nCMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1\n//Deprecated.  Use -W[no-]deprecated instead.\nCMAKE_WARN_DEPRECATED:INTERNAL=ON\n//ADVANCED property for variable: COVERAGE_COMMAND\nCOVERAGE_COMMAND-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: COVERAGE_EXTRA_FLAGS\nCOVERAGE_EXTRA_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CTEST_SUBMIT_RETRY_COUNT\nCTEST_SUBMIT_RETRY_COUNT-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CTEST_SUBMIT_RETRY_DELAY\nCTEST_SUBMIT_RETRY_DELAY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDAToolkit_CUPTI_INCLUDE_DIR\nCUDAToolkit_CUPTI_INCLUDE_DIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDAToolkit_rt_LIBRARY\nCUDAToolkit_rt_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_CUDART\nCUDA_CUDART-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_OpenCL_LIBRARY\nCUDA_OpenCL_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cuFile_LIBRARY\nCUDA_cuFile_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cuFile_rdma_LIBRARY\nCUDA_cuFile_rdma_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cuFile_rdma_static_LIBRARY\nCUDA_cuFile_rdma_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cuFile_static_LIBRARY\nCUDA_cuFile_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cublasLt_LIBRARY\nCUDA_cublasLt_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cublasLt_static_LIBRARY\nCUDA_cublasLt_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cublas_LIBRARY\nCUDA_cublas_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cublas_static_LIBRARY\nCUDA_cublas_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cuda_driver_LIBRARY\nCUDA_cuda_driver_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cudart_LIBRARY\nCUDA_cudart_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cudart_static_LIBRARY\nCUDA_cudart_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cudla_LIBRARY\nCUDA_cudla_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cufft_LIBRARY\nCUDA_cufft_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cufft_static_LIBRARY\nCUDA_cufft_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cufft_static_nocallback_LIBRARY\nCUDA_cufft_static_nocallback_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cufftw_LIBRARY\nCUDA_cufftw_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cufftw_static_LIBRARY\nCUDA_cufftw_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cufilt_LIBRARY\nCUDA_cufilt_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_culibos_LIBRARY\nCUDA_culibos_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cupti_LIBRARY\nCUDA_cupti_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cupti_static_LIBRARY\nCUDA_cupti_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_curand_LIBRARY\nCUDA_curand_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_curand_static_LIBRARY\nCUDA_curand_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cusolver_LIBRARY\nCUDA_cusolver_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cusolver_lapack_static_LIBRARY\nCUDA_cusolver_lapack_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cusolver_metis_static_LIBRARY\nCUDA_cusolver_metis_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cusolver_static_LIBRARY\nCUDA_cusolver_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cusparse_LIBRARY\nCUDA_cusparse_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_cusparse_static_LIBRARY\nCUDA_cusparse_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppc_LIBRARY\nCUDA_nppc_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppc_static_LIBRARY\nCUDA_nppc_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppial_LIBRARY\nCUDA_nppial_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppial_static_LIBRARY\nCUDA_nppial_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppicc_LIBRARY\nCUDA_nppicc_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppicc_static_LIBRARY\nCUDA_nppicc_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppicom_LIBRARY\nCUDA_nppicom_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppicom_static_LIBRARY\nCUDA_nppicom_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppidei_LIBRARY\nCUDA_nppidei_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppidei_static_LIBRARY\nCUDA_nppidei_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppif_LIBRARY\nCUDA_nppif_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppif_static_LIBRARY\nCUDA_nppif_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppig_LIBRARY\nCUDA_nppig_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppig_static_LIBRARY\nCUDA_nppig_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppim_LIBRARY\nCUDA_nppim_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppim_static_LIBRARY\nCUDA_nppim_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppist_LIBRARY\nCUDA_nppist_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppist_static_LIBRARY\nCUDA_nppist_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppisu_LIBRARY\nCUDA_nppisu_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppisu_static_LIBRARY\nCUDA_nppisu_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppitc_LIBRARY\nCUDA_nppitc_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nppitc_static_LIBRARY\nCUDA_nppitc_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_npps_LIBRARY\nCUDA_npps_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_npps_static_LIBRARY\nCUDA_npps_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvJitLink_LIBRARY\nCUDA_nvJitLink_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvJitLink_static_LIBRARY\nCUDA_nvJitLink_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvToolsExt_LIBRARY\nCUDA_nvToolsExt_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvfatbin_LIBRARY\nCUDA_nvfatbin_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvfatbin_static_LIBRARY\nCUDA_nvfatbin_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvgraph_LIBRARY\nCUDA_nvgraph_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvgraph_static_LIBRARY\nCUDA_nvgraph_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvjpeg_LIBRARY\nCUDA_nvjpeg_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvjpeg_static_LIBRARY\nCUDA_nvjpeg_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvml_LIBRARY\nCUDA_nvml_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvml_static_LIBRARY\nCUDA_nvml_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvperf_host_LIBRARY\nCUDA_nvperf_host_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvperf_host_static_LIBRARY\nCUDA_nvperf_host_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvperf_target_LIBRARY\nCUDA_nvperf_target_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvptxcompiler_static_LIBRARY\nCUDA_nvptxcompiler_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvrtc_LIBRARY\nCUDA_nvrtc_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvrtc_builtins_LIBRARY\nCUDA_nvrtc_builtins_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvrtc_builtins_static_LIBRARY\nCUDA_nvrtc_builtins_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_nvrtc_static_LIBRARY\nCUDA_nvrtc_static_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_pcsamplingutil_LIBRARY\nCUDA_pcsamplingutil_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: CUDA_sanitizer_LIBRARY\nCUDA_sanitizer_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: DART_TESTING_TIMEOUT\nDART_TESTING_TIMEOUT-ADVANCED:INTERNAL=1\n//Details about finding CUDAToolkit\nFIND_PACKAGE_MESSAGE_DETAILS_CUDAToolkit:INTERNAL=[/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/include][/opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/lib/libcudart.so][/opt/share/libs/nvidia/cuda-12.8.0/bin][v12.8.61()]\n//Details about finding MPI\nFIND_PACKAGE_MESSAGE_DETAILS_MPI:INTERNAL=[TRUE][found components: CXX ][v3.1()]\n//Details about finding MPI_CXX\nFIND_PACKAGE_MESSAGE_DETAILS_MPI_CXX:INTERNAL=[/lib64/libxpmem.so][/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/lib/libmpi_cxx.so][/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/lib/libmpi.so][xpmem;mpi_cxx;mpi][/opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/include][TRUE][v3.1()]\n//Details about finding OpenMP\nFIND_PACKAGE_MESSAGE_DETAILS_OpenMP:INTERNAL=[TRUE][found components: CXX ][v4.5()]\n//Details about finding OpenMP_CXX\nFIND_PACKAGE_MESSAGE_DETAILS_OpenMP_CXX:INTERNAL=[-fopenmp][/opt/rh/gcc-toolset-12/root/usr/lib/gcc/x86_64-redhat-linux/12/libgomp.so][/lib64/libpthread.so][v4.5()]\n//Details about finding Threads\nFIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]\n//ADVANCED property for variable: GITCOMMAND\nGITCOMMAND-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: GIT_EXECUTABLE\nGIT_EXECUTABLE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MAKECOMMAND\nMAKECOMMAND-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MEMORYCHECK_COMMAND\nMEMORYCHECK_COMMAND-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MEMORYCHECK_SUPPRESSIONS_FILE\nMEMORYCHECK_SUPPRESSIONS_FILE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPIEXEC_EXECUTABLE\nMPIEXEC_EXECUTABLE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPIEXEC_MAX_NUMPROCS\nMPIEXEC_MAX_NUMPROCS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPIEXEC_NUMPROC_FLAG\nMPIEXEC_NUMPROC_FLAG-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPIEXEC_POSTFLAGS\nMPIEXEC_POSTFLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPIEXEC_PREFLAGS\nMPIEXEC_PREFLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_CXX_ADDITIONAL_INCLUDE_DIRS\nMPI_CXX_ADDITIONAL_INCLUDE_DIRS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_CXX_COMPILER\nMPI_CXX_COMPILER-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_CXX_COMPILER_INCLUDE_DIRS\nMPI_CXX_COMPILER_INCLUDE_DIRS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_CXX_COMPILE_DEFINITIONS\nMPI_CXX_COMPILE_DEFINITIONS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_CXX_COMPILE_OPTIONS\nMPI_CXX_COMPILE_OPTIONS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_CXX_HEADER_DIR\nMPI_CXX_HEADER_DIR-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_CXX_LIB_NAMES\nMPI_CXX_LIB_NAMES-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_CXX_LINK_FLAGS\nMPI_CXX_LINK_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_CXX_SKIP_MPICXX\nMPI_CXX_SKIP_MPICXX-ADVANCED:INTERNAL=1\n//Result of TRY_COMPILE\nMPI_RESULT_CXX_test_mpi_MPICXX:INTERNAL=TRUE\n//Result of TRY_COMPILE\nMPI_RESULT_CXX_test_mpi_normal:INTERNAL=TRUE\n//ADVANCED property for variable: MPI_mpi_LIBRARY\nMPI_mpi_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_mpi_cxx_LIBRARY\nMPI_mpi_cxx_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: MPI_xpmem_LIBRARY\nMPI_xpmem_LIBRARY-ADVANCED:INTERNAL=1\nNLOHMANN_JSON_CONFIG_INSTALL_DIR:INTERNAL=share/cmake/nlohmann_json\n//Result of TRY_COMPILE\nOpenMP_COMPILE_RESULT_CXX_fopenmp:INTERNAL=TRUE\n//Result of TRY_COMPILE\nOpenMP_COMPILE_RESULT_C_fopenmp:INTERNAL=TRUE\n//ADVANCED property for variable: OpenMP_CXX_FLAGS\nOpenMP_CXX_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: OpenMP_CXX_LIB_NAMES\nOpenMP_CXX_LIB_NAMES-ADVANCED:INTERNAL=1\n//CXX compiler's OpenMP specification date\nOpenMP_CXX_SPEC_DATE:INTERNAL=201511\n//ADVANCED property for variable: OpenMP_C_FLAGS\nOpenMP_C_FLAGS-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: OpenMP_C_LIB_NAMES\nOpenMP_C_LIB_NAMES-ADVANCED:INTERNAL=1\n//Result of TRY_COMPILE\nOpenMP_SPECTEST_CXX_:INTERNAL=TRUE\n//ADVANCED property for variable: OpenMP_gomp_LIBRARY\nOpenMP_gomp_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: OpenMP_pthread_LIBRARY\nOpenMP_pthread_LIBRARY-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: PKG_CONFIG_ARGN\nPKG_CONFIG_ARGN-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: PKG_CONFIG_EXECUTABLE\nPKG_CONFIG_EXECUTABLE-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: SITE\nSITE-ADVANCED:INTERNAL=1\n//STRINGS property for variable: WACOMM_BOOTSTRAP_DEPENDENCIES\nWACOMM_BOOTSTRAP_DEPENDENCIES-STRINGS:INTERNAL=AUTO;ON;OFF\nWACOMM_LOG4CPLUS_CFLAGS:INTERNAL=-I/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_LOG4CPLUS_CFLAGS_I:INTERNAL=\nWACOMM_LOG4CPLUS_CFLAGS_OTHER:INTERNAL=\nWACOMM_LOG4CPLUS_FOUND:INTERNAL=1\nWACOMM_LOG4CPLUS_INCLUDEDIR:INTERNAL=/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_LOG4CPLUS_INCLUDE_DIRS:INTERNAL=/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_LOG4CPLUS_LDFLAGS:INTERNAL=-L/home/montella/devel/wacommplusplus/build/external/lib;-llog4cplus\nWACOMM_LOG4CPLUS_LDFLAGS_OTHER:INTERNAL=\nWACOMM_LOG4CPLUS_LIBDIR:INTERNAL=/home/montella/devel/wacommplusplus/build/external/lib\nWACOMM_LOG4CPLUS_LIBRARIES:INTERNAL=log4cplus\nWACOMM_LOG4CPLUS_LIBRARY_DIRS:INTERNAL=/home/montella/devel/wacommplusplus/build/external/lib\nWACOMM_LOG4CPLUS_LIBS:INTERNAL=\nWACOMM_LOG4CPLUS_LIBS_L:INTERNAL=\nWACOMM_LOG4CPLUS_LIBS_OTHER:INTERNAL=\nWACOMM_LOG4CPLUS_LIBS_PATHS:INTERNAL=\nWACOMM_LOG4CPLUS_MODULE_NAME:INTERNAL=log4cplus\nWACOMM_LOG4CPLUS_PREFIX:INTERNAL=/home/montella/devel/wacommplusplus/build/external\nWACOMM_LOG4CPLUS_STATIC_CFLAGS:INTERNAL=-I/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_LOG4CPLUS_STATIC_CFLAGS_I:INTERNAL=\nWACOMM_LOG4CPLUS_STATIC_CFLAGS_OTHER:INTERNAL=\nWACOMM_LOG4CPLUS_STATIC_INCLUDE_DIRS:INTERNAL=/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_LOG4CPLUS_STATIC_LDFLAGS:INTERNAL=-L/home/montella/devel/wacommplusplus/build/external/lib;-llog4cplus\nWACOMM_LOG4CPLUS_STATIC_LDFLAGS_OTHER:INTERNAL=\nWACOMM_LOG4CPLUS_STATIC_LIBDIR:INTERNAL=\nWACOMM_LOG4CPLUS_STATIC_LIBRARIES:INTERNAL=log4cplus\nWACOMM_LOG4CPLUS_STATIC_LIBRARY_DIRS:INTERNAL=/home/montella/devel/wacommplusplus/build/external/lib\nWACOMM_LOG4CPLUS_STATIC_LIBS:INTERNAL=\nWACOMM_LOG4CPLUS_STATIC_LIBS_L:INTERNAL=\nWACOMM_LOG4CPLUS_STATIC_LIBS_OTHER:INTERNAL=\nWACOMM_LOG4CPLUS_STATIC_LIBS_PATHS:INTERNAL=\nWACOMM_LOG4CPLUS_VERSION:INTERNAL=2.1.1\nWACOMM_LOG4CPLUS_log4cplus_INCLUDEDIR:INTERNAL=\nWACOMM_LOG4CPLUS_log4cplus_LIBDIR:INTERNAL=\nWACOMM_LOG4CPLUS_log4cplus_PREFIX:INTERNAL=\nWACOMM_LOG4CPLUS_log4cplus_VERSION:INTERNAL=\nWACOMM_NETCDF_CFLAGS:INTERNAL=-I/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_NETCDF_CFLAGS_I:INTERNAL=\nWACOMM_NETCDF_CFLAGS_OTHER:INTERNAL=\nWACOMM_NETCDF_FOUND:INTERNAL=1\n//Test WACOMM_NETCDF_HAS_DAP\nWACOMM_NETCDF_HAS_DAP:INTERNAL=1\nWACOMM_NETCDF_INCLUDEDIR:INTERNAL=/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_NETCDF_INCLUDE_DIRS:INTERNAL=/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_NETCDF_LDFLAGS:INTERNAL=-L/home/montella/devel/wacommplusplus/build/external/lib;-lnetcdf\nWACOMM_NETCDF_LDFLAGS_OTHER:INTERNAL=\nWACOMM_NETCDF_LIBDIR:INTERNAL=/home/montella/devel/wacommplusplus/build/external/lib\nWACOMM_NETCDF_LIBRARIES:INTERNAL=netcdf\nWACOMM_NETCDF_LIBRARY_DIRS:INTERNAL=/home/montella/devel/wacommplusplus/build/external/lib\nWACOMM_NETCDF_LIBS:INTERNAL=\nWACOMM_NETCDF_LIBS_L:INTERNAL=\nWACOMM_NETCDF_LIBS_OTHER:INTERNAL=\nWACOMM_NETCDF_LIBS_PATHS:INTERNAL=\nWACOMM_NETCDF_MODULE_NAME:INTERNAL=netcdf\nWACOMM_NETCDF_PREFIX:INTERNAL=/home/montella/devel/wacommplusplus/build/external\nWACOMM_NETCDF_STATIC_CFLAGS:INTERNAL=-I/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_NETCDF_STATIC_CFLAGS_I:INTERNAL=\nWACOMM_NETCDF_STATIC_CFLAGS_OTHER:INTERNAL=\nWACOMM_NETCDF_STATIC_INCLUDE_DIRS:INTERNAL=/home/montella/devel/wacommplusplus/build/external/include\nWACOMM_NETCDF_STATIC_LDFLAGS:INTERNAL=-L/home/montella/devel/wacommplusplus/build/external/lib;-lnetcdf;-lhdf5_hl;-lhdf5;-lm;-lz;-lsz;-lcurl;-lzip\nWACOMM_NETCDF_STATIC_LDFLAGS_OTHER:INTERNAL=\nWACOMM_NETCDF_STATIC_LIBDIR:INTERNAL=\nWACOMM_NETCDF_STATIC_LIBRARIES:INTERNAL=netcdf;hdf5_hl;hdf5;m;z;sz;curl;zip\nWACOMM_NETCDF_STATIC_LIBRARY_DIRS:INTERNAL=/home/montella/devel/wacommplusplus/build/external/lib\nWACOMM_NETCDF_STATIC_LIBS:INTERNAL=\nWACOMM_NETCDF_STATIC_LIBS_L:INTERNAL=\nWACOMM_NETCDF_STATIC_LIBS_OTHER:INTERNAL=\nWACOMM_NETCDF_STATIC_LIBS_PATHS:INTERNAL=\nWACOMM_NETCDF_VERSION:INTERNAL=4.8.1\nWACOMM_NETCDF_netcdf_INCLUDEDIR:INTERNAL=\nWACOMM_NETCDF_netcdf_LIBDIR:INTERNAL=\nWACOMM_NETCDF_netcdf_PREFIX:INTERNAL=\nWACOMM_NETCDF_netcdf_VERSION:INTERNAL=\n//CMAKE_INSTALL_PREFIX during last run\n_GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX:INTERNAL=/usr/local\n//Compiler reason failure\n_Python3_Compiler_REASON_FAILURE:INTERNAL=\n//Development reason failure\n_Python3_Development_REASON_FAILURE:INTERNAL=\n//Path to a program.\n_Python3_EXECUTABLE:INTERNAL=/usr/bin/python3.11\n//Python3 Properties\n_Python3_INTERPRETER_PROPERTIES:INTERNAL=Python;3;11;7;64;32;<none>;cpython-311-x86_64-linux-gnu;abi3;/usr/lib64/python3.11;/usr/local/lib64/python3.11;/usr/local/lib/python3.11/site-packages;/usr/local/lib64/python3.11/site-packages\n_Python3_INTERPRETER_SIGNATURE:INTERNAL=9706960aa2a868136534c4a00c8f3e22\n//NumPy reason failure\n_Python3_NumPy_REASON_FAILURE:INTERNAL=\n__pkg_config_arguments_WACOMM_LOG4CPLUS:INTERNAL=QUIET;IMPORTED_TARGET;log4cplus\n__pkg_config_arguments_WACOMM_NETCDF:INTERNAL=QUIET;IMPORTED_TARGET;netcdf\n__pkg_config_checked_WACOMM_LOG4CPLUS:INTERNAL=1\n__pkg_config_checked_WACOMM_NETCDF:INTERNAL=1\n//ADVANCED property for variable: pkgcfg_lib_WACOMM_LOG4CPLUS_log4cplus\npkgcfg_lib_WACOMM_LOG4CPLUS_log4cplus-ADVANCED:INTERNAL=1\n//ADVANCED property for variable: pkgcfg_lib_WACOMM_NETCDF_netcdf\npkgcfg_lib_WACOMM_NETCDF_netcdf-ADVANCED:INTERNAL=1\nprefix_result:INTERNAL=/home/montella/devel/wacommplusplus/build/external/lib\n\n",
+    "flags.make": "# CMAKE generated file: DO NOT EDIT!\n# Generated by \"Unix Makefiles\" Generator, CMake Version 4.4\n\n# compile CUDA with /opt/share/libs/nvidia/cuda-12.8.0/bin/nvcc\n# compile CXX with /opt/rh/gcc-toolset-12/root/usr/bin/c++\nCUDA_DEFINES = -DUSE_CUDA -DUSE_MPI -DUSE_OMP\n\nCUDA_INCLUDES = --options-file CMakeFiles/wacommplusplus.dir/includes_CUDA.rsp\n\nCUDA_FLAGS = -O3 -DNDEBUG -std=c++17 \"--generate-code=arch=compute_70,code=[compute_70,sm_70]\" -Xcompiler -fexceptions -Xcompiler -pthread\n\nCXX_DEFINES = -DUSE_CUDA -DUSE_MPI -DUSE_OMP\n\nCXX_INCLUDES = -I/home/montella/devel/wacommplusplus/build-cuda/generated -I/home/montella/devel/wacommplusplus/build/_deps/wacomm_json-src/include -isystem /home/montella/devel/wacommplusplus/build/external/include -isystem /opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/include -isystem /opt/share/comps/gcc-12.2.1/ompi-4.1.4_nccl/include/openmpi -isystem /opt/share/libs/gcc-8.5.0/hwloc-2.10.0/include -isystem /opt/share/libs/nvidia/cuda-12.8.0/targets/x86_64-linux/include\n\nCXX_FLAGS = -O3 -DNDEBUG -std=c++17 -fopenmp -fexceptions -pthread\n\n",
+    "forcing.sha256": "9694d10993b32888adfe1a15ae4ef1ae5e9ec414a8694343fbdb23be7d9e7430  processed-6h/ocm3_d03_20210701Z09.nc\ncdd7e137ace1126f163c61b4a85fb30fc11fa50b1b5b05fd95d67a17561fb2de  processed-6h/ocm3_d03_20210701Z10.nc\n45adc8b355074adc928a1bb69bef008296ecb75dc9f78c9dad52f70592961965  processed-6h/ocm3_d03_20210701Z11.nc\na48b4f0a70dec08fcc580e05c24cd64e81aa59166f7c44340d53ccc2620ed0f0  processed-6h/ocm3_d03_20210701Z13.nc\nd0143e1b44e5b937456ee090618697c09389cb97545623d2953eb1682ece4d7c  processed-6h/ocm3_d03_20210701Z14.nc\n017e294da9d31c2c373698700a3652d25722c98aea58101437f4f72518458347  processed-6h/ocm3_d03_20210701Z15.nc\n",
+    "jobs.txt": "1 6346\n2 6347\n4 6348\n8 6349\n16 6350\n",
+    "revision.txt": "2bdcc36c262bf3b0c4f6e207987f1a781b8c82df\n",
+    "run_sarno_cuda_scaling.sh": "#!/bin/bash\nset -euo pipefail\n\nrepository=$(cd \"$(dirname \"$0\")/..\" && pwd)\nroot=\"$repository/data/wacomm-sarno-lite\"\nsuite=\"$root/cuda-scaling\"\nif [ \"$#\" -ne 0 ]; then echo \"Usage: bash tools/run_sarno_cuda_scaling.sh\" >&2; exit 1; fi\nfor option in USE_MPI:BOOL=ON USE_OMP:BOOL=ON USE_CUDA:BOOL=ON CMAKE_BUILD_TYPE:STRING=Release; do\n    if ! grep -qx \"$option\" \"$repository/build-cuda/CMakeCache.txt\"; then\n        echo \"Build requires $option\" >&2; exit 1\n    fi\ndone\nif [ -e \"$suite\" ]; then echo \"Archive $suite before repeating the experiment.\" >&2; exit 1; fi\ntest \"$(cat \"$root/preparation/provenance/exit.txt\")\" = 0\n(cd \"$root\" && sha256sum -c preparation/provenance/prepared-forcing.sha256)\nmkdir -p \"$suite/provenance\"\ncp \"$repository/build-cuda/CMakeCache.txt\" \"$suite/provenance/\"\ncp \"$repository/build-cuda/CMakeFiles/wacommplusplus.dir/flags.make\" \"$suite/provenance/\"\ngit -C \"$repository\" rev-parse HEAD > \"$suite/provenance/revision.txt\"\ngit -C \"$repository\" diff HEAD > \"$suite/provenance/working-tree.patch\"\ncp \"$repository/tools/sarno_cuda_scaling_job.sh\" \"$repository/tools/run_sarno_cuda_scaling.sh\" \"$suite/provenance/\"\ncp \"$root/preparation/provenance/prepared-forcing.sha256\" \"$suite/provenance/forcing.sha256\"\nprevious=\"\"\nfor processes in 1 2 4 8 16; do\n    run=\"$suite/p$processes\"\n    mkdir -p \"$run\"/{provenance,examples,output-6h,snapshots-6h}\n    ln -s ../../processed-6h \"$run/processed-6h\"\n    cp \"$repository/build-cuda/wacommplusplus\" \"$run/\"\n    cp \"$root/scaling-64/p1/wacomm-sarno-lite-6h.json\" \"$run/\"\n    mkdir -p \"$run/examples/sources-sarno_river\"\n    cp \"$repository/examples/sources-sarno_river/sources-sarno_river.json\" \"$run/examples/sources-sarno_river/\"\n    cp \"$repository/tools/sarno_cuda_scaling_job.sh\" \"$run/submit.sh\"\n    (cd \"$run\" && sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river/sources-sarno_river.json submit.sh) > \"$run/provenance/inputs.sha256\"\n    nodes=$(( (processes+3)/4 ))\n    dependency=()\n    if [ -n \"$previous\" ]; then dependency=(--dependency=\"afterok:$previous\"); fi\n    job=$(sbatch --parsable --partition=low-gn --nodes=\"$nodes\" --ntasks=\"$processes\" \\\n        --cpus-per-task=1 --gres=gpu:tesla:4 --exclusive --mem=0 --time=01:00:00 \\\n        --job-name=\"sarno-cuda-p$processes\" --chdir=\"$run\" \\\n        --output=\"$run/run.out\" --error=\"$run/run.err\" \"${dependency[@]}\" \"$run/submit.sh\")\n    previous=\"${job%%;*}\"\n    printf '%s\\n' \"$previous\" > \"$run/provenance/job-id.txt\"\n    printf '%s %s\\n' \"$processes\" \"$previous\" | tee -a \"$suite/provenance/jobs.txt\"\ndone\n",
+    "sarno_cuda_scaling_job.sh": "#!/bin/bash -l\nset -euo pipefail\n\nmodule load openssl/openssl-4.0.2\nmodule load cmake/cmake-4.4.3\nmodule load gcc-12.2.1/ompi-4.1.4_nccl\nmodule load nvidia/cuda-12.8.0\nexport OMP_NUM_THREADS=1\nexport OMP_THREAD_LIMIT=1\nexport OMP_DYNAMIC=FALSE\nexport OMP_PROC_BIND=TRUE\nexport OMP_PLACES=cores\nmodule list > provenance/modules.txt 2>&1\nuname -a > provenance/platform.txt\nlscpu > provenance/cpu.txt\nmpirun --version > provenance/mpi.txt\nnvcc --version > provenance/cuda.txt\nnvidia-smi -L > provenance/gpus.txt\nscontrol show job \"$SLURM_JOB_ID\" > provenance/slurm.txt\nprintenv | LC_ALL=C sort | sed -n '/^OMP_/p' > provenance/openmp.txt\nset +e\n/usr/bin/time -f '%e' -o provenance/elapsed-seconds.txt \\\n    mpirun --np \"$SLURM_NTASKS\" --map-by ppr:4:node --bind-to core --report-bindings \\\n    bash -c 'export CUDA_VISIBLE_DEVICES=\"$OMPI_COMM_WORLD_LOCAL_RANK\"; printf \"GPU binding: rank=%s host=%s device=%s\\n\" \"$OMPI_COMM_WORLD_RANK\" \"$(hostname)\" \"$CUDA_VISIBLE_DEVICES\"; exec ./wacommplusplus wacomm-sarno-lite-6h.json'\nstatus=$?\nprintf '%s\\n' \"$status\" > provenance/exit.txt\nset -e\nif [ \"$status\" -ne 0 ]; then exit \"$status\"; fi\nfind output-6h snapshots-6h -type f -exec sha256sum {} + > provenance/outputs.sha256\n",
+    "working-tree.patch": "diff --git a/cuda/kernel.cu b/cuda/kernel.cu\nindex 7d9e3ed2..c4bece74 100644\n--- a/cuda/kernel.cu\n+++ b/cuda/kernel.cu\n@@ -35,7 +35,7 @@ __device__ double normal(unsigned long long seed, unsigned long long particle, l\n     return sqrt(-2.0*log(u1))*cos(6.28318530717958647692*u2);\n }\n \n-__device__ double forcingErrorNormal(unsigned long long seed,unsigned long long particle,long long interval,\n+__device__ double deviceForcingErrorNormal(unsigned long long seed,unsigned long long particle,long long interval,\n                                      unsigned long long substep,unsigned long long component,double longitude,\n                                      double latitude,double physicalTime,double spatialScale,double temporalScale) {\n     if (spatialScale<=0 && temporalScale<=0) return normal(seed,particle,interval,substep,component);\n@@ -190,10 +190,10 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde\n                 windErrorTemporalScale=region.windErrorTemporalScale;\n             }\n             if (windErrorStdDev>0) {\n-                double first=forcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,\n+                double first=deviceForcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,\n                         uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT,longitude,latitude,\n                         physicalTime+.5*direction*stepDt,windErrorSpatialScale,windErrorTemporalScale);\n-                double second=forcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,\n+                double second=deviceForcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,\n                         uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT,longitude,latitude,\n                         physicalTime+.5*direction*stepDt,windErrorSpatialScale,windErrorTemporalScale);\n                 windU+=windErrorStdDev*first;\n@@ -292,7 +292,7 @@ cudaError_t cudaMoveParticle(config_data *config, particle_data *particles, int\n                              float *windU10, float *windV10, float *stokesU, float *stokesV, int particleCount,\n                              int numThread, int numGPU) {\n     (void)mask; (void)numThread; (void)numGPU;\n-    dim3 threads=512;\n+    dim3 threads=128;\n     dim3 blocks=particleCount/threads.x+((particleCount%threads.x)==0 ? 0 : 1);\n     move<<<blocks,threads>>>(config,particles,timeIndex,oceanTime,sW,sRho,eta,xi,times,mask,lonRad,latRad,\n                             depthIntervals,h,zeta,u,v,w,akt,windU10,windV10,stokesU,stokesV,particleCount);\n"
+  },
+  "timing": {
+    "application": "GNU time around mpirun; includes native reads and output writes, excludes preparation and queue wait",
+    "solver": "sum of five barrier-bounded physical-interval seconds; excludes forcing reads and writes"
+  }
+}

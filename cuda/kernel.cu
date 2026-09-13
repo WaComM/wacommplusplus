@@ -35,7 +35,7 @@ __device__ double normal(unsigned long long seed, unsigned long long particle, l
     return sqrt(-2.0*log(u1))*cos(6.28318530717958647692*u2);
 }
 
-__device__ double forcingErrorNormal(unsigned long long seed,unsigned long long particle,long long interval,
+__device__ double deviceForcingErrorNormal(unsigned long long seed,unsigned long long particle,long long interval,
                                      unsigned long long substep,unsigned long long component,double longitude,
                                      double latitude,double physicalTime,double spatialScale,double temporalScale) {
     if (spatialScale<=0 && temporalScale<=0) return normal(seed,particle,interval,substep,component);
@@ -190,10 +190,10 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
                 windErrorTemporalScale=region.windErrorTemporalScale;
             }
             if (windErrorStdDev>0) {
-                double first=forcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
+                double first=deviceForcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
                         uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT,longitude,latitude,
                         physicalTime+.5*direction*stepDt,windErrorSpatialScale,windErrorTemporalScale);
-                double second=forcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
+                double second=deviceForcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
                         uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT,longitude,latitude,
                         physicalTime+.5*direction*stepDt,windErrorSpatialScale,windErrorTemporalScale);
                 windU+=windErrorStdDev*first;
@@ -292,7 +292,7 @@ cudaError_t cudaMoveParticle(config_data *config, particle_data *particles, int 
                              float *windU10, float *windV10, float *stokesU, float *stokesV, int particleCount,
                              int numThread, int numGPU) {
     (void)mask; (void)numThread; (void)numGPU;
-    dim3 threads=512;
+    dim3 threads=128;
     dim3 blocks=particleCount/threads.x+((particleCount%threads.x)==0 ? 0 : 1);
     move<<<blocks,threads>>>(config,particles,timeIndex,oceanTime,sW,sRho,eta,xi,times,mask,lonRad,latRad,
                             depthIntervals,h,zeta,u,v,w,akt,windU10,windV10,stokesU,stokesV,particleCount);

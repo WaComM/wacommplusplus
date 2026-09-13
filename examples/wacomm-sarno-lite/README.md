@@ -208,6 +208,43 @@ The same five-interval solver timer $T_p$ (seconds), full `mpirun` elapsed timer
 
 **Discussion and limits.** The fastest measured solver point is 64 ranks at 1.0540 s, 9.91× faster than one rank, but the gain from 32 to 64 ranks is only 0.1482 s while efficiency drops from 27.16% to 15.49%. The full invocation is fastest at four ranks (18.79 s); it takes 79.05 s at 64 ranks. At 64 ranks, solver intervals account for about 1.3% of full elapsed time. Every rank loads ocean windows, and the two-node run introduces inter-node communication and shared-storage traffic; these measurements do not isolate either cost or show which dominates. MPI emitted OpenFabrics initialization warnings, retained in the report, yet all jobs exited zero and particle states matched exactly. This is one ascending sweep with one sample per count and uncontrolled cache, I/O, and system variation. The difference from the earlier 1–32 sweep, especially at 32 ranks, shows why neither sweep establishes a stable performance optimum. These results do not validate multi-node scaling beyond two nodes or predict performance on other hardware.
 
+## MPI, OpenMP, and CUDA performance diagnostic on `low-gn`
+
+**Question and prerequisites.** How does this fixed six-hour passive Sarno workload run on one Tesla V100 per MPI rank when OpenMP is compiled in but limited to one thread? Use the same prepared native forcing, source file, seed 5489, and scientific configuration as the MPI sweep above. The Release executable must be built separately in `build-cuda` with `USE_MPI=ON`, `USE_OMP=ON`, `USE_CUDA=ON`, `USE_EMPI=OFF`, `USE_OPENACC=OFF`, and `CMAKE_CUDA_ARCHITECTURES=70` for the V100. The local build reused the existing repository's nlohmann/json and NetCDF dependencies; its complete cache, compiler flags, staged binary checksum, and job environment are in the [report](docs/figures/cuda-scaling/cuda-scaling-results.json). CUDA 12.8.0, GNU 12.2.1, OpenMPI 4.1.4, and CMake 4.4.3 were loaded. The CUDA kernel uses 128 threads per block because the previous 512-thread launch exceeded V100 resource limits; the renamed device-local forcing-error helper resolves an overload ambiguity without changing its calculation.
+
+**Exact commands and allocation.** From the repository root, after completing the preparation job and the CPU build described above (whose checked-in dependency cache and static libraries the CUDA build reuses):
+
+```bash
+bash tools/build_sarno_cuda.sh
+bash tools/run_sarno_cuda_scaling.sh
+# Wait for the three low-gn jobs to exit successfully.
+MPLCONFIGDIR=/tmp/wacomm-mpl data/wacomm-sarno-lite/venv/bin/python \
+  tools/cuda_scaling_figures.py data/wacomm-sarno-lite/cuda-scaling \
+  --output-dir examples/wacomm-sarno-lite/docs/figures/cuda-scaling
+```
+
+The wrapper submits 1, 2, and 4 ranks sequentially to one exclusive `low-gn` node, reserving all four Tesla GPUs and one CPU per rank. It pins each local rank to a distinct GPU with `CUDA_VISIBLE_DEVICES` and sets `OMP_NUM_THREADS=OMP_THREAD_LIMIT=1`. At one and two ranks, unused reserved GPUs do no work; efficiency divides by active ranks/GPUs. It refuses to overwrite an existing run directory and verifies prepared-forcing checksums before submission. Each run reads the same native forcing through a symlink, with ROMS conversion and normalized-forcing writes disabled. The output directory contains five physical-time particle snapshots and gridded history files. The collector verifies binary/configuration/source hashes, successful exits, one visible GPU per rank, distinct rank/GPU bindings, exactly five solver intervals, and exact equality of all saved particle states among the three CUDA runs. This verifies CUDA rank decomposition for this workload only.
+
+**Timing and estimators.** Let $T_p$ be the sum of five barrier-bounded solver intervals in seconds for $p$ active MPI ranks/GPUs (dimensionless). It excludes native forcing reads, output writes, and the earlier download/preparation job. Full elapsed time $A_p$ includes native reads, launch, solver, and writes, but excludes queue wait and preparation. The dimensionless speedup is $T_1/T_p$ and efficiency is $T_1/(pT_p)$; the application series substitutes $A_p$. These measurements are computational diagnostics, not a validated scientific speedup claim, because the CPU–CUDA equivalence check below fails.
+
+![Computational diagnostic comparing solver and full-application speedup for one, two, and four MPI ranks with one Tesla V100 each.](docs/figures/cuda-scaling/sarno-cuda-speedup.svg)
+
+**Figure 9 — Computational diagnostic.** Blue shows CUDA solver speedup, orange full-application speedup, and gray ideal linear scaling. All runs use one `low-gn` node, with one OpenMP thread and one active GPU per rank. Both axes are logarithmic; each point is one run. [PDF](docs/figures/cuda-scaling/sarno-cuda-speedup.pdf) · [400 dpi PNG](docs/figures/cuda-scaling/sarno-cuda-speedup.png).
+
+![Computational diagnostic comparing solver and full-application efficiency for one, two, and four MPI ranks with one Tesla V100 each.](docs/figures/cuda-scaling/sarno-cuda-efficiency.svg)
+
+**Figure 10 — Computational diagnostic.** Efficiency divides each separately normalized speedup by active ranks/GPUs. The 100% line is an ideal reference. There are no uncertainty bars because each count has one sample. [PDF](docs/figures/cuda-scaling/sarno-cuda-efficiency.pdf) · [400 dpi PNG](docs/figures/cuda-scaling/sarno-cuda-efficiency.png).
+
+| MPI ranks / active GPUs | Job | Solver time (s) | Solver speedup | Solver efficiency | Application time (s) | Application speedup |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 6346 | 2.9535 | 1.000× | 100.00% | 52.35 | 1.000× |
+| 2 | 6347 | 3.2931 | 0.897× | 44.84% | 19.60 | 2.671× |
+| 4 | 6348 | 4.0267 | 0.733× | 18.34% | 21.36 | 2.451× |
+
+**Discussion and scientific limit.** The solver slows as active GPUs increase on this small particle release: 2.9535 s at one rank, 4.0267 s at four. The complete application is fastest at two ranks (19.60 s), but the unusually slow one-rank elapsed time (52.35 s) is one unreplicated observation and may reflect cold storage or other uncontrolled startup costs. GPU-rank comparisons pass exact identity and state checks at every saved physical time. The CPU one-rank and CUDA one-rank states do **not** pass the repository's zero-tolerance comparison: at 10:00 UTC, longitude differs by up to 1.27×10⁻⁸ degrees, latitude by 8.36×10⁻¹⁰ degrees, and depth by 9.53×10⁻⁸ m; at 14:00, the two outputs differ by one active particle (32,393 CPU versus 32,394 CUDA). The CUDA particle parity test also fails its position assertion on this GPU. These observations indicate an unresolved backend-equivalence problem, so the charts characterize runtime of the current CUDA implementation but do not establish performance of a scientifically interchangeable solver. They cannot justify replacing the CPU backend for this case.
+
+An attempted eight-rank job on two `low-gn` nodes reached the last forcing file but did not exit; all eight ranks continued spinning while GPU utilization was zero. It was cancelled, and its dependent 16-rank job was cancelled before starting. Their incomplete timings are excluded from the plots and table. The completed sweep has one run per count, fixed ascending order, uncontrolled cache and I/O conditions, and no uncertainty estimate. The report preserves the completed job IDs, timing intervals, GPU mapping, platform/build metadata, checksums, comparison results, and figure hashes. The cancelled multi-node logs remain in the local runtime archive, outside Git. This performance observation is separate from scientific validation; the passive-release assumptions, forcing fields and units, missing 12:00 record, and physical interpretation described earlier still apply. The Amdahl (1967) reference below gives context for imperfect scaling, without implying a fitted serial fraction here.
+
 ## OpenMP strong scaling and MPI comparison
 
 **Question and fixed workload.** Compare one MPI process with 1, 2, 4, 8, 16, and 32 OpenMP threads against the MPI sweep above at the same active core counts. The physical question, six-hour window, seed 5489, five source batches, native fields and units, boundaries, and missing 12:00 forcing limitation are unchanged. This is computational verification and performance evidence for the passive-release configuration, not observational validation.

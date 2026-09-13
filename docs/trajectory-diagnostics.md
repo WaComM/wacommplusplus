@@ -88,6 +88,10 @@ For dimensionless thread count $n$ and summed solver time $T_n$ in seconds, spee
 
 OpenMP affinity verification requires one hardware thread per physical core, distinct runtime worker affinities for multi-thread runs, and a single resolved OpenMP place plus MPI binding for the one-thread case. This collector is intentionally limited to the recorded non-SMT topology; it does not infer physical-core equivalence on an SMT host.
 
+## CUDA scaling diagnostic
+
+`tools/cuda_scaling_figures.py data/wacomm-sarno-lite/cuda-scaling --output-dir examples/wacomm-sarno-lite/docs/figures/cuda-scaling` verifies the completed one-node `low-gn` runs at 1, 2, and 4 MPI ranks with one OpenMP thread and one distinct V100 GPU per rank. It reuses the five-interval solver timer and full-application timer defined above, with speedup $T_1/T_p$ and efficiency $T_1/(pT_p)$ for active GPU/rank count $p$; each estimator is dimensionless. No timing samples are averaged or imputed. The collector requires identical binaries, configurations, source files, successful exits, complete physical intervals, recorded GPU bindings, and exact particle-state agreement among CUDA ranks. It writes only outside the simulation root. SVG/PDF/400 dpi PNG plots and a JSON report retain the measurements, provenance, and hashes. The [Sarno discussion](../examples/wacomm-sarno-lite/README.md#mpi-openmp-and-cuda-performance-diagnostic-on-low-gn) records the failed CPU–CUDA equivalence check and the incomplete multi-node attempt. These charts are computational diagnostics of an unresolved backend, not evidence of scientific interchangeability or calibrated performance.
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
