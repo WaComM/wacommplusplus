@@ -78,18 +78,46 @@ __device__ double bilinear(double *field, int j, int i, double jf, double ifrac,
 
 __device__ float bilinear(float *field, int t0, int t1, int j, int i, double jf, double ifrac,
                           int eta, int xi, double alpha) {
-    return at(field,t0,t1,j,i,eta,xi,alpha)*(1.0-ifrac)*(1.0-jf)+
-           at(field,t0,t1,j+1,i,eta,xi,alpha)*(1.0-ifrac)*jf+
-           at(field,t0,t1,j+1,i+1,eta,xi,alpha)*ifrac*jf+
-           at(field,t0,t1,j,i+1,eta,xi,alpha)*ifrac*(1.0-jf);
+    float f1=at(field,t0,t1,j,i,eta,xi,alpha)*(1.0-ifrac)*(1.0-jf);
+    float f2=at(field,t0,t1,j+1,i,eta,xi,alpha)*(1.0-ifrac)*jf;
+    float f3=at(field,t0,t1,j+1,i+1,eta,xi,alpha)*ifrac*jf;
+    float f4=at(field,t0,t1,j,i+1,eta,xi,alpha)*ifrac*(1.0-jf);
+    return f1+f2+f3+f4;
 }
 
 __device__ float bilinear(float *field, int t0, int t1, int k, int levels, int j, int i,
                           double jf, double ifrac, int eta, int xi, double alpha) {
-    return at(field,t0,t1,k,levels,j,i,eta,xi,alpha)*(1.0-ifrac)*(1.0-jf)+
-           at(field,t0,t1,k,levels,j+1,i,eta,xi,alpha)*(1.0-ifrac)*jf+
-           at(field,t0,t1,k,levels,j+1,i+1,eta,xi,alpha)*ifrac*jf+
-           at(field,t0,t1,k,levels,j,i+1,eta,xi,alpha)*ifrac*(1.0-jf);
+    float f1=at(field,t0,t1,k,levels,j,i,eta,xi,alpha)*(1.0-ifrac)*(1.0-jf);
+    float f2=at(field,t0,t1,k,levels,j+1,i,eta,xi,alpha)*(1.0-ifrac)*jf;
+    float f3=at(field,t0,t1,k,levels,j+1,i+1,eta,xi,alpha)*ifrac*jf;
+    float f4=at(field,t0,t1,k,levels,j,i+1,eta,xi,alpha)*ifrac*(1.0-jf);
+    return f1+f2+f3+f4;
+}
+
+__device__ double environmentAt(float *field, int t0, int t1, int j, int i, double jf,
+                                 double ifrac, int eta, int xi, double alpha) {
+    float f1=field[index3(t0,j,i,eta,xi)]*(1.0-ifrac)*(1.0-jf);
+    float f2=field[index3(t0,j+1,i,eta,xi)]*(1.0-ifrac)*jf;
+    float f3=field[index3(t0,j+1,i+1,eta,xi)]*ifrac*jf;
+    float f4=field[index3(t0,j,i+1,eta,xi)]*ifrac*(1.0-jf);
+    float n1=field[index3(t1,j,i,eta,xi)]*(1.0-ifrac)*(1.0-jf);
+    float n2=field[index3(t1,j+1,i,eta,xi)]*(1.0-ifrac)*jf;
+    float n3=field[index3(t1,j+1,i+1,eta,xi)]*ifrac*jf;
+    float n4=field[index3(t1,j,i+1,eta,xi)]*ifrac*(1.0-jf);
+    return (1.0-alpha)*(f1+f2+f3+f4)+alpha*(n1+n2+n3+n4);
+}
+
+__device__ double waveAt(float *field, int t0, int t1, int j, int i, double jf,
+                          double ifrac, int eta, int xi, double alpha) {
+    double first=field[index3(t0,j,i,eta,xi)]*(1.0-ifrac)*(1.0-jf)+
+                 field[index3(t0,j+1,i,eta,xi)]*(1.0-ifrac)*jf+
+                 field[index3(t0,j+1,i+1,eta,xi)]*ifrac*jf+
+                 field[index3(t0,j,i+1,eta,xi)]*ifrac*(1.0-jf);
+    double next=field[index3(t1,j,i,eta,xi)]*(1.0-ifrac)*(1.0-jf)+
+                field[index3(t1,j+1,i,eta,xi)]*(1.0-ifrac)*jf+
+                field[index3(t1,j+1,i+1,eta,xi)]*ifrac*jf+
+                field[index3(t1,j,i+1,eta,xi)]*ifrac*(1.0-jf);
+    return (1.0-alpha)*first+alpha*next;
 }
 
 __device__ void reflect(double oldCoordinate, int oldCell, double &candidate, int candidateCell) {
@@ -172,8 +200,8 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
             LeewayCoefficients coefficients=driftObjectCoefficients((DriftObjectType)particle.driftObjectType);
             long long uncertaintyInterval=llround(fmin(intervalStart,intervalEnd));
             unsigned long long uncertaintySubstep=(unsigned long long)floor(elapsed/config->dti);
-            double windU=windU10 ? bilinear(windU10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windU10;
-            double windV=windV10 ? bilinear(windV10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windV10;
+            double windU=windU10 ? environmentAt(windU10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windU10;
+            double windV=windV10 ? environmentAt(windV10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windV10;
             double longitude=bilinear(lonRad,jI,iI,jF,iF,xi);
             double latitude=bilinear(latRad,jI,iI,jF,iF,xi);
             double windErrorStdDev=config->windErrorStdDev;
@@ -211,8 +239,8 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
             uu+=(float)leeway.u;
             vv+=(float)leeway.v;
             if (stokesU && stokesV) {
-                uu+=bilinear(stokesU,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha);
-                vv+=bilinear(stokesV,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha);
+                uu+=(float)waveAt(stokesU,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha);
+                vv+=(float)waveAt(stokesV,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha);
             }
         }
         double ww=bilinear(w,timeIndex,nextTime,kI,sW,jI,iI,jF,iF,eta,xi,alpha)*(1.0-kF)+

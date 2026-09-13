@@ -8,6 +8,8 @@ The decomposition regression also updates each rank's particles with OpenMP dyna
 
 Fast CI compiles serial, OpenMP, MPI, and combined MPI/OpenMP application configurations. Scheduled validation compiles MPI, OpenMP, and CUDA together, tests OpenACC, and runs every CPU-side regression, including MPI execution. The CUDA regression compares deterministic, seeded-stochastic, dynamic-WRF, and coupled WRF/WW3 CPU/GPU state and skips only when a device is absent. The manual GPU workflow runs it on a labeled self-hosted NVIDIA runner; the FlexMPI workflow requires an installation providing the actual EMPI runtime. Compile-only accelerator results are not numerical parity evidence.
 
+The `gn03` Slurm parity run used one V100, one MPI task, and one OpenMP thread. It verified the CPU/CUDA particle update on the synthetic regression fields after aligning the east–west metric and environmental interpolation order. It does not compare complete application NetCDF outputs or establish four-way equivalence for every rank/thread/GPU count.
+
 Record ranks, threads, affinity, GPU and driver data with results. Validate deterministic output against serial execution before scientific use.
 
 The [two-process Sarno Slurm example](../examples/wacomm-sarno-lite/README.md#two-process-mpi-calculation) runs the six-hour seeded ROMS calculation on `high-wn` with OpenMP/CUDA disabled. `bash tools/run_sarno_lite.sh --mpi` requests two cores on one node and uses OpenMPI with explicit core binding. Its five particle snapshots match the serial run exactly after identity ordering; this evidence covers the documented case and excludes inter-node communication performance and observational validation.

@@ -553,7 +553,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             // https://www.movable-type.co.uk/scripts/latlong.html
             dLatLon = pow(sin(0.5 * dLat), 2) +
                  pow(sin(0.5 * dLon), 2) *
-                 cos(latRad(jI + 1, iI)) *
+                 cos(latRad(jI, iI + 1)) *
                  cos(latRad(jI, iI));
 
             // Size of a grid cell along latitude in meters

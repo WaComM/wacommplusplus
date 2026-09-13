@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdio>
 #include <limits>
 
 namespace {
@@ -135,6 +136,9 @@ int main() {
         assert(cudaMemcpy(&result,deviceParticle,sizeof(result),cudaMemcpyDeviceToHost)==cudaSuccess);
 
         double tolerance=stochastic ? 1e-9 : 1e-12;
+        if (!close(result.i,cpu.I(),tolerance) || !close(result.j,cpu.J(),tolerance))
+            std::fprintf(stderr,"mode=%d cpu=(%.17g,%.17g) cuda=(%.17g,%.17g)\n",
+                         mode,cpu.I(),cpu.J(),result.i,result.j);
         assert(result.id==cpu.Id());
         assert(close(result.i,cpu.I(),tolerance) && close(result.j,cpu.J(),tolerance));
         assert(close(result.k,cpu.K(),tolerance) && close(result.health,cpu.Health(),tolerance));

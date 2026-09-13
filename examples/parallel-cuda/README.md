@@ -12,6 +12,8 @@ Configure with `cmake -S . -B build-cuda -DUSE_CUDA=ON`, build with `cmake --bui
 
 Compare identity, particle count, position, health, age, drift side, closures, concentration, and output time with the serial result using declared tolerances. Run `ctest --test-dir build-cuda -R cuda_particle_parity --output-on-failure`; on a GPU this includes nonuniform dynamic wind and coupled wind/Stokes interpolation. Run compute-sanitizer where available and verify all device-to-host copies complete before host reads.
 
+For a direct one-device check under Slurm, request a single GPU and run `./build-cuda/cuda_particle_parity_test` inside the allocation. The executable exits with code 77 when no device is available, so check the job exit code rather than treating a CTest skip as a pass. On `gn03`, job 6358 completed this test on a Tesla V100 with one task and one OpenMP thread. This fixture verifies particle-state parity on its synthetic fields; a complete application comparison still requires matching input and output snapshots.
+
 ## Limitations, interpretation, and reproducibility
 
 Do not infer measured scientific equivalence from a successful kernel launch or compile-only CI. Record revision, inputs/configuration and checksums, compiler, CUDA toolkit, driver/GPU, CMake options, launch settings, tests, tolerances, timing, and output checksums. See [parallelism](../../docs/parallelism.md) and [testing](../../docs/testing.md).

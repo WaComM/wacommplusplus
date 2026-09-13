@@ -68,7 +68,15 @@ The timeline is conceptual. Physical timestamps, not file order or a nominal rec
 
 ## Metric conversion and position update
 
-The deterministic and random displacements are formed in metres. Local meridional and zonal grid distances $D_y$ and $D_x$ are evaluated with the haversine formula and Earth radius $R_E=6\,371\,000$ m between adjacent coordinate nodes. The vertical cell thickness is
+The deterministic and random displacements are formed in metres. Local meridional and zonal grid distances $D_y$ and $D_x$ are evaluated with the haversine formula and Earth radius $R_E=6\,371\,000$ m between adjacent coordinate nodes:
+
+$$
+D_x=2R_E\operatorname{atan2}(\sqrt{a_x},\sqrt{1-a_x}),\qquad
+a_x=\sin^2\!\left(\frac{\lambda_{j,i+1}-\lambda_{j,i}}{2}\right)
+\cos(\phi_{j,i+1})\cos(\phi_{j,i}),
+$$
+
+where $\lambda$ and $\phi$ are node longitude and latitude in radians. $D_y$ applies the same haversine operator to nodes $(j,i)$ and $(j+1,i)$. Both distances are in metres. The zonal cosine factors use the actual east–west segment endpoints; older CPU calculations used the latitude of the north node for one factor, causing a latitude-dependent mismatch with CUDA. The vertical cell thickness is
 
 $$D_z=(h+\zeta)\,\Delta s_k,$$
 

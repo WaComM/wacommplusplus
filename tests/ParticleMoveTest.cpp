@@ -33,8 +33,7 @@ int main() {
     Particle full(1,-.5,.25,.25,0);
     full.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
     assert(std::abs(full.Age()-65)<1e-12);
-    double distanceTerm=std::pow(std::sin(0.5*0.017453292519943295),2)*
-                        std::cos(0.017453292519943295);
+    double distanceTerm=std::pow(std::sin(0.5*0.017453292519943295),2);
     double xdist=2.0*std::atan2(std::sqrt(distanceTerm),std::sqrt(1.0-distanceTerm))*6371000.0;
     assert(std::abs(full.I()-(.25+65.0/xdist))<1e-10);
 
