@@ -54,10 +54,14 @@ int main(int argc, char **argv) {
     config.trackingDirection=Config::TRACKING_FORWARD;
     config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
 
-    for (particle_data &data:local) {
-        Particle particle(data);
+    const int localCount=(int)local.size();
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic,1)
+#endif
+    for (int index=0;index<localCount;index++) {
+        Particle particle(local[index]);
         particle.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
-        data=particle.data();
+        local[index]=particle.data();
     }
     MPI_Gatherv(local.data(),counts[worldRank],particleType,
                 parallelResult.data(),counts.data(),displacements.data(),particleType,0,MPI_COMM_WORLD);

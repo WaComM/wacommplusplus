@@ -25,6 +25,8 @@ Optional switches are `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA
 
 `WACOMM_BOOTSTRAP_DEPENDENCIES` is a three-state cache string. `AUTO` is the default and prefers a usable installed stack. If installed NetCDF-C, NetCDF-C++4, or DAP support is missing, it builds a coherent private zlib, libaec/SZIP, TLS-enabled curl, HDF5, NetCDF-C, and NetCDF-C++4 chain, including OpenSSL 3.5.8 on Unix other than macOS; JSON and log4cplus fall back independently. `ON` bypasses installed copies and always uses the pinned private stack. `OFF` performs no dependency downloads and fails during configuration when a required installed package or DAP capability is unavailable. Private files remain under `<build>/external` and are never installed globally.
 
+Installed log4cplus CMake packages may export either the shared `log4cplus::log4cplus` or static `log4cplus::log4cplusS` target. The build accepts both before trying pkg-config, so a static package does not depend on a separate shared-library entry.
+
 ```bash
 cmake -S . -B build -DWACOMM_BOOTSTRAP_DEPENDENCIES=AUTO
 cmake -S . -B build-private -DWACOMM_BOOTSTRAP_DEPENDENCIES=ON

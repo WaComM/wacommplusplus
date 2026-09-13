@@ -241,6 +241,17 @@ if(BUILD_APPLICATION)
             target_link_libraries(mpi_decomposition_test PRIVATE ${WACOMM_LIBRARIES})
             add_test(NAME mpi_decomposition_parity COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
                     ${MPIEXEC_PREFLAGS} $<TARGET_FILE:mpi_decomposition_test> ${MPIEXEC_POSTFLAGS})
+            if(USE_OMP)
+                set_tests_properties(mpi_decomposition_parity PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+            endif()
+            if(USE_OMP)
+                add_test(NAME mpi_openmp_single_worker_parity COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1
+                        ${MPIEXEC_PREFLAGS} $<TARGET_FILE:mpi_decomposition_test> ${MPIEXEC_POSTFLAGS})
+                set_tests_properties(mpi_openmp_single_worker_parity PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+                add_test(NAME mpi_openmp_multi_worker_parity COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                        ${MPIEXEC_PREFLAGS} $<TARGET_FILE:mpi_decomposition_test> ${MPIEXEC_POSTFLAGS})
+                set_tests_properties(mpi_openmp_multi_worker_parity PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OMP_DYNAMIC=FALSE")
+            endif()
         endif()
 
         if(USE_CUDA)

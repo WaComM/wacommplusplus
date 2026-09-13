@@ -10,6 +10,8 @@ Application and backend validation additionally requires NetCDF fixtures and the
 
 When configured with `USE_MPI=ON`, CTest launches a two-rank decomposition test over eleven particles. It uses the same committed MPI datatype as the application, performs the seeded stochastic particle update after a non-uniform scatter, gathers the state, and compares identity, position, health, age, and emission time exactly with serial execution. Two ranks fit the minimum GitHub-hosted runner allocation without implementation-specific oversubscription flags, while the odd particle count still exercises a remainder on rank zero.
 
+With `USE_OMP=ON`, the same test performs local particle updates under dynamic OpenMP scheduling. Additional CTest cases use one rank with one thread and two ranks with two threads per rank; both compare every gathered particle against a serial reference. These are numerical backend-equivalence checks for the synthetic seeded interval, not observational validation. The CUDA case remains a separate CPU/device particle-state comparison and must execute on a physical GPU before CUDA parity can be claimed.
+
 Test targets explicitly undefine `NDEBUG`, including in Release configurations, because the regression executables use C assertions as their failure mechanism. A Release CI pass therefore executes the numerical and metadata checks rather than only launching empty test bodies.
 
 When Python 3 is available, CTest also creates a temporary reproducibility manifest and verifies ocean, weather, wave, and output SHA-256 values, selected CMake options, declared tolerances, and schema version. Python is optional and is not required to configure or build the portable C++17 numerical core.
