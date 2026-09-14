@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Stage the six-hour example below the repository and submit a Slurm job.
-repository=$(cd "$(dirname "$0")/.." && pwd)
+repository=$(cd "$(dirname "$0")/../../.." && pwd)
 run="$repository/data/wacomm-sarno-lite"
 processes=1
 memory=32G
@@ -15,7 +15,7 @@ if [ "$#" -eq 1 ] && [ "$1" = "--mpi" ]; then
     run="$run/mpi2"
     if [ ! -e "$run/roms" ]; then ln -s ../roms "$run/roms"; fi
 elif [ "$#" -ne 0 ]; then
-    echo "Usage: bash tools/run_sarno_lite.sh [--mpi]" >&2
+    echo "Usage: bash examples/wacomm-sarno-lite/tools/run_sarno_lite.sh [--mpi]" >&2
     exit 1
 fi
 if ! grep -qx "USE_MPI:BOOL=$mpi" "$repository/build/CMakeCache.txt"; then
@@ -40,7 +40,7 @@ cp "$repository/examples/wacomm-sarno-lite/wacomm-sarno-lite.json" "$run/wacomm-
 mkdir -p "$run/examples/sources-sarno_river"
 cp "$repository/examples/sources-sarno_river/sources-sarno_river.json" "$run/examples/sources-sarno_river/"
 cp "$repository/build/wacommplusplus" "$run/wacommplusplus"
-cp "$repository/tools/sarno_lite_job.sh" "$run/submit-6h.sh"
+cp "$repository/examples/wacomm-sarno-lite/tools/sarno_lite_job.sh" "$run/submit-6h.sh"
 cp "$repository/build/CMakeCache.txt" "$run/provenance/"
 git -C "$repository" rev-parse HEAD > "$run/provenance/revision.txt"
 git -C "$repository" diff HEAD > "$run/provenance/working-tree.patch"

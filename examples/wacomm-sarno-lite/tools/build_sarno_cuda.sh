@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-repository=$(cd "$(dirname "$0")/.." && pwd)
+repository=$(cd "$(dirname "$0")/../../.." && pwd)
 cd "$repository"
 module load openssl/openssl-4.0.2
 module load cmake/cmake-4.4.3

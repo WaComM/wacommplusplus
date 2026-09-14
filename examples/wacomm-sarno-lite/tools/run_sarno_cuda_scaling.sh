@@ -1,10 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-repository=$(cd "$(dirname "$0")/.." && pwd)
+repository=$(cd "$(dirname "$0")/../../.." && pwd)
 root="$repository/data/wacomm-sarno-lite"
 suite="$root/cuda-scaling"
-if [ "$#" -ne 0 ]; then echo "Usage: bash tools/run_sarno_cuda_scaling.sh" >&2; exit 1; fi
+if [ "$#" -ne 0 ]; then echo "Usage: bash examples/wacomm-sarno-lite/tools/run_sarno_cuda_scaling.sh" >&2; exit 1; fi
 for option in USE_MPI:BOOL=ON USE_OMP:BOOL=ON USE_CUDA:BOOL=ON CMAKE_BUILD_TYPE:STRING=Release; do
     if ! grep -qx "$option" "$repository/build-cuda/CMakeCache.txt"; then
         echo "Build requires $option" >&2; exit 1
@@ -18,7 +18,7 @@ cp "$repository/build-cuda/CMakeCache.txt" "$suite/provenance/"
 cp "$repository/build-cuda/CMakeFiles/wacommplusplus.dir/flags.make" "$suite/provenance/"
 git -C "$repository" rev-parse HEAD > "$suite/provenance/revision.txt"
 git -C "$repository" diff HEAD > "$suite/provenance/working-tree.patch"
-cp "$repository/tools/sarno_cuda_scaling_job.sh" "$repository/tools/run_sarno_cuda_scaling.sh" "$suite/provenance/"
+cp "$repository/examples/wacomm-sarno-lite/tools/sarno_cuda_scaling_job.sh" "$repository/examples/wacomm-sarno-lite/tools/run_sarno_cuda_scaling.sh" "$suite/provenance/"
 cp "$root/preparation/provenance/prepared-forcing.sha256" "$suite/provenance/forcing.sha256"
 previous=""
 for processes in 1 2 4; do
@@ -29,7 +29,7 @@ for processes in 1 2 4; do
     cp "$root/scaling-64/p1/wacomm-sarno-lite-6h.json" "$run/"
     mkdir -p "$run/examples/sources-sarno_river"
     cp "$repository/examples/sources-sarno_river/sources-sarno_river.json" "$run/examples/sources-sarno_river/"
-    cp "$repository/tools/sarno_cuda_scaling_job.sh" "$run/submit.sh"
+    cp "$repository/examples/wacomm-sarno-lite/tools/sarno_cuda_scaling_job.sh" "$run/submit.sh"
     (cd "$run" && sha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river/sources-sarno_river.json submit.sh) > "$run/provenance/inputs.sha256"
     nodes=$(( (processes+3)/4 ))
     dependency=()

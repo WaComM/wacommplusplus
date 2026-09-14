@@ -320,20 +320,20 @@ if(BUILD_TESTING)
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/trajectory_diagnostics.py")
         set_tests_properties(trajectory_diagnostics PROPERTIES SKIP_RETURN_CODE 77)
         add_test(NAME publication_figures COMMAND "${Python3_EXECUTABLE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/PublicationFiguresTest.py"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/publication_figures.py")
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/PublicationFiguresTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/publication_figures.py")
         set_tests_properties(publication_figures PROPERTIES SKIP_RETURN_CODE 77)
         add_test(NAME particle_snapshot_comparison COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ParticleSnapshotComparisonTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/compare_particle_snapshots.py")
         set_tests_properties(particle_snapshot_comparison PROPERTIES SKIP_RETURN_CODE 77)
         add_test(NAME scaling_figures COMMAND "${Python3_EXECUTABLE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/ScalingFiguresTest.py"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/scaling_figures.py")
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/ScalingFiguresTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/scaling_figures.py")
         set_tests_properties(scaling_figures PROPERTIES SKIP_RETURN_CODE 77)
         add_test(NAME openmp_scaling_figures COMMAND "${Python3_EXECUTABLE}"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tests/OpenMPScalingFiguresTest.py"
-                "${CMAKE_CURRENT_SOURCE_DIR}/tools/openmp_scaling_figures.py")
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/OpenMPScalingFiguresTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/openmp_scaling_figures.py")
         set_tests_properties(openmp_scaling_figures PROPERTIES SKIP_RETURN_CODE 77)
     endif()
 endif()

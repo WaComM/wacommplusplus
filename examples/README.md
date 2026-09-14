@@ -4,7 +4,7 @@ Each experiment lives in `examples/<name>/` with its discussion in `README.md`, 
 
 Examples are part of the same versioned WaComM++ scientific software product as physics, implementation, tests, and documentation. Existing scenario files demonstrate native and ROMS inputs, source definitions, MPI/OpenMP/CUDA launch scripts, and restart preparation.
 
-Use `data/<example_name>/` below the repository as the working directory for example runs; `data/` is ignored by Git. Stage the configuration, required forcing, source files, executable, outputs, and reproducibility records there, preserving the configuration’s relative paths. See the [Sarno lite Slurm run](wacomm-sarno-lite/README.md#slurm-calculation) for an actual-calculation setup.
+Use `data/<example_name>/` below the repository as the working directory for example runs; `data/` is ignored by Git. Stage the configuration, required forcing, source files, executable, outputs, and reproducibility records there, preserving the configuration’s relative paths. See the [Sarno lite Slurm run](wacomm-sarno-lite/docs/README.md#slurm-calculation) for an actual-calculation setup.
 
 For each run, inspect the JSON before use, replace local forcing paths, record input checksums and the Git revision, run the matching executable/backend, and validate particle counts and trajectories against a deterministic reference. Backtracking should normally use endpoint particles, `random:false`, and `backward_diffusion:none`. Stochastic backward output is an ensemble of candidate origins, not a unique reconstructed source.
 
@@ -26,9 +26,9 @@ The leeway-enabled reference set includes catalog-mean, coefficient-ensemble, co
 
 The Sarno wrapper also supports `--mpi` for two processes on `high-wn`, with outputs under `data/wacomm-sarno-lite/mpi2/`.
 
-The Sarno `tools/run_sarno_scaling.sh` workflow uses an MPI/OpenMP build with CUDA disabled and one OpenMP thread per rank at 1, 2, 4, 8, 16, and 32 ranks. It reads shared native forcing from `data/wacomm-sarno-lite/processed-6h/` and stages isolated results under `data/wacomm-sarno-lite/scaling/`; see its guide for elapsed-time definitions, speedup/efficiency plots, and limitations.
+The Sarno `examples/wacomm-sarno-lite/tools/run_sarno_scaling.sh` workflow uses an MPI/OpenMP build with CUDA disabled and one OpenMP thread per rank at 1, 2, 4, 8, 16, and 32 ranks. It reads shared native forcing from `data/wacomm-sarno-lite/processed-6h/` and stages isolated results under `data/wacomm-sarno-lite/scaling/`; see its guide for elapsed-time definitions, speedup/efficiency plots, and limitations.
 
-The [Sarno OpenMP comparison](wacomm-sarno-lite/README.md#openmp-strong-scaling-and-mpi-comparison) uses one process and 1, 2, 4, 8, 16, or 32 threads on `high-wn`, with native forcing and the MPI experiment's exact binary. It adds thread-scaling figures and compares equal active core counts with the MPI sweep.
+The [Sarno OpenMP comparison](wacomm-sarno-lite/docs/README.md#openmp-strong-scaling-and-mpi-comparison) uses one process and 1, 2, 4, 8, 16, or 32 threads on `high-wn`, with native forcing and the MPI experiment's exact binary. It adds thread-scaling figures and compares equal active core counts with the MPI sweep.
 
 All runnable examples follow the [shared performance-evaluation protocol](../docs/performance-evaluation.md), including scientific equivalence and a Codex review note for every performance test.
 

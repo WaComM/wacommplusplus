@@ -83,7 +83,7 @@ ctest --test-dir build -C Release --output-on-failure
 `USE_EMPI=ON` requires an MPI implementation plus a real FlexMPI installation. Configuration searches for `empi.h` and the EMPI library and fails clearly if either is absent. Pass its installation prefix through `CMAKE_PREFIX_PATH`, `CMAKE_INCLUDE_PATH`, or `CMAKE_LIBRARY_PATH` when it is outside the system search path.
 
 
-For the six-hour serial or two-process MPI Slurm execution and optional Python 3.11 plotting environment, follow the [Sarno guide](../examples/wacomm-sarno-lite/README.md). `tools/requirements-figures.txt` pins the rendering dependencies; these are separate from the C++ build and are not required by the portable core.
+For the six-hour serial or two-process MPI Slurm execution and optional Python 3.11 plotting environment, follow the [Sarno guide](../examples/wacomm-sarno-lite/docs/README.md). `tools/requirements-figures.txt` pins the rendering dependencies; these are separate from the C++ build and are not required by the portable core.
 
 ### MPI build for the Sarno Slurm run
 
@@ -95,30 +95,30 @@ cmake -S . -B build -DWACOMM_BOOTSTRAP_DEPENDENCIES=ON \
   -DUSE_EMPI=OFF -DUSE_OPENACC=OFF -DWACOMM_BOOTSTRAP_PARALLEL_IO=OFF
 cmake --build build --parallel 8
 ctest --test-dir build --output-on-failure
-bash tools/run_sarno_lite.sh --mpi
+bash examples/wacomm-sarno-lite/tools/run_sarno_lite.sh --mpi
 ```
 
-The verified toolchain is GNU 12.2.1, CMake 4.4.3, and OpenMPI 4.1.4. Loaded CUDA and OpenSSL modules do not enable accelerator execution or replace private OpenSSL 3.5.8. MPI discovery and tests must run where MPI can initialize its communication resources. If a failed discovery left invalid wrapper paths in the cache, repeat configuration with `-U 'MPI_*'`. Serial HDF5/NetCDF remains sufficient for this solver run; MPI particle decomposition does not require parallel I/O. See the [example](../examples/wacomm-sarno-lite/README.md#two-process-mpi-calculation) for resources and exact comparison evidence.
+The verified toolchain is GNU 12.2.1, CMake 4.4.3, and OpenMPI 4.1.4. Loaded CUDA and OpenSSL modules do not enable accelerator execution or replace private OpenSSL 3.5.8. MPI discovery and tests must run where MPI can initialize its communication resources. If a failed discovery left invalid wrapper paths in the cache, repeat configuration with `-U 'MPI_*'`. Serial HDF5/NetCDF remains sufficient for this solver run; MPI particle decomposition does not require parallel I/O. See the [example](../examples/wacomm-sarno-lite/docs/README.md#two-process-mpi-calculation) for resources and exact comparison evidence.
 
 ### Combined MPI and OpenMP scaling build
 
-For the [Sarno strong-scaling sweep](../examples/wacomm-sarno-lite/README.md#mpiopenmp-strong-scaling), load the same four host modules, then build:
+For the [Sarno strong-scaling sweep](../examples/wacomm-sarno-lite/docs/README.md#mpiopenmp-strong-scaling), load the same four host modules, then build:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_MPI=ON -DUSE_OMP=ON -DUSE_CUDA=OFF \
   -DUSE_EMPI=OFF -DUSE_OPENACC=OFF -DWACOMM_BOOTSTRAP_PARALLEL_IO=OFF
 cmake --build build --parallel 8
 OMP_NUM_THREADS=1 ctest --test-dir build --output-on-failure
-bash tools/prepare_sarno_scaling.sh
+bash examples/wacomm-sarno-lite/tools/prepare_sarno_scaling.sh
 # After successful preparation and checksum collection:
-bash tools/run_sarno_scaling.sh
+bash examples/wacomm-sarno-lite/tools/run_sarno_scaling.sh
 ```
 
 This enables the OpenMP implementation but gives each MPI rank exactly one OpenMP worker during the benchmark. It does not measure multi-thread scaling. The executable retains private OpenSSL and serial NetCDF/HDF5. Preparation requires the six downloaded ROMS files under `data/wacomm-sarno-lite/roms/`; it regenerates `processed-6h/` in a separate one-process job. The sweep requires that preparation to finish successfully, GNU `time`, Slurm, and disk space for six sets of particle/gridded outputs (native forcing is shared). It refuses to reuse an existing `scaling/` directory. CMake must discover the optional plotting environment to run `scaling_figures`; see the example for Python dependencies.
 
 ### OpenMP thread sweep with one MPI process
 
-The [OpenMP Sarno comparison](../examples/wacomm-sarno-lite/README.md#openmp-strong-scaling-and-mpi-comparison) reuses the exact Release MPI/OpenMP binary from the MPI experiment; CUDA remains disabled. Run `bash tools/run_sarno_openmp_scaling.sh high-wn` after the native preparation and MPI sweep. The wrapper rejects an executable that differs from the archived MPI one-process binary so changes in optimization or provenance cannot silently change the comparison. It varies Slurm CPUs per task and OpenMP threads over 1, 2, 4, 8, 16, and 32 while keeping one MPI process. Python plotting dependencies remain optional and separate from the portable core.
+The [OpenMP Sarno comparison](../examples/wacomm-sarno-lite/docs/README.md#openmp-strong-scaling-and-mpi-comparison) reuses the exact Release MPI/OpenMP binary from the MPI experiment; CUDA remains disabled. Run `bash examples/wacomm-sarno-lite/tools/run_sarno_openmp_scaling.sh high-wn` after the native preparation and MPI sweep. The wrapper rejects an executable that differs from the archived MPI one-process binary so changes in optimization or provenance cannot silently change the comparison. It varies Slurm CPUs per task and OpenMP threads over 1, 2, 4, 8, 16, and 32 while keeping one MPI process. Python plotting dependencies remain optional and separate from the portable core.
 
 ## References
 

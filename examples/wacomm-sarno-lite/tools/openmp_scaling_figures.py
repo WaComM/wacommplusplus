@@ -15,6 +15,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "tools"))
 from scaling_figures import solver_intervals, validate_forcing
 from compare_particle_snapshots import compare
 from trajectory_diagnostics import checksum
@@ -157,7 +158,7 @@ def main():
                 "limitations":"Single ascending sweep; historical MPI comparison, no repeated/randomized timings. Cache, frequency, NUMA placement and system state are uncontrolled; no confidence intervals or causal bottleneck attribution.",
                 "suite_provenance":{p.name:p.read_text() for p in sorted((root/"provenance").iterdir()) if p.is_file()},
                 "plotting":{"python":sys.version,"numpy":np.__version__,"netCDF4":netCDF4.__version__,"matplotlib":matplotlib.__version__,
-                            "scripts":{name:checksum(pathlib.Path(__file__).parent/name) for name in ("openmp_scaling_figures.py","scaling_figures.py","compare_particle_snapshots.py","trajectory_diagnostics.py")}}}
+                            "scripts":{name:checksum((pathlib.Path(__file__).parent if name in ("openmp_scaling_figures.py","scaling_figures.py") else pathlib.Path(__file__).resolve().parents[3]/"tools")/name) for name in ("openmp_scaling_figures.py","scaling_figures.py","compare_particle_snapshots.py","trajectory_diagnostics.py")}}}
         (output/"openmp-scaling-results.json").write_text(json.dumps(report,indent=2,sort_keys=True)+"\n")
     except (ValueError,OSError,RuntimeError) as error:
         parser.exit(2,str(error)+"\n")

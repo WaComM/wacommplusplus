@@ -5,6 +5,7 @@ import datetime
 import json
 import pathlib
 import platform
+import sys
 
 import numpy as np
 import netCDF4
@@ -13,6 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "tools"))
 from trajectory_diagnostics import checksum, haversine, TIME_UNITS
 
 
@@ -224,7 +226,7 @@ def render(snapshots,grid,args):
             "inputs":[s["input"] for s in snapshots],"statistics":summary,"outputs":outputs,
             "software":{"python":platform.python_version(),"numpy":np.__version__,"matplotlib":matplotlib.__version__,
                         "netCDF4":netCDF4.__version__,"script_sha256":checksum(pathlib.Path(__file__)),
-                        "diagnostic_helpers_sha256":checksum(pathlib.Path(__file__).with_name("trajectory_diagnostics.py"))}}
+                        "diagnostic_helpers_sha256":checksum(pathlib.Path(__file__).resolve().parents[3]/"tools"/"trajectory_diagnostics.py")}}
     (root/"sarno-figure-manifest.json").write_text(json.dumps(report,indent=2,sort_keys=True)+"\n")
     return report
 

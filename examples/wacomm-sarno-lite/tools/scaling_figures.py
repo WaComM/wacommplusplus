@@ -17,6 +17,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "tools"))
 from compare_particle_snapshots import compare
 from trajectory_diagnostics import checksum
 

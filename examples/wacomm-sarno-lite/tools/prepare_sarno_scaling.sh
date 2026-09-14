@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # Rebuild native forcing once, outside the performance experiment.
-repository=$(cd "$(dirname "$0")/.." && pwd)
+repository=$(cd "$(dirname "$0")/../../.." && pwd)
 root="$repository/data/wacomm-sarno-lite"
 run="$root/preparation"
-if [ "$#" -ne 0 ]; then echo "Usage: bash tools/prepare_sarno_scaling.sh" >&2; exit 1; fi
+if [ "$#" -ne 0 ]; then echo "Usage: bash examples/wacomm-sarno-lite/tools/prepare_sarno_scaling.sh" >&2; exit 1; fi
 if [ -e "$run" ] || [ -e "$root/processed-6h-before-scaling" ]; then
     echo "Archive the existing preparation run and forcing backup before repeating." >&2; exit 1
 fi
@@ -25,7 +25,7 @@ cp "$repository/build/CMakeCache.txt" "$run/provenance/"
 cp "$repository/examples/wacomm-sarno-lite/wacomm-sarno-lite.json" "$run/wacomm-sarno-lite-6h.json"
 mkdir -p "$run/examples/sources-sarno_river"
 cp "$repository/examples/sources-sarno_river/sources-sarno_river.json" "$run/examples/sources-sarno_river/"
-cp "$repository/tools/sarno_scaling_job.sh" "$run/submit.sh"
+cp "$repository/examples/wacomm-sarno-lite/tools/sarno_scaling_job.sh" "$run/submit.sh"
 cat >> "$run/submit.sh" <<'SCRIPT'
 sha256sum processed-6h/ocm3_d03_20210701Z*.nc > provenance/prepared-forcing.sha256
 SCRIPT
