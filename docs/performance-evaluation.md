@@ -56,7 +56,9 @@ The validation report must record exact commands, timestamps, scheduler job IDs,
 6. On the same hardware and scientific workload, measure the five GPU tuples, verify distinct device bindings and CPU/GPU numerical equivalence, update the records, and rerun the collector. If four GPUs or a supported backend are unavailable, document the limitation and do not claim a complete GPU experiment.
 7. Review every generated Codex note. Give an agent the note together with the referenced run artifacts and repository context; require it to isolate generic core or example-infrastructure defects, propose minimal changes, and rerun scientific and performance checks across applicable examples and backends. Do not optimize one case by changing its physics, forcing, or workload. Archive before/after records separately.
 
-The earlier Sarno-only scripts and figures remain historical diagnostics with their own workload and run counts. They are not automatically comparable with this shared protocol.
+The [Sarno implementation](../examples/wacomm-sarno-lite/docs/performance-evaluation.md) stages the full matrix with rotated replicate blocks and validates particle and gridded outputs before using this collector. Earlier Sarno-only scripts and figures remain historical diagnostics with their own workload and run counts; they are not automatically comparable with this shared protocol.
+
+For a declared problem-size series, repeat the entire resource matrix and CPU selection at every size, with a separate one-worker baseline and source/input identity check for each. The reusable `tools/performance_workload_scaling.py` requires complete GPU sweeps and common build, forcing, configuration, hardware class, and timing scope across sizes; it writes cross-size charts, a measured-choice table, and a Codex review prompt. `tools/performance_publish.py` exports a compact validated result record and checksummed figures without versioning large simulation outputs. The series varies a scientific workload parameter and is not a fixed-problem strong-scaling curve across sizes.
 
 ## References
 

@@ -302,9 +302,9 @@ The independently measured one-core solver baselines differ by **3.46%**: OpenMP
 
 The MPI reference is historical, not interleaved or rerun alongside OpenMP. Each count has one sample, and filesystem caches, CPU frequency, NUMA first-touch placement, and background system behavior are uncontrolled. Affinity settings differ between processes and threads and are archived; runtime diagnostic overhead is not separately subtracted. Comparisons describe this fixed workload and execution policy, not statistically established superiority or a general recommendation for other particle counts, grids, or machines. No hybrid multi-rank/multi-thread or multi-node experiment is implied. Preserve the ignored runtime directories separately from Git for reproducibility.
 
-## Performance evaluation
+## Shared performance evaluation
 
-Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
+The [detailed Sarno performance evaluation](docs/performance-evaluation.md) applies the repository protocol to 1,000, 10,000, 100,000, and 1,000,000 particles emitted per hour. It gives the exact launcher and collector commands, validation gates, all requested resource tuples, versioned charts, observed results, limitations, and per-run Codex review-note workflow. At 10,000 particles/hour, the validated CPU optimum is `1/32/0` at 0.519478 s median solver time; all one- through four-GPU timings for this workload are slower than that CPU point. Compare each other emission rate against its own baseline and select its CPU configuration independently.
 
 ## References
 
@@ -315,3 +315,4 @@ Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/perform
 - OpenDrift Project. [Gallery](https://opendrift.github.io/gallery/index.html), [ROMS reader example](https://opendrift.github.io/gallery/example_roms_native.html), and [vertical mixing example](https://opendrift.github.io/gallery/example_vertical_mixing.html). Visualization/software provenance; not independent scientific validation.
 
 - Amdahl, G. M. (1967). Validity of the single processor approach to achieving large scale computing capabilities. *AFIPS Conference Proceedings*, 30 (Spring Joint Computer Conference), 483–485. [doi:10.1145/1465482.1465560](https://doi.org/10.1145/1465482.1465560).
+- Hoefler, T., and Belli, R. (2015). Scientific benchmarking of parallel computing systems: twelve ways to tell the masses when reporting performance results. *Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis*, article 73, 1–12. [doi:10.1145/2807591.2807644](https://doi.org/10.1145/2807591.2807644).

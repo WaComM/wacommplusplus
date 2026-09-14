@@ -1,0 +1,453 @@
+{
+  "schema": "wacomm-performance-published-v1",
+  "problem_size": 10000,
+  "problem_size_unit": "particles/hour",
+  "physical_window": "2021-07-01T09:00:00Z/2021-07-01T15:00:00Z",
+  "selected_cpu": [
+    1,
+    32,
+    0
+  ],
+  "gpu_sweep_complete": true,
+  "provenance": {
+    "revision": "a92646173324af59866a30983ab35d638fc5fd63",
+    "configuration_sha256": "17df9ec6c8e360d2b6bdc3df00a6da545a57bfd4e2440f9208e2aba58b5c722d",
+    "source_sha256": "f7c04c9f3b7397a3334100886eda74b311b0daf07c63530a8d2c1076e5fe9687",
+    "forcing_sha256": "fde61fd3f5969052cd25987369ad6ea762c62f7026ffc51c3bcc5855879c9456",
+    "binary_sha256": "16d9fae6a7e2dd14f493bb34b3b2df5de996084d43a9f72f0491acf81c429b0c",
+    "hardware_id": "Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz|2|16|Tesla V100-SXM2-32GB"
+  },
+  "raw_archive": "data/wacomm-sarno-lite/sarno-protocol-rotated-20260913",
+  "failed_excluded_jobs": [
+    6384,
+    6470
+  ],
+  "records": [
+    {
+      "mpi_processes": 16,
+      "openmp_threads": 1,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        1.691954778,
+        1.6731263969999999,
+        1.68302587
+      ],
+      "median_seconds": 1.68302587,
+      "application_seconds": [
+        25.99,
+        20.67,
+        20.99
+      ],
+      "speedup": 6.20215449748256,
+      "cpu_efficiency": 0.38763465609266,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 16,
+      "openmp_threads": 2,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        0.831909463,
+        0.818061014,
+        0.812648278
+      ],
+      "median_seconds": 0.818061014,
+      "application_seconds": [
+        16.83,
+        16.91,
+        17.0
+      ],
+      "speedup": 12.759911901876794,
+      "cpu_efficiency": 0.3987472469336498,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 16,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        0.98688563,
+        0.978006057,
+        0.974108227
+      ],
+      "median_seconds": 0.978006057,
+      "application_seconds": [
+        11.05,
+        11.07,
+        11.22
+      ],
+      "speedup": 10.673130697185446,
+      "cpu_efficiency": 0.6670706685740904,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 1,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        10.535958785,
+        10.437730886,
+        10.438386469
+      ],
+      "median_seconds": 10.438386469,
+      "application_seconds": [
+        21.58,
+        21.38,
+        21.31
+      ],
+      "speedup": 1.0,
+      "cpu_efficiency": 1.0,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 2,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        5.524449335,
+        5.50711531,
+        5.550701429
+      ],
+      "median_seconds": 5.524449335,
+      "application_seconds": [
+        16.12,
+        16.4,
+        16.38
+      ],
+      "speedup": 1.8894890397252597,
+      "cpu_efficiency": 0.9447445198626299,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 32,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        0.519734077,
+        0.516711088,
+        0.5194776249999999
+      ],
+      "median_seconds": 0.5194776249999999,
+      "application_seconds": [
+        10.7,
+        10.81,
+        12.24
+      ],
+      "speedup": 20.094005914114202,
+      "cpu_efficiency": 0.6279376848160688,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 32,
+      "gpu_devices": 1,
+      "solver_seconds": [
+        2.223739691,
+        2.23019438,
+        2.213461109
+      ],
+      "median_seconds": 2.223739691,
+      "application_seconds": [
+        12.56,
+        12.49,
+        12.48
+      ],
+      "speedup": 4.694068514964506,
+      "cpu_efficiency": null,
+      "gpu_incremental_speedup": 0.23360541123695755,
+      "gpu_device_speedup": 1.0,
+      "gpu_device_efficiency": 1.0
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 32,
+      "gpu_devices": 2,
+      "solver_seconds": [
+        4.168407031,
+        4.166706817,
+        4.179174426
+      ],
+      "median_seconds": 4.168407031,
+      "application_seconds": [
+        14.64,
+        14.53,
+        14.61
+      ],
+      "speedup": 2.5041667935426717,
+      "cpu_efficiency": null,
+      "gpu_incremental_speedup": 0.12462257671496571,
+      "gpu_device_speedup": 0.5334747001581861,
+      "gpu_device_efficiency": 0.26673735007909305
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 32,
+      "gpu_devices": 3,
+      "solver_seconds": [
+        6.099646916,
+        6.111924645,
+        6.103719049
+      ],
+      "median_seconds": 6.103719049,
+      "application_seconds": [
+        16.65,
+        16.59,
+        16.48
+      ],
+      "speedup": 1.7101682409039072,
+      "cpu_efficiency": null,
+      "gpu_incremental_speedup": 0.08510837750389384,
+      "gpu_device_speedup": 0.3643253683775509,
+      "gpu_device_efficiency": 0.12144178945918364
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 32,
+      "gpu_devices": 4,
+      "solver_seconds": [
+        8.005258164,
+        8.013993661,
+        8.046880941
+      ],
+      "median_seconds": 8.013993661,
+      "application_seconds": [
+        18.54,
+        18.51,
+        18.47
+      ],
+      "speedup": 1.302519930830277,
+      "cpu_efficiency": null,
+      "gpu_incremental_speedup": 0.06482131718272142,
+      "gpu_device_speedup": 0.2774820875915839,
+      "gpu_device_efficiency": 0.06937052189789597
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 4,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        2.9145904579999997,
+        2.921569966,
+        2.906937935
+      ],
+      "median_seconds": 2.9145904579999997,
+      "application_seconds": [
+        13.27,
+        13.31,
+        13.41
+      ],
+      "speedup": 3.5814247728522552,
+      "cpu_efficiency": 0.8953561932130638,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 8,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        1.618252377,
+        1.612154495,
+        1.6326809899999999
+      ],
+      "median_seconds": 1.618252377,
+      "application_seconds": [
+        11.78,
+        11.92,
+        11.9
+      ],
+      "speedup": 6.450407005334496,
+      "cpu_efficiency": 0.806300875666812,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 2,
+      "openmp_threads": 16,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        0.529168812,
+        0.534059418,
+        0.535556935
+      ],
+      "median_seconds": 0.534059418,
+      "application_seconds": [
+        11.14,
+        11.42,
+        10.94
+      ],
+      "speedup": 19.54536539790035,
+      "cpu_efficiency": 0.610792668684386,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 2,
+      "openmp_threads": 1,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        5.797582541,
+        5.794962691,
+        5.81053376
+      ],
+      "median_seconds": 5.797582541,
+      "application_seconds": [
+        16.99,
+        16.99,
+        17.2
+      ],
+      "speedup": 1.800472247730953,
+      "cpu_efficiency": 0.9002361238654765,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 32,
+      "openmp_threads": 1,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        1.238087655,
+        1.295361982,
+        1.237695354
+      ],
+      "median_seconds": 1.238087655,
+      "application_seconds": [
+        21.56,
+        25.73,
+        26.06
+      ],
+      "speedup": 8.431056094327989,
+      "cpu_efficiency": 0.26347050294774965,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 4,
+      "openmp_threads": 1,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        3.394187728,
+        3.540326908,
+        3.365914842
+      ],
+      "median_seconds": 3.394187728,
+      "application_seconds": [
+        17.05,
+        17.04,
+        17.02
+      ],
+      "speedup": 3.075370988731593,
+      "cpu_efficiency": 0.7688427471828982,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 4,
+      "openmp_threads": 8,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        0.559964892,
+        0.568228018,
+        0.5612346029999999
+      ],
+      "median_seconds": 0.5612346029999999,
+      "application_seconds": [
+        11.34,
+        11.4,
+        11.12
+      ],
+      "speedup": 18.598971647868975,
+      "cpu_efficiency": 0.5812178639959055,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 64,
+      "openmp_threads": 1,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        1.023023494,
+        0.99808503,
+        1.024000839
+      ],
+      "median_seconds": 1.023023494,
+      "application_seconds": [
+        21.99,
+        22.45,
+        23.86
+      ],
+      "speedup": 10.203467007571968,
+      "cpu_efficiency": 0.159429171993312,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 8,
+      "openmp_threads": 1,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        2.215786129,
+        2.311451951,
+        2.236177407
+      ],
+      "median_seconds": 2.236177407,
+      "application_seconds": [
+        18.77,
+        18.9,
+        18.62
+      ],
+      "speedup": 4.667959901716331,
+      "cpu_efficiency": 0.5834949877145413,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    },
+    {
+      "mpi_processes": 8,
+      "openmp_threads": 4,
+      "gpu_devices": 0,
+      "solver_seconds": [
+        0.6237218050000001,
+        0.632229169,
+        0.64294879
+      ],
+      "median_seconds": 0.632229169,
+      "application_seconds": [
+        13.45,
+        13.64,
+        13.43
+      ],
+      "speedup": 16.510447446628326,
+      "cpu_efficiency": 0.5159514827071352,
+      "gpu_incremental_speedup": null,
+      "gpu_device_speedup": null,
+      "gpu_device_efficiency": null
+    }
+  ],
+  "figure_sha256": {
+    "speedup.svg": "8ec683eaaed76e5061848edb23718a0d1b432b60e452e447404c994e256576de",
+    "cpu_efficiency.svg": "a20c3b9d872d169b8d1d7c354b1a5c38821a725e40bb6e93cd83eba38692cc3e",
+    "gpu_incremental_speedup.svg": "2fd97a0f2b195d3e7c8c2fb2d666f11a933b7f692c205b304dd479dda2c19bc7",
+    "gpu_device_scaling.svg": "15459a1b26853888f2f92d48aaddb5368ca93dbc3e01601bb2650e5cc673ea7a"
+  }
+}

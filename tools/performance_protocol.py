@@ -84,7 +84,9 @@ Analyze the WaComM++ core and this example using the evidence below. Diagnose an
 - Run record: `{record['source_path']}` (SHA-256 `{record['run_json_sha256']}`)
 - Validation evidence: `{record['validation_report']}`; equivalence passed
 - Revision: `{record['revision']}`
+- Declared emission rate (particles/hour): `{record.get('problem_size_particles_per_hour', 'not declared')}`
 - Configuration SHA-256: `{record['configuration_sha256']}`
+- Source SHA-256: `{record.get('source_sha256', 'not recorded')}`
 - Forcing SHA-256: `{record['forcing_sha256']}`
 - Binary SHA-256: `{record['binary_sha256']}`
 - Hardware ID: `{record['hardware_id']}`
@@ -106,16 +108,18 @@ def plot(root, records, best, gpu_complete):
     groups = [('MPI', MPI), ('OpenMP', OMP), ('hybrid', HYBRID)]
     by_key = {key(r): r for r in records}
     for metric, ylabel in [('speedup', 'Speedup'), ('cpu_efficiency', 'CPU efficiency')]:
-        fig, ax = plt.subplots()
-        for label, keys in groups:
-            ax.plot(range(len(keys)), [by_key[k][metric] for k in keys], marker='o', label=label)
+        fig, axes = plt.subplots(1, 3, figsize=(14, 4), sharey=True)
+        for ax, (label, keys) in zip(axes, groups):
+            x = range(len(keys))
+            ax.plot(x, [by_key[k][metric] for k in keys], marker='o', label='measured')
             ideal = [k[0] * k[1] if metric == 'speedup' else 1 for k in keys]
-            ax.plot(range(len(keys)), ideal, linestyle=':', alpha=0.5, label=f'{label} ideal')
-        ax.set_xticks(range(7))
-        ax.set_xlabel('Sweep point index (see results.json for resource counts)')
-        ax.set_ylabel(ylabel)
-        ax.grid(True)
-        ax.legend()
+            ax.plot(x, ideal, linestyle=':', label='ideal CPU')
+            ax.set_xticks(list(x), [f'{p}/{n}' for p, n, _ in keys], rotation=45)
+            ax.set_title(label)
+            ax.set_xlabel('MPI / OpenMP')
+            ax.grid(True)
+            ax.legend()
+        axes[0].set_ylabel(ylabel)
         fig.tight_layout()
         fig.savefig(root / f'{metric}.svg')
         plt.close(fig)

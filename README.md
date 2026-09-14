@@ -57,6 +57,8 @@ A [Sarno CUDA performance diagnostic](examples/wacomm-sarno-lite/README.md#mpi-o
 
 The [shared performance-evaluation protocol](docs/performance-evaluation.md) applies to every runnable example and use case; it defines the CPU/GPU resource matrix, scientific equivalence gate, repeat measurements, charts, and per-test Codex review notes.
 
+The [Sarno shared-protocol workflow](examples/wacomm-sarno-lite/docs/performance-evaluation.md) stages the complete MPI, OpenMP, and hybrid CPU matrix in rotated replicate blocks, selects the fastest measured CPU tuple, and gates the subsequent GPU sweep on numerical equivalence. It preserves a Codex review note for each valid performance configuration.
+
 ## References
 
 Montella, R., et al. (2023), “A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment,” *31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing*, 17–26. Earlier WaComM publications and ocean-model references are listed in [references](docs/references.md).

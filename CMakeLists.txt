@@ -301,6 +301,11 @@ if(BUILD_TESTING)
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/reproducibility_manifest.py")
         add_test(NAME performance_protocol COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/PerformanceProtocolTest.py")
+        add_test(NAME performance_workload_scaling COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/PerformanceWorkloadScalingTest.py")
+        add_test(NAME sarno_protocol_collect COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/SarnoProtocolCollectTest.py")
+        set_tests_properties(sarno_protocol_collect PROPERTIES SKIP_RETURN_CODE 77)
         add_test(NAME example_documentation COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ExampleDocumentationTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/examples")

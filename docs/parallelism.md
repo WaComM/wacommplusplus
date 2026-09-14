@@ -20,6 +20,8 @@ The [OpenMP Sarno sweep](../examples/wacomm-sarno-lite/README.md#openmp-strong-s
 
 The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
 
+The [Sarno shared-protocol workflow](../examples/wacomm-sarno-lite/docs/performance-evaluation.md) exercises the full MPI/OpenMP/hybrid matrix and selected-CPU GPU sweep on the same six-hour scientific workload. Its CUDA-capable executable is used for both CPU-hidden and GPU-visible runs; every point requires numerical equivalence before performance interpretation. Multi-node MPI launchers must explicitly export `CUDA_VISIBLE_DEVICES` and `OMP_*` settings to remote ranks and archive each rank’s observed device binding; a batch-shell setting alone did not propagate in the Sarno 64-process pilot and caused remote ranks to enter the GPU path.
+
 ## References
 
 - Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).

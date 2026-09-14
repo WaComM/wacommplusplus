@@ -1,6 +1,6 @@
 # wacomm-sarno-lite documentation
 
-The [example guide](../README.md) describes the experiment, inputs, command, verification, interpretation, and references. See the repository [model](../../../docs/model.md), [configuration reference](../../../docs/configuration.md), and [adapter guide](../../../docs/adapters.md) for common scientific and runtime details. Versioned figures and other example media belong in `figures/`.
+The [performance evaluation](performance-evaluation.md) contains the complete resource and problem-size protocol, validation, and versioned results. The [example guide](../README.md) describes the experiment, inputs, command, verification, interpretation, and references. See the repository [model](../../../docs/model.md), [configuration reference](../../../docs/configuration.md), and [adapter guide](../../../docs/adapters.md) for common scientific and runtime details. Versioned figures and other example media belong in `figures/`.
 
 ## References
 

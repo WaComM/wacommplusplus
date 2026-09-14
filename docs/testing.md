@@ -66,6 +66,8 @@ The OpenMP experiment passed all [13 portable-core and diagnostic CTest checks](
 
 The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
 
+The Sarno-specific `sarno_protocol_collect` test checks solver-interval validation, runtime process/thread/GPU identity, GPU-coordinate tolerance rejection, and exact gridded-output comparison. The generic `performance_workload_scaling` test requires complete, comparable CPU/GPU sweeps and rejects duplicate or inconsistent problem sizes. The [full Sarno performance workflow](../examples/wacomm-sarno-lite/docs/performance-evaluation.md) additionally compares archived particle states and grids for every repetition before producing charts. Python NetCDF and plotting packages are optional and pinned in `tools/requirements-figures.txt`.
+
 ## References
 
 - Oberkampf, W. L., and Trucano, T. G. (2002). Verification and validation in computational fluid dynamics. *Progress in Aerospace Sciences*, 38, 209–272. [doi:10.1016/S0376-0421(02)00005-2](https://doi.org/10.1016/S0376-0421(02)00005-2).

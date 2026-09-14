@@ -40,6 +40,8 @@ The one-process OpenMP comparison stages `data/wacomm-sarno-lite/openmp-scaling/
 
 The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
 
+The [Sarno shared-protocol run](../examples/wacomm-sarno-lite/docs/performance-evaluation.md) stores a warm-up, three rotated measurement blocks, Slurm allocations and bindings, source/configuration/forcing/binary hashes, exact or tolerance-bounded particle comparisons, gridded comparisons, charts, and a Codex review note for each resource tuple. The initial fixed-order pilot is archived separately and must not be pooled with the formal series.
+
 ## References
 
 - Peng, R. D. (2011). Reproducible research in computational science. *Science*, 334, 1226–1227. [doi:10.1126/science.1213847](https://doi.org/10.1126/science.1213847).
