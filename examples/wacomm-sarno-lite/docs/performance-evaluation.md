@@ -88,7 +88,16 @@ At the selected `1/32` CPU placement, the one-through-four-GPU medians are **2.1
 
 ## Status of the 100,000- and 1,000,000-particles/hour suites
 
-As of 14 September 2026, the 100,000-particles/hour CPU suite is running and the 1,000,000-particles/hour CPU suite is queued after its one-node sequence. Their two-node 64-rank measurements require both `gn01` and `gn02`; an unrelated three-day allocation on `gn01` has delayed them. The scheduler-order amendments and exact job IDs are archived in each ignored suite's `provenance/scheduler-adjustment.md`. One-node successors may proceed under exclusive allocations, but the complete CPU matrix, selected-CPU GPU sweep, cross-size charts, and recommendations for these two rates remain **unmeasured and unpublished**. Do not extrapolate the 1,000- or 10,000-particle ranking to them.
+As of 14 September 2026, all fifteen one-node CPU tuples have executed three times at both larger rates. Their two-node 64-rank measurements require both `gn01` and `gn02`; an unrelated allocation on `gn01` has delayed all six required 64-rank jobs. The scheduler-order amendments and exact job IDs are archived in each ignored suite's `provenance/scheduler-adjustment.md`. The timing logs give the following **provisional, incomplete-matrix diagnostics**:
+
+| Particles/hour | One-worker median (s) | Fastest of fifteen one-node tuples | Candidate median (s) | Candidate CPU speedup | Candidate efficiency |
+| ---: | ---: | :---: | ---: | ---: | ---: |
+| 100,000 | 101.139 | `2/16/0` | 4.833 | 20.926 | 0.654 |
+| 1,000,000 | 997.166 | `2/16/0` | 47.445 | 21.017 | 0.657 |
+
+These medians sum the same five barrier-bounded solver intervals in each of three measured repetitions. For each rate, all three `2/16/0` particle-snapshot series and gridded-output series match the corresponding `1/1/0` sample-1 exactly; the remaining one-node tuples have not yet undergone the full collector's scientific comparison. The apparent shift from `1/32/0` at the smaller rates to `2/16/0` is a hypothesis from incomplete coverage, not a final resource recommendation. The complete CPU matrix, selected-CPU GPU sweep, cross-size charts, and final recommendations for these two rates remain **unpublished** until the 64-rank results and full equivalence validation are available.
+
+The archived provisional records were generated with `python3.11 examples/wacomm-sarno-lite/tools/partial_sarno_diagnostic.py <suite-root> --candidate 2:16` for each rate. The compact [100,000-particle](performance-progress-q100000.json) and [1,000,000-particle](performance-progress-q1000000.json) records are versioned here; each full suite retains the same `provenance/partial-one-node-diagnostic.json` and a Codex-ready Markdown note for every completed tuple. The JSON records all completed CPU timing samples, baseline and candidate input hashes, hardware class, and the exact particle/grid comparison reports; it explicitly marks the other tuples as scientifically unchecked by this partial procedure. Re-run the complete collector after the delayed 64-rank measurements rather than promoting a provisional note into final evidence.
 
 ## Reproducibility and interpretation
 

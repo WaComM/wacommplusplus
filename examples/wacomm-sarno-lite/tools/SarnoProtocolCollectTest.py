@@ -10,6 +10,7 @@ except ImportError:
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sarno_protocol_collect import gpu_compare, gridded_compare, solver_seconds, INTERVALS
+from partial_sarno_diagnostic import write_notes
 from trajectory_diagnostics import TIME_UNITS
 
 
@@ -68,6 +69,15 @@ def main():
             pass
         else:
             raise AssertionError('wrong thread count accepted')
+        (root / 'provenance').mkdir()
+        (root / 'p2_n4_g0').mkdir()
+        report = {'problem_size_particles_per_hour': 1000, 'completed_cpu_tuples': 1,
+                  'candidate': [2, 4, 0], 'revision': 'abc', 'hardware_id': 'node',
+                  'records': [{'mpi_processes': 2, 'openmp_threads': 4,
+                               'solver_seconds': [1, 2, 3], 'median_seconds': 2,
+                               'scientific_equivalence': 'exact comparison passed'}]}
+        write_notes(root, report)
+        assert 'incomplete CPU matrix' in (root / 'p2_n4_g0/codex-performance-review.md').read_text()
 
 
 if __name__ == '__main__':
