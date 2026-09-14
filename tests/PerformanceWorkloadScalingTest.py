@@ -11,7 +11,7 @@ import performance_publish
 import performance_workload_scaling as scaling
 
 
-def make_case(root, size, best=(4, 8, 0)):
+def make_case(root, size, best=(4, 8, 0), revision='abc'):
     for p, n, g in sorted(protocol.CPU | {(best[0], best[1], g) for g in range(1, 5)}):
         directory = root / f'p{p}_n{n}_g{g}'
         directory.mkdir(parents=True)
@@ -20,7 +20,7 @@ def make_case(root, size, best=(4, 8, 0)):
         record = dict(mpi_processes=p, openmp_threads=n, gpu_devices=g,
                       solver_seconds=[seconds] * 3, exit_code=0,
                       equivalence_passed=True, validation_report='validation.md',
-                      revision='abc', configuration_sha256='config',
+                      revision=revision, configuration_sha256='config',
                       forcing_sha256='forcing', binary_sha256='binary',
                       hardware_id='node', timing_scope='solver',
                       problem_size=size, problem_size_unit='particles/hour',
@@ -33,8 +33,9 @@ def main():
         base = Path(temporary)
         cases = [(1000, base / 'small'), (10000, base / 'large')]
         for size, root in cases:
-            make_case(root, size)
+            make_case(root, size, revision=f'docs-only-{size}')
         summary = scaling.collect(cases)
+        assert summary['cases'][0]['revision'] != summary['cases'][1]['revision']
         assert len(summary['cases']) == 2
         assert all(case['selected_cpu'] == (4, 8, 0) for case in summary['cases'])
         assert all(case['best_measured_configuration'] == (4, 8, 0) for case in summary['cases'])

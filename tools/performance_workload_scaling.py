@@ -32,7 +32,7 @@ def collect(cases):
             unit = current_unit
         elif current_unit != unit:
             raise ValueError('problem-size units differ')
-        fields = ('revision', 'configuration_sha256', 'forcing_sha256',
+        fields = ('configuration_sha256', 'forcing_sha256',
                   'binary_sha256', 'hardware_id', 'timing_scope')
         signature = tuple(records[0][field] for field in fields)
         if common is None:
@@ -56,7 +56,8 @@ def collect(cases):
                            'gpu_device_efficiency': r['gpu_device_efficiency']})
         winner = min(values, key=lambda value: (value['median_seconds'], value['gpu_devices']))
         summaries.append({'problem_size': size, 'problem_size_unit': unit,
-                          'run_root': str(root), 'source_sha256': next(iter(sources)),
+                          'run_root': str(root), 'revision': records[0]['revision'],
+                          'source_sha256': next(iter(sources)),
                           'selected_cpu': best,
                           'serial_median_seconds': by_key[(1, 1, 0)]['median_seconds'],
                           'selected_cpu_median_seconds': cpu['median_seconds'],

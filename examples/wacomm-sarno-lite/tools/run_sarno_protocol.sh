@@ -9,9 +9,11 @@ phase="${1:-}"
 run_name="${2:-}"
 partition="${3:-norm-gn}"
 particles_per_hour="${4:-10000}"
+after_job="${5:-}"
 if [[ "$phase" != cpu && "$phase" != gpu ]] || [[ ! "$run_name" =~ ^[a-zA-Z0-9-]+$ ]] ||
-   [[ ! "$particles_per_hour" =~ ^[1-9][0-9]*$ ]] || [ "$#" -gt 4 ]; then
-    echo 'Usage: bash examples/wacomm-sarno-lite/tools/run_sarno_protocol.sh cpu|gpu suite-name [partition [particles-per-hour]]' >&2
+   [[ ! "$particles_per_hour" =~ ^[1-9][0-9]*$ ]] ||
+   { [ -n "$after_job" ] && [[ ! "$after_job" =~ ^[1-9][0-9]*$ ]]; } || [ "$#" -gt 5 ]; then
+    echo 'Usage: bash examples/wacomm-sarno-lite/tools/run_sarno_protocol.sh cpu|gpu suite-name [partition [particles-per-hour [after-job-id]]]' >&2
     exit 1
 fi
 suite="$root/$run_name"
@@ -31,6 +33,7 @@ done
 (cd "$root" && sha256sum -c preparation/provenance/prepared-forcing.sha256)
 if [ "$phase" = cpu ]; then
     mkdir -p "$suite/provenance"
+    if [ -n "$after_job" ]; then printf '%s\n' "$after_job" > "$suite/provenance/after-job-id.txt"; fi
     cp "$repository/build-cuda/CMakeCache.txt" "$suite/provenance/"
     cp "$repository/build-cuda/CMakeFiles/wacommplusplus.dir/flags.make" "$suite/provenance/"
     git -C "$repository" rev-parse HEAD > "$suite/provenance/revision.txt"
@@ -53,6 +56,7 @@ config['io'].update(ocean_model='WaComM',base_path='processed-6h/',save_input=Fa
 with open(sys.argv[2],'w') as stream: json.dump(config,stream,indent=2);stream.write('\n')
 PYTHON
 else
+    if [ -n "$after_job" ]; then printf '%s\n' "$after_job" > "$suite/provenance/gpu-after-job-id.txt"; fi
     cp "$example/tools/run_sarno_protocol.sh" "$suite/provenance/run_sarno_protocol-gpu.sh"
     cp "$example/tools/sarno_protocol_job.sh" "$suite/provenance/sarno_protocol_job-gpu.sh"
 fi
@@ -89,7 +93,7 @@ for tuple in "${tuples[@]}"; do
 done
 
 # Rotate configuration order between independent replicate blocks.
-previous=""
+previous="$after_job"
 for repetition in 1 2 3; do
     count="${#tuples[@]}"
     offset=$(( (repetition-1)*5 % count ))
