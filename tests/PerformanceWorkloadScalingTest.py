@@ -41,7 +41,7 @@ def main():
         assert all(case['best_measured_configuration'] == (4, 8, 0) for case in summary['cases'])
         assert all(len(case['gpu_sweep']) == 5 for case in summary['cases'])
         scaling.write_report(summary, base)
-        assert '| 1000 | 4/8/0 |' in (base / 'workload-summary.md').read_text()
+        assert '| 1000 | 4/8/0 | 4/8/0 |' in (base / 'workload-summary.md').read_text()
         for name in performance_publish.FIGURES:
             (cases[0][1] / name).write_text('<svg xmlns="http://www.w3.org/2000/svg"/> \n')
         performance_publish.publish(cases[0][1], base / 'published', 'test interval')

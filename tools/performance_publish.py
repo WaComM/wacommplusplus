@@ -17,7 +17,7 @@ RECORD_FIELDS = ('mpi_processes', 'openmp_threads', 'gpu_devices',
 
 
 def publish(root, output, physical_window=None, excluded_jobs=()):
-    records, selected, complete = performance_protocol.load(root)
+    records, selected, gpu_reference, complete = performance_protocol.load(root)
     if not complete:
         raise ValueError('a complete CPU and selected-CPU GPU sweep is required')
     sizes = {(r.get('problem_size'), r.get('problem_size_unit')) for r in records}
@@ -45,7 +45,8 @@ def publish(root, output, physical_window=None, excluded_jobs=()):
     compact = {'schema': 'wacomm-performance-published-v1',
                'problem_size': size, 'problem_size_unit': unit,
                'physical_window': physical_window,
-               'selected_cpu': selected, 'gpu_sweep_complete': complete,
+               'selected_cpu': selected, 'gpu_reference_cpu': gpu_reference,
+               'gpu_sweep_complete': complete,
                'provenance': provenance, 'raw_archive': str(root),
                'failed_excluded_jobs': list(excluded_jobs),
                'records': [{field: r.get(field) for field in RECORD_FIELDS} for r in records],

@@ -67,7 +67,7 @@ if [ "$phase" = cpu ]; then
 else
     read -r processes threads < <(python3 - "$suite/results.json" <<'PYTHON'
 import json,sys
-p,n,g=json.load(open(sys.argv[1]))['selected_cpu']
+p,n,g=json.load(open(sys.argv[1]))['gpu_reference_cpu']
 print(p,n)
 PYTHON
 )

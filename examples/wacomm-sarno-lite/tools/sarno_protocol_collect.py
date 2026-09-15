@@ -159,7 +159,7 @@ def job_records(run):
     return used, superseded
 
 
-def process(root):
+def process(root, only_run=None):
     reference_sample = root / 'p1_n1_g0' / 'sample-1'
     reference = reference_sample / 'snapshots-6h'
     if not reference.is_dir():
@@ -175,7 +175,11 @@ def process(root):
         raise ValueError('source manifest disagrees with declared emission rate')
     identity = None
     for run in sorted(root.glob('p*_n*_g*')):
+        if only_run is not None and run.name != only_run:
+            continue
         p, n, g = map(int, re.fullmatch(r'p(\d+)_n(\d+)_g(\d+)', run.name).groups())
+        if (run / 'run.json').is_file() and (run / 'validation.md').is_file():
+            continue
         if not (run / 'sample-3' / 'exit.txt').is_file():
             raise ValueError(f'{run}: incomplete job')
         samples = []
@@ -247,21 +251,26 @@ def process(root):
                   'binary_sha256': signature[2], 'hardware_id': hardware_id(run),
                   'timing_scope': 'solver'}
         (run / 'run.json').write_text(json.dumps(record, indent=2) + '\n')
-    records, best, gpu_complete = performance_protocol.load(root)
-    (root / 'results.json').write_text(json.dumps({'selected_cpu': best, 'gpu_sweep_complete': gpu_complete,
+    if only_run is not None:
+        return None
+    records, best, gpu_reference, gpu_complete = performance_protocol.load(root)
+    (root / 'results.json').write_text(json.dumps({'selected_cpu': best,
+                                                  'gpu_reference_cpu': gpu_reference,
+                                                  'gpu_sweep_complete': gpu_complete,
                                                   'records': records}, indent=2) + '\n')
     for record in records:
-        performance_protocol.write_note(Path(record['source_path']).parent / 'codex-performance-review.md', record, best)
-    performance_protocol.plot(root, records, best, gpu_complete)
-    return best, gpu_complete
+        performance_protocol.write_note(Path(record['source_path']).parent / 'codex-performance-review.md', record, best, gpu_reference)
+    performance_protocol.plot(root, records, gpu_reference, gpu_complete)
+    return best, gpu_reference, gpu_complete
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('run_root', type=Path)
+    parser.add_argument('--run', help='validate one resource directory before aggregate collection')
     args = parser.parse_args()
     try:
-        best, gpu_complete = process(args.run_root)
+        result = process(args.run_root, args.run)
     except (ValueError, OSError, RuntimeError) as error:
         match = re.search(r'p\d+_n\d+_g\d+', str(error))
         note_root = args.run_root / match.group() if match else args.run_root
@@ -274,7 +283,11 @@ def main():
                 'backward/forward, restart, and backend-equivalence regression checks. '
                 'Do not use this run in a speedup or efficiency chart.\n')
         parser.exit(2, str(error) + '\n')
-    print(f'Selected CPU tuple: {best}; complete GPU sweep: {gpu_complete}')
+    if result is None:
+        print(f'Validated resource directory: {args.run}')
+    else:
+        best, gpu_reference, gpu_complete = result
+        print(f'Selected CPU tuple: {best}; GPU-compatible CPU reference: {gpu_reference}; complete GPU sweep: {gpu_complete}')
 
 
 if __name__ == '__main__':

@@ -27,18 +27,18 @@ def main():
         root = Path(tmp)
         for k in protocol.CPU:
             make(root, k, 100 / (k[0] * k[1]) + (0 if k == (4, 8, 0) else 10))
-        records, best, complete = protocol.load(root)
-        assert best == (4, 8, 0) and not complete
+        records, best, gpu_reference, complete = protocol.load(root)
+        assert best == (4, 8, 0) and gpu_reference == best and not complete
         assert len(records) == 16
         for g in range(1, 5):
             make(root, (4, 8, g), 3 / (g + 1))
-        records, best, complete = protocol.load(root)
+        records, best, gpu_reference, complete = protocol.load(root)
         assert complete and best == (4, 8, 0)
         for record in records:
-            protocol.write_note(Path(record['source_path']).parent / 'codex-performance-review.md', record, best)
+            protocol.write_note(Path(record['source_path']).parent / 'codex-performance-review.md', record, best, gpu_reference)
         assert len(list(root.glob('*/codex-performance-review.md'))) == 20
         try:
-            protocol.plot(root, records, best, complete)
+            protocol.plot(root, records, gpu_reference, complete)
         except ImportError:
             pass
         else:
@@ -56,6 +56,16 @@ def main():
             pass
         else:
             raise AssertionError('nonpositive timings accepted')
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        for k in protocol.CPU:
+            seconds = 1 if k == (64, 1, 0) else 2 if k == (2, 16, 0) else 20
+            make(root, k, seconds)
+        records, best, gpu_reference, complete = protocol.load(root)
+        assert best == (64, 1, 0)
+        assert gpu_reference == (2, 16, 0)
+        assert not complete
 
 
 if __name__ == '__main__':

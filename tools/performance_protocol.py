@@ -11,6 +11,7 @@ MPI = [(p, 1, 0) for p in (1, 2, 4, 8, 16, 32, 64)]
 OMP = [(1, n, 0) for n in (1, 2, 4, 8, 16, 32)]
 HYBRID = [(p, 32 // p, 0) for p in (1, 2, 4, 8, 16, 32)]
 CPU = set(MPI + OMP + HYBRID)
+GPU_COMPATIBLE_CPU = {k for k in CPU if k[0] * k[1] <= 32}
 
 
 def key(record):
@@ -59,7 +60,9 @@ def load(root):
         if any(r[f] != baseline[f] for f in identity):
             raise ValueError(f'{r["source_path"]}: workload/build/hardware mismatch')
     best = min((by_key[k] for k in CPU), key=lambda r: (r['median_seconds'], key(r)))
-    p, n, _ = key(best)
+    gpu_reference = min((by_key[k] for k in GPU_COMPATIBLE_CPU),
+                        key=lambda r: (r['median_seconds'], key(r)))
+    p, n, _ = key(gpu_reference)
     gpu = {(p, n, g) for g in range(5)}
     if by_key.keys() - CPU - gpu:
         raise ValueError('unexpected GPU configuration')
@@ -71,11 +74,11 @@ def load(root):
         r['gpu_device_efficiency'] = r['gpu_device_speedup'] / r['gpu_devices'] if r['gpu_device_speedup'] is not None else None
         r['speedup'] = baseline['median_seconds'] / r['median_seconds']
         r['cpu_efficiency'] = r['speedup'] / (r['mpi_processes'] * r['openmp_threads']) if r['gpu_devices'] == 0 else None
-        r['gpu_incremental_speedup'] = best['median_seconds'] / r['median_seconds'] if r['gpu_devices'] else None
-    return records, key(best), bool(gpu <= by_key.keys())
+        r['gpu_incremental_speedup'] = gpu_reference['median_seconds'] / r['median_seconds'] if r['gpu_devices'] else None
+    return records, key(best), key(gpu_reference), bool(gpu <= by_key.keys())
 
 
-def write_note(path, record, best):
+def write_note(path, record, best, gpu_reference):
     k = key(record)
     path.write_text(f'''# Performance review: {k[0]}/{k[1]}/{k[2]}
 
@@ -96,12 +99,13 @@ Analyze the WaComM++ core and this example using the evidence below. Diagnose an
 - CPU efficiency: `{record['cpu_efficiency'] if record['cpu_efficiency'] is not None else 'not defined for heterogeneous resources'}`
 - GPU device speedup/efficiency (relative to one GPU): `{record['gpu_device_speedup']}` / `{record['gpu_device_efficiency']}`
 - Selected CPU configuration: `{best[0]}/{best[1]}/0`
+- GPU-compatible CPU reference: `{gpu_reference[0]}/{gpu_reference[1]}/0`
 
 Report reproducible evidence, a root-cause hypothesis, a scoped generic patch, scientific/backend/restart checks, and before/after measurements on the same workload and hardware. Treat this note as a review prompt, not authorization to alter scientific behavior without validation.
 ''')
 
 
-def plot(root, records, best, gpu_complete):
+def plot(root, records, gpu_reference, gpu_complete):
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
@@ -125,9 +129,9 @@ def plot(root, records, best, gpu_complete):
         plt.close(fig)
     if gpu_complete:
         fig, ax = plt.subplots()
-        p, n, _ = best
+        p, n, _ = gpu_reference
         ax.plot(range(5), [by_key[(p, n, g)]['gpu_incremental_speedup'] for g in range(5)], marker='o')
-        ax.set(xlabel='GPU devices', ylabel='Speedup relative to selected CPU configuration')
+        ax.set(xlabel='GPU devices', ylabel='Speedup relative to GPU-compatible CPU reference')
         ax.set_xticks(range(5))
         ax.grid(True)
         fig.tight_layout()
@@ -149,12 +153,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('run_root', type=Path)
     args = parser.parse_args()
-    records, best, gpu_complete = load(args.run_root)
-    summary = {'selected_cpu': best, 'gpu_sweep_complete': gpu_complete, 'records': records}
+    records, best, gpu_reference, gpu_complete = load(args.run_root)
+    summary = {'selected_cpu': best, 'gpu_reference_cpu': gpu_reference,
+               'gpu_sweep_complete': gpu_complete, 'records': records}
     (args.run_root / 'results.json').write_text(json.dumps(summary, indent=2) + '\n')
     for r in records:
-        write_note(Path(r['source_path']).parent / 'codex-performance-review.md', r, best)
-    plot(args.run_root, records, best, gpu_complete)
+        write_note(Path(r['source_path']).parent / 'codex-performance-review.md', r, best, gpu_reference)
+    plot(args.run_root, records, gpu_reference, gpu_complete)
 
 
 if __name__ == '__main__':

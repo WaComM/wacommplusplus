@@ -19,7 +19,7 @@ def collect(cases):
     for size, root in sorted(cases):
         if not math.isfinite(size) or size <= 0:
             raise ValueError('problem sizes must be positive and finite')
-        records, best, gpu_complete = performance_protocol.load(root)
+        records, best, gpu_reference, gpu_complete = performance_protocol.load(root)
         if not gpu_complete:
             raise ValueError(f'{root}: complete GPU sweep required')
         if any(r.get('problem_size') != size for r in records):
@@ -44,27 +44,30 @@ def collect(cases):
             raise ValueError(f'{root}: source hashes missing or inconsistent')
         by_key = {performance_protocol.key(r): r for r in records}
         cpu = by_key[best]
-        p, n, _ = best
+        gpu_cpu = by_key[gpu_reference]
+        p, n, _ = gpu_reference
         values = []
         for g in range(5):
             r = by_key[(p, n, g)]
             values.append({'gpu_devices': g, 'solver_seconds': r['solver_seconds'],
                            'median_seconds': r['median_seconds'],
                            'application_seconds': r.get('application_seconds'),
-                           'incremental_speedup': cpu['median_seconds'] / r['median_seconds'],
+                           'incremental_speedup': gpu_cpu['median_seconds'] / r['median_seconds'],
                            'gpu_device_speedup': r['gpu_device_speedup'],
                            'gpu_device_efficiency': r['gpu_device_efficiency']})
-        winner = min(values, key=lambda value: (value['median_seconds'], value['gpu_devices']))
+        best_measured = min([cpu] + [by_key[(p, n, g)] for g in range(1, 5)],
+                            key=lambda r: (r['median_seconds'], performance_protocol.key(r)))
         summaries.append({'problem_size': size, 'problem_size_unit': unit,
                           'run_root': str(root), 'revision': records[0]['revision'],
                           'source_sha256': next(iter(sources)),
                           'selected_cpu': best,
+                          'gpu_reference_cpu': gpu_reference,
                           'serial_median_seconds': by_key[(1, 1, 0)]['median_seconds'],
                           'selected_cpu_median_seconds': cpu['median_seconds'],
                           'selected_cpu_speedup': cpu['speedup'],
                           'selected_cpu_efficiency': cpu['cpu_efficiency'],
-                          'best_measured_configuration': (p, n, winner['gpu_devices']),
-                          'best_measured_median_seconds': winner['median_seconds'],
+                          'best_measured_configuration': performance_protocol.key(best_measured),
+                          'best_measured_median_seconds': best_measured['median_seconds'],
                           'gpu_sweep': values})
     return {'schema': 'wacomm-performance-workload-scaling-v1',
             'common_provenance': dict(zip(fields, common)), 'problem_size_unit': unit,
@@ -108,21 +111,26 @@ def plot(summary, output):
     fig.tight_layout()
     fig.savefig(output / 'workload-cpu-selection.svg')
     plt.close(fig)
+    for name in ('workload-runtime.svg', 'workload-gpu-speedup.svg',
+                 'workload-cpu-selection.svg'):
+        path = output / name
+        path.write_text('\n'.join(line.rstrip(' \t') for line in path.read_text().splitlines()) + '\n')
 
 
 def write_report(summary, output):
     lines = [
         '# Measured workload-dependent resource choices',
         '',
-        'Each row uses the fastest validated CPU tuple at that emission rate and compares it with zero through four GPUs at fixed MPI/OpenMP placement. Times are medians of the independent solver-duration sums; these are observed choices on the recorded hardware, not universal optima.',
+        'Each row reports the fastest validated CPU tuple at that emission rate. The GPU comparison uses the listed one-node CPU reference with zero through four devices at fixed MPI/OpenMP placement. Times are medians of the independent solver-duration sums; these are observed choices on the recorded hardware, not universal optima.',
         '',
-        '| Particles/hour | Selected CPU (p/n/0) | CPU median (s) | CPU speedup | CPU efficiency | Best measured (p/n/g) | Best median (s) |',
-        '| ---: | :---: | ---: | ---: | ---: | :---: | ---: |',
+        '| Particles/hour | Selected CPU (p/n/0) | GPU reference (p/n/0) | CPU median (s) | CPU speedup | CPU efficiency | Best measured (p/n/g) | Best median (s) |',
+        '| ---: | :---: | :---: | ---: | ---: | ---: | :---: | ---: |',
     ]
     for case in summary['cases']:
         cpu = '/'.join(map(str, case['selected_cpu']))
+        gpu_reference = '/'.join(map(str, case['gpu_reference_cpu']))
         best = '/'.join(map(str, case['best_measured_configuration']))
-        lines.append(f"| {case['problem_size']:g} | {cpu} | {case['selected_cpu_median_seconds']:.6g} | {case['selected_cpu_speedup']:.3f} | {case['selected_cpu_efficiency']:.3f} | {best} | {case['best_measured_median_seconds']:.6g} |")
+        lines.append(f"| {case['problem_size']:g} | {cpu} | {gpu_reference} | {case['selected_cpu_median_seconds']:.6g} | {case['selected_cpu_speedup']:.3f} | {case['selected_cpu_efficiency']:.3f} | {best} | {case['best_measured_median_seconds']:.6g} |")
     lines += ['', 'A device count is favored only when its measured median is lower at the same emission rate; differences from three repetitions are descriptive and do not establish statistical significance. Examine the per-case speedup and efficiency charts, raw samples, validation reports, and device telemetry before attributing a bottleneck or generalizing to other hardware.', '']
     (output / 'workload-summary.md').write_text('\n'.join(lines))
 
