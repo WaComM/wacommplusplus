@@ -1,5 +1,7 @@
 # Configuration
 
+The [ROMS webinar conversion guide](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) demonstrates `simulation.dry=true` with `io.save_input=true`, disabled sources/restart, and example-local output paths. Create the output parent directory before direct execution, or use its runner to create an isolated archive. Dry conversion processes the configured input list and writes normalized forcing, including adjacent boundary records; it produces no particle output.
+
 Configuration is JSON or the legacy namelist form. New scientific runs should set an explicit seed and direction:
 
 ```json

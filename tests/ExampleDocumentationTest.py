@@ -10,7 +10,11 @@ def main():
     missing = []
 
     for configuration in sorted(examples.glob("*/*.json")):
-        guide = configuration.parent / "README.md"
+        guide = configuration.with_suffix(".md")
+        if not guide.is_file():
+            guide = configuration.parent / "docs" / (configuration.stem + ".md")
+        if not guide.is_file():
+            guide = configuration.parent / "README.md"
         if not guide.is_file():
             guide = configuration.parent / "docs" / "README.md"
         if not (configuration.parent / "docs" / "figures").is_dir():
@@ -20,6 +24,13 @@ def main():
             missing.append(str(guide.relative_to(examples)))
         else:
             text = guide.read_text()
+            if guide.name != "README.md":
+                for section in ("Scientific question", "Prerequisites", "Required forcing fields and units",
+                                "Configuration", "Expected outputs", "Verification", "Limitations",
+                                "Reproducibility", "References"):
+                    if "## " + section not in text:
+                        print(f"Missing {section} section in {guide}")
+                        return 1
             if "performance-evaluation.md" not in text:
                 print(f"Missing shared performance protocol in {guide.name}")
                 return 1

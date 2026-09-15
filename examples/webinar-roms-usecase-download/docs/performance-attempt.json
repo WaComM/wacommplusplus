@@ -1,0 +1,30 @@
+{
+  "utc": "2026-09-15T19:07:13.895242+00:00",
+  "revision": "2a1183b9c74b0b21c4b084371a844fa2b29cab3f",
+  "status": "failed",
+  "platform": "Linux-4.18.0-553.104.1.el8_10.x86_64-x86_64-with-centos-8.10-Green_Obsidian",
+  "binary_sha256": "9900713968aabee61f3b2765624ee4c4ca0702bcfa1a9f24e7049cf73c2621e2",
+  "runner_sha256": "03606bb3ccb433c772ea13cd943b0c2b34273d70a3ce13a6d70d183f734a6db8",
+  "configuration_sha256": "89c901b5a5943a46bbc984f6a03077f036135a4aecff62123f03010bf9d2129b",
+  "timeout_seconds": 30.0,
+  "timing_scope": "application wall seconds: process startup, forcing reads, normalization, writes, shutdown",
+  "resources": "one directly launched process; OMP_NUM_THREADS=1; no particle solver",
+  "samples": [
+    {
+      "order": 0,
+      "warmup": true,
+      "command": [
+        "/home/montella/devel/wacommplusplus/build/wacommplusplus",
+        "/home/montella/devel/wacommplusplus/examples/webinar-roms-usecase-download/data/performance-20260915-https-03/warmup/configuration.json"
+      ],
+      "elapsed_seconds": 30.00367940030992,
+      "exit_code": -9,
+      "timed_out": true,
+      "outputs": [],
+      "error": "application failed or timed out; see archived logs"
+    }
+  ],
+  "archive": "examples/webinar-roms-usecase-download/data/performance-20260915-https-03",
+  "archive_run_sha256": "4699d4d284b975e0f627b141cb8c235aa74dd4cabaa8605546668679f36c6f7a",
+  "interpretation": "Historical forcing unavailable within deadline; no completed warmup, no valid performance samples, no median or speedup."
+}

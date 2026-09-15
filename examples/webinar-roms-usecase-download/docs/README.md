@@ -1,7 +1,9 @@
-# webinar-roms-usecase-download documentation
+# ROMS webinar documentation
 
-The [example guide](../README.md) describes the experiment, inputs, command, verification, interpretation, and references. See the repository [model](../../../docs/model.md), [configuration reference](../../../docs/configuration.md), and [adapter guide](../../../docs/adapters.md) for common scientific and runtime details. Versioned figures and other example media belong in `figures/`.
+The [same-name configuration guide](webinar-roms-usecase-download.md) describes
+inputs, commands, output verification, limitations, and reproducibility. The
+[performance record](performance-results.md) archives the download-test outcome.
 
 ## References
 
-See the peer-reviewed references in the [example guide](../README.md).
+See the [guide references](webinar-roms-usecase-download.md#references).

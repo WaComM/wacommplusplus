@@ -1,6 +1,6 @@
 {
 	"simulation": {
-		"name": "Drift",
+		"name": "ROMS webinar forcing conversion",
 		"institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
 		"url": "https://meteo.uniparthenope.it",
 		"start": "20190401Z0800",
@@ -8,7 +8,7 @@
 		"dry": true
 	},
 	"io": {
-		"base_path": "http://data.meteo.uniparthenope.it/opendap/rms3/d03/history/",
+		"base_path": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/",
 		"nc_inputs": [
 			"2019/04/01/rms3_d03_20190401Z0800.nc",
 			"2019/04/01/rms3_d03_20190401Z0900.nc",
@@ -25,19 +25,17 @@
 			"2019/04/01/rms3_d03_20190401Z2000.nc"
 		],
 		"ocean_model":"ROMS",
-		"nc_output_root": "output/wacomm_his_",
+		"nc_output_root": "examples/webinar-roms-usecase-download/data/output/wacomm_his_",
 		"mask_output": false,
 		"timestep": 3600,
 		"save_input": true,
-		"nc_input_root":"processed/ocm3_d03_"
+		"nc_input_root":"examples/webinar-roms-usecase-download/data/processed/ocm3_d03_"
 	},
 	"restart": {
-		"active": false,
-		"restart_file": "http://data.meteo.uniparthenope.it/opendap/opendap/wcm3/d03/2021/07/01/wpp3_d03_20210701Z0000.nc"
+		"active": false
 	},
 	"sources": {
-		"active": false,
-		"sources_file": "examples/sources-webinar/sources-webinar.json"
+		"active": false
 	},
 	"physics": {
 		"random_seed": 5489,

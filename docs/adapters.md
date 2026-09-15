@@ -1,5 +1,7 @@
 # Ocean adapters
 
+The [ROMS webinar conversion workflow](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) documents required legacy ROMS conventions and explicit local staging. Its HTTPS endpoint is not guaranteed available. The legacy ROMS reader copies numeric time without general unit/epoch conversion; dataset metadata and vector/vertical conventions require independent inspection. Successful conversion alone does not certify arbitrary ROMS product compatibility.
+
 ![Ocean, weather, and wave adapters normalize product data before a single solver composes the physics](figures/environment-adapter-schema.svg)
 
 Adapters normalize ocean time, vertical levels, mask, longitude, latitude, bathymetry, sea-surface height, velocity, and diffusivity onto the particle grid. They never reverse time or velocity. The solver owns tracking direction.

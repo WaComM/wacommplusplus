@@ -296,6 +296,12 @@ if(BUILD_TESTING)
     add_test(NAME environmental_regridding COMMAND environmental_regridder_test)
     find_package(Python3 QUIET COMPONENTS Interpreter)
     if(Python3_Interpreter_FOUND)
+        if(BUILD_APPLICATION AND UNIX)
+            add_test(NAME webinar_roms_workflow COMMAND "${Python3_EXECUTABLE}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/webinar-roms-usecase-download/tools/WorkflowTest.py"
+                    "$<TARGET_FILE:wacommplusplus>")
+            set_tests_properties(webinar_roms_workflow PROPERTIES SKIP_RETURN_CODE 77)
+        endif()
         add_test(NAME reproducibility_manifest COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ReproducibilityManifestTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tools/reproducibility_manifest.py")

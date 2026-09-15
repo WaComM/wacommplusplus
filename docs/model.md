@@ -1,5 +1,7 @@
 # Physical and numerical model
 
+The [ROMS webinar download example](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) exercises forcing normalization and serialization in dry mode. Particle integration, stochastic evolution, and restart trajectories are not executed; its timing evidence concerns preprocessing only.
+
 WaComM++ is an offline Lagrangian transport model. It follows discrete computational particles through velocity and diffusivity fields supplied by Eulerian ocean products; optionally it adds wind-induced leeway and surface Stokes drift. A computational particle is a carrier of position, identity, age, health, release time, and object state. It is not necessarily one molecule, organism, person, or unit mass. Any mapping from particles to a physical inventory belongs to the experiment definition and must be reported with the source and concentration conventions.
 
 This page is the normative overview of the implemented equations. Product normalization is specified in [adapters](adapters.md), surface-object parameterization in [surface drift](sar-drift.md), configuration names in [configuration](configuration.md), temporal inversion in [backtracking](backtracking.md), and continuation in [restart](restart.md).

@@ -1,7 +1,11 @@
-# Input data staging
+# Input and run archives
 
-Place this experiment’s external forcing and other run-specific data here when staging a local run. Set the paths in the configuration explicitly and record source provenance and checksums as described in the [example guide](../README.md). Generated results belong in the ignored repository `data/` run directory.
+Store this example's externally staged ROMS forcing, converted files, logs, and
+immutable performance run directories here. Generated contents are ignored by Git.
+Preserve the configured relative input paths in a local mirror; record source
+provenance and checksums. Keep a separate long-term archive of large data.
+See the [configuration guide](../docs/webinar-roms-usecase-download.md).
 
 ## References
 
-See the peer-reviewed references in the [example guide](../README.md).
+See the [guide references](../docs/webinar-roms-usecase-download.md#references).

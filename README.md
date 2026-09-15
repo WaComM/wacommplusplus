@@ -1,5 +1,7 @@
 # WaComM++
 
+The [ROMS webinar download example](examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) is a dry forcing-conversion workflow with isolated run archives and an application-wall-time benchmark. It does not execute the particle solver; historical endpoint availability and input metadata must be verified before use.
+
 WaComM++ (Water quality COMmunity Model in C++) is a C++17 Lagrangian transport and diffusion framework for marine pollutants and drifting surface objects. Gridded Eulerian ocean forcing drives compact, independently advected particles whose state includes position, emission time, age, health, a stable 64-bit identity, and restart-safe drift-object metadata.
 
 The current release reads local or remote ROMS, NEMO, HYCOM, and native WACOMM products through direction-neutral adapters. HTTP, HTTPS, and DAP4 locations use the linked NetCDF transport. Forcing is opened lazily as a bounded current/adjacent pair, and the adjacent normalized window is reused on the next iteration. It supports deterministic forward and backward traversal, configurable stochastic forward diffusion, an explicitly labelled stochastic backward ensemble mode, restart input/output, OpenMP, MPI, FlexMPI/EMPI, OpenACC, and optional CUDA. Unsupported URI schemes, transport capabilities, and adapter layouts are rejected rather than silently interpreted as another source or grid.
