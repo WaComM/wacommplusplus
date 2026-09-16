@@ -1,0 +1,421 @@
+{
+  "archive": "/home/montella/devel/wacommplusplus/examples/webinar-roms-usecase-download/data/roms-20260915-16",
+  "complete": true,
+  "files": [
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0000.nc",
+      "bytes": 6230329808,
+      "sha256": "75cdd5147c96e9b39294d364c03aac54ec39697be8096524fea83bd0152a1694",
+      "physical_time_utc": "2026-09-15T00:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0100.nc",
+      "bytes": 6230329808,
+      "sha256": "f0eb8940a2e87b717add3a51021c9257b2b55a31104665201e1c8ba23a0eef89",
+      "physical_time_utc": "2026-09-15T01:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0200.nc",
+      "bytes": 6230329808,
+      "sha256": "a9535a6ee2f832ab0dfff6121d508cf4f284a26135c2f0929ba1ddf377f5d9e0",
+      "physical_time_utc": "2026-09-15T02:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0300.nc",
+      "bytes": 6230329808,
+      "sha256": "09b7df84d9aba0fcc42a7d0b994bb9d52bcae3f06625c1ef3b2b39a56e957240",
+      "physical_time_utc": "2026-09-15T03:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0400.nc",
+      "bytes": 6230329808,
+      "sha256": "3657a69f613ebbb7ad49c0427e0690a89e2ee3f07016ad070d4cbd58a8439e1c",
+      "physical_time_utc": "2026-09-15T04:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0500.nc",
+      "bytes": 6230329808,
+      "sha256": "2c784aa5fea94e1cb669b204d370f8ff6ba50022097f2418c0fa4419386bf505",
+      "physical_time_utc": "2026-09-15T05:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0600.nc",
+      "bytes": 6230329808,
+      "sha256": "eac203c15fa0754f12ef59d15b3d73b54a371beee2c885225427c284267d3f20",
+      "physical_time_utc": "2026-09-15T06:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0700.nc",
+      "bytes": 6230329808,
+      "sha256": "df4c19257c19bd5e02c4fab061d49b0dbd885188ccbef9be416d2ba79dbd9bc3",
+      "physical_time_utc": "2026-09-15T07:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0800.nc",
+      "bytes": 6230329808,
+      "sha256": "c450715c3702b22c32aa23e523046e99a0e4416441345f29afc2897b2f344fa8",
+      "physical_time_utc": "2026-09-15T08:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z0900.nc",
+      "bytes": 6230329808,
+      "sha256": "c5641824b1057990541f37330f67b75564c22a7a8a8ab4573eab5172f32501d5",
+      "physical_time_utc": "2026-09-15T09:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1000.nc",
+      "bytes": 6230329808,
+      "sha256": "7d98d5c8d306a31691ee72d6f498cafad068547b96b2fb5810cef7ade13770f3",
+      "physical_time_utc": "2026-09-15T10:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1100.nc",
+      "bytes": 6230329808,
+      "sha256": "8151255b93acadbc1229194e91123bbdd7394b85176d625966ea59b11d66df62",
+      "physical_time_utc": "2026-09-15T11:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1200.nc",
+      "bytes": 6230329808,
+      "sha256": "2ad1136f8efe47a9c74e99d5300ee774427ac9190f891933fbe80afabd79a932",
+      "physical_time_utc": "2026-09-15T12:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1300.nc",
+      "bytes": 6230329808,
+      "sha256": "90e3846944cc3e9a69b83d8c15c9d50c47693263f5c782b9c0917b3ad082ce22",
+      "physical_time_utc": "2026-09-15T13:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1400.nc",
+      "bytes": 6230329808,
+      "sha256": "1f2e9b19ed9f98028f21194d755bd37aead3a042c57b4bfca460dbfbb48d88c5",
+      "physical_time_utc": "2026-09-15T14:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1500.nc",
+      "bytes": 6230329808,
+      "sha256": "53a443e8111ba85c114e8600effd1650c7a5267c80576288ebb3e80d5c7d319a",
+      "physical_time_utc": "2026-09-15T15:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1600.nc",
+      "bytes": 6230329808,
+      "sha256": "01f3aed10b85183e72b03d7f396edfc4ed538df4351a6adc39b3919fc9c6499a",
+      "physical_time_utc": "2026-09-15T16:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1700.nc",
+      "bytes": 6230329808,
+      "sha256": "a229627800ee060526d78bc2dec6b9ed27e2c5e55e7dfc69672c79c4ced5351c",
+      "physical_time_utc": "2026-09-15T17:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1800.nc",
+      "bytes": 6230329808,
+      "sha256": "adb898b2ce9543962c92644522cbe835b3cb73a99f78d08ddb5bbe8aefce4fae",
+      "physical_time_utc": "2026-09-15T18:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z1900.nc",
+      "bytes": 6230329808,
+      "sha256": "ab693b504a21344df3383917a8f8aedb50991dc6ed511150c711445c7660aa12",
+      "physical_time_utc": "2026-09-15T19:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z2000.nc",
+      "bytes": 6230329808,
+      "sha256": "d45a5b2e459e73cb96bbe195fa86a5aa8c3dd4187ab2cd942692715cb9b25a6b",
+      "physical_time_utc": "2026-09-15T20:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z2100.nc",
+      "bytes": 6230329808,
+      "sha256": "1483aa5b1e53fdd285528dd49e4b5e2f2eb91564828f431c94018edc7a664863",
+      "physical_time_utc": "2026-09-15T21:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z2200.nc",
+      "bytes": 6230329808,
+      "sha256": "cff9d06d80fd25c5788526347a57b3be23c039f399dcafe32ff7d7903c032413",
+      "physical_time_utc": "2026-09-15T22:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/15/rms3_d03_20260915Z2300.nc",
+      "bytes": 6230329808,
+      "sha256": "ffea048409e4bcb77a2603b5e65035d8cee1bd4f4174043df95ae05a27864205",
+      "physical_time_utc": "2026-09-15T23:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    },
+    {
+      "sample_rho_indices": [
+        800,
+        1000
+      ],
+      "sample_xi_bearing_rad": 0.0,
+      "sample_angle_minus_bearing_rad": 1.5707963263199212,
+      "name": "2026/09/16/rms3_d03_20260916Z0000.nc",
+      "bytes": 6230329808,
+      "sha256": "20aa6167f21d88f87abd6ac7df010099436e672bfb82c23bb3d3adc5adbddd72",
+      "physical_time_utc": "2026-09-16T00:00:00Z",
+      "angle_units": "radians",
+      "angle_min": 1.5707963263198805,
+      "angle_max": 1.5707963263199658,
+      "sigma_stretching_equals_s": true
+    }
+  ],
+  "total_bytes": 155758245200,
+  "physical_window": "2026-09-15T00:00:00Z/2026-09-16T00:00:00Z",
+  "source_base_url": "https://data.meteo.uniparthenope.it/files/rms3/d03/history/",
+  "download_failures": [],
+  "verification": "File sizes, all 25 exact physical timestamps, dimensions, vertical curves and angle metadata checked; download SHA-256 values archived separately.",
+  "adapter_status": "Vector-basis compatibility unresolved: angle is approximately pi/2 radians; rotation is implemented, but sampled XI coordinates point east and contradict the declared angle. No scientific native conversion or solver benchmark accepted.",
+  "checksum_reverification": {
+    "verified_utc": "2026-09-16T05:17:53.076705+00:00",
+    "files_verified": 25,
+    "total_bytes": 155758245200,
+    "command": "python3 examples/webinar-roms-usecase-download/tools/download.py --destination examples/webinar-roms-usecase-download/data/roms-20260915-16 --workers 4",
+    "exit_code": 0,
+    "result": "All 25 downloaded files rehashed and matched the recorded SHA-256 values."
+  },
+  "orientation_diagnostic": "At rho j=800,i=1000, compare declared angle with atan2(delta latitude, wrapped delta longitude * cos(mean latitude)) for the next XI point, all angles in radians. This local tangent diagnostic identifies conflicting metadata; it never replaces the supplied angle or selects a vector basis."
+}

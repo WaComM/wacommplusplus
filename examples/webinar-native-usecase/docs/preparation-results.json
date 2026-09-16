@@ -1,0 +1,156 @@
+{
+  "scope": "two seeded serial native replays at 1000 particles/hour; numerical verification, not observational validation",
+  "archive": "examples/webinar-native-usecase/data/preparation",
+  "forcing_files": 25,
+  "forcing_manifest_sha256": "2ab2535d1f6089f5eb31d873222649cd6c61a6b150393319f91d8666b932cc40",
+  "comparison_sha256": "12a2e103f6db5e3512ad761ecbfebbbe11fc4685a90b3be19f0890841d69abc8",
+  "particle_comparison": true,
+  "snapshots": 12,
+  "gridded_comparison": [
+    {
+      "name": "wacomm_his_20260915Z00.nc",
+      "reference_sha256": "c9852fc19cf28164d0d07584c8e982b80081ca42a13544d27a04474d133f9fc2",
+      "candidate_sha256": "c9852fc19cf28164d0d07584c8e982b80081ca42a13544d27a04474d133f9fc2",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z01.nc",
+      "reference_sha256": "87964941d060705199dea32bb9fec55c232668f907f910035174474bf14ca7a4",
+      "candidate_sha256": "87964941d060705199dea32bb9fec55c232668f907f910035174474bf14ca7a4",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z02.nc",
+      "reference_sha256": "fa740c3241d274beae0356830070490145068f4aa10042e154e1f984fd42c8de",
+      "candidate_sha256": "fa740c3241d274beae0356830070490145068f4aa10042e154e1f984fd42c8de",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z03.nc",
+      "reference_sha256": "d77f304b5f1f023fa7cac5942a2dca8e4f25197a44fd02ca95a38689a1d964d6",
+      "candidate_sha256": "d77f304b5f1f023fa7cac5942a2dca8e4f25197a44fd02ca95a38689a1d964d6",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z04.nc",
+      "reference_sha256": "b6504ef83491bb36f4a8e4bfb10044c18464f4889953d2ae48524f5292f4d2e4",
+      "candidate_sha256": "b6504ef83491bb36f4a8e4bfb10044c18464f4889953d2ae48524f5292f4d2e4",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z05.nc",
+      "reference_sha256": "52a883c409909664f9d654cf79d7bf7951c42a71fcde7dda89e0cc9683429201",
+      "candidate_sha256": "52a883c409909664f9d654cf79d7bf7951c42a71fcde7dda89e0cc9683429201",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z06.nc",
+      "reference_sha256": "66b089adbbd76bcfa68e0a2bd027c3305a5efcb071698e6ae902f1f5eb7f384c",
+      "candidate_sha256": "66b089adbbd76bcfa68e0a2bd027c3305a5efcb071698e6ae902f1f5eb7f384c",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z07.nc",
+      "reference_sha256": "346d59d837fb91b15e06416b9ac11714e6434f9cb16cc059fe55335f047611b8",
+      "candidate_sha256": "346d59d837fb91b15e06416b9ac11714e6434f9cb16cc059fe55335f047611b8",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z08.nc",
+      "reference_sha256": "313be10881842aff91801352e3a33a88294b477befd5b21a8721c4300b71dd1f",
+      "candidate_sha256": "313be10881842aff91801352e3a33a88294b477befd5b21a8721c4300b71dd1f",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z09.nc",
+      "reference_sha256": "c50ca570409ebc4916c567ef48b8c9c3967214aff71d578787f2848a26fb4a31",
+      "candidate_sha256": "c50ca570409ebc4916c567ef48b8c9c3967214aff71d578787f2848a26fb4a31",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z10.nc",
+      "reference_sha256": "f893cc45dcbd43a0994a2065e024e4fc5fa08d2b65c34edaac740d89fd30aa87",
+      "candidate_sha256": "f893cc45dcbd43a0994a2065e024e4fc5fa08d2b65c34edaac740d89fd30aa87",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z11.nc",
+      "reference_sha256": "6a55642d7c99b20b093cf633fb0d6e6ae3e121d77372d24d89fa5e4e1fdcc5c6",
+      "candidate_sha256": "6a55642d7c99b20b093cf633fb0d6e6ae3e121d77372d24d89fa5e4e1fdcc5c6",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z12.nc",
+      "reference_sha256": "ccb64d64f3d948ea3ff28fe360a4ccc6f69f02d181ec5b35afba5463fd4cb88f",
+      "candidate_sha256": "ccb64d64f3d948ea3ff28fe360a4ccc6f69f02d181ec5b35afba5463fd4cb88f",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z13.nc",
+      "reference_sha256": "2ed5f2a4cbbee5ed5cd02e4c27b71ef390dd35e85fed51689865f1860a185509",
+      "candidate_sha256": "2ed5f2a4cbbee5ed5cd02e4c27b71ef390dd35e85fed51689865f1860a185509",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z14.nc",
+      "reference_sha256": "0acf705b6e81ce864612e6dd5a3dcec29daea972cefd25ec4ce2754c71170093",
+      "candidate_sha256": "0acf705b6e81ce864612e6dd5a3dcec29daea972cefd25ec4ce2754c71170093",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z15.nc",
+      "reference_sha256": "e9212891dd59fd674b56f57dae9585ec0bbd421dc4f5c0cb2c8641859745f19d",
+      "candidate_sha256": "e9212891dd59fd674b56f57dae9585ec0bbd421dc4f5c0cb2c8641859745f19d",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z16.nc",
+      "reference_sha256": "539430fc9c98def9452799bf2f2567821a025eb41c274e601fa23e68b1cfccce",
+      "candidate_sha256": "539430fc9c98def9452799bf2f2567821a025eb41c274e601fa23e68b1cfccce",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z17.nc",
+      "reference_sha256": "2266dd31897b3b4d731ddeb9463aae0d7f62803f50e888b2207549a27bfbd7f4",
+      "candidate_sha256": "2266dd31897b3b4d731ddeb9463aae0d7f62803f50e888b2207549a27bfbd7f4",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z18.nc",
+      "reference_sha256": "15154acb2b7f7495d72cf54ce2d12e19ab3c06af4616913c8e215e2d89709154",
+      "candidate_sha256": "15154acb2b7f7495d72cf54ce2d12e19ab3c06af4616913c8e215e2d89709154",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z19.nc",
+      "reference_sha256": "7affba08364ed83e9681cb14128fb22fa6a8f47f39db6c35677275f940c03c92",
+      "candidate_sha256": "7affba08364ed83e9681cb14128fb22fa6a8f47f39db6c35677275f940c03c92",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z20.nc",
+      "reference_sha256": "7e743d1cdc1c67de4c997dd38888b37ab8a7fc7dd1edef85fbd14c03d64141e4",
+      "candidate_sha256": "7e743d1cdc1c67de4c997dd38888b37ab8a7fc7dd1edef85fbd14c03d64141e4",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z21.nc",
+      "reference_sha256": "5d7d991c42bfb47eaa06dce78efc291e4980c761e0ff7b4dee4fb679e6d1cfe5",
+      "candidate_sha256": "5d7d991c42bfb47eaa06dce78efc291e4980c761e0ff7b4dee4fb679e6d1cfe5",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z22.nc",
+      "reference_sha256": "3ccecc82642804174079601c008e1eabad0c4ecc3dfeee943bd335859fe654a5",
+      "candidate_sha256": "3ccecc82642804174079601c008e1eabad0c4ecc3dfeee943bd335859fe654a5",
+      "variables_equal": true
+    },
+    {
+      "name": "wacomm_his_20260915Z23.nc",
+      "reference_sha256": "b101f19b8f97fc9f4b45cc91033b52ed5363686cf0ac44043585e670473c4f3e",
+      "candidate_sha256": "b101f19b8f97fc9f4b45cc91033b52ed5363686cf0ac44043585e670473c4f3e",
+      "variables_equal": true
+    }
+  ],
+  "gate": "Two serial seeded replays agree exactly."
+}

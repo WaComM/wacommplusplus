@@ -1,0 +1,213 @@
+{
+  "revision": "9c81f8d7019e2f657c49372f5e385d7e0a1e5fe1",
+  "utc": "2026-09-15T19:26:08.763089+00:00",
+  "timeout_seconds": 30.0,
+  "measured_repetitions": 3,
+  "platform": "Linux-4.18.0-553.104.1.el8_10.x86_64-x86_64-with-centos-8.10-Green_Obsidian",
+  "hostname": "fesrv.e4.cluster",
+  "cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63
+  ],
+  "binary": "/home/montella/devel/wacommplusplus/build/wacommplusplus",
+  "binary_sha256": "7f2d57c3ae519b1bd00a6e452bd1a5495b5703811b09dd6be8573770530b5b6f",
+  "runner_sha256": "cb5011c5092ccf61bebfceb2c35d15d1b88158240ac026f9d5f3edf120374ae6",
+  "configuration_sha256": "111a0a1fb58fce13dcaa4975b817b96bdfbfd4718df0ee826d9600d3a513a9da",
+  "forcing": [
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0000.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0100.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0200.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0300.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0400.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0500.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0600.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0700.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0800.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z0900.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1000.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1100.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1200.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1300.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1400.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1500.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1600.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1700.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1800.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z1900.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z2000.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z2100.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z2200.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/15/rms3_d03_20260915Z2300.nc",
+      "sha256": null
+    },
+    {
+      "location": "https://data.meteo.uniparthenope.it/opendap/rms3/d03/history/2026/09/16/rms3_d03_20260916Z0000.nc",
+      "sha256": null
+    }
+  ],
+  "random_seed": 5489,
+  "restart": "disabled",
+  "sources": "disabled",
+  "environment": {
+    "OMP_NUM_THREADS": "1",
+    "OMP_DYNAMIC": "FALSE",
+    "OMP_PROC_BIND": null,
+    "OMP_PLACES": null,
+    "SLURM_JOB_ID": null
+  },
+  "timing_scope": "application wall seconds: process startup, forcing reads, normalization, writes, shutdown",
+  "resources": "one directly launched process; OMP_NUM_THREADS=1; no particle solver",
+  "tolerance": "exact ncdump -p 9,17 values and metadata across repetitions; not observational validation",
+  "samples": [
+    {
+      "order": 0,
+      "warmup": true,
+      "command": [
+        "/home/montella/devel/wacommplusplus/build/wacommplusplus",
+        "/home/montella/devel/wacommplusplus/examples/webinar-roms-usecase-download/data/performance-20260915-24h-001/warmup/configuration.json"
+      ],
+      "elapsed_seconds": 30.07691303268075,
+      "exit_code": -9,
+      "timed_out": true,
+      "outputs": [],
+      "error": "application failed or timed out; see archived logs"
+    }
+  ],
+  "status": "failed",
+  "archive": "examples/webinar-roms-usecase-download/data/performance-20260915-24h-001",
+  "archive_run_sha256": "8798ee7550b63b40d3bd491f17add72df0b931d5591f3efe0733fe6cdf5b0448",
+  "physical_window": "2026-09-15T00:00:00Z/2026-09-16T00:00:00Z",
+  "interpretation": "Warm-up timed out; zero eligible measurements. No conversion median or native solver scaling results."
+}

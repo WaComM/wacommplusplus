@@ -1,9 +1,48 @@
 # Historical ROMS conversion performance record
 
+## File-archive recovery
+
+The user-supplied `/files/rms3/d03/history/` endpoint successfully delivered all
+25 requested files (155,758,245,200 bytes). See the [download and metadata record](download-20260915.json).
+The earlier OPeNDAP timeouts below remain archived. Download durations are not
+solver timings, and no conversion median or scientific benchmark follows from
+transfer success. An [explicit angle-repair policy](rectilinear-angle-repair.md)
+now provides derived forcing under a documented grid-axis interpretation.
+The [executed record](angle-repair-results.json) contains all 25 repaired and
+25 converted native file checksums. Serial conversion exited successfully in
+406.171 seconds. This single preparation duration is not a protocol median;
+repair and conversion are not solver timing samples.
+
+## Updated 2026-09-15/16 window
+
+The current configuration requests 25 hourly inputs from 2026-09-15 00:00 through
+2026-09-16 00:00 UTC. A network-enabled HTTPS metadata probe for the first file
+returned no bytes within 30 seconds (curl exit 28). The updated conversion
+warm-up also timed out after 30.077 s, with no outputs or eligible samples.
+Its [separate run record](performance-attempt-20260915.json) preserves the full
+requested file list, binary/configuration hashes and failed sample. This attempt
+used the existing Release MPI/OpenMP application with one directly launched
+process and one thread; CUDA was disabled. It does not supersede or reuse the
+2019 measurements below.
+
+```bash
+python3 examples/webinar-roms-usecase-download/tools/run.py \
+  --binary build/wacommplusplus \
+  --run-root examples/webinar-roms-usecase-download/data/performance-20260915-24h-001 \
+  --timeout 30
+```
+
+The synthetic 25-file conversion regression passes for the midnight boundary.
+At that earlier attempt, provider data were unavailable and no valid result
+was produced. The later file-archive recovery, repair and single conversion
+above supersede that readiness state. Native smoke checks now pass, as recorded
+in the [native example status](../../webinar-native-usecase/docs/performance-status.md);
+no repeated-conversion median or validated solver performance curve is implied.
+
 ## Scope and estimator
 
-This record concerns the thirteen-file 2019-04-01 dry conversion described in the
-[configuration guide](webinar-roms-usecase-download.md). Application wall seconds
+This record concerns the thirteen-file 2019-04-01 dry conversion used by the previous configuration (the
+[current guide](webinar-roms-usecase-download.md) now describes the September 2026 window). Application wall seconds
 include startup, transport, normalization, output, and shutdown. A valid suite
 requires one successful warm-up and three successful, exactly repeatable measured
 runs. The estimator is their median; failed elapsed time is not throughput.

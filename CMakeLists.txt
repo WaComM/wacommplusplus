@@ -195,7 +195,8 @@ if(BUILD_APPLICATION)
         add_test(NAME structured_grid_adapters COMMAND structured_grid_adapter_test)
 
         add_executable(roms_adapter_test tests/ROMSAdapterTest.cpp
-                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/ROMSAdapter.cpp)
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/ROMSAdapter.cpp
+                OceanModelAdapters/WacommAdapter.cpp)
         wacomm_enable_test_assertions(roms_adapter_test)
         target_link_libraries(roms_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME roms_adapter COMMAND roms_adapter_test)
@@ -301,6 +302,10 @@ if(BUILD_TESTING)
                     "${CMAKE_CURRENT_SOURCE_DIR}/examples/webinar-roms-usecase-download/tools/WorkflowTest.py"
                     "$<TARGET_FILE:wacommplusplus>")
             set_tests_properties(webinar_roms_workflow PROPERTIES SKIP_RETURN_CODE 77)
+            add_test(NAME webinar_roms_angle_repair COMMAND "${Python3_EXECUTABLE}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/webinar-roms-usecase-download/tools/AngleRepairTest.py"
+                    "$<TARGET_FILE:wacommplusplus>")
+            set_tests_properties(webinar_roms_angle_repair PROPERTIES SKIP_RETURN_CODE 77)
         endif()
         add_test(NAME reproducibility_manifest COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ReproducibilityManifestTest.py"
@@ -312,6 +317,9 @@ if(BUILD_TESTING)
         add_test(NAME sarno_protocol_collect COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/SarnoProtocolCollectTest.py")
         set_tests_properties(sarno_protocol_collect PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME webinar_native_protocol COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/webinar-native-usecase/tools/WebinarProtocolTest.py")
+        set_tests_properties(webinar_native_protocol PROPERTIES SKIP_RETURN_CODE 77)
         add_test(NAME example_documentation COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/ExampleDocumentationTest.py"
                 "${CMAKE_CURRENT_SOURCE_DIR}/examples")

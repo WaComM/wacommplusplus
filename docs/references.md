@@ -1,5 +1,7 @@
 # References
 
+The [native webinar performance protocol](../examples/webinar-native-usecase/docs/performance-evaluation.md) applies the Amdahl (1967) and Hoefler and Belli (2015) methods listed here to the 2026-09-15/16 window; the related ROMS conversion uses the Shchepetkin and McWilliams (2005) adapter context. Numerical checks are not observational validation.
+
 - Montella, R., Di Luccio, D., De Vita, C. G., Mellone, G., Lapegna, M., Ortega, G., Marcellino, L., Zambianchi, E., and Giunta, G. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).
 - Breivik, Ø., Allen, A. A., Maisondieu, C., Roth, J.-C., and Forest, B. (2012). The leeway of shipping containers at different immersion levels. *Ocean Dynamics*, 62, 741–752. [doi:10.1007/s10236-012-0522-z](https://doi.org/10.1007/s10236-012-0522-z).
 - Di Luccio, D., Galletti, A., Marcellino, L., Riccio, A., Montella, R., and Brizius, A. (2017). Some remarks about a community open source Lagrangian pollutant transport and dispersion model. *Procedia Computer Science*, 113, 490–495. [doi:10.1016/j.procs.2017.08.308](https://doi.org/10.1016/j.procs.2017.08.308).
@@ -34,3 +36,15 @@ Thygesen (2011) is the basis for treating stochastic backward trajectories as co
 ## Performance evaluation
 
 - Hoefler, T., and Belli, R. (2015). Scientific benchmarking of parallel computing systems: twelve ways to tell the masses when reporting performance results. *Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis*, article 73, 1–12. [doi:10.1145/2807591.2807644](https://doi.org/10.1145/2807591.2807644). Repeated measurements, controlled conditions, and honest presentation of variability support the [shared performance protocol](performance-evaluation.md) and the [ROMS webinar conversion timing procedure](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md#performance-evaluation).
+
+The ROMS horizontal-vector normalization described in [adapters](adapters.md#roms-horizontal-vector-basis)
+uses the C-grid context of Shchepetkin and McWilliams (2005), listed above.
+Its author list, title, journal, year, volume 9, issue 4, pages 347–404 and DOI
+were verified against the Crossref DOI record on 2026-09-16. The [ROMS grid module](https://github.com/myroms/roms/blob/develop/ROMS/Modules/mod_grid.F)
+documents the angle convention as interoperability provenance; it does not
+replace the peer-reviewed numerical reference.
+
+The webinar [explicit ROMS metadata repair](../examples/webinar-roms-usecase-download/docs/rectilinear-angle-repair.md) validates the full
+rectilinear C-grid before correcting angle in derived inputs under a declared
+grid-axis interpretation. It preserves original forcing and does not alter
+solver equations or certify upstream ocean-model accuracy.

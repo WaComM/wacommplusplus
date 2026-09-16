@@ -1,22 +1,19 @@
 #!/usr/bin/env python3
-"""Validate Sarno Slurm runs and produce inputs for the shared protocol collector."""
+"""Validate Webinar Slurm runs and produce inputs for the shared protocol collector."""
 import argparse
 import datetime
-import hashlib
 import json
 import math
 from pathlib import Path
 import re
 import sys
 
-import netCDF4
-import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "tools"))
-from compare_particle_snapshots import compare, snapshot_index, order
+from compare_particle_snapshots import compare, snapshot_index
 import performance_protocol
 
-TIMES = [datetime.datetime(2021, 7, 1, h, tzinfo=datetime.timezone.utc)
-         for h in (9, 10, 11, 13, 14, 15)]
+TIMES = [datetime.datetime(2026, 9, 15, tzinfo=datetime.timezone.utc) + datetime.timedelta(hours=h)
+         for h in range(25)]
 EPOCH = datetime.datetime(1968, 5, 23, tzinfo=datetime.timezone.utc)
 INTERVALS = [(a - EPOCH).total_seconds() for a in TIMES]
 
@@ -29,11 +26,19 @@ def solver_seconds(path, p, n, g):
     return interval_seconds(path, p, n, g, INTERVALS)
 
 
+def check_output_coverage(sample):
+    if sorted(snapshot_index(sample / 'restart')) != INTERVALS[2::2]:
+        raise ValueError(f'{sample}: incomplete two-hour particle history')
+    if len(list((sample / 'output').glob('*.nc'))) != len(INTERVALS) - 1:
+        raise ValueError(f'{sample}: incomplete hourly gridded output')
+
+
 def process(root, only_run=None):
     reference_sample = root / 'p1_n1_g0' / 'sample-1'
-    reference = reference_sample / 'snapshots-6h'
+    reference = reference_sample / 'restart'
     if not reference.is_dir():
         raise ValueError('baseline snapshots absent')
+    check_output_coverage(reference_sample)
     forcing_manifest = root / 'provenance' / 'forcing.sha256'
     particles_per_hour = int((root / 'provenance' / 'particles-per-hour.txt').read_text())
     if particles_per_hour <= 0:
@@ -43,26 +48,35 @@ def process(root, only_run=None):
     if (len(source_document.get('features', [])) != 1 or
             source_document['features'][0]['properties'].get('particlesPerHour') != particles_per_hour):
         raise ValueError('source manifest disagrees with declared emission rate')
+    for line in forcing_manifest.read_text().splitlines():
+        digest, name = line.split(maxsplit=1)
+        if sha(root.parent / name.lstrip('*')) != digest:
+            raise ValueError('forcing checksum mismatch')
     identity = None
     for run in sorted(root.glob('p*_n*_g*')):
         if only_run is not None and run.name != only_run:
             continue
         p, n, g = map(int, re.fullmatch(r'p(\d+)_n(\d+)_g(\d+)', run.name).groups())
-        if (run / 'run.json').is_file() and (run / 'validation.md').is_file():
-            continue
         if not (run / 'sample-3' / 'exit.txt').is_file():
             raise ValueError(f'{run}: incomplete job')
+        if (run / 'sample-warmup/exit.txt').read_text().strip() != '0':
+            raise ValueError(f'{run}: unsuccessful warm-up')
         samples = []
         application_samples = []
         comparisons = []
-        config = run / 'sample-1' / 'wacomm-sarno-lite-6h.json'
-        source = run / 'sample-1' / 'examples/sources-sarno_river/sources-sarno_river.json'
+        config = run / 'sample-1' / 'webinar-native-usecase.json'
+        source = run / 'sample-1' / 'examples/sources-webinar/sources-webinar.json'
         for rep in (1, 2, 3):
             sample = run / f'sample-{rep}'
             if (sample / 'exit.txt').read_text().strip() != '0':
                 raise ValueError(f'{sample}: failed model')
-            if sha(sample / 'wacomm-sarno-lite-6h.json') != sha(config) or sha(sample / 'examples/sources-sarno_river/sources-sarno_river.json') != sha(source):
+            if sha(sample / 'webinar-native-usecase.json') != sha(config) or sha(sample / 'examples/sources-webinar/sources-webinar.json') != sha(source):
                 raise ValueError(f'{sample}: changing scientific inputs')
+            stdout = (sample / 'run.out').read_text()
+            if len(re.findall(r'^GPU binding: rank=', stdout, re.MULTILINE)) != p:
+                raise ValueError(f'{sample}: incomplete rank binding evidence')
+            if 'bound to' not in (sample / 'run.err').read_text():
+                raise ValueError(f'{sample}: missing CPU affinity evidence')
             samples.append(solver_seconds(sample / 'run.out', p, n, g))
             elapsed = float((sample / 'elapsed-seconds.txt').read_text())
             if not math.isfinite(elapsed) or elapsed <= 0:
@@ -71,15 +85,18 @@ def process(root, only_run=None):
             if g and (not (sample / 'gpu-monitor.log').is_file() or
                       (sample / 'gpu-monitor.log').stat().st_size == 0):
                 raise ValueError(f'{sample}: missing GPU utilization/memory/power record')
-            snapshots = sample / 'snapshots-6h'
+            check_output_coverage(sample)
+            snapshots = sample / 'restart'
             try:
                 particle_report = gpu_compare(reference, snapshots) if g else compare(reference, snapshots)
-                grid_report = gridded_compare(reference_sample / 'output-6h', sample / 'output-6h')
+                grid_report = gridded_compare(reference_sample / 'output', sample / 'output')
             except (ValueError, OSError, RuntimeError) as error:
                 raise ValueError(f'{sample}: {error}') from error
             comparisons.append({'particles': particle_report, 'gridded': grid_report})
         bin_hash = sha(run / 'wacommplusplus')
         signature = (sha(config), sha(source), bin_hash, sha(forcing_manifest))
+        if signature[0] != sha(root / 'provenance/config.json'):
+            raise ValueError(f'{run}: configuration differs from suite manifest')
         if signature[1] != sha(source_manifest):
             raise ValueError(f'{run}: source differs from suite emission-rate manifest')
         if identity is None:
@@ -92,8 +109,8 @@ def process(root, only_run=None):
                                 (run / 'provenance/runtime.txt').read_text(), re.MULTILINE)
         if not device_mask:
             raise ValueError(f'{run}: missing CUDA device mask')
-        lines = [f'# Sarno validation: {p}/{n}/{g}', '',
-                 f'Passive six-hour release at {particles_per_hour} particles per hour, 2021-07-01 09:00–15:00 UTC; seed 5489.',
+        lines = [f'# Webinar validation: {p}/{n}/{g}', '',
+                 f'Passive 24-hour release at {particles_per_hour} particles per hour, 2026-09-15 00:00–2026-09-16 00:00 UTC; seed 5489.',
                  'All measured snapshots were compared by integer particle ID and physical time.',
                  'GPU coordinates use the absolute tolerances defined below; CPU comparisons require exact equality.',
                  '', f'- Measured job IDs by repetition: {used_jobs}',
@@ -146,7 +163,7 @@ def main():
         note_root = args.run_root / match.group() if match else args.run_root
         if note_root.is_dir():
             (note_root / 'codex-performance-review.md').write_text(
-                '# Failed Sarno performance validation\n\n'
+                '# Failed Webinar performance validation\n\n'
                 f'Validation failed: `{error}`. Inspect this run’s raw output, Slurm binding, '
                 'configuration, forcing and executable hashes, and the corresponding baseline. '
                 'Diagnose the shared solver or example infrastructure and apply a generic fix only after '

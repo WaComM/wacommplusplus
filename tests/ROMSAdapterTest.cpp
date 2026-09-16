@@ -5,6 +5,9 @@
 #include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <limits>
+#include <stdexcept>
+#include "../OceanModelAdapters/WacommAdapter.hpp"
 #include <vector>
 
 using namespace netCDF;
@@ -28,8 +31,11 @@ int main() {
         file.addVar("lat_v",ncDouble,{etaV,xiV});
         file.addVar("lon_u",ncDouble,{etaU,xiU});
         file.addVar("h",ncDouble,rhoDims);
-        file.addVar("u",ncFloat,uDims);
-        file.addVar("v",ncFloat,vDims);
+        file.addVar("u",ncFloat,uDims).putAtt("units","meter second-1");
+        file.addVar("v",ncFloat,vDims).putAtt("units","meter second-1");
+        NcVar angle=file.addVar("angle",ncDouble,rhoDims);
+        angle.putAtt("units","radians");
+        double angles[6]={}; angle.putVar(angles);
         file.addVar("w",ncFloat,wDims);
         file.addVar("AKt",ncFloat,wDims);
         file.addVar("s_w",ncDouble,sW);
@@ -67,6 +73,128 @@ int main() {
         assert(std::abs(adapter.U()(t,k,j,1)-3)<1e-6);
         assert(std::abs(adapter.U()(t,k,j,2)-4)<1e-6);
         for (int i=0;i<3;i++) assert(std::abs(adapter.V()(t,k,j,i)-6)<1e-6);
+    }
+    auto expectRejected=[&]() {
+        bool rejected=false;
+        try { ROMSAdapter invalid(input); invalid.process(); }
+        catch (const std::runtime_error&) { rejected=true; }
+        assert(rejected);
+    };
+    const double pi=std::acos(-1.0);
+    for (double theta:{0.0,.5*pi,-.5*pi,pi,.25*pi}) {
+        {
+            NcFile file(fileName,NcFile::write);
+            double angles[6]; for (double &value:angles) value=theta;
+            file.getVar("angle").putVar(angles);
+        }
+        ROMSAdapter rotated(input); rotated.process();
+        assertAdapterRestartEquivalence(rotated);
+        assertAdapterRestartEquivalence(rotated,true);
+        for (int t=0;t<2;t++) for (int k=-1;k<=0;k++) for (int j=0;j<2;j++) for (int i=0;i<3;i++) {
+            double u=2+i,v=6;
+            assert(std::abs(rotated.U()(t,k,j,i)-(u*std::cos(theta)-v*std::sin(theta)))<1e-6);
+            assert(std::abs(rotated.V()(t,k,j,i)-(u*std::sin(theta)+v*std::cos(theta)))<1e-6);
+            assert(std::abs(std::hypot(rotated.U()(t,k,j,i),rotated.V()(t,k,j,i))-std::hypot(u,v))<1e-6);
+        }
+        string nativeFile="roms-rotated-native-test.nc";
+        rotated.saveAsNetCDF(nativeFile);
+        {
+            NcFile file(nativeFile,NcFile::read);
+            string basis; file.getVar("u").getAtt("standard_name").getValues(basis);
+            assert(basis=="eastward_sea_water_velocity");
+        }
+        WacommAdapter native(nativeFile); native.process();
+        assertAdapterRestartEquivalence(native);
+        for (int t=0;t<2;t++) for (int k=-1;k<=0;k++) for (int j=0;j<2;j++) for (int i=0;i<3;i++) {
+            assert(native.U()(t,k,j,i)==rotated.U()(t,k,j,i));
+            assert(native.V()(t,k,j,i)==rotated.V()(t,k,j,i));
+        }
+        std::remove(nativeFile.c_str());
+    }
+    {
+        NcFile file(fileName,NcFile::write);
+        double angles[6]={0,.5*pi,-.5*pi,pi,.25*pi,std::numeric_limits<double>::quiet_NaN()};
+        double mask[6]={1,1,1,1,1,0};
+        file.getVar("angle").putVar(angles); file.getVar("mask_rho").putVar(mask);
+    }
+    {
+        ROMSAdapter varied(input); varied.process();
+        assert(std::abs(varied.U()(0,-1,0,1)+6)<1e-6);
+        assert(std::abs(varied.V()(0,-1,0,1)-3)<1e-6);
+        assert(varied.U()(0,-1,1,2)==0 && varied.V()(0,-1,1,2)==0);
+    }
+    {
+        NcFile file(fileName,NcFile::write);
+        double mask[6]={1,1,1,1,1,1}; file.getVar("mask_rho").putVar(mask);
+    }
+    expectRejected();
+    for (double invalid:{std::numeric_limits<double>::infinity(),NC_FILL_DOUBLE,-9999.0}) {
+        {
+            NcFile file(fileName,NcFile::write);
+            double angles[6]={0,0,0,0,0,invalid};
+            file.getVar("angle").putAtt("missing_value",ncDouble,-9999.0);
+            file.getVar("angle").putVar(angles);
+        }
+        expectRejected();
+    }
+    {
+        NcFile file(fileName,NcFile::write);
+        double angles[6]={}; file.getVar("angle").putVar(angles);
+        file.getVar("angle").putAtt("units","degrees");
+    }
+    expectRejected();
+    {
+        NcFile file(fileName,NcFile::write);
+        file.getVar("angle").putAtt("units","radians");
+        file.getVar("angle").rename("saved_angle");
+    }
+    expectRejected();
+    {
+        NcFile file(fileName,NcFile::write);
+        file.getVar("u").putAtt("standard_name","eastward_sea_water_velocity");
+    }
+    expectRejected();
+    {
+        NcFile file(fileName,NcFile::write);
+        file.getVar("v").putAtt("standard_name","northward_sea_water_velocity");
+    }
+    {
+        ROMSAdapter earth(input); earth.process();
+        assert(earth.U()(0,-1,0,1)==3 && earth.V()(0,-1,0,1)==6);
+    }
+    {
+        NcFile file(fileName,NcFile::write);
+        file.getVar("saved_angle").rename("angle");
+        double angles[6]={pi,pi,pi,pi,pi,pi}; file.getVar("angle").putVar(angles);
+    }
+    {
+        ROMSAdapter earth(input); earth.process();
+        assert(earth.U()(0,-1,0,1)==3 && earth.V()(0,-1,0,1)==6);
+    }
+    {
+        NcFile file(fileName,NcFile::write);
+        file.getVar("u").putAtt("standard_name",""); file.getVar("v").putAtt("standard_name","");
+        file.getVar("angle").rename("saved_angle");
+        file.addVar("angle",ncDouble,{file.getDim("xi_rho"),file.getDim("eta_rho")}).putAtt("units","radians");
+    }
+    expectRejected();
+    {
+        NcFile file(fileName,NcFile::write);
+        file.getVar("angle").rename("bad_angle"); file.getVar("saved_angle").rename("angle");
+        double angles[6]={}; file.getVar("angle").putVar(angles);
+        file.getVar("u").putAtt("units","centimeter second-1");
+    }
+    expectRejected();
+    {
+        NcFile file(fileName,NcFile::write);
+        file.getVar("u").putAtt("units","meter second-1");
+        float invalid=std::numeric_limits<float>::quiet_NaN();
+        file.getVar("u").putVar({0,0,0,0},{1,1,1,1},&invalid);
+    }
+    expectRejected();
+    {
+        NcFile file(fileName,NcFile::write);
+        float value=2; file.getVar("u").putVar({0,0,0,0},{1,1,1,1},&value);
     }
     const string nextFile="roms-adapter-next-test.nc";
     {

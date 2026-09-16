@@ -3,6 +3,7 @@
 
 import datetime
 import json
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -22,7 +23,7 @@ def main():
         root = Path(temporary)
         forcing = root / 'forcing'
         epoch = datetime.datetime(1968, 5, 23)
-        start = int((datetime.datetime(2019, 4, 1, 8) - epoch).total_seconds())
+        start = int((datetime.datetime.strptime(config['simulation']['start'], '%Y%m%dZ%H%M') - epoch).total_seconds())
         for index, name in enumerate(config['io']['nc_inputs']):
             output = forcing / name
             output.parent.mkdir(parents=True, exist_ok=True)
@@ -38,10 +39,13 @@ def main():
  double lat_rho(eta_rho,xi_rho); double lon_rho(eta_rho,xi_rho);
  double lat_v(eta_v,xi_v); double lon_u(eta_u,xi_u); double h(eta_rho,xi_rho);
  float zeta(ocean_time,eta_rho,xi_rho);
- float u(ocean_time,s_rho,eta_u,xi_u); float v(ocean_time,s_rho,eta_v,xi_v);
+ float u(ocean_time,s_rho,eta_u,xi_u); u:units="meter second-1";
+ float v(ocean_time,s_rho,eta_v,xi_v); v:units="meter second-1";
+ double angle(eta_rho,xi_rho); angle:units="radians";
  float w(ocean_time,s_w,eta_rho,xi_rho); float AKt(ocean_time,s_w,eta_rho,xi_rho);
  data:
- ocean_time=TIME; s_rho=-0.75,-0.25; s_w=-1,-0.5,0;
+ angle=1.5707963267948966,1.5707963267948966,1.5707963267948966,
+ 1.5707963267948966,1.5707963267948966,1.5707963267948966; ocean_time=TIME; s_rho=-0.75,-0.25; s_w=-1,-0.5,0;
  mask_rho=1,1,1,1,1,1; mask_u=1,1,1,1; mask_v=1,1,1;
  lat_rho=40,40,40,41,41,41; lon_rho=10,11,12,10,11,12;
  lat_v=40.5,40.5,40.5; lon_u=10.5,11.5,10.5,11.5; h=100,100,100,100,100,100;
@@ -60,9 +64,14 @@ def main():
             stamp = name.rsplit('_', 1)[1].replace('00.nc', '.nc')
             output = root / 'success/warmup' / ('ocm3_d03_' + stamp)
             result = subprocess.check_output(['ncdump', '-v', 'ocean_time', str(output)], universal_newlines=True)
+            for component, value in [('u', -6), ('v', 2)]:
+                dump = subprocess.check_output(['ncdump', '-v', component, str(output)], universal_newlines=True)
+                data = dump.split('data:', 1)[1].split('=', 1)[1].split(';', 1)[0]
+                numbers = [float(token) for token in re.findall(r'[-+]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][-+]?[0-9]+)?', data)]
+                assert numbers and all(abs(number-value) < 1e-6 for number in numbers)
             expected = str(start + index * 3600)
             assert expected in result
-            if index < 12:
+            if index < len(config['io']['nc_inputs']) - 1:
                 assert str(start + (index + 1) * 3600) in result
         # An existing archive must never be overwritten.
         assert subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode != 0

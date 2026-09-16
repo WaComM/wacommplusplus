@@ -9,7 +9,7 @@
 #include <cmath>
 #include <limits>
 
-inline void assertAdapterRestartEquivalence(OceanModelAdapter &adapter) {
+inline void assertAdapterRestartEquivalence(OceanModelAdapter &adapter,bool random=false) {
     assert(adapter.OceanTime().Nx()>=2);
     int eta=(int)adapter.Mask().Nx(),xi=(int)adapter.Mask().Ny();
     int sRho=(int)adapter.SRho().Nx(),sW=(int)adapter.SW().Nx();
@@ -39,7 +39,7 @@ inline void assertAdapterRestartEquivalence(OceanModelAdapter &adapter) {
     }
 
     config_data config{};
-    config.random=false; config.randomSeed=5489; config.deltat=end-start; config.dti=30;
+    config.random=random; config.randomSeed=5489; config.deltat=end-start; config.dti=30;
     config.survprob=0; config.tau0=86400; config.crid=1; config.sigma=.1;
     config.shoreLimit=.25; config.upperClosure=Config::CLOSURE_MODE_CONSTRAINT;
     config.lowerClosure=Config::CLOSURE_MODE_CONSTRAINT;

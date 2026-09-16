@@ -141,6 +141,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     NcVar uVar = dataFile.addVar("u", ncFloat, oceanTimeSRhoEtaRhoXiRhoDims);
     uVar.putAtt("long_name","u-momentum component at RHO-points");
     uVar.putAtt("units","meter second-1");
+    uVar.putAtt("standard_name","eastward_sea_water_velocity");
     uVar.putAtt("grid","grid");
     uVar.putAtt("loction","face");
     uVar.putAtt("coordinates","lon_rho lat_rho s_rho ocean_time");
@@ -152,6 +153,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     NcVar vVar = dataFile.addVar("v", ncFloat, oceanTimeSRhoEtaRhoXiRhoDims);
     vVar.putAtt("long_name","v-momentum component at RHO-points");
     vVar.putAtt("units","meter second-1");
+    vVar.putAtt("standard_name","northward_sea_water_velocity");
     vVar.putAtt("grid","grid");
     vVar.putAtt("loction","face");
     vVar.putAtt("coordinates","lon_rho lat_rho s_rho ocean_time");

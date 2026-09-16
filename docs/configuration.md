@@ -1,5 +1,7 @@
 # Configuration
 
+The [native webinar configuration](../examples/webinar-native-usecase/docs/webinar-native-usecase.md) and its ROMS download configuration share `simulation.start="20260915Z0000"`, `simulation.end="20260916Z0000"` and 25 explicitly ordered hourly inputs. The native protocol keeps random source placement, seed 5489, and 7200 s history cadence; rate sweeps modify only the archived source emission count.
+
 The [ROMS webinar conversion guide](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) demonstrates `simulation.dry=true` with `io.save_input=true`, disabled sources/restart, and example-local output paths. Create the output parent directory before direct execution, or use its runner to create an isolated archive. Dry conversion processes the configured input list and writes normalized forcing, including adjacent boundary records; it produces no particle output.
 
 Configuration is JSON or the legacy namelist form. New scientific runs should set an explicit seed and direction:
@@ -105,6 +107,23 @@ The native adapter accepts both `WACOMM` and the historical documented spelling 
 The OpenMP scaling sweep changes only Slurm CPUs per task and OpenMP thread settings, keeping one MPI process and the identical native-forcing scientific configuration from the MPI sweep. Its roots are `data/wacomm-sarno-lite/openmp-scaling/tN/`. No adapter, seed, tracking, restart, source, or output option is changed.
 
 The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
+
+## ROMS forcing metadata
+
+No new tracking or backend option enables rotation. For `io.ocean_model="ROMS"`,
+traditional grid-relative U/V require rho-point `angle` in radians; explicitly
+Earth-relative U/V instead require the paired eastward/northward `standard_name`
+attributes. Both require `units="meter second-1"`. Missing or contradictory
+basis declarations fail; see the [complete adapter contract](adapters.md#roms-horizontal-vector-basis).
+Native `io.save_input=true` output now records the component standard names.
+Existing unrotated native files are not repaired by changing the model selector;
+regenerate them from verified ROMS input and retain their old provenance.
+
+
+The webinar [explicit ROMS metadata repair](../examples/webinar-roms-usecase-download/docs/rectilinear-angle-repair.md) validates the full
+rectilinear C-grid before correcting angle in derived inputs under a declared
+grid-axis interpretation. It preserves original forcing and does not alter
+solver equations or certify upstream ocean-model accuracy.
 
 ## References
 

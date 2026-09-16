@@ -1,5 +1,12 @@
 # Sarno River: six-hour coastal release
 
+ROMS preparation now uses the [shared angle/basis contract](../../../docs/adapters.md#roms-horizontal-vector-basis).
+Verify source `angle` and units, regenerate native forcing when grid-relative
+velocities previously lacked rotation, and keep earlier archived plots and
+benchmarks separate. Existing historical results are not evidence for corrected
+forcing until repeated comparisons pass.
+
+
 ## Scientific objective
 
 Follow a passive stochastic release near the Sarno River mouth from **2021-07-01 09:00 to 15:00 UTC**. The diagnostic question is how selected particles spread horizontally and occupy the model's near-surface vertical coordinate over six hours. This is a conditional model result, not pollutant-mass exposure, an observational validation, or a search-area probability. No leeway object model is selected.

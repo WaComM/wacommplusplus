@@ -1,6 +1,6 @@
 # Ocean adapters
 
-The [ROMS webinar conversion workflow](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) documents required legacy ROMS conventions and explicit local staging. Its HTTPS endpoint is not guaranteed available. The legacy ROMS reader copies numeric time without general unit/epoch conversion; dataset metadata and vector/vertical conventions require independent inspection. Successful conversion alone does not certify arbitrary ROMS product compatibility.
+The [ROMS webinar conversion workflow](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) documents required legacy ROMS conventions and explicit local staging. Its HTTPS endpoint is not guaranteed available. The legacy ROMS reader copies numeric time without general unit/epoch conversion; dataset time, vertical and vector-basis conventions require independent inspection. Horizontal vector normalization now follows the explicit contract below. Successful conversion alone does not certify arbitrary ROMS product compatibility.
 
 ![Ocean, weather, and wave adapters normalize product data before a single solver composes the physics](figures/environment-adapter-schema.svg)
 
@@ -8,7 +8,88 @@ Adapters normalize ocean time, vertical levels, mask, longitude, latitude, bathy
 
 The implemented adapters are ROMS, native WACOMM, NEMO, and HYCOM. Adapter selection is explicit and an unknown name fails; no fallback chooses a different model silently.
 
-ROMS velocity is normalized from its Arakawa C-grid staggering to the rho-point particle grid without changing units or sign. For every wet rho point, `U_rho(j,i)` is the arithmetic mean of the valid wet faces `U(j,i)` and `U(j,i-1)`, while `V_rho(j,i)` is the mean of `V(j,i)` and `V(j-1,i)`. A domain edge with one available face uses that face rather than halving it against an invented zero; a land rho point is zero. Thus velocity remains in meters per second and the adapter performs spatial normalization only. The runtime ROMS fixture checks interior and all four edge mappings on the staggered dimensions described by Shchepetkin and McWilliams (2005).
+ROMS grid-relative velocity is first interpolated from its Arakawa C-grid staggering to rho points, then rotated into Earth-relative east/north components. This changes component values when the declared grid angle is nonzero, while preserving physical direction and m/s units. For every wet rho point, `U_rho(j,i)` is the arithmetic mean of the valid wet faces `U(j,i)` and `U(j,i-1)`, while `V_rho(j,i)` is the mean of `V(j,i)` and `V(j-1,i)`. A domain edge with one available face uses that face rather than halving it against an invented zero; a land rho point is zero. The stencil and wet-face selection are unchanged by the subsequent vector rotation; this is adapter normalization, independent of tracking direction. The runtime ROMS fixture checks interior and all four edge mappings on the staggered dimensions described by Shchepetkin and McWilliams (2005).
+
+## ROMS horizontal vector basis
+
+Let \(\bar u_\xi\) and \(\bar v_\eta\) be the wet-face means at a rho
+point, in m s\(^{-1}\), and let \(\theta\) be its declared `angle`, in
+radians counterclockwise from east to the positive XI axis. The adapter supplies
+
+\[
+ u_E=\bar u_\xi\cos\theta-\bar v_\eta\sin\theta,\qquad
+ v_N=\bar u_\xi\sin\theta+\bar v_\eta\cos\theta.
+\]
+
+Here \(u_E\) and \(v_N\) are eastward and northward velocity in m s\(^{-1}\).
+For \(\theta=\pi/2\), \((u_E,v_N)=(-\bar v_\eta,\bar u_\xi)\).
+This orthogonal rotation preserves the magnitude of the interpolated horizontal
+vector up to floating-point rounding. It does not preserve face fluxes: the
+preceding wet-face arithmetic average is not conservative regridding.
+The C-grid and coordinate context follows Shchepetkin and McWilliams (2005).
+
+```mermaid
+flowchart LR
+    A[Grid-relative U and V at wet faces] --> B[Existing wet-face means at rho points]
+    B --> C[Rotate using declared rho-point angle]
+    C --> D[East and north in the common solver]
+    E[Explicit eastward and northward U and V] --> F[Existing wet-face means only]
+    F --> D
+```
+
+Conceptual normalization pipeline, not simulation output. Coordinate
+transformation, regridding and solver direction are separate operations.
+
+The reader accepts these two explicit cases:
+
+- Traditional ROMS `u`/`v` with no `standard_name` require
+  `angle(eta_rho,xi_rho)` with `units="radians"`. The documented ROMS meaning
+  of this variable is required; degrees and packed angle fields are rejected.
+  Angles are not inferred from numeric coordinate ranges, product names, or
+  geographic bearings. Finite radian values are periodic through sine/cosine.
+- Already normalized `u` and `v` must both declare, respectively,
+  `standard_name="eastward_sea_water_velocity"` and
+  `standard_name="northward_sea_water_velocity"`. They are interpolated but
+  not rotated, even if a grid `angle` is present. One declaration without the
+  other, unknown standard names, or an undeclared basis without `angle` fails.
+
+Both cases currently require `units="meter second-1"` and the named ROMS
+staggered dimensions `(ocean_time,s_rho,eta_u,xi_u)` and
+`(ocean_time,s_rho,eta_v,xi_v)`. Packed horizontal fields (`scale_factor` or
+`add_offset`) fail instead of silently reading storage units. Masks must be
+finite zero/one values. Non-finite or declared/default missing U/V on wet faces
+and missing/non-finite angles at wet rho points fail. Dry-face values are not
+used; angles at dry rho points may be missing and normalized land velocities
+remain zero. Normalized components must fit the finite float range. No new
+spatial stencil, extrapolation, CRS transform, vertical-coordinate conversion,
+calendar conversion or tracking policy is introduced.
+
+Normalization runs before MPI particle decomposition and CPU/accelerator
+integration. Forward and backward runs therefore consume the same physical
+vectors. Newly serialized native forcing declares the eastward/northward
+standard names, and the native reader does not rotate them again. Regenerate
+native forcing previously produced from rotated ROMS grids; restarting a
+trajectory computed with the old unrotated forcing is not equivalent to a
+continuous run using corrected forcing. Preserve old results and checksums as
+historical evidence rather than combining them with corrected runs.
+
+The ROMS fixture checks 0, ±π/2, π and π/4 angles, spatial variation, wet
+boundaries, dry rho points, invalid metadata and wet values, and explicit
+Earth-relative inputs. Analytic velocity and speed errors must be below
+10⁻⁶ m/s; native round trips are exact. The fixture also exercises deterministic and seeded-stochastic
+continuous/restarted forward and backward trajectories with 10⁻⁹ dimensionless
+grid-index and 10⁻⁹ s age tolerances. Common stochastic/backend tests remain
+required. These are numerical verification checks, not observational validation.
+
+The [webinar archive audit](../examples/webinar-roms-usecase-download/docs/download-20260915.json)
+found a declared angle near π/2 while sampled XI coordinate differences point
+east. Rotation support cannot establish which conflicting provider declaration
+is correct. The webinar now provides an [explicit preprocessing policy](../examples/webinar-roms-usecase-download/docs/rectilinear-angle-repair.md)
+that assumes ROMS grid-axis components, checks the complete rectilinear C-grid,
+and sets angle to zero in derived copies. Original data and angle are retained.
+This bounded interpretation does not certify the upstream ROMS simulation.
+General curvilinear particle-grid support is not established by this rotation;
+existing solver metric limitations still apply.
 
 Native WACOMM files use the `xi_rho` horizontal dimension written by the current serializer. The loader also accepts the historical `eta_xi` spelling for restart/input compatibility. Native and ROMS time coordinates must be strictly chronological, matching the NEMO/HYCOM contract.
 

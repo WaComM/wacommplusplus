@@ -1,0 +1,44 @@
+{
+  "scope": "Shared ROMS vector-basis normalization; no scientific provider-data run",
+  "revision": "9c81f8d7019e2f657c49372f5e385d7e0a1e5fe1",
+  "working_tree_patch_sha256": "9b0eaf46cffd981743f960a0f3293ae659f3d155fa0c8812bc2e98023bcbb420",
+  "archive": "examples/webinar-native-usecase/data/rotation-validation-20260916-002",
+  "portable_core_tests": {
+    "passed": 17,
+    "failed": 0
+  },
+  "serial_application_tests": {
+    "passed": 28,
+    "failed": 0
+  },
+  "mpi_openmp_application_tests": {
+    "passed": 32,
+    "failed": 0
+  },
+  "final_rotated_workflow_and_adapter_checks": {
+    "serial_passed": 6,
+    "mpi_openmp_passed": 6
+  },
+  "gpu_node_tests": {
+    "job_id": 6696,
+    "passed": 8,
+    "failed": 0,
+    "skipped": 0,
+    "tests_log_sha256": "cba978cc28d033c36900a948e0f4c15b5e4901f59e3268ea493d87961dbfb641"
+  },
+  "binaries": [
+    {
+      "build": "build",
+      "binary_sha256": "4c9cc29947abab475e7595ea6085224132f8e926c2643d0ab68ed8a0a3120971"
+    },
+    {
+      "build": "build-serial-rotation",
+      "binary_sha256": "d20b02f7d6389fc8e214975f2ab275b78eba51193d1e0892942cfcd5e7977bd2"
+    },
+    {
+      "build": "build-cuda",
+      "binary_sha256": "5c89ec743db9c954c23939a986d2732162b2644b1cc3e640c907304071632482"
+    }
+  ],
+  "provider_readiness": "Unresolved angle/coordinate contradiction; provider confirmation required. Source archive unchanged."
+}

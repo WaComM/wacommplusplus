@@ -1,5 +1,7 @@
 # Physical and numerical model
 
+The [native webinar protocol](../examples/webinar-native-usecase/docs/performance-evaluation.md) exercises the common forward passive model over 24 hourly intervals from 2026-09-15 00:00 to 2026-09-16 00:00 UTC. Its ROMS preprocessing step is dry; performance-rate sweeps preserve physical parameters, random source placement, seed and output cadence and require independent numerical equivalence.
+
 The [ROMS webinar download example](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) exercises forcing normalization and serialization in dry mode. Particle integration, stochastic evolution, and restart trajectories are not executed; its timing evidence concerns preprocessing only.
 
 WaComM++ is an offline Lagrangian transport model. It follows discrete computational particles through velocity and diffusivity fields supplied by Eulerian ocean products; optionally it adds wind-induced leeway and surface Stokes drift. A computational particle is a carrier of position, identity, age, health, release time, and object state. It is not necessarily one molecule, organism, person, or unit mass. Any mapping from particles to a physical inventory belongs to the experiment definition and must be reported with the source and concentration conventions.
@@ -9,6 +11,18 @@ This page is the normative overview of the implemented equations. Product normal
 ![Conceptual relation between Eulerian forcing cells and an off-grid Lagrangian particle](figures/lagrangian-eulerian-schema.svg)
 
 The figure is a conceptual, non-georeferenced schema. The environmental model supplies values at fixed grid locations; WaComM++ samples those values at a moving fractional grid position and advances that position. It does not solve the Eulerian tracer advection–diffusion equation on a concentration grid.
+
+## ROMS vector normalization
+
+ROMS horizontal velocities are normalized before the shared solver: the existing
+wet-face averages are rotated by the declared rho-point angle into east/north.
+The [adapter equations and input contract](adapters.md#roms-horizontal-vector-basis)
+define the signs, units, missing-data policy and explicit Earth-relative bypass.
+This is a coordinate-basis operation, not backward-time policy or an additional
+force (Shchepetkin and McWilliams, 2005). All execution backends receive these
+same normalized fields; old native forcing produced without rotation must be
+regenerated before comparing trajectories or performance. A corrected-forcing
+restart must originate from a corrected-forcing trajectory.
 
 ## Lagrangian formulation
 
@@ -186,6 +200,12 @@ Equality of the endpoint time and dynamic fields is exact numeric equality after
 The [OpenMP/MPI comparison](../examples/wacomm-sarno-lite/docs/README.md#openmp-strong-scaling-and-mpi-comparison) holds the governing model and forcing fixed. Different thread/process decompositions are verified through exact stored-particle comparisons; measured speedup and efficiency concern computation, not physical accuracy or observational validation.
 
 The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
+
+
+The webinar [explicit ROMS metadata repair](../examples/webinar-roms-usecase-download/docs/rectilinear-angle-repair.md) validates the full
+rectilinear C-grid before correcting angle in derived inputs under a declared
+grid-axis interpretation. It preserves original forcing and does not alter
+solver equations or certify upstream ocean-model accuracy.
 
 ## References
 

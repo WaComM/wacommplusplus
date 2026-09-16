@@ -4,7 +4,50 @@
 
 #include "ROMSAdapter.hpp"
 
+#include <cmath>
+#include <limits>
 #include <stdexcept>
+
+namespace {
+string romsAttribute(NcVar &variable,const string &name) {
+    auto attributes=variable.getAtts();
+    auto found=attributes.find(name);
+    if (found==attributes.end()) return "";
+    string value;
+    found->second.getValues(value);
+    return value;
+}
+
+void requireRomsDimensions(NcVar &variable,const vector<NcDim> &dimensions) {
+    if (variable.isNull() || variable.getDims()!=dimensions)
+        throw std::runtime_error("ROMS horizontal field has incompatible dimensions");
+    auto attributes=variable.getAtts();
+    if (attributes.count("scale_factor") || attributes.count("add_offset"))
+        throw std::runtime_error("ROMS horizontal fields require unpacked physical values");
+}
+
+vector<double> romsMissingValues(NcVar &variable) {
+    vector<double> values;
+    auto attributes=variable.getAtts();
+    for (const string name:{"_FillValue","missing_value"}) {
+        auto found=attributes.find(name);
+        if (found!=attributes.end()) {
+            vector<double> missing(found->second.getAttLength());
+            found->second.getValues(missing.data());
+            values.insert(values.end(),missing.begin(),missing.end());
+        }
+    }
+    values.push_back(NC_FILL_FLOAT);
+    values.push_back(NC_FILL_DOUBLE);
+    return values;
+}
+
+bool validRomsValue(double value,const vector<double> &missing) {
+    if (!std::isfinite(value)) return false;
+    for (double sentinel:missing) if (value==sentinel) return false;
+    return true;
+}
+}
 
 ROMSAdapter::ROMSAdapter(string &fileName): fileName(fileName) {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
@@ -19,6 +62,7 @@ void ROMSAdapter::process()
 
     // Retrieve the variable named "mask_rho"
     NcVar varMaskRho=dataFile.getVar("mask_rho");
+    requireRomsDimensions(varMaskRho,{dataFile.getDim("eta_rho"),dataFile.getDim("xi_rho")});
     size_t eta_rho = varMaskRho.getDim(0).getSize();
     size_t xi_rho = varMaskRho.getDim(1).getSize();
     Array2<double>mask_rho(eta_rho,xi_rho);
@@ -26,6 +70,7 @@ void ROMSAdapter::process()
 
     // Retrieve the variable named "mask_u"
     NcVar varMaskU=dataFile.getVar("mask_u");
+    requireRomsDimensions(varMaskU,{dataFile.getDim("eta_u"),dataFile.getDim("xi_u")});
     size_t eta_u = varMaskU.getDim(0).getSize();
     size_t xi_u = varMaskU.getDim(1).getSize();
     Array2<double> mask_u(eta_u,xi_u);
@@ -33,6 +78,7 @@ void ROMSAdapter::process()
 
     // Retrieve the variable named "mask_v"
     NcVar varMaskV=dataFile.getVar("mask_v");
+    requireRomsDimensions(varMaskV,{dataFile.getDim("eta_v"),dataFile.getDim("xi_v")});
     size_t eta_v = varMaskV.getDim(0).getSize();
     size_t xi_v = varMaskV.getDim(1).getSize();
     Array2<double> mask_v(eta_v,xi_v);
@@ -65,6 +111,8 @@ void ROMSAdapter::process()
 
     // Retrieve the variable named "u"
     NcVar varU=dataFile.getVar("u");
+    requireRomsDimensions(varU,{dataFile.getDim("ocean_time"),dataFile.getDim("s_rho"),
+                               dataFile.getDim("eta_u"),dataFile.getDim("xi_u")});
     size_t ocean_time = varU.getDim(0).getSize();
     size_t s_rho = varU.getDim(1).getSize();
     Array4<float> u(ocean_time, s_rho, eta_u, xi_u,0,-(int)s_rho+1,0,0);
@@ -72,8 +120,50 @@ void ROMSAdapter::process()
 
     // Retrieve the variable named "v"
     NcVar varV=dataFile.getVar("v");
+    requireRomsDimensions(varV,{dataFile.getDim("ocean_time"),dataFile.getDim("s_rho"),
+                               dataFile.getDim("eta_v"),dataFile.getDim("xi_v")});
     Array4<float> v(ocean_time, s_rho, eta_v, xi_v,0,-(int)s_rho+1,0,0);
     varV.getVar(v());
+
+    if (romsAttribute(varU,"units")!="meter second-1" || romsAttribute(varV,"units")!="meter second-1")
+        throw std::runtime_error("ROMS u/v require units 'meter second-1'");
+    string uName=romsAttribute(varU,"standard_name"),vName=romsAttribute(varV,"standard_name");
+    bool earthRelative=uName=="eastward_sea_water_velocity" && vName=="northward_sea_water_velocity";
+    if (!earthRelative && (!uName.empty() || !vName.empty()))
+        throw std::runtime_error("ROMS u/v have unsupported or inconsistent vector-basis metadata");
+
+    Array2<double> angle(eta_rho,xi_rho);
+    angle=0.0;
+    vector<double> angleMissing;
+    if (!earthRelative) {
+        NcVar varAngle=dataFile.getVar("angle");
+        requireRomsDimensions(varAngle,{dataFile.getDim("eta_rho"),dataFile.getDim("xi_rho")});
+        if (romsAttribute(varAngle,"units")!="radians")
+            throw std::runtime_error("ROMS grid-relative u/v require angle(eta_rho,xi_rho) in radians");
+        varAngle.getVar(angle());
+        angleMissing=romsMissingValues(varAngle);
+    }
+    for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) {
+        if (mask_rho(j,i)!=0.0 && mask_rho(j,i)!=1.0)
+            throw std::runtime_error("ROMS rho mask requires finite zero/one values");
+        if (mask_rho(j,i)>0.0 && !validRomsValue(angle(j,i),angleMissing))
+            throw std::runtime_error("ROMS angle is missing or non-finite at a wet rho point");
+    }
+    vector<double> uMissing=romsMissingValues(varU),vMissing=romsMissingValues(varV);
+    for (int j=0;j<eta_u;j++) for (int i=0;i<xi_u;i++) {
+        if (mask_u(j,i)!=0.0 && mask_u(j,i)!=1.0)
+            throw std::runtime_error("ROMS u mask requires finite zero/one values");
+        if (mask_u(j,i)>0.0) for (int t=0;t<ocean_time;t++) for (int k=-(int)s_rho+1;k<=0;k++)
+            if (!validRomsValue(u(t,k,j,i),uMissing))
+                throw std::runtime_error("ROMS u is missing or non-finite at a wet face");
+    }
+    for (int j=0;j<eta_v;j++) for (int i=0;i<xi_v;i++) {
+        if (mask_v(j,i)!=0.0 && mask_v(j,i)!=1.0)
+            throw std::runtime_error("ROMS v mask requires finite zero/one values");
+        if (mask_v(j,i)>0.0) for (int t=0;t<ocean_time;t++) for (int k=-(int)s_rho+1;k<=0;k++)
+            if (!validRomsValue(v(t,k,j,i),vMissing))
+                throw std::runtime_error("ROMS v is missing or non-finite at a wet face");
+    }
 
     // Retrieve the variable named "w"
     NcVar varW=dataFile.getVar("w");
@@ -185,6 +275,32 @@ void ROMSAdapter::process()
 
     LOG4CPLUS_DEBUG(logger,"Interpolation 2D...");
     uv2rho(mask_rho, mask_u, mask_v, u,v);
+
+    // Rotate the interpolated horizontal components into east and north.
+    Array2<double> cosine(eta_rho,xi_rho),sine(eta_rho,xi_rho);
+    for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) {
+        cosine(j,i)=mask_rho(j,i)>0.0 ? std::cos(angle(j,i)) : 1.0;
+        sine(j,i)=mask_rho(j,i)>0.0 ? std::sin(angle(j,i)) : 0.0;
+    }
+    int invalidVelocity=0;
+    #pragma omp parallel for collapse(4) default(none) shared(ocean_time, s_rho, eta_rho, xi_rho, mask_rho, cosine, sine, earthRelative) reduction(|:invalidVelocity)
+    for (int t=0;t<ocean_time;t++) for (int k=-(int)s_rho+1;k<=0;k++) {
+        for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) {
+            if (mask_rho(j,i)<=0.0) continue;
+            double gridU=this->U()(t,k,j,i),gridV=this->V()(t,k,j,i);
+            double east=earthRelative ? gridU : gridU*cosine(j,i)-gridV*sine(j,i);
+            double north=earthRelative ? gridV : gridU*sine(j,i)+gridV*cosine(j,i);
+            if (!std::isfinite(east) || !std::isfinite(north) ||
+                std::abs(east)>std::numeric_limits<float>::max() || std::abs(north)>std::numeric_limits<float>::max()) {
+                invalidVelocity=1;
+            } else {
+                this->U()(t,k,j,i)=(float)east;
+                this->V()(t,k,j,i)=(float)north;
+            }
+        }
+    }
+    if (invalidVelocity)
+        throw std::runtime_error("ROMS normalized velocity is outside finite float range");
 
     LOG4CPLUS_DEBUG(logger,"Interpolation 3D...");
     wakt2wakt(mask_rho, w, akt);

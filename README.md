@@ -1,5 +1,15 @@
 # WaComM++
 
+ROMS input now rotates declared grid-relative U/V into east/north after the
+existing wet-face interpolation. Explicit eastward/northward standard names
+prevent double rotation. See the [metadata requirements and regression evidence](docs/adapters.md#roms-horizontal-vector-basis);
+missing or inconsistent basis metadata fails, and old unrotated native forcing
+must be regenerated. The webinar provider's angle/coordinate inconsistency is
+tracked separately from this implementation fix.
+
+
+The [native webinar protocol](examples/webinar-native-usecase/docs/performance-evaluation.md) uses 25 hourly forcing files from 2026-09-15 00:00 through 2026-09-16 00:00 UTC. Its paired ROMS conversion example prepares that same window; the native workflow applies the full CPU/hybrid and selected-CPU GPU matrix independently at each release rate.
+
 The [ROMS webinar download example](examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) is a dry forcing-conversion workflow with isolated run archives and an application-wall-time benchmark. It does not execute the particle solver; historical endpoint availability and input metadata must be verified before use.
 
 WaComM++ (Water quality COMmunity Model in C++) is a C++17 Lagrangian transport and diffusion framework for marine pollutants and drifting surface objects. Gridded Eulerian ocean forcing drives compact, independently advected particles whose state includes position, emission time, age, health, a stable 64-bit identity, and restart-safe drift-object metadata.
@@ -60,6 +70,12 @@ A [Sarno CUDA performance diagnostic](examples/wacomm-sarno-lite/docs/README.md#
 The [shared performance-evaluation protocol](docs/performance-evaluation.md) applies to every runnable example and use case; it defines the CPU/GPU resource matrix, scientific equivalence gate, repeat measurements, charts, and per-test Codex review notes.
 
 The [Sarno shared-protocol workflow](examples/wacomm-sarno-lite/docs/performance-evaluation.md) stages the complete MPI, OpenMP, and hybrid CPU matrix in rotated replicate blocks, selects the fastest measured CPU tuple, and gates the subsequent GPU sweep on numerical equivalence. It preserves a Codex review note for each valid performance configuration.
+
+
+The webinar [explicit ROMS metadata repair](examples/webinar-roms-usecase-download/docs/rectilinear-angle-repair.md) validates the full
+rectilinear C-grid before correcting angle in derived inputs under a declared
+grid-axis interpretation. It preserves original forcing and does not alter
+solver equations or certify upstream ocean-model accuracy.
 
 ## References
 
