@@ -10,6 +10,24 @@ Configuration is JSON or the legacy namelist form. New scientific runs should se
 {"physics":{"random":false,"random_seed":5489,"dti":30},"tracking":{"direction":"forward","backward_diffusion":"none"}}
 ```
 
+## Source emission
+
+Each GeoJSON source feature declares an explicit `emission` object. Continuous sources use a physical-time rate:
+
+```json
+"emission": {"mode":"uniform_rate", "rate":1000, "rate_unit":"particles/hour"}
+```
+
+For rate $R>0$ particles per hour and active-source start $t_s$, release $n=0,1,\ldots$ has physical time
+
+$$t_n=t_s+\left(n+\frac{1}{2}\right)\frac{3600\ \mathrm{s}}{R}.$$
+
+The midpoint phase prevents a release from belonging to both adjacent half-open intervals. A solver interval $[a,b)$ schedules every $t_n\in[a,b)$ that is also in the source active window $[t_s,t_e)$. Thus 1,000 particles per hour means one particle every 3.6 s, a complete hour contains exactly 1,000 releases, and a two-hour forcing interval contains 2,000. Fractional rates are supported without interval-local rounding. If `start` is the negative sentinel or omitted, `simulation.start` is $t_s$; a negative or omitted `end` leaves the source active through the simulation.
+
+`single_pulse` requires an integer `particles` count and an explicit source `start`; all members receive that release time. `forcing_interval_batch` requires integer `particles_per_interval` and releases that batch at every available forcing-interval start. The latter depends on forcing resolution and exists for explicit legacy reproduction, not as an hourly-rate interpretation. The deprecated top-level source property `particlesPerHour` remains readable and maps to `forcing_interval_batch`; new or migrated configurations must use `emission`.
+
+All interval membership is evaluated in seconds on the normalized physical-time axis. Forward execution alone emits ordinary sources; backward execution continues to suppress them. Releases for an interval are created before particle distribution, with future members inactive until their stored release time, so serial, OpenMP, MPI, and CUDA use the same schedule. A restart checkpoint stores those inactive members and suppresses rescheduling of its partially completed forcing interval; subsequent interval schedules are reconstructed from physical time.
+
 `direction` is `forward` or `backward`. Backward diffusion defaults to `none`; `symmetric_stochastic` enables an ensemble and must not be interpreted as exact path reconstruction. Closure values are `constraint`, `kill`, and `reflection`. Unknown direction and backward-diffusion values are errors.
 
 `physics.dti` and `physics.deltat` are seconds and must be finite and greater than zero. `physics.sigma` is a stochastic displacement scale in meters and `physics.shore_limit` is a positive-down water-column threshold in meters; both must be finite and non-negative. Invalid numerical or closure values fail during configuration loading rather than entering the integration loop.
@@ -94,7 +112,7 @@ The complete resolved JSON configuration, including defaults, is embedded in Net
 
 The private Unix application dependency stack (other than macOS) includes OpenSSL 3.5.8 for HTTPS transport. `WACOMM_BOOTSTRAP_DEPENDENCIES` controls dependency selection at CMake configuration time; no simulation JSON key selects TLS. See the [build guide](build.md#serial-build-with-private-openssl) for prerequisites, serial commands, and provenance checks.
 
-The six-hour [Sarno example](../examples/wacomm-sarno-lite/docs/README.md) sets `simulation.dry=false`, `simulation.end="20210701Z15"`, `io.ocean_model="ROMS"`, `io.save_input=true`, and `io.save_history="nc"`. `history_root` stores physical-time particle snapshots separately from `nc_output_root` gridded counts. The explicit available input list controls the intervals; the missing 12:00 record produces a two-hour interpolation interval and no source batch at 12:00. Example runtime roots are `data/<example_name>/`. Saved native filenames use hour-only stamps.
+The six-hour [Sarno example](../examples/wacomm-sarno-lite/docs/README.md) sets `simulation.dry=false`, `simulation.end="20210701Z15"`, `io.ocean_model="ROMS"`, `io.save_input=true`, and `io.save_history="nc"`. `history_root` stores physical-time particle snapshots separately from `nc_output_root` gridded counts. The missing 12:00 forcing record produces a two-hour interpolation interval, but the physical-time source rate still schedules the releases belonging to that hour. Example runtime roots are `data/<example_name>/`. Saved native filenames use hour-only stamps.
 
 The MPI Sarno workflow uses the identical scientific configuration and a separate `data/wacomm-sarno-lite/mpi2/` run root; process count is selected by the Slurm wrapper, not a tracking or adapter option.
 

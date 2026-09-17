@@ -7,14 +7,17 @@
 
 
 #include "Particles.hpp"
+#include "SourceEmission.hpp"
 
 class Source {
 public:
     Source();
-    Source(string id, double k, double j, double i, double start, double end, int particlesPerHour, int mode);
+    Source(string id, double k, double j, double i, double start, double end, double emissionValue,
+           EmissionMode emissionMode, int mode);
     ~Source();
 
-    void emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles, double currentOceanTime);
+    void emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles,
+              double intervalStart, double intervalEnd);
 
     string Id();
     double K();
@@ -23,6 +26,8 @@ public:
     double Start();
     double End();
     int ParticlesPerHour();
+    double EmissionValue();
+    EmissionMode EmissionSchedule();
     int Mode();
 
     void Id(string value);
@@ -32,6 +37,8 @@ public:
     void Start(double value);
     void End(double value);
     void ParticlesPerHour(int value);
+    void EmissionValue(double value);
+    void EmissionSchedule(EmissionMode value);
     void Mode(int value);
 
 
@@ -45,7 +52,8 @@ private:
     double i;
     double start;
     double end;
-    int particlesPerHour;
+    double emissionValue;
+    EmissionMode emissionMode;
     int mode;
 
 

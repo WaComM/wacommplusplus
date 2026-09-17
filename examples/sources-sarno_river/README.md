@@ -6,7 +6,7 @@
 
 ## Prerequisites and input
 
-Provide forcing whose wet grid contains the point. The GeoJSON source requests 10,000 particles per hour and omits explicit start/end times, so the run interval supplies its active window. Verify this behavior against the resolved configuration before production use.
+Provide forcing whose wet grid contains the point. The GeoJSON source uses `uniform_rate` at 10,000 particles h$^{-1}$ and omits explicit start/end times, so the run interval supplies its active window. Releases are uniformly spaced by 0.36 s in physical time and do not depend on forcing-record spacing. Verify the resolved configuration before production use.
 
 ## Configuration and exact use
 

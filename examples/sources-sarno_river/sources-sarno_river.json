@@ -5,8 +5,7 @@
     "type": "Feature",
     "properties": {
       "id": "Sarno River",
-      "particlesPerHour": 10000
-    },
+      "emission": {"mode": "uniform_rate", "rate": 10000, "rate_unit": "particles/hour"}},
     "geometry": {
       "type": "Point",
       "coordinates": [ 14.466590881347654,

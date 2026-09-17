@@ -148,6 +148,8 @@ The diagram is a conceptual software-and-numerics schema. It identifies where en
 
 ## Age, health, sources, and concentration
 
+For a uniform source rate $R$ in particles h$^{-1}$, releases occur at $t_n=t_s+(n+1/2)3600/R$ seconds and are selected from each half-open forcing interval. This physical-time schedule is independent of forcing spacing; `single_pulse` represents an instantaneous ensemble and the explicit legacy `forcing_interval_batch` mode remains forcing-resolution dependent. Computational particles carry unit weight unless an application documents another interpretation, so $R$ is not by itself a mass or volume flux.
+
 An emitted particle becomes active when forward physical time reaches its stored release time. Backward mode suppresses ordinary forward source emission. After every completed live substep, age advances by $\Delta t$ and health is reset to
 
 $$H(A)=H_0\exp\left(-\frac{A}{\tau_0}\right),$$
@@ -181,7 +183,7 @@ Principal limitations are offline one-way coupling, interpolation error inherite
 
 The private Unix build (other than macOS) uses pinned OpenSSL 3.5.8 for HTTPS forcing transport, as documented in the [build guide](build.md). This dependency belongs to data access and does not change the governing equations, physical time, tracking direction, or restart state.
 
-The [six-hour Sarno diagnostic](../examples/wacomm-sarno-lite/docs/README.md) illustrates the existing model without changing its equations. The missing 12:00 record is interpolated across 11:00–13:00; source emission occurs at available interval starts, yielding five batches. Profile depth is the exported bathymetry/sigma coordinate, with no instantaneous sea-level term. The [diagnostic estimators](trajectory-diagnostics.md#publication-maps-and-profiles) distinguish counts, radial distances, and member quantiles from mass or calibrated probability.
+The [six-hour Sarno diagnostic](../examples/wacomm-sarno-lite/docs/README.md) uses a uniform physical-time rate. The missing 12:00 record is interpolated across 11:00–13:00, while releases continue on their 0.36 s schedule through that interval. Profile depth is the exported bathymetry/sigma coordinate, with no instantaneous sea-level term. The [diagnostic estimators](trajectory-diagnostics.md#publication-maps-and-profiles) distinguish counts, radial distances, and member quantiles from mass or calibrated probability.
 
 The documented two-process MPI Sarno execution reproduces every stored serial particle variable exactly at the five saved times. This verifies backend agreement for this case without changing the governing model or providing observational validation.
 

@@ -6,7 +6,7 @@
 
 ## Prerequisites and input
 
-Provide forcing whose physical domain covers every listed longitude/latitude. Features use zero-metre depth, 100 particles per hour, and sentinel start/end values. Unlike the older catalog, grid indices are not embedded, so the selected adapter must map each physical coordinate to a valid wet cell.
+Provide forcing whose physical domain covers every listed longitude/latitude. Features use zero-metre depth, `uniform_rate` at 100 particles h$^{-1}$, and sentinel start/end values. Unlike the older catalog, grid indices are not embedded, so the selected adapter must map each physical coordinate to a valid wet cell.
 
 ## Configuration and exact use
 

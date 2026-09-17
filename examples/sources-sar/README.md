@@ -8,7 +8,7 @@ This file defines release geometry only and cannot activate leeway. A complete r
 
 ## Prerequisites and input
 
-Use chronological forcing that contains the point and the emission time. The source has one GeoJSON point, a zero-metre depth, and 10,000 particles per hour. Confirm that the adapter's longitude, latitude, mask, bathymetry, and time coordinates cover those values.
+Use chronological forcing that contains the point and the emission time. The source has one GeoJSON point, a zero-metre depth, and an explicit `single_pulse` of 10,000 particles at 09:00 UTC. Confirm that the adapter's longitude, latitude, mask, bathymetry, and time coordinates cover those values.
 
 ## Configuration and exact use
 

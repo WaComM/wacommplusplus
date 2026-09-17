@@ -6,7 +6,7 @@
 
 ## Prerequisites and input
 
-Use the forcing grid for which the stored longitude/latitude and legacy `i/j/k` hints were prepared. Each feature requests 100 particles per hour and uses sentinel start/end values. Longitude and latitude are authoritative physical coordinates; verify all points against the current adapter rather than assuming that stored grid indices apply to another product.
+Use the forcing grid for which the stored longitude/latitude and legacy `i/j/k` hints were prepared. Each feature uses `uniform_rate` at 100 particles h$^{-1}$ and sentinel start/end values. Longitude and latitude are authoritative physical coordinates; verify all points against the current adapter rather than assuming that stored grid indices apply to another product.
 
 ## Configuration and exact use
 

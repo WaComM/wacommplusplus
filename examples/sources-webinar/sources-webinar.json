@@ -8,8 +8,7 @@
       "id": "1",
       "mode": 1,
       "start": -1.0,
-      "particlesPerHour": 250000
-    },
+      "emission": {"mode": "uniform_rate", "rate": 250000, "rate_unit": "particles/hour"}},
     "geometry": {
       "type": "Point",
       "coordinates": [

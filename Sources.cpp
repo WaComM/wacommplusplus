@@ -7,6 +7,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <iomanip>
+#include <cmath>
 
 #include "JulianDate.hpp"
 
@@ -179,6 +180,16 @@ void Sources::saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanMo
         JulianDate::fromModJulian(source.Start(),  calStart);
         JulianDate::fromModJulian(source.End(),  calEnd);
 
+        json emission = {{ "mode", emissionModeToString(source.EmissionSchedule())}};
+        if (source.EmissionSchedule()==EmissionMode::UNIFORM_RATE) {
+            emission["rate"]=source.EmissionValue();
+            emission["rate_unit"]="particles/hour";
+        } else if (source.EmissionSchedule()==EmissionMode::SINGLE_PULSE) {
+            emission["particles"]=source.EmissionValue();
+        } else {
+            emission["particles_per_interval"]=source.EmissionValue();
+        }
+
         json properties = {
                 { "id", source.Id()},
                 { "k", source.K()},
@@ -186,7 +197,7 @@ void Sources::saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanMo
                 { "i", source.I()},
                 { "start", calStart.asNCEPdate()},
                 { "end", calEnd.asNCEPdate()},
-                { "particlesPerHour", source.ParticlesPerHour()},
+                { "emission", emission},
                 { "mode", source.Mode()},
                 { "depth", dep}
         };
@@ -235,7 +246,9 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
                 double k = 0, j = 1e37, i = 1e37;
                 double startOceanTime = -1, endOceanTime = -1;
                 double dep = 0;
-                int mode = 1, particlesPerHour = 100;
+                int mode = 1;
+                double emissionValue = 100;
+                EmissionMode emissionMode=EmissionMode::FORCING_INTERVAL_BATCH;
                 string id = "source_" + to_string(count);
                 if (feature.contains("properties")) {
                     auto properties = feature["properties"];
@@ -262,11 +275,38 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
                     if (properties.contains("k")) { k = atof(to_string(properties["k"]).c_str()); }
                     if (properties.contains("j")) { j = atof(to_string(properties["j"]).c_str()); }
                     if (properties.contains("i")) { i = atof(to_string(properties["i"]).c_str()); }
+                    if (properties.contains("mode")) { mode = properties["mode"].get<int>(); }
 
                     if (properties.contains("dep")) { dep = atof(to_string(properties["dep"]).c_str()); }
                     if (properties.contains("particlesPerHour")) {
-                        particlesPerHour = stoi(to_string(properties["particlesPerHour"]));
+                        emissionValue = properties["particlesPerHour"].get<double>();
+                        emissionMode=EmissionMode::FORCING_INTERVAL_BATCH;
                     }
+                    if (properties.contains("emission")) {
+                        if (properties.contains("particlesPerHour"))
+                            throw std::runtime_error("source cannot contain both emission and particlesPerHour");
+                        auto emission=properties["emission"];
+                        if (!emission.is_object() || !emission.contains("mode"))
+                            throw std::runtime_error("source emission must contain mode");
+                        emissionMode=emissionModeFromString(emission["mode"].get<string>());
+                        if (emissionMode==EmissionMode::UNIFORM_RATE) {
+                            if (!emission.contains("rate") || emission.value("rate_unit","")!="particles/hour")
+                                throw std::runtime_error("uniform_rate requires rate and rate_unit=particles/hour");
+                            emissionValue=emission["rate"].get<double>();
+                        } else if (emissionMode==EmissionMode::FORCING_INTERVAL_BATCH) {
+                            if (!emission.contains("particles_per_interval"))
+                                throw std::runtime_error("forcing_interval_batch requires particles_per_interval");
+                            emissionValue=emission["particles_per_interval"].get<double>();
+                        } else {
+                            if (!emission.contains("particles"))
+                                throw std::runtime_error("single_pulse requires particles");
+                            emissionValue=emission["particles"].get<double>();
+                        }
+                    }
+                    if (!std::isfinite(emissionValue) || emissionValue<0)
+                        throw std::runtime_error("source emission value must be finite and nonnegative");
+                    if (emissionMode==EmissionMode::SINGLE_PULSE && startOceanTime<0)
+                        throw std::runtime_error("single_pulse requires an explicit source start");
                 }
 
                 // convert lat/lon and depth in k,j,i
@@ -292,7 +332,8 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
                     }
                 }
 
-                this->push_back(Source(id, k, j, i, startOceanTime, endOceanTime, particlesPerHour, mode));
+                this->push_back(Source(id, k, j, i, startOceanTime, endOceanTime,
+                                       emissionValue,emissionMode,mode));
                 count++;
             }
         }

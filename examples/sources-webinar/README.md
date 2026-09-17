@@ -6,7 +6,7 @@
 
 ## Prerequisites and input
 
-The source requires a forcing grid containing 14.0468 E, 40.83480299863682 N. Its `start` and `end` sentinel values defer activity to the simulation interval, and it requests 250,000 particles per hour; confirm memory and runtime capacity before execution.
+The source requires a forcing grid containing 14.0468 E, 40.83480299863682 N. Its `start` and `end` sentinel values defer activity to the simulation interval, and it uses `uniform_rate` at 250,000 particles h$^{-1}$; confirm memory and runtime capacity before execution.
 
 ## Configuration and exact use
 

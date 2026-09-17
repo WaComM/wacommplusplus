@@ -6,7 +6,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"1"
          },
@@ -24,7 +24,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"2"
          },
@@ -42,7 +42,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"3"
          },
@@ -60,7 +60,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"4"
          },
@@ -78,7 +78,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"5"
          },
@@ -96,7 +96,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"6"
          },
@@ -114,7 +114,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"7"
          },
@@ -132,7 +132,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"8"
          },
@@ -150,7 +150,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"9"
          },
@@ -168,7 +168,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"10"
          },
@@ -186,7 +186,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"11"
          },
@@ -204,7 +204,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"12"
          },
@@ -222,7 +222,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"13"
          },
@@ -240,7 +240,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"14"
          },
@@ -258,7 +258,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"15"
          },
@@ -276,7 +276,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"16"
          },
@@ -294,7 +294,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"17"
          },
@@ -312,7 +312,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"18"
          },
@@ -330,7 +330,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"19"
          },
@@ -348,7 +348,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"20"
          },
@@ -366,7 +366,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"21"
          },
@@ -384,7 +384,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"22"
          },
@@ -402,7 +402,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"23"
          },
@@ -420,7 +420,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"24"
          },
@@ -438,7 +438,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"25"
          },
@@ -456,7 +456,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"26"
          },
@@ -474,7 +474,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"27"
          },
@@ -492,7 +492,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"28"
          },
@@ -510,7 +510,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"29"
          },
@@ -528,7 +528,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"30"
          },
@@ -546,7 +546,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"31"
          },
@@ -564,7 +564,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"32"
          },
@@ -582,7 +582,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"33"
          },
@@ -600,7 +600,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"34"
          },
@@ -618,7 +618,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"35"
          },
@@ -636,7 +636,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"36"
          },
@@ -654,7 +654,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"37"
          },
@@ -672,7 +672,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"38"
          },
@@ -690,7 +690,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"39"
          },
@@ -708,7 +708,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"40"
          },
@@ -726,7 +726,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"41"
          },
@@ -744,7 +744,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"42"
          },
@@ -762,7 +762,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"43"
          },
@@ -780,7 +780,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"44"
          },
@@ -798,7 +798,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"45"
          },
@@ -816,7 +816,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"46"
          },
@@ -834,7 +834,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"47"
          },
@@ -852,7 +852,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"48"
          },
@@ -870,7 +870,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"49"
          },
@@ -888,7 +888,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"50"
          },
@@ -906,7 +906,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"51"
          },
@@ -924,7 +924,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"52"
          },
@@ -942,7 +942,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":49,
+            "emission": {"mode": "uniform_rate", "rate": 49, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"53",
             "label":"Regi Lagni"
@@ -961,7 +961,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":1116,
+            "emission": {"mode": "uniform_rate", "rate": 1116, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"54",
             "label":"Fiume Volturno"
@@ -980,7 +980,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"55"
          },
@@ -998,7 +998,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"56"
          },
@@ -1016,7 +1016,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"57"
          },
@@ -1034,7 +1034,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"58"
          },
@@ -1052,7 +1052,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"59"
          },
@@ -1070,7 +1070,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"60"
          },
@@ -1088,7 +1088,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"61"
          },
@@ -1106,7 +1106,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"62"
          },
@@ -1124,7 +1124,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"63"
          },
@@ -1142,7 +1142,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":205,
+            "emission": {"mode": "uniform_rate", "rate": 205, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"64",
             "label":"Fiume Sarno"
@@ -1161,7 +1161,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"65"
          },
@@ -1179,7 +1179,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"66"
          },
@@ -1197,7 +1197,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"67"
          },
@@ -1215,7 +1215,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"68"
          },
@@ -1233,7 +1233,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"69"
          },
@@ -1251,7 +1251,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"70"
          },
@@ -1269,7 +1269,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"71"
          },
@@ -1287,7 +1287,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"72"
          },
@@ -1305,7 +1305,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"73"
          },
@@ -1323,7 +1323,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"74"
          },
@@ -1341,7 +1341,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":1089,
+            "emission": {"mode": "uniform_rate", "rate": 1089, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"75",
             "label":"Fiume Sele"
@@ -1360,7 +1360,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"76"
          },
@@ -1378,7 +1378,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"77"
          },
@@ -1396,7 +1396,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"78"
          },
@@ -1414,7 +1414,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"79"
          },
@@ -1432,7 +1432,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"80"
          },
@@ -1450,7 +1450,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"81"
          },
@@ -1468,7 +1468,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"82"
          },
@@ -1486,7 +1486,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"83"
          },
@@ -1504,7 +1504,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"84"
          },
@@ -1522,7 +1522,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"85"
          },
@@ -1540,7 +1540,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"86"
          },
@@ -1558,7 +1558,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"87"
          },
@@ -1576,7 +1576,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"88"
          },
@@ -1594,7 +1594,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"89"
          },
@@ -1612,7 +1612,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"90"
          },
@@ -1630,7 +1630,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"91"
          },
@@ -1648,7 +1648,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"92"
          },
@@ -1666,7 +1666,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"93"
          },
@@ -1684,7 +1684,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"94"
          },
@@ -1702,7 +1702,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"95"
          },
@@ -1720,7 +1720,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"96"
          },
@@ -1738,7 +1738,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"97"
          },
@@ -1756,7 +1756,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"98"
          },
@@ -1774,7 +1774,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"99"
          },
@@ -1792,7 +1792,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"100"
          },
@@ -1810,7 +1810,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"101"
          },
@@ -1828,7 +1828,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"102"
          },
@@ -1846,7 +1846,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"103"
          },
@@ -1864,7 +1864,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"104"
          },
@@ -1882,7 +1882,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"105"
          },
@@ -1900,7 +1900,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"106"
          },
@@ -1918,7 +1918,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"107"
          },
@@ -1936,7 +1936,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"108"
          },
@@ -1954,7 +1954,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"109"
          },
@@ -1972,7 +1972,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"110"
          },
@@ -1990,7 +1990,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"111"
          },
@@ -2008,7 +2008,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"112"
          },
@@ -2026,7 +2026,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"113"
          },
@@ -2044,7 +2044,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"114"
          },
@@ -2062,7 +2062,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"115"
          },
@@ -2080,7 +2080,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"116"
          },
@@ -2098,7 +2098,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"117"
          },
@@ -2116,7 +2116,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"118"
          },
@@ -2134,7 +2134,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"119"
          },
@@ -2152,7 +2152,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"120"
          },
@@ -2170,7 +2170,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"121"
          },
@@ -2188,7 +2188,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"122"
          },
@@ -2206,7 +2206,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"123"
          },
@@ -2224,7 +2224,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"124"
          },
@@ -2242,7 +2242,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"125"
          },
@@ -2260,7 +2260,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"126"
          },
@@ -2278,7 +2278,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"127"
          },
@@ -2296,7 +2296,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"128"
          },
@@ -2314,7 +2314,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"129"
          },
@@ -2332,7 +2332,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"130"
          },
@@ -2350,7 +2350,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"131"
          },
@@ -2368,7 +2368,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"132"
          },
@@ -2386,7 +2386,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"133"
          },
@@ -2404,7 +2404,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"134"
          },
@@ -2422,7 +2422,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"135"
          },
@@ -2440,7 +2440,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"136"
          },
@@ -2458,7 +2458,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":77,
+            "emission": {"mode": "uniform_rate", "rate": 77, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"137",
             "label":"Cala badessa"
@@ -2477,7 +2477,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"138"
          },
@@ -2495,7 +2495,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"139"
          },
@@ -2513,7 +2513,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"140"
          },
@@ -2531,7 +2531,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"141"
          },
@@ -2549,7 +2549,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"142"
          },
@@ -2567,7 +2567,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"143"
          },
@@ -2585,7 +2585,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"144"
          },
@@ -2603,7 +2603,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"145"
          },
@@ -2621,7 +2621,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"146"
          },
@@ -2639,7 +2639,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"147"
          },
@@ -2657,7 +2657,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"148"
          },
@@ -2675,7 +2675,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"149"
          },
@@ -2693,7 +2693,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"150"
          },
@@ -2711,7 +2711,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"151"
          },
@@ -2729,7 +2729,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"152"
          },
@@ -2747,7 +2747,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"153"
          },
@@ -2765,7 +2765,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"154"
          },
@@ -2783,7 +2783,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"155"
          },
@@ -2801,7 +2801,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"156"
          },
@@ -2819,7 +2819,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"157"
          },
@@ -2837,7 +2837,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"158"
          },
@@ -2855,7 +2855,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"159"
          },
@@ -2873,7 +2873,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"160"
          },
@@ -2891,7 +2891,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"161"
          },
@@ -2909,7 +2909,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"162"
          },
@@ -2927,7 +2927,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"163"
          },
@@ -2945,7 +2945,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"164"
          },
@@ -2963,7 +2963,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"165"
          },
@@ -2981,7 +2981,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"166"
          },
@@ -2999,7 +2999,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"167"
          },
@@ -3017,7 +3017,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"168"
          },
@@ -3035,7 +3035,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"169"
          },
@@ -3053,7 +3053,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"170"
          },
@@ -3071,7 +3071,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"171"
          },
@@ -3089,7 +3089,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"172"
          },
@@ -3107,7 +3107,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"173"
          },
@@ -3125,7 +3125,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"174"
          },
@@ -3143,7 +3143,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"175"
          },
@@ -3161,7 +3161,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"176"
          },
@@ -3179,7 +3179,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"177"
          },
@@ -3197,7 +3197,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"178"
          },
@@ -3215,7 +3215,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"179"
          },
@@ -3233,7 +3233,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"180"
          },
@@ -3251,7 +3251,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"181"
          },
@@ -3269,7 +3269,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"182"
          },
@@ -3287,7 +3287,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"183"
          },
@@ -3305,7 +3305,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"184"
          },
@@ -3323,7 +3323,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"185"
          },
@@ -3341,7 +3341,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"186"
          },
@@ -3359,7 +3359,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"187"
          },
@@ -3377,7 +3377,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"188"
          },
@@ -3395,7 +3395,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"189"
          },
@@ -3413,7 +3413,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"190"
          },
@@ -3431,7 +3431,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"191"
          },
@@ -3449,7 +3449,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"192"
          },
@@ -3467,7 +3467,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"193"
          },
@@ -3485,7 +3485,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"194"
          },
@@ -3503,7 +3503,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"195"
          },
@@ -3521,7 +3521,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"196"
          },
@@ -3539,7 +3539,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"197"
          },
@@ -3557,7 +3557,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"198"
          },
@@ -3575,7 +3575,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"199"
          },
@@ -3593,7 +3593,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"200"
          },
@@ -3611,7 +3611,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"201"
          },
@@ -3629,7 +3629,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"202"
          },
@@ -3647,7 +3647,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"203"
          },
@@ -3665,7 +3665,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"204"
          },
@@ -3683,7 +3683,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"205"
          },
@@ -3701,7 +3701,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"206"
          },
@@ -3719,7 +3719,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"207"
          },
@@ -3737,7 +3737,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"208"
          },
@@ -3755,7 +3755,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"209"
          },
@@ -3773,7 +3773,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"210"
          },
@@ -3791,7 +3791,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"211"
          },
@@ -3809,7 +3809,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"212"
          },
@@ -3827,7 +3827,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"213"
          },
@@ -3845,7 +3845,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"214"
          },
@@ -3863,7 +3863,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"215"
          },
@@ -3881,7 +3881,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"216"
          },
@@ -3899,7 +3899,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"217"
          },
@@ -3917,7 +3917,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"218"
          },
@@ -3935,7 +3935,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"219"
          },
@@ -3953,7 +3953,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"220"
          },
@@ -3971,7 +3971,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"221"
          },
@@ -3989,7 +3989,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"222"
          },
@@ -4007,7 +4007,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"223"
          },
@@ -4025,7 +4025,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"224"
          },
@@ -4043,7 +4043,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"225"
          },
@@ -4061,7 +4061,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"226"
          },
@@ -4079,7 +4079,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"227"
          },
@@ -4097,7 +4097,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"228"
          },
@@ -4115,7 +4115,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"229"
          },
@@ -4133,7 +4133,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"230"
          },
@@ -4151,7 +4151,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"231"
          },
@@ -4169,7 +4169,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"232"
          },
@@ -4187,7 +4187,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"233"
          },
@@ -4205,7 +4205,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"234"
          },
@@ -4223,7 +4223,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"235"
          },
@@ -4241,7 +4241,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"236"
          },
@@ -4259,7 +4259,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"237"
          },
@@ -4277,7 +4277,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"238"
          },
@@ -4295,7 +4295,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"239"
          },
@@ -4313,7 +4313,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"240"
          },
@@ -4331,7 +4331,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"241"
          },
@@ -4349,7 +4349,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"242"
          },
@@ -4367,7 +4367,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"243"
          },
@@ -4385,7 +4385,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"244"
          },
@@ -4403,7 +4403,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"245"
          },
@@ -4421,7 +4421,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"246"
          },
@@ -4439,7 +4439,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"247"
          },
@@ -4457,7 +4457,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"248"
          },
@@ -4475,7 +4475,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"249"
          },
@@ -4493,7 +4493,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"250"
          },
@@ -4511,7 +4511,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"251"
          },
@@ -4529,7 +4529,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"252"
          },
@@ -4547,7 +4547,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"253"
          },
@@ -4565,7 +4565,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"254"
          },
@@ -4583,7 +4583,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"255"
          },
@@ -4601,7 +4601,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"256"
          },
@@ -4619,7 +4619,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"257"
          },
@@ -4637,7 +4637,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"258"
          },
@@ -4655,7 +4655,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"259"
          },
@@ -4673,7 +4673,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"260"
          },
@@ -4691,7 +4691,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"261"
          },
@@ -4709,7 +4709,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"262"
          },
@@ -4727,7 +4727,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"263"
          },
@@ -4745,7 +4745,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"264"
          },
@@ -4763,7 +4763,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"265"
          },
@@ -4781,7 +4781,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"266"
          },
@@ -4799,7 +4799,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"267"
          },
@@ -4817,7 +4817,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"268"
          },
@@ -4835,7 +4835,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"269"
          },
@@ -4853,7 +4853,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"270"
          },
@@ -4871,7 +4871,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"271"
          },
@@ -4889,7 +4889,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"272"
          },
@@ -4907,7 +4907,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"273"
          },
@@ -4925,7 +4925,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"274"
          },
@@ -4943,7 +4943,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"275"
          },
@@ -4961,7 +4961,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"276"
          },
@@ -4979,7 +4979,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"277"
          },
@@ -4997,7 +4997,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"278"
          },
@@ -5015,7 +5015,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"279"
          },
@@ -5033,7 +5033,7 @@
             "start":-1.0,
             "end":-1.0,
             "mode":1,
-            "particlesPerHour":100,
+            "emission": {"mode": "uniform_rate", "rate": 100, "rate_unit": "particles/hour"},
             "depth":0.0,
             "id":"280"
          },

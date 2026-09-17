@@ -123,7 +123,8 @@ def main():
     if (binary.parent / 'CMakeCache.txt').is_file():
         shutil.copy2(binary.parent / 'CMakeCache.txt', provenance)
     source = json.loads((REPOSITORY / 'examples/sources-webinar/sources-webinar.json').read_text())
-    source['features'][0]['properties']['particlesPerHour'] = 1000
+    source['features'][0]['properties']['emission'] = {
+        'mode': 'uniform_rate', 'rate': 1000, 'rate_unit': 'particles/hour'}
     for repetition in (1, 2):
         sample = preparation / f'smoke-{repetition}'
         (sample / 'examples/sources-webinar').mkdir(parents=True)

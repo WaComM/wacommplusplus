@@ -56,7 +56,8 @@ if [ "$phase" = cpu ]; then
 import json,sys
 with open(sys.argv[1]) as stream: source=json.load(stream)
 if len(source['features'])!=1: raise ValueError('Webinar protocol requires one declared source')
-source['features'][0]['properties']['particlesPerHour']=int(sys.argv[3])
+source['features'][0]['properties']['emission']={
+    'mode':'uniform_rate','rate':int(sys.argv[3]),'rate_unit':'particles/hour'}
 with open(sys.argv[2],'w') as stream: json.dump(source,stream,indent=2);stream.write('\n')
 PYTHON
     cp "$example/webinar-native-usecase.json" "$suite/provenance/config.json"

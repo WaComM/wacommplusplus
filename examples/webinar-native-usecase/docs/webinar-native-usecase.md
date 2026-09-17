@@ -59,7 +59,7 @@ paired configuration; see the [model](../../../docs/model.md) and
 [configuration reference](../../../docs/configuration.md) for equations, units
 and scope. No regridding, wind, wave or object model is added.
 
-The launcher archives a copy of the source and changes only `particlesPerHour`
+The launcher archives a copy of the source and changes only `emission.rate`
 for each size; it preserves geometry and random placement. Every sample has an
 isolated working directory that resolves the unchanged relative I/O paths.
 Preparation uses 1,000 particles/hour twice as an untimed repeatability check.

@@ -40,8 +40,10 @@ def process(root, only_run=None):
         raise ValueError('particles per hour must be positive')
     source_manifest = root / 'provenance' / 'source.json'
     source_document = json.loads(source_manifest.read_text())
+    emission = source_document.get('features', [{}])[0].get('properties', {}).get('emission', {})
     if (len(source_document.get('features', [])) != 1 or
-            source_document['features'][0]['properties'].get('particlesPerHour') != particles_per_hour):
+            emission.get('mode') != 'uniform_rate' or emission.get('rate') != particles_per_hour or
+            emission.get('rate_unit') != 'particles/hour'):
         raise ValueError('source manifest disagrees with declared emission rate')
     identity = None
     for run in sorted(root.glob('p*_n*_g*')):

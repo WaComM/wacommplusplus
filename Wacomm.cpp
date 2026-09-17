@@ -258,7 +258,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             for (int idx = 0; idx < nSources && emitSources; idx++) {
 
                 // Emit particles
-                sources->at(idx).emit(config, particles, JulianDate::toModJulian(cal.asNCEPdate()));
+                sources->at(idx).emit(config, particles, intervalStart, intervalEnd);
             }
 
             // Get the total number of particles

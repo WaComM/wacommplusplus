@@ -35,7 +35,7 @@ The script downloads missing available forcing through temporary `.part` files, 
 ./wacommplusplus wacomm-sarno-lite-6h.json
 ```
 
-The configured source parameter is named `particlesPerHour`, but the current solver invokes emission once at each forcing-interval start. The two-hour gap therefore yields **five batches of 10,000**, at 09, 10, 11, 13, and 14 UTC: **50,000 emitted**, not 60,000. This scenario is not a constant hourly release through the missing interval. No governing equation or emission implementation was changed for this run.
+The source declares `uniform_rate` at 10,000 particles h$^{-1}$. Releases are spaced every 0.36 s in physical time using midpoint timing, so the six-hour window emits **60,000 particles**. The missing 12:00 forcing record changes temporal interpolation but not the release rate: the 11:00–13:00 solver interval schedules 20,000 releases.
 
 ## Expected outputs and verification
 
@@ -66,7 +66,7 @@ MPLCONFIGDIR=/tmp/wacomm-mpl data/wacomm-sarno-lite/venv/bin/python \
   --map-crs EPSG:4326 --extent 14.461 14.474 40.721 40.733 \
   --source 14.466590881347654 40.72813686316017 \
   --depth-bin 0.0005 --depth-unit mm \
-  --note '12:00 forcing unavailable: interpolation spans 11:00–13:00 UTC; no 12:00 release batch.' \
+  --note '12:00 forcing unavailable: interpolation spans 11:00–13:00 UTC; physical-time emission remains continuous.' \
   --output-dir examples/wacomm-sarno-lite/docs/figures
 ```
 
@@ -86,7 +86,7 @@ The saved native names are `processed-6h/ocm3_d03_20210701ZHH.nc` at hours 09, 1
 
 ## Limitations, interpretation, and reproducibility
 
-The six-hour realization depends on forcing, the missing 12:00 record, interval-based source batches, grid resolution, closures, and the documented legacy stochastic displacement. Numerical repeatability is not observational validation; the particle rate is not a contaminant mass flux. The finite member cloud and depth quantiles do not estimate calibrated probabilities or forecast confidence. These figures take their map/profile presentation cues from the OpenDrift gallery but do not run OpenDrift or establish agreement with it.
+The six-hour realization depends on forcing, the missing 12:00 record, the physical-time source rate, grid resolution, closures, and the documented legacy stochastic displacement. Numerical repeatability is not observational validation; the particle rate is not a contaminant mass flux. The finite member cloud and depth quantiles do not estimate calibrated probabilities or forecast confidence. Existing checked-in publication figures and logs predate the uniform-rate migration and contain five legacy interval batches (50,000 emissions); regenerate them before using them as evidence for the current 60,000-particle configuration. These figures take their map/profile presentation cues from the OpenDrift gallery but do not run OpenDrift or establish agreement with it.
 
 Archive Git base revision and working-tree changes, full resolved and input configurations, source/forcing/native/restart/output checksums, seed, compiler/CMake and library versions, module list, Slurm allocation and job logs, timestep and test tolerances, plotting environment, commands, and figure checksums. The run used the earlier recorded source revision with the session's build changes; the numerical C++ sources were unchanged. Run data are intentionally outside Git; the small figures and their provenance are versioned with this guide.
 
@@ -113,7 +113,7 @@ The [comparison report](figures/mpi2-comparison.json) records each physical time
 
 ## MPI/OpenMP strong scaling
 
-**Scientific and computational question.** How does solver time for this fixed six-hour passive-release calculation change with MPI process count when OpenMP is enabled but limited to one thread per rank? This experiment changes execution resources only. It reuses the saved native forcing described above; units, source batches, seed, physical interpretation, and missing-hour limitation remain applicable.
+**Scientific and computational question.** How does solver time for this fixed six-hour passive-release calculation change with MPI process count when OpenMP is enabled but limited to one thread per rank? This experiment changes execution resources only. It reuses the saved native forcing described above; units, physical-time source schedule, seed, physical interpretation, and missing-hour limitation remain applicable.
 
 **Prerequisites and exact commands.** Use GNU 12.2.1, OpenMPI 4.1.4, CMake 4.4.3, the same four modules, and a Release build with MPI and OpenMP enabled and CUDA disabled. Keep the six downloaded ROMS files under `data/wacomm-sarno-lite/roms/`. Downloading is completed before preparation. The one-process preparation job rebuilds the six native inputs under `data/wacomm-sarno-lite/processed-6h/`; the performance sweep then shares those files read-only. Reserve disk space for the old forcing backup, regenerated forcing, and seven sets of particle/gridded outputs. From the repository root:
 
@@ -258,7 +258,7 @@ An attempted eight-rank job on two `low-gn` nodes reached the last forcing file 
 
 ## OpenMP strong scaling and MPI comparison
 
-**Question and fixed workload.** Compare one MPI process with 1, 2, 4, 8, 16, and 32 OpenMP threads against the MPI sweep above at the same active core counts. The physical question, six-hour window, seed 5489, five source batches, native fields and units, boundaries, and missing 12:00 forcing limitation are unchanged. This is computational verification and performance evidence for the passive-release configuration, not observational validation.
+**Question and fixed workload.** Compare one MPI process with 1, 2, 4, 8, 16, and 32 OpenMP threads against the MPI sweep above at the same active core counts. The physical question, six-hour window, seed 5489, 10,000 particles h$^{-1}$ physical-time schedule, native fields and units, boundaries, and missing 12:00 forcing limitation are unchanged. This is computational verification and performance evidence for the passive-release configuration, not observational validation.
 
 **Prerequisites and exact command.** Reuse the Release MPI/OpenMP executable with CUDA disabled, the successful one-process preparation job, and its six `processed-6h/` files. The wrapper requires the build executable to be byte-identical to `scaling/p1/wacommplusplus`; a rebuilt binary with different provenance or compiler settings requires a new matched MPI baseline. Native inputs are checked against preparation checksums before submission. The partition is `high-wn`; `high-w` is not a configured partition on this host.
 
