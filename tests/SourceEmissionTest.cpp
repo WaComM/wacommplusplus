@@ -41,4 +41,10 @@ int main() {
     try { sourceEmissionTimes(EmissionMode::FORCING_INTERVAL_BATCH,1.5,0,-1,0,3600); }
     catch (const std::runtime_error&) { rejected=true; }
     assert(rejected);
+
+    double offset=sourcePositionOffset(5489,42,0);
+    assert(offset==sourcePositionOffset(5489,42,0));
+    assert(offset!=sourcePositionOffset(5489,43,0));
+    assert(offset!=sourcePositionOffset(5489,42,1));
+    assert(offset!=sourcePositionOffset(5490,42,0));
 }

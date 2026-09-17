@@ -249,17 +249,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             // Get the number of particles
             size_t nParticles0 = particles->size();
 
-            // Get the number of sources
-            int nSources = sources->size();
-
-            // For each source
             bool emitSources=!config->Backward() &&
                     NumericalHelpers::emitAtIntervalStart(intervalStart,config->RestartCheckpoint());
-            for (int idx = 0; idx < nSources && emitSources; idx++) {
-
-                // Emit particles
-                sources->at(idx).emit(config, particles, intervalStart, intervalEnd);
-            }
+            if (emitSources)
+                sources->emit(config,particles,intervalStart,intervalEnd);
 
             // Get the total number of particles
             nParticles = particles->size();

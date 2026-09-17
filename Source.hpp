@@ -16,8 +16,10 @@ public:
            EmissionMode emissionMode, int mode);
     ~Source();
 
+    std::vector<double> emissionTimes(const std::shared_ptr<Config>& config,
+                                      double intervalStart, double intervalEnd);
     void emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles,
-              double intervalStart, double intervalEnd);
+              double emissionTime);
 
     string Id();
     double K();

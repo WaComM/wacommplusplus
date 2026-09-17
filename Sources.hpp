@@ -29,6 +29,8 @@ public:
 
     void loadFromNamelist(string &fileName);
     void loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> oceanModelAdapter);
+    void emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles,
+              double intervalStart, double intervalEnd);
     void saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanModelAdapter);
 
 

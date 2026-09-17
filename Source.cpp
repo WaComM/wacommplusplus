@@ -3,7 +3,6 @@
 //
 
 #include "Source.hpp"
-#include <random>
 
 Source::Source(string id, double k, double j, double i, double start, double end, double emissionValue,
                EmissionMode emissionMode, int mode):
@@ -14,50 +13,34 @@ Source::Source(string id, double k, double j, double i, double start, double end
 
 Source::~Source() = default;
 
+std::vector<double> Source::emissionTimes(const std::shared_ptr<Config>& config,
+                                          double intervalStart, double intervalEnd) {
+    if (mode!=1) return {};
+    double sourceStart=start<0 ? config->JulianStart()*86400.0 : start*86400.0;
+    double sourceEnd=end<0 ? -1 : end*86400.0;
+    return sourceEmissionTimes(emissionMode,emissionValue,sourceStart,sourceEnd,
+                               intervalStart,intervalEnd);
+}
+
 void Source::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles,
-                  double intervalStart, double intervalEnd) {
+                  double emissionTime) {
+    std::uint64_t id=particles->size()==0 ? 0 : particles->at(particles->size()-1).Id()+1;
+    double kk = k;
+    double jj = j;
+    double ii = i;
 
-    // Create a random number generator
-    std::default_random_engine generator;
-
-    // Create a distribution probability with mean=0 and stddev=0.25
-    std::normal_distribution<double> distribution(0.0,0.25);
-
-    // Check if the source is active
-    if (mode>0) {
-        unsigned long id=0;
-        if (particles->size()>0) {
-            id = particles->at(particles->size() - 1).Id() + 1;
-        }
-        double sourceStart=start<0 ? config->JulianStart()*86400.0 : start*86400.0;
-        double sourceEnd=end<0 ? -1 : end*86400.0;
-        std::vector<double> emissionTimes;
-        if (mode==1)
-            emissionTimes=sourceEmissionTimes(emissionMode,emissionValue,sourceStart,sourceEnd,
-                                              intervalStart,intervalEnd);
-
-        // Release the particles scheduled in this physical-time interval
-        for (double emissionTime: emissionTimes) {
-            double kk = k;
-            double jj = j;
-            double ii = i;
-
-            if (config->RandomSources()) {
-
-                kk = k + distribution(generator);
-                jj = j + distribution(generator);
-                ii = i + distribution(generator);
-            }
-
-            Particle particle(id, kk, jj, ii, emissionTime);
-            DriftSide side=config->DefaultDriftSide();
-            if (config->LeewayRandomSide())
-                side=sampleDriftSide(config->RandomSeed(),id,config->LeewayRightSideProbability());
-            particle.Drift(config->DriftObject(),side);
-            particles->push_back(particle);
-            id++;
-        }
+    if (config->RandomSources()) {
+        kk = k + sourcePositionOffset(config->RandomSeed(),id,0);
+        jj = j + sourcePositionOffset(config->RandomSeed(),id,1);
+        ii = i + sourcePositionOffset(config->RandomSeed(),id,2);
     }
+
+    Particle particle(id, kk, jj, ii, emissionTime);
+    DriftSide side=config->DefaultDriftSide();
+    if (config->LeewayRandomSide())
+        side=sampleDriftSide(config->RandomSeed(),id,config->LeewayRightSideProbability());
+    particle.Drift(config->DriftObject(),side);
+    particles->push_back(particle);
 }
 
 Source::Source(): id(""),k(0),j(0),i(0),start(-1),end(-1),emissionValue(100),

@@ -148,7 +148,7 @@ The diagram is a conceptual software-and-numerics schema. It identifies where en
 
 ## Age, health, sources, and concentration
 
-For a uniform source rate $R$ in particles h$^{-1}$, releases occur at $t_n=t_s+(n+1/2)3600/R$ seconds and are selected from each half-open forcing interval. This physical-time schedule is independent of forcing spacing; `single_pulse` represents an instantaneous ensemble and the explicit legacy `forcing_interval_batch` mode remains forcing-resolution dependent. Computational particles carry unit weight unless an application documents another interpretation, so $R$ is not by itself a mass or volume flux.
+For a uniform source rate $R$ in particles h$^{-1}$, releases occur at $t_n=t_s+(n+1/2)3600/R$ seconds and are selected from each half-open forcing interval. This physical-time schedule is independent of forcing spacing; `single_pulse` represents an instantaneous ensemble and the explicit legacy `forcing_interval_batch` mode remains forcing-resolution dependent. Optional random source placement adds independent $N(0,0.25^2)$ offsets to the vertical and two horizontal fractional grid indices, keyed by configured seed and stable identity. This grid-coordinate spread is not isotropic in physical distance and is not a calibrated geolocation-error model. Computational particles carry unit weight unless an application documents another interpretation, so $R$ is not by itself a mass or volume flux.
 
 An emitted particle becomes active when forward physical time reaches its stored release time. Backward mode suppresses ordinary forward source emission. After every completed live substep, age advances by $\Delta t$ and health is reset to
 

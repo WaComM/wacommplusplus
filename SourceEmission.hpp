@@ -7,11 +7,20 @@
 #include <string>
 #include <vector>
 
+#include "NumericalHelpers.hpp"
+
 enum class EmissionMode {
     UNIFORM_RATE,
     FORCING_INTERVAL_BATCH,
     SINGLE_PULSE
 };
+
+static constexpr std::int64_t SOURCE_POSITION_RANDOM_INTERVAL=(-9223372036854775807LL-1)+2;
+
+inline double sourcePositionOffset(std::uint64_t seed, std::uint64_t particle,
+                                   std::uint64_t component) {
+    return 0.25*NumericalHelpers::normal(seed,particle,SOURCE_POSITION_RANDOM_INTERVAL,0,component);
+}
 
 inline EmissionMode emissionModeFromString(const std::string& value) {
     if (value=="uniform_rate") return EmissionMode::UNIFORM_RATE;

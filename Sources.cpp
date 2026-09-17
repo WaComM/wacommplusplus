@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 #include <iomanip>
 #include <cmath>
+#include <algorithm>
 
 #include "JulianDate.hpp"
 
@@ -227,6 +228,23 @@ void Sources::saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanMo
 }
 
 Sources::~Sources() {
+}
+
+void Sources::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles,
+                   double intervalStart, double intervalEnd) {
+    struct Emission {
+        double time;
+        std::size_t source;
+    };
+    std::vector<Emission> emissions;
+    for (std::size_t source=0;source<size();source++)
+        for (double time: at(source).emissionTimes(config,intervalStart,intervalEnd))
+            emissions.push_back({time,source});
+    std::stable_sort(emissions.begin(),emissions.end(),[](const Emission& left,const Emission& right) {
+        return left.time<right.time;
+    });
+    for (const Emission& emission: emissions)
+        at(emission.source).emit(config,particles,emission.time);
 }
 
 void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> oceanModelAdapter) {
