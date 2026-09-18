@@ -32,8 +32,7 @@
 			"ocm3_d03_20260915Z20.nc",
 			"ocm3_d03_20260915Z21.nc",
 			"ocm3_d03_20260915Z22.nc",
-			"ocm3_d03_20260915Z23.nc",
-			"ocm3_d03_20260916Z00.nc"
+			"ocm3_d03_20260915Z23.nc"
 		],
 		"ocean_model":"WaComM",
 		"nc_output_root": "output/wacomm_his_",

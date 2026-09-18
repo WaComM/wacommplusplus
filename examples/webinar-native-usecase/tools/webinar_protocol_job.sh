@@ -54,8 +54,12 @@ for repetition in "${repetitions[@]}"; do
         nvidia-smi dmon -s pucm -d 1 -o DT -f gpu-monitor.log &
         monitor=$!
     fi
+    mapping="slot:PE=$WEBINAR_THREADS"
+    if [ "$WEBINAR_PROCESSES" -gt "${WEBINAR_RANKS_PER_NODE:-32}" ]; then
+        mapping="ppr:${WEBINAR_RANKS_PER_NODE}:node:PE=$WEBINAR_THREADS"
+    fi
     /usr/bin/time -f '%e' -o elapsed-seconds.txt \
-        mpirun --np "$WEBINAR_PROCESSES" --map-by "slot:PE=$WEBINAR_THREADS" \
+        mpirun --np "$WEBINAR_PROCESSES" --map-by "$mapping" \
         -x CUDA_VISIBLE_DEVICES -x OMP_NUM_THREADS -x OMP_THREAD_LIMIT \
         -x OMP_DYNAMIC -x OMP_PROC_BIND -x OMP_PLACES \
         --bind-to core --report-bindings \

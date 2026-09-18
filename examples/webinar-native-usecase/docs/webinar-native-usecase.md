@@ -23,8 +23,11 @@ checks before scheduling. Missing hardware leaves the matrix incomplete.
 
 ## Required forcing fields and units
 
-Stage the 25 hourly files from `ocm3_d03_20260915Z00.nc` through
-`ocm3_d03_20260916Z00.nc`, inclusive, from the declared native archive. The native adapter
+Stage the 24 two-record hourly files from `ocm3_d03_20260915Z00.nc` through
+`ocm3_d03_20260915Z23.nc`, inclusive, from the declared native archive. The
+converted `ocm3_d03_20260916Z00.nc` contains only the already represented
+terminal boundary and remains in preparation provenance rather than being
+decoded as a solver input. The native adapter
 requires grid longitude/latitude (degrees east/north), wet mask (dimensionless),
 bathymetry (metres) and bottom-to-surface sigma levels (dimensionless), sea-surface height (metres),
 eastward/northward/vertical velocity (m/s), vertical diffusivity (m²/s), and

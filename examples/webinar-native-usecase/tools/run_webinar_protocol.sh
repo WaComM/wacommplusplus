@@ -113,15 +113,27 @@ for repetition in 1 2 3; do
         IFS=: read -r processes threads gpus <<< "$tuple"
         run="$suite/p${processes}_n${threads}_g${gpus}"
         nodes=1
-        if [ "$((processes*threads))" -gt 32 ]; then nodes=2; fi
+        if [ "$phase" = cpu ]; then
+            worker_nodes=$(((processes*threads+31)/32))
+            rank_nodes=1
+            if [ "$processes" -gt 16 ]; then rank_nodes=$(((processes+7)/8)); fi
+            nodes="$worker_nodes"
+            if [ "$rank_nodes" -gt "$nodes" ]; then nodes="$rank_nodes"; fi
+        fi
         dependency=()
         if [ -n "$previous" ]; then dependency=(--dependency="afterok:$previous"); fi
+        excluded_nodes=()
+        if [ -n "${WEBINAR_EXCLUDE_NODES:-}" ]; then
+            excluded_nodes=(--exclude="$WEBINAR_EXCLUDE_NODES")
+        fi
         gres=()
         if [ "$gpus" -gt 0 ]; then gres=(--gres="gpu:tesla:$gpus"); fi
+        ranks_per_node=32
+        if [ "$phase" = cpu ] && [ "$processes" -gt 16 ]; then ranks_per_node=8; fi
         job=$(sbatch --parsable --partition="$partition" --nodes="$nodes" --ntasks="$processes" \
             --cpus-per-task="$threads" --exclusive --mem=0 --time="${WEBINAR_TIME_LIMIT:-24:00:00}" \
-            --export="ALL,WEBINAR_PROCESSES=$processes,WEBINAR_THREADS=$threads,WEBINAR_GPUS=$gpus,WEBINAR_REPETITION=$repetition" \
-            "${gres[@]}" "${dependency[@]}" --job-name="webinar-$tuple-r$repetition" \
+            --export="ALL,WEBINAR_PROCESSES=$processes,WEBINAR_THREADS=$threads,WEBINAR_GPUS=$gpus,WEBINAR_REPETITION=$repetition,WEBINAR_RANKS_PER_NODE=$ranks_per_node" \
+            "${gres[@]}" "${dependency[@]}" "${excluded_nodes[@]}" --job-name="webinar-$tuple-r$repetition" \
             --chdir="$run" --output="$run/job-$repetition.out" --error="$run/job-$repetition.err" "$run/submit.sh")
         previous="${job%%;*}"
         printf '%s\n' "$previous" > "$run/provenance/job-id-$repetition.txt"

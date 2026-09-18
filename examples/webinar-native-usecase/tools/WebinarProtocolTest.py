@@ -31,7 +31,7 @@ def main():
     assert native['simulation']['end'] == roms['simulation']['end'] == '20260916Z0000'
     start = datetime.datetime(2026, 9, 15)
     times = [start + datetime.timedelta(hours=h) for h in range(25)]
-    assert native['io']['nc_inputs'] == [t.strftime('ocm3_d03_%Y%m%dZ%H.nc') for t in times]
+    assert native['io']['nc_inputs'] == [t.strftime('ocm3_d03_%Y%m%dZ%H.nc') for t in times[:-1]]
     assert roms['io']['nc_inputs'] == [t.strftime('%Y/%m/%d/rms3_d03_%Y%m%dZ%H00.nc') for t in times]
     assert native['physics']['random_sources'] and native['restart']['interval'] == 7200
     with tempfile.TemporaryDirectory() as directory:
@@ -49,12 +49,12 @@ def main():
         rejected(lambda: validate_inputs(root))
         for index, name in enumerate(native['io']['nc_inputs']):
             with netCDF4.Dataset(root / name, 'w') as ds:
-                for dim, size in [('ocean_time', 1), ('eta_rho', 2), ('xi_rho', 2), ('s_rho', 2), ('s_w', 3)]:
+                for dim, size in [('ocean_time', 2), ('eta_rho', 2), ('xi_rho', 2), ('s_rho', 2), ('s_w', 3)]:
                     ds.createDimension(dim, size)
                 clock = ds.createVariable('ocean_time', 'f8', ('ocean_time',))
                 clock.units = 'seconds since 1968-05-23 00:00:00 GMT'
                 clock.calendar = 'gregorian'
-                clock[:] = [INTERVALS[index]]
+                clock[:] = INTERVALS[index:index + 2]
                 horizontal = ('eta_rho', 'xi_rho')
                 for name, dimensions, units, value in [
                         ('lat_rho', horizontal, 'degree_north', 40.8),
@@ -73,13 +73,13 @@ def main():
                     variable.positive = 'up'
                     variable.standard_name = 'ocean_sigma_coordinates'
                     variable[:] = values
-        assert len(validate_inputs(root)[1]) == 25
+        assert len(validate_inputs(root)[1]) == 24
         first = root / native['io']['nc_inputs'][0]
         with netCDF4.Dataset(first, 'a') as ds:
-            ds.variables['ocean_time'][:] = [INTERVALS[0] + 0.5]
+            ds.variables['ocean_time'][:] = [INTERVALS[0] + 0.5, INTERVALS[1]]
         rejected(lambda: validate_inputs(root))
         with netCDF4.Dataset(first, 'a') as ds:
-            ds.variables['ocean_time'][:] = [INTERVALS[0]]
+            ds.variables['ocean_time'][:] = INTERVALS[:2]
             ds.variables['ocean_time'].units = 'hours since 1968-05-23 00:00:00 GMT'
         rejected(lambda: validate_inputs(root))
         with netCDF4.Dataset(first, 'a') as ds:
@@ -87,7 +87,7 @@ def main():
             ds.variables['u'].units = 'centimeter second-1'
         rejected(lambda: validate_inputs(root))
 
-    print('Webinar 25-file window and 24-interval evidence checks passed')
+    print('Webinar 24-file native window and 24-interval evidence checks passed')
 
 
 if __name__ == '__main__':

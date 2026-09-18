@@ -79,6 +79,28 @@ that placement fixed for the four GPU points. CPU masking, rank environment
 export, core binding, GPU topology and telemetry follow the Sarno job runner.
 See the [guide](webinar-native-usecase.md#verification) for exact commands.
 
+The first `32/1/0` warm-up on job 6717 was killed by the node out-of-memory
+handler after 16-rank execution had succeeded. A two-node retry in job 6785
+completed all 24 solver intervals but did not terminate after the final forcing
+boundary and was cancelled without contributing a sample. Both immutable
+failed attempts are retained. Resumed CPU jobs therefore cap placement at
+eight MPI ranks per homogeneous 178 GB Xeon Gold 5218 node: `32/1/0` uses four
+nodes and `64/1/0` uses eight. Nodes with and without V100 devices have the same
+recorded CPU model, core count, NUMA count and RAM; CUDA remains masked for all
+CPU runs. The worker-count rule still applies, so other requested tuples retain
+their minimum 32-core-node placement unless rank memory requires more nodes.
+This changes resource placement, not the workload or equations. The overall
+CPU optimum may consequently be a multi-node result; GPU comparison uses the
+fastest validated one-node V100 tuple.
+
+Live stack traces from the four-node retry showed ranks blocked in HDF5 reads
+inside `WacommAdapter::process()` while handling the final native file. The
+workload staging audit therefore checks every native time axis before deciding
+whether a terminal artifact is redundant. The common driver is not shortened:
+a single file may itself contain a valid interval, and the application
+regression suite must continue to execute that case. Any replacement suite
+must retain identical physical interval boundaries and output times.
+
 ```mermaid
 flowchart LR
     A[Verify September 2026 native forcing] --> B[Two serial smoke replays]

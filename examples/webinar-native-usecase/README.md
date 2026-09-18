@@ -1,7 +1,9 @@
 # Native-WACOMM webinar use case
 
 Seeded passive transport for **2026-09-15 00:00–2026-09-16 00:00 UTC**, using
-25 hourly native forcing files. The primary performance workload releases
+24 two-record hourly native forcing files. The twenty-fifth converted file is
+the already represented terminal boundary and remains preparation provenance.
+The primary performance workload releases
 250,000 particles/hour with seed 5489.
 
 - [Configuration guide](docs/webinar-native-usecase.md): fields, configuration, commands, verification and limitations.
