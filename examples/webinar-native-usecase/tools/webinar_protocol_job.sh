@@ -12,6 +12,11 @@ export OMP_THREAD_LIMIT="$WEBINAR_THREADS"
 export OMP_DYNAMIC=FALSE
 export OMP_PROC_BIND=TRUE
 export OMP_PLACES=cores
+# The cluster's OpenMPI 4.1.4 module links UCX 1.15 even though its PML requests
+# UCX >= 1.18.  Select one recorded, supported transport for every sample so
+# multi-node MPI_Finalize does not hang and all timings remain comparable.
+export OMPI_MCA_pml=ob1
+export OMPI_MCA_btl=self,vader,tcp
 if [ "$WEBINAR_GPUS" -eq 0 ]; then
     export CUDA_VISIBLE_DEVICES=-1
 else
@@ -30,7 +35,7 @@ uname -a > provenance/platform.txt
 lscpu > provenance/cpu.txt
 mpirun --version > provenance/mpi.txt
 scontrol show job "$SLURM_JOB_ID" > provenance/slurm.txt
-printenv | LC_ALL=C sort | sed -n '/^OMP_\|^CUDA_VISIBLE_DEVICES=/p' > provenance/runtime.txt
+printenv | LC_ALL=C sort | sed -n '/^OMP_\|^OMPI_MCA_\|^CUDA_VISIBLE_DEVICES=/p' > provenance/runtime.txt
 nvidia-smi -L > provenance/gpus.txt 2>&1 || true
 if [ "$WEBINAR_GPUS" -gt 0 ]; then
     nvidia-smi topo -m > provenance/gpu-topology.txt

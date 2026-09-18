@@ -1,6 +1,6 @@
 # Webinar protocol execution status
 
-## Recorded status on 2026-09-17
+## Recorded status on 2026-09-18
 
 Forcing preparation and both serial smoke replays are complete. The primary
 250,000-particles/hour CPU matrix was submitted as jobs **6712–6759** on
@@ -12,7 +12,13 @@ at most eight MPI ranks on each homogeneous 178 GB Xeon Gold 5218 node while
 preserving the workload. The intervening two-node retry, job 6785, completed
 all solver intervals but did not terminate at the final forcing boundary and
 was cancelled without yielding a sample. See the performance protocol for the
-resulting four- and eight-node placements. This is a dated execution record,
+resulting four- and eight-node placements. After terminal-file staging was
+corrected, job 7015 completed all intervals and then hung in `MPI_Finalize`.
+Stack traces identified the OpenMPI UCX PML teardown; the module reports UCX
+1.15 while requesting at least 1.18. Jobs 7015--7058 were cancelled, and the
+immutable failed suite is excluded. Its replacement records and uses the
+OpenMPI `ob1` PML with `self,vader,tcp` BTLs for every CPU and GPU sample so
+transport does not vary within the suite. This is a dated execution record,
 not a completed performance result.
 
 | Stage | Recorded evidence | Remaining work |
@@ -21,8 +27,8 @@ not a completed performance result.
 | Explicit angle repair | 25 derived files; complete grid checks passed | None under the documented interpretation |
 | Native conversion | 25 files converted and validated; 24 two-record files are solver inputs and the terminal-boundary file is provenance-only | None |
 | Serial smoke replays | Two successful runs; exact particle and gridded agreement | None |
-| Primary CPU matrix | First samples through `16/1/0` completed; `32/1/0` jobs 6717 and 6785 failed before producing an eligible sample | Resume with the documented eight-ranks-per-node memory placement and validate every tuple |
-| Selected-CPU GPU matrix | Conditional dispatch scheduled through job 6760 | Select CPU reference after validation; run four device counts |
+| Primary CPU matrix | First samples through `16/1/0` completed in an excluded diagnostic suite; job 7015 exposed the UCX finalization defect | Run the fresh transport-controlled suite and validate every tuple |
+| Selected-CPU GPU matrix | Conditional dispatch scheduled by validation job 7116 | Select CPU reference after validation; run four device counts |
 | Final results | Conditional collection and export configured | Validate complete CPU/GPU sweep before accepting charts |
 | Additional release rates | Separate suites documented | Not yet submitted |
 
@@ -58,16 +64,24 @@ same intervals and preserves the terminal file in conversion provenance.
 ## Scheduled protocol and result locations
 
 The [CPU submission record](cpu-submission-angle-repaired.json) and
-[continuation record](protocol-continuation.json) describe the active suite:
+[continuation record](protocol-continuation.json) describe the excluded
+diagnostic suite:
 
 `examples/webinar-native-usecase/data/webinar-q250000-angle-repaired-001/`
 
-After CPU jobs succeed, job 6760 independently validates their evidence and
+Jobs 7015--7058 were cancelled after the transport failure was isolated; they
+must not be resumed or mixed with replacement timings. In the replacement
+suite, the post-CPU continuation independently validates the evidence and
 selects the fastest GPU-compatible CPU tuple. Only then does it submit the
 1-, 2-, 3- and 4-device runs, with warm-ups and three rotated replicate blocks.
 Final collection depends on successful completion of the GPU jobs. Tool checksum
 changes or failed comparisons stop progression. See the
 [scheduled workflow](performance-evaluation.md#scheduled-continuation-for-the-repaired-forcing).
+
+The replacement suite is
+`examples/webinar-native-usecase/data/webinar-q250000-tcp-001/`. CPU jobs
+7068--7115 and checksum-guarded validation/continuation job 7116 were submitted
+on 2026-09-18.
 
 Inspect `collect-cpu.out`, `collect-cpu.err`, `collect-final.out`,
 `collect-final.err`, and per-tuple `codex-performance-review.md` files in that

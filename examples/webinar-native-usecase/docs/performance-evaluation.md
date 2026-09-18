@@ -62,6 +62,15 @@ result. Review `collect-cpu.err`, `collect-final.err`, the per-tuple review note
 and publication artifacts after completion. Failed dependencies do not authorize
 skipping tuples or selecting an alternative workload.
 
+The angle-repaired diagnostic chain was cancelled at jobs 7015--7058 after
+all intervals in job 7015 completed but OpenMPI remained blocked in UCX during
+`MPI_Finalize`. The installed OpenMPI 4.1.4 module reports UCX 1.15 while its
+PML warns that UCX 1.18 or newer is required. The replacement suite explicitly
+records and exports `OMPI_MCA_pml=ob1` and
+`OMPI_MCA_btl=self,vader,tcp` for every sample. Results from the earlier UCX
+suite are excluded rather than combined with the replacement because MPI
+transport is part of the measured runtime environment.
+
 ## Matrix and execution
 
 | Sweep | MPI ranks / OpenMP threads / devices |
