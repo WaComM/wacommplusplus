@@ -17,6 +17,9 @@ export OMP_PLACES=cores
 # multi-node MPI_Finalize does not hang and all timings remain comparable.
 export OMPI_MCA_pml=ob1
 export OMPI_MCA_btl=self,vader,tcp
+# HCOLL has its own UCX dependency and otherwise enters UCX during collective
+# teardown even when the selected OpenMPI PML is ob1.
+export OMPI_MCA_coll=^hcoll
 if [ "$WEBINAR_GPUS" -eq 0 ]; then
     export CUDA_VISIBLE_DEVICES=-1
 else

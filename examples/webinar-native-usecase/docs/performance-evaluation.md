@@ -71,6 +71,14 @@ records and exports `OMPI_MCA_pml=ob1` and
 suite are excluded rather than combined with the replacement because MPI
 transport is part of the measured runtime environment.
 
+The first OB1/TCP replacement (jobs 7068--7116) exposed a second teardown path:
+HCOLL continued to use UCX independently of the selected PML. Job 7073 finished
+all solver intervals, after which surviving ranks remained in
+`hcoll_comm_attr_del_fn` and `hmca_bcol_ucx_p2p_disconnect` during
+`MPI_Finalize`. That suite is also excluded. Its successor additionally exports
+`OMPI_MCA_coll=^hcoll` for every sample, disabling the UCX-dependent collective
+plugin while retaining OpenMPI's other collective components.
+
 ## Matrix and execution
 
 | Sweep | MPI ranks / OpenMP threads / devices |

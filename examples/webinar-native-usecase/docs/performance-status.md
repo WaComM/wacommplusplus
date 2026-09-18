@@ -81,7 +81,14 @@ changes or failed comparisons stop progression. See the
 The replacement suite is
 `examples/webinar-native-usecase/data/webinar-q250000-tcp-001/`. CPU jobs
 7068--7115 and checksum-guarded validation/continuation job 7116 were submitted
-on 2026-09-18.
+on 2026-09-18. Job 7073 subsequently completed all physical intervals but hung
+in HCOLL's independent UCX teardown path. Jobs 7073--7116 were cancelled and
+this suite is excluded. A second fresh suite disables HCOLL in addition to
+selecting OB1/TCP; no timings are combined across these runtime environments.
+That active suite is
+`examples/webinar-native-usecase/data/webinar-q250000-tcp-nohcoll-001/`:
+CPU jobs 7126--7173 and checksum-guarded validation/continuation job 7174 were
+submitted on 2026-09-18.
 
 Inspect `collect-cpu.out`, `collect-cpu.err`, `collect-final.out`,
 `collect-final.err`, and per-tuple `codex-performance-review.md` files in that
