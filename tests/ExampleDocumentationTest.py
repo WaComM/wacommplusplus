@@ -50,6 +50,28 @@ def main():
         print("Missing example guides: " + ", ".join(missing))
         return 1
 
+    for source_file in sorted(examples.glob("*sources*/*.json")):
+        source = json.loads(source_file.read_text())
+        if source.get("type") != "FeatureCollection":
+            print(f"Source artifact is not a FeatureCollection: {source_file}")
+            return 1
+        for feature in source.get("features", []):
+            properties = feature.get("properties", {})
+            if "particlesPerHour" in properties:
+                print(f"Legacy particlesPerHour remains in {source_file}")
+                return 1
+            emission = properties.get("emission", {})
+            mode = emission.get("mode")
+            required = {"uniform_rate": ("rate", "rate_unit"),
+                        "single_pulse": ("particles",),
+                        "forcing_interval_batch": ("particles_per_interval",)}
+            if mode not in required or any(key not in emission for key in required[mode]):
+                print(f"Invalid explicit emission in {source_file}")
+                return 1
+            if mode == "uniform_rate" and emission["rate_unit"] != "particles/hour":
+                print(f"Invalid uniform-rate unit in {source_file}")
+                return 1
+
     sarno = examples / "wacomm-sarno-lite"
     misplaced = list(sarno.glob("*.md")) + list(sarno.glob("*.sh"))
     misplaced += list((sarno / "data").glob("*.md"))
