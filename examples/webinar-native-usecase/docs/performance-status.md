@@ -90,6 +90,20 @@ That active suite is
 CPU jobs 7126--7173 and checksum-guarded validation/continuation job 7174 were
 submitted on 2026-09-18.
 
+First-block jobs through `32/1/0` have completed with zero warm-up and measured
+exit codes. Each measured sample contains all 24 solver intervals; the
+four-node `32/1/0` sample exited normally with the recorded OB1/TCP and
+HCOLL-disabled environment. The heterogeneous H100 node remains excluded, and
+no placement was changed merely to reduce scheduler delay.
+
+Job 7132 started on 2026-09-20 but lost the OpenMPI daemon on `wn01` before the
+first solver interval. The TCP BTL reported an unexpected process identifier;
+Slurm terminated the stalled warm-up at its 24-hour limit. This failed attempt
+is retained and excluded. Because the identical runtime completed the
+four-node sample, no scientific or runtime setting was changed for the first
+retry. Jobs 8202--8243 resume every incomplete CPU sample, and checksum-guarded
+validation/continuation job 8244 follows the chain.
+
 Inspect `collect-cpu.out`, `collect-cpu.err`, `collect-final.out`,
 `collect-final.err`, and per-tuple `codex-performance-review.md` files in that
 suite. A successful final export creates `publication/`, containing compact
