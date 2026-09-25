@@ -116,7 +116,7 @@ for repetition in 1 2 3; do
         if [ "$phase" = cpu ]; then
             worker_nodes=$(((processes*threads+31)/32))
             rank_nodes=1
-            if [ "$processes" -gt 16 ]; then rank_nodes=$(((processes+7)/8)); fi
+            if [ "$processes" -gt 16 ]; then rank_nodes=$(((processes+15)/16)); fi
             nodes="$worker_nodes"
             if [ "$rank_nodes" -gt "$nodes" ]; then nodes="$rank_nodes"; fi
         fi
@@ -129,7 +129,7 @@ for repetition in 1 2 3; do
         gres=()
         if [ "$gpus" -gt 0 ]; then gres=(--gres="gpu:tesla:$gpus"); fi
         ranks_per_node=32
-        if [ "$phase" = cpu ] && [ "$processes" -gt 16 ]; then ranks_per_node=8; fi
+        if [ "$phase" = cpu ] && [ "$processes" -gt 16 ]; then ranks_per_node=16; fi
         job=$(sbatch --parsable --partition="$partition" --nodes="$nodes" --ntasks="$processes" \
             --cpus-per-task="$threads" --exclusive --mem=0 --time="${WEBINAR_TIME_LIMIT:-24:00:00}" \
             --export="ALL,WEBINAR_PROCESSES=$processes,WEBINAR_THREADS=$threads,WEBINAR_GPUS=$gpus,WEBINAR_REPETITION=$repetition,WEBINAR_RANKS_PER_NODE=$ranks_per_node" \

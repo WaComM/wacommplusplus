@@ -44,11 +44,11 @@ for repetition in 1 2 3; do
         workers=$((processes*threads))
         worker_nodes=$(((workers+31)/32))
         rank_nodes=1
-        if [ "$processes" -gt 16 ]; then rank_nodes=$(((processes+7)/8)); fi
+        if [ "$processes" -gt 16 ]; then rank_nodes=$(((processes+15)/16)); fi
         nodes="$worker_nodes"
         if [ "$rank_nodes" -gt "$nodes" ]; then nodes="$rank_nodes"; fi
         ranks_per_node=32
-        if [ "$processes" -gt 16 ]; then ranks_per_node=8; fi
+        if [ "$processes" -gt 16 ]; then ranks_per_node=16; fi
         dependency=()
         if [ -n "$previous" ]; then dependency=(--dependency="afterok:$previous"); fi
         excluded_nodes=()

@@ -1,6 +1,6 @@
 # Webinar protocol execution status
 
-## Recorded status on 2026-09-18
+## Recorded status on 2026-09-25
 
 Forcing preparation and both serial smoke replays are complete. The primary
 250,000-particles/hour CPU matrix was submitted as jobs **6712–6759** on
@@ -103,6 +103,20 @@ is retained and excluded. Because the identical runtime completed the
 four-node sample, no scientific or runtime setting was changed for the first
 retry. Jobs 8202--8243 resume every incomplete CPU sample, and checksum-guarded
 validation/continuation job 8244 follows the chain.
+
+By 2026-09-25 job 8202 still required simultaneous access to every homogeneous
+node, with Slurm projecting another multi-day delay. The completed one-node
+`16/1/0` sample establishes that 16 ranks fit the node memory, whereas the
+original OOM evidence applies to 32 ranks on one node. Jobs 8202--8244 are
+therefore superseded without contributing results. A fresh suite uses a
+uniform 16-ranks-per-node cap for the high-rank points: two nodes for `32/1/0`
+and four for `64/1/0`. This placement change is isolated in the new suite; no
+timings are combined with the eight-ranks-per-node attempts.
+
+The active replacement suite is
+`examples/webinar-native-usecase/data/webinar-q250000-tcp-nohcoll-rpn16-001/`.
+CPU jobs 8301--8348 and checksum-guarded validation/continuation job 8349 were
+submitted on 2026-09-25.
 
 Inspect `collect-cpu.out`, `collect-cpu.err`, `collect-final.out`,
 `collect-final.err`, and per-tuple `codex-performance-review.md` files in that

@@ -100,9 +100,13 @@ The first `32/1/0` warm-up on job 6717 was killed by the node out-of-memory
 handler after 16-rank execution had succeeded. A two-node retry in job 6785
 completed all 24 solver intervals but did not terminate after the final forcing
 boundary and was cancelled without contributing a sample. Both immutable
-failed attempts are retained. Resumed CPU jobs therefore cap placement at
-eight MPI ranks per homogeneous 178 GB Xeon Gold 5218 node: `32/1/0` uses four
-nodes and `64/1/0` uses eight. Nodes with and without V100 devices have the same
+failed attempts are retained. An initial conservative retry capped placement
+at eight MPI ranks per homogeneous 178 GB Xeon Gold 5218 node. Its four-node
+`32/1/0` sample completed, but the eight-node `64/1/0` warm-up lost an OpenMPI
+daemon before its first interval and later retries could not acquire all eight
+nodes. Since the measured `16/1/0` sample completed on one node, the replacement
+suite caps placement at 16 MPI ranks per node: `32/1/0` uses two nodes and
+`64/1/0` uses four. Nodes with and without V100 devices have the same
 recorded CPU model, core count, NUMA count and RAM; CUDA remains masked for all
 CPU runs. The worker-count rule still applies, so other requested tuples retain
 their minimum 32-core-node placement unless rank memory requires more nodes.
