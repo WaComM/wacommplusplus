@@ -17,6 +17,11 @@ export OMP_PLACES=cores
 # multi-node MPI_Finalize does not hang and all timings remain comparable.
 export OMPI_MCA_pml=ob1
 export OMPI_MCA_btl=self,vader,tcp
+# Every benchmark node exposes eth0 and IP-over-InfiniBand.  Keep both MPI
+# payload and daemon-control TCP traffic on one common fabric; allowing both
+# interfaces produced mismatched process identifiers and lost ORTE daemons.
+export OMPI_MCA_btl_tcp_if_include=eth0
+export OMPI_MCA_oob_tcp_if_include=eth0
 # HCOLL has its own UCX dependency and otherwise enters UCX during collective
 # teardown even when the selected OpenMPI PML is ob1.
 export OMPI_MCA_coll=^hcoll

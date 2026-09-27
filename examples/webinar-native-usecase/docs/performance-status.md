@@ -118,6 +118,19 @@ The active replacement suite is
 CPU jobs 8301--8348 and checksum-guarded validation/continuation job 8349 were
 submitted on 2026-09-25.
 
+Job 8306 (`32/1/0`) started on two nodes but reproduced the TCP BTL unexpected
+process-identifier error between `gn02` and `gn03` before completing its first
+interval. It stalled until the 24-hour limit; jobs 8306--8349 are retained and
+excluded. The node inventory shows both `eth0` and IP-over-InfiniBand `ib0` on
+common subnets. The next fresh suite pins both MPI TCP payload traffic and ORTE
+daemon-control traffic to `eth0`; no timings cross that interface-policy
+boundary.
+
+The active interface-pinned suite is
+`examples/webinar-native-usecase/data/webinar-q250000-tcp-nohcoll-rpn16-eth0-001/`.
+CPU jobs 8391--8438 and checksum-guarded validation/continuation job 8439 were
+submitted on 2026-09-27.
+
 Inspect `collect-cpu.out`, `collect-cpu.err`, `collect-final.out`,
 `collect-final.err`, and per-tuple `codex-performance-review.md` files in that
 suite. A successful final export creates `publication/`, containing compact

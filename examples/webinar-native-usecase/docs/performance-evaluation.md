@@ -79,6 +79,15 @@ all solver intervals, after which surviving ranks remained in
 `OMPI_MCA_coll=^hcoll` for every sample, disabling the UCX-dependent collective
 plugin while retaining OpenMPI's other collective components.
 
+The first 16-ranks-per-node suite reproduced an OpenMPI TCP process-identifier
+mismatch on two nodes, demonstrating that node count was not the cause. Every
+eligible node exposes both `eth0` and IP-over-InfiniBand `ib0` on common
+subnets. The replacement suite therefore records
+`OMPI_MCA_btl_tcp_if_include=eth0` and
+`OMPI_MCA_oob_tcp_if_include=eth0`, keeping MPI payload and ORTE daemon-control
+TCP traffic on one interface. No timing from the unrestricted-interface suite
+is combined with the replacement.
+
 ## Matrix and execution
 
 | Sweep | MPI ranks / OpenMP threads / devices |
