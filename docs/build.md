@@ -19,7 +19,22 @@ ctest --test-dir build-core --output-on-failure
 
 Physical Raspberry Pi ARM64 and RV64 builds use the same portable source and complete serial test suite. The [Raspberry Pi OS ARM64](raspberry-pi.md) and [RISC-V 64 Linux](riscv64-linux.md) guides define native-board preflight checks, dependencies, self-hosted runner labels, validation gates, and evidence retention. Cross-compilation, an ARM64 proxy, or QEMU execution does not by itself demonstrate native hardware execution.
 
-Optional switches are `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA`, `USE_PROJ`, and `BUILD_REMOTE_INTEGRATION_TESTS`. `USE_PROJ=ON` enables explicitly declared projected environmental grids and requires the PROJ library and coordinate database; it is not required by the portable core or geographic adapters. Application builds require NetCDF with DAP2 and DAP4 support so configured remote datasets cannot fail later merely because transport was omitted at build time. `BUILD_REMOTE_INTEGRATION_TESTS=ON` adds the network-dependent official OPeNDAP hyperslab test; it remains off in the default offline suite. CUDA is unavailable on modern macOS. Configuration fails explicitly when a requested dependency is missing.
+Optional switches are `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA`, `USE_PROJ`, and `BUILD_REMOTE_INTEGRATION_TESTS`. `USE_PROJ=ON` enables explicitly declared projected environmental grids and requires the PROJ library and coordinate database; it is not required by the portable core or geographic adapters. Discovery prefers PROJ's own CMake package (`PROJ::proj`) on every platform and falls back to pkg-config outside Windows. Application builds require NetCDF with DAP2 and DAP4 support so configured remote datasets cannot fail later merely because transport was omitted at build time. `BUILD_REMOTE_INTEGRATION_TESTS=ON` adds the network-dependent official OPeNDAP hyperslab test; it remains off in the default offline suite. CUDA is unavailable on modern macOS. Configuration fails explicitly when a requested dependency is missing.
+
+## macOS
+
+With Homebrew, install `cmake netcdf netcdf-cxx log4cplus nlohmann-json pkg-config`, and add `libomp`, `open-mpi`, or `proj` for the matching option. AppleClang locates Homebrew `libomp` automatically when `USE_OMP=ON`. The optional Python regressions use whichever interpreter CMake finds, which may be a Homebrew interpreter without NumPy, netCDF4, or Matplotlib. Those tests then report a skip. Point CMake at the interpreter that has `tools/requirements-figures.txt` installed:
+
+```bash
+brew install cmake netcdf netcdf-cxx log4cplus nlohmann-json pkg-config libomp open-mpi proj
+python3 -m pip install -r tools/requirements-figures.txt
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_OMP=ON -DUSE_MPI=ON -DUSE_PROJ=ON \
+  -DPython3_EXECUTABLE="$(python3 -c 'import sys; print(sys.executable)')"
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+```
+
+On 2026-11-06, on macOS 26 arm64 with AppleClang 21, Homebrew NetCDF 4.10.1, NetCDF-C++ 4.3.1, log4cplus 2.2.0, Open MPI 5.0.11, libomp 23.1.2, and PROJ 9.9.0, the following suites passed with no skips: serial (31 tests), OpenMP (31), MPI (32), MPI+OpenMP (34), and PROJ (31). The portable core passed 18 tests, of which the 7 Python tests skipped under Homebrew Python 3.15. CUDA is unavailable on macOS.
 
 ## Dependency bootstrap
 

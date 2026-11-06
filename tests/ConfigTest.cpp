@@ -157,6 +157,22 @@ int main() {
     assert(rejected);
     {
         std::ofstream file(invalid);
+        file << R"({"restart":{"interval":0}})";
+    }
+    rejected=false;
+    try { Config invalidRestartInterval(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
+        file << R"({"io":{"timestep":0}})";
+    }
+    rejected=false;
+    try { Config invalidOutputTimestep(invalid); }
+    catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
+    {
+        std::ofstream file(invalid);
         file << R"({"drift":{"model":"passive","coefficient_ensemble":true}})";
     }
     rejected=false;

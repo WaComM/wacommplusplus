@@ -9,6 +9,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <iomanip>
+#include <limits>
 #include <stdexcept>
 
 // for convenience
@@ -28,6 +29,9 @@ void Particles::saveAsTxt(const string& fileName)
 {
     LOG4CPLUS_DEBUG(logger, "Saving restart file:"+fileName);
     std::ofstream outfile(fileName);
+
+    // Round-trip precision: physical times are O(1e9) seconds
+    outfile << std::setprecision(std::numeric_limits<double>::max_digits10);
     int count = size();
     outfile << "\t" << count << endl;
     for(int idx=0; idx<count; idx++) {
@@ -334,7 +338,7 @@ void Particles::loadFromTxt(const string &fileName) {
         std::istringstream iss(line);
         if (count > 0)
         {
-            unsigned long id=count;
+            std::uint64_t id=count;
             double k, j, i, health, tpart, emitOceanTime=-1;
             //if (!(iss >> i >> j >> k >> health >> tpart )) { break; } // error
 
@@ -351,7 +355,7 @@ void Particles::loadFromTxt(const string &fileName) {
                 tpart=atof(tokens[4].c_str());
             } else if (tokens.size()>=7) {
                 // C++ style restart text file
-                id=atoi(tokens[0].c_str());
+                id=std::stoull(tokens[0]);
                 i=atof(tokens[1].c_str());
                 j=atof(tokens[2].c_str());
                 k=atof(tokens[3].c_str());
@@ -371,7 +375,10 @@ void Particles::loadFromTxt(const string &fileName) {
 }
 
 void Particles::loadFromJson(const string &fileName) {
-    std::ifstream infile(fileName);
+    // The GeoJSON history omits inactive and out-of-domain particles and the
+    // restart metadata, so it cannot reproduce the continuous integration.
+    throw std::runtime_error("GeoJSON particle histories are not restart files: " + fileName +
+                             " (use save_history=nc or text)");
 }
 
 void Particles::loadFromNetCDF(const string &fileName, std::shared_ptr<Config> config) {

@@ -16,6 +16,7 @@ The documentation is organized as a scientific model description rather than sol
 - [Restart](restart.md)
 - [Parallelism](parallelism.md)
 - [Testing](testing.md)
+- [Application end-to-end verification](application-verification.md)
 - [Reproducibility](reproducibility.md)
 - [Trajectory maps and ensemble diagnostics](trajectory-diagnostics.md)
 - [Examples](examples.md)

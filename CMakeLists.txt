@@ -73,12 +73,18 @@ if(BUILD_APPLICATION)
             nlohmann_json::nlohmann_json ${WACOMM_DEPENDENCY_LIBRARIES})
 
     if(USE_PROJ)
-        if(WIN32)
-            find_package(PROJ CONFIG REQUIRED)
+        # Prefer the PROJ CMake package on every platform; pkg-config is only
+        # a fallback and must be loaded here because the dependency module
+        # finds it in function scope.
+        find_package(PROJ CONFIG QUIET)
+        if(TARGET PROJ::proj)
             list(APPEND WACOMM_LIBRARIES PROJ::proj)
+        elseif(WIN32)
+            find_package(PROJ CONFIG REQUIRED)
         else()
-            pkg_check_modules(PROJ REQUIRED IMPORTED_TARGET proj)
-            list(APPEND WACOMM_LIBRARIES PkgConfig::PROJ)
+            find_package(PkgConfig REQUIRED)
+            pkg_check_modules(WACOMM_PROJ REQUIRED IMPORTED_TARGET proj)
+            list(APPEND WACOMM_LIBRARIES PkgConfig::WACOMM_PROJ)
         endif()
         add_compile_definitions(WACOMM_USE_PROJ)
     endif()
@@ -235,6 +241,29 @@ if(BUILD_APPLICATION)
         wacomm_enable_test_assertions(concentration_test)
         target_link_libraries(concentration_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME concentration_preservation COMMAND concentration_test)
+
+        # End-to-end regression of the built executable on an analytic uniform current.
+        add_executable(application_end_to_end_test tests/ApplicationEndToEndTest.cpp
+                OceanModelAdapter.cpp Particle.cpp DriftModel.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(application_end_to_end_test)
+        target_link_libraries(application_end_to_end_test PRIVATE ${WACOMM_LIBRARIES})
+        set(WACOMM_END_TO_END_LAUNCHER "")
+        if(USE_MPI)
+            set(WACOMM_END_TO_END_LAUNCHER ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS})
+        endif()
+        string(REPLACE ";" "\\;" WACOMM_END_TO_END_LAUNCHER "${WACOMM_END_TO_END_LAUNCHER}")
+        add_test(NAME application_end_to_end COMMAND ${CMAKE_COMMAND}
+                -DHELPER=$<TARGET_FILE:application_end_to_end_test>
+                -DEXECUTABLE=$<TARGET_FILE:wacommplusplus>
+                -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/application-end-to-end
+                "-DLAUNCHER=${WACOMM_END_TO_END_LAUNCHER}"
+                -DREQUIRE_CUDA_DEVICE=${USE_CUDA}
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ApplicationEndToEnd.cmake)
+        set_tests_properties(application_end_to_end PROPERTIES TIMEOUT 300
+                SKIP_REGULAR_EXPRESSION "WACOMM_END_TO_END_SKIP")
+        if(USE_OMP)
+            set_tests_properties(application_end_to_end PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OMP_DYNAMIC=FALSE")
+        endif()
 
         if(USE_MPI)
             add_executable(mpi_decomposition_test tests/MpiDecompositionTest.cpp Particle.cpp DriftModel.cpp)

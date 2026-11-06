@@ -6,6 +6,7 @@
 #include "Concentration.hpp"
 
 #include <chrono>
+#include <cmath>
 #include <iomanip>
 #include <utility>
 #include "OceanModelAdapters/ROMSAdapter.hpp"
@@ -838,7 +839,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         // Check if the history must be saved
         if (!config->SaveHistory().empty()) {
         // Check if the history must be saved
-            if (int(finalOceanTime-startOceanTime)%config->RestartInterval() == 0) {
+            // Round to whole seconds: modified Julian days carry O(1e-5) s round-off
+            if (std::llround(finalOceanTime-startOceanTime)%config->RestartInterval() == 0) {
                 // Create the history filename
                 string historyFilename = config->HistoryRoot() + calFinal.asNCEPdate() ;
 
@@ -865,7 +867,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             }
         }
 
-        if (int(finalOceanTime-startOceanTime)%config->TimeStep() == 0) {
+        if (std::llround(finalOceanTime-startOceanTime)%config->TimeStep() == 0) {
             // Create the output filename
             string ncOutputFilename=config->NcOutputRoot()+cal.asNCEPdate()+".nc";
 

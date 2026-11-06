@@ -1003,6 +1003,12 @@ void Config::loadFromJson(const string &fileName) {
     if (!std::isfinite(_data.dti) || _data.dti<=0) {
         throw std::runtime_error("physics.dti must be a finite value greater than zero");
     }
+    if (!std::isfinite(restartInterval) || restartInterval<1 || restartInterval!=std::floor(restartInterval)) {
+        throw std::runtime_error("restart.interval must be a whole number of seconds greater than zero");
+    }
+    if (!std::isfinite(timeStep) || timeStep<1 || timeStep!=std::floor(timeStep)) {
+        throw std::runtime_error("io.timestep must be a whole number of seconds greater than zero");
+    }
     if (!std::isfinite(_data.deltat) || _data.deltat<=0) {
         throw std::runtime_error("physics.deltat must be a finite value greater than zero");
     }

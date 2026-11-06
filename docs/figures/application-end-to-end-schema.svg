@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="470" viewBox="0 0 980 470" role="img" aria-labelledby="title desc">
+  <title id="title">WaComM++ application end-to-end regression workflow</title>
+  <desc id="desc">Conceptual workflow of the application_end_to_end CTest case. A helper writes two hourly native WACOMM forcing windows with a uniform current u = 0.10 m/s and v = 0.05 m/s, a point source, and forward and backward configurations. The unmodified wacommplusplus executable, optionally under a two-rank MPI launcher, integrates forward from the source and writes text histories at 01 and 02 UTC and hourly gridded counts. A second invocation integrates backward from the 02 UTC text restart and writes histories at 01 and 00 UTC. The verifier compares the forward endpoint with the analytic spherical displacement within 0.1 percent of the 805 m path, requires a forward-backward round trip below 1 mm at every snapshot, and requires every hourly history and gridded file. This is a conceptual schema, not model output.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .box{fill:#f8fafc;stroke:#334155;stroke-width:2}.exe{fill:#dbeafe;stroke:#1d4ed8;stroke-width:2}.check{fill:#dcfce7;stroke:#15803d;stroke-width:2}.file{fill:#fef9c3;stroke:#a16207;stroke-width:1.5}.label{font:16px system-ui,sans-serif;fill:#0f172a;text-anchor:middle}.small{font:13px system-ui,sans-serif;fill:#334155;text-anchor:middle}.note{font:italic 13px system-ui,sans-serif;fill:#475569}.line{stroke:#2563eb;stroke-width:2.5;fill:none;marker-end:url(#arrow)}.back{stroke:#b45309;stroke-width:2.5;fill:none;marker-end:url(#arrow);stroke-dasharray:7 5}
+      @media (prefers-color-scheme:dark){.box{fill:#1e293b;stroke:#cbd5e1}.exe{fill:#172554;stroke:#60a5fa}.check{fill:#14532d;stroke:#4ade80}.file{fill:#422006;stroke:#facc15}.label{fill:#f8fafc}.small{fill:#cbd5e1}.note{fill:#cbd5e1}}
+    </style>
+  </defs>
+  <rect class="box" x="30" y="40" width="200" height="150" rx="8"/>
+  <text class="label" x="130" y="70">Analytic fixture</text>
+  <text class="small" x="130" y="96">application_end_to_end_test</text>
+  <text class="small" x="130" y="116">generate</text>
+  <text class="small" x="130" y="142">u = 0.10 m s⁻¹, v = 0.05 m s⁻¹</text>
+  <text class="small" x="130" y="162">21 × 21 nodes, 0.01° spacing</text>
+  <text class="small" x="130" y="182">AKT = 0, random = false</text>
+
+  <rect class="file" x="30" y="230" width="200" height="96" rx="6"/>
+  <text class="small" x="130" y="256">forcing-0.nc  [00, 01] UTC</text>
+  <text class="small" x="130" y="278">forcing-1.nc  [01, 02] UTC</text>
+  <text class="small" x="130" y="300">sources.json (single pulse)</text>
+  <text class="small" x="130" y="320">forward.json · backward.json</text>
+
+  <rect class="exe" x="300" y="40" width="250" height="110" rx="8"/>
+  <text class="label" x="425" y="70">wacommplusplus forward.json</text>
+  <text class="small" x="425" y="96">sources → particles at 00 UTC</text>
+  <text class="small" x="425" y="116">cross-file boundary assembly</text>
+  <text class="small" x="425" y="136">2 MPI ranks when USE_MPI=ON</text>
+
+  <rect class="exe" x="300" y="250" width="250" height="110" rx="8"/>
+  <text class="label" x="425" y="280">wacommplusplus backward.json</text>
+  <text class="small" x="425" y="306">text restart from 02 UTC</text>
+  <text class="small" x="425" y="326">direction = backward</text>
+  <text class="small" x="425" y="346">backward_diffusion = none</text>
+
+  <rect class="file" x="610" y="40" width="160" height="110" rx="6"/>
+  <text class="small" x="690" y="66">forward-history</text>
+  <text class="small" x="690" y="86">Z01.txt · Z02.txt</text>
+  <text class="small" x="690" y="114">forward-conc</text>
+  <text class="small" x="690" y="134">Z00.nc · Z01.nc</text>
+
+  <rect class="file" x="610" y="250" width="160" height="110" rx="6"/>
+  <text class="small" x="690" y="276">backward-history</text>
+  <text class="small" x="690" y="296">Z01.txt · Z00.txt</text>
+  <text class="small" x="690" y="324">backward-conc</text>
+  <text class="small" x="690" y="344">Z02.nc · Z01.nc</text>
+
+  <rect class="check" x="820" y="120" width="140" height="170" rx="8"/>
+  <text class="label" x="890" y="150">Verify</text>
+  <text class="small" x="890" y="176">endpoint error</text>
+  <text class="small" x="890" y="194">&lt; 0.1 % of 805 m</text>
+  <text class="small" x="890" y="220">round trip</text>
+  <text class="small" x="890" y="238">&lt; 1 mm</text>
+  <text class="small" x="890" y="264">every hourly file</text>
+  <text class="small" x="890" y="282">present</text>
+
+  <path class="line" d="M230 110 L300 95"/>
+  <path class="line" d="M230 278 C265 278 265 120 300 120"/>
+  <path class="line" d="M550 95 L610 95"/>
+  <path class="back" d="M690 150 C690 200 470 200 450 250"/>
+  <path class="line" d="M550 305 L610 305"/>
+  <path class="line" d="M770 95 C800 95 800 170 820 170"/>
+  <path class="line" d="M770 305 C800 305 800 240 820 240"/>
+  <text class="note" x="702" y="200">Z02.txt endpoints</text>
+  <text class="note" x="30" y="420">Solid arrows: data flow. Dashed arrow: forward endpoints reused as the backward initial state.</text>
+  <text class="note" x="30" y="442">Conceptual schema of the regression, not model output; the forcing grid is synthetic.</text>
+</svg>

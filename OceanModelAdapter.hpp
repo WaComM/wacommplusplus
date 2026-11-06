@@ -37,6 +37,7 @@ class OceanModelAdapter {
 
 public:
     OceanModelAdapter();
+    virtual ~OceanModelAdapter() = default;
 
     void saveAsNetCDF(std::string &fileName);
 

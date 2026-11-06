@@ -46,7 +46,7 @@ $$
 
 where $\lambda$ is the transition hazard in s-1, $\Delta t$ is the completed physical substep in s, $I$ is the forcing interval keyed by its lower physical time, and $m$ is its absolute substep index. The limiting cases $p_h=0$ and 1 mean no transition and one transition after every positive-duration substep. The displacement over a substep uses its incoming side; a successful draw changes subsequent motion. Multiple unresolved flips inside one substep are not represented, so `dti` is part of the scientific configuration. Absolute step duration gives the same transition probability in either tracking direction, but a backward realization is not the pathwise inverse of a forward realization.
 
-![Conceptual keyed crosswind-side assignment](figures/leeway-side-ensemble-schema.svg)
+![Conceptual schema: a configured right-side probability, the random seed, and a stable particle identity produce an initial left or right crosswind-side assignment that is stored for forward, backward, and restarted execution and may later change by optional jibing](figures/leeway-side-ensemble-schema.svg)
 
 The schema is conceptual and non-georeferenced. It illustrates reproducible initial side assignment, not observed side frequencies or a trajectory probability map. When jibing is enabled, the stored side may subsequently change at completed physical substeps.
 

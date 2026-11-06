@@ -25,6 +25,10 @@ Coordinate reference systems must be explicit configuration, never inferred from
 
 All changes must preserve the original WaComM++ repository coding style, including the style, tone, structure, and granularity of existing comments. Contributors and coding agents must not mass-reformat unrelated code or introduce a competing style inside existing source files. Follow nearby code, preserve established terminology, and rewrite legacy comments only when they are incorrect or directly affected.
 
+Physical-time decisions must not depend on floating-point truncation. Times built from modified Julian days carry round-off of order $10^{-5}$ s. Output cadence, interval membership, and calendar stamps must therefore round to a declared resolution before integer comparison, never cast with `int(...)`. Cadence parameters must be validated as positive whole seconds.
+
+Every persisted particle state must round-trip exactly. Text output uses `max_digits10`. Identities are parsed as unsigned 64-bit integers. A loader that cannot reproduce the full state must fail explicitly, never succeed silently as an empty stub. Visualization formats such as GeoJSON histories are not restart formats.
+
 Restart behavior is defined in physical time and must satisfy, within declared tolerances:
 
 ```text
@@ -54,8 +58,16 @@ Every document that states model physics or describes scientific/runtime configu
 
 Every checked-in example configuration must have a same-name Markdown guide. Each guide must state the scientific question, prerequisites, required forcing fields and units, complete configuration role, exact command, expected outputs, verification procedure and tolerances, limitations, appropriate interpretation, reproducibility metadata, and peer-reviewed references. Historical names such as `sar` do not activate object physics; guides must state whether the configuration is passive or explicitly selects a drift model.
 
+The offline `application_end_to_end` CTest case is the executable-level contract. It runs the production `wacommplusplus` binary forward and backward on a generated analytic current, and launches it on two MPI ranks or two OpenMP threads in those builds. Changes to configuration parsing, adapters, source emission, the run loop, restart I/O, output naming, or output cadence must keep it passing without loosening its tolerances. Extend it when a new executable path becomes user-visible. Component tests alone do not show that `main` composes them correctly.
+
+Every optional build switch that a hosted CI runner can satisfy must be configured, built, and tested in CI on at least one Linux and one macOS runner. A switch that is documented but never configured in CI is untested. Dependency discovery must not rely on variables set in another function's scope; load `PkgConfig` or a package's CMake configuration where it is used.
+
 Documentation tests must enforce the one-to-one configuration/guide relationship and the presence of required scholarly and reproducibility sections. Documentation-only changes must run those tests; physical or configuration changes must additionally run the portable core, serial application, relevant parallel/backend tests, restart tests, and forward/backward regression tests.
 
 Documentation must use figures, schemas, equations, and maps when they materially clarify architecture, physical-vector composition, grid relationships, temporal logic, ensemble interpretation, or spatial behavior. Visual assets must be repository-native, versioned, accessible, legible in light and dark reading contexts, and accompanied by descriptive alternative text and a caption or adjacent narrative stating whether the visual is conceptual, diagnostic, or a model result. Scientific maps must identify projection, spatial extent, time, units, data/coastline provenance, and uncertainty semantics; conceptual maps must be explicitly labeled non-georeferenced. Equations must define every symbol and unit. Never use decorative graphics as evidence, present a schematic as output, or allow a visual to contradict code, configuration, tests, or the documented mathematical model.
+
+Screenshots are evidence of real tool output and are governed like scientific figures. Capture them from a run reproducible from documented commands. Record the capture tool, viewport, date, and build, and never retouch the content. Embed each with descriptive alternative text (enforced by `documentation_visuals`) and a caption stating whether the underlying data are synthetic. Keep generated figures and screenshots in `docs/figures/` or the owning example's `docs/figures/`.
+
+On macOS, CMake may select a Homebrew Python without NumPy, netCDF4, or Matplotlib, which turns the optional Python regressions into skips. Pass `-DPython3_EXECUTABLE` for an interpreter with `tools/requirements-figures.txt` installed. A skip is not a pass and must be reported as one.
 
 Diagnostic tooling must be read-only with respect to simulation output and must preserve stable trajectory identity and physical time. Every statistic must define its estimator, units, selection rules, missing-data treatment, coordinate geometry, and inferential limits. Maps must not download or fabricate geographic context implicitly, and ensemble paths or envelopes must not be labeled as probabilities, confidence regions, or search areas unless the implementation and validation support that interpretation.

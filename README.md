@@ -1,17 +1,5 @@
 # WaComM++
 
-ROMS input now rotates declared grid-relative U/V into east/north after the
-existing wet-face interpolation. Explicit eastward/northward standard names
-prevent double rotation. See the [metadata requirements and regression evidence](docs/adapters.md#roms-horizontal-vector-basis);
-missing or inconsistent basis metadata fails, and old unrotated native forcing
-must be regenerated. The webinar provider's angle/coordinate inconsistency is
-tracked separately from this implementation fix.
-
-
-The [native webinar protocol](examples/webinar-native-usecase/docs/performance-evaluation.md) uses 25 hourly forcing files from 2026-09-15 00:00 through 2026-09-16 00:00 UTC. Its paired ROMS conversion example prepares that same window; the native workflow applies the full CPU/hybrid and selected-CPU GPU matrix independently at each release rate.
-
-The [ROMS webinar download example](examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) is a dry forcing-conversion workflow with isolated run archives and an application-wall-time benchmark. It does not execute the particle solver; historical endpoint availability and input metadata must be verified before use.
-
 WaComM++ (Water quality COMmunity Model in C++) is a C++17 Lagrangian transport and diffusion framework for marine pollutants and drifting surface objects. Gridded Eulerian ocean forcing drives compact, independently advected particles whose state includes position, emission time, age, health, a stable 64-bit identity, and restart-safe drift-object metadata.
 
 The current release reads local or remote ROMS, NEMO, HYCOM, and native WACOMM products through direction-neutral adapters. HTTP, HTTPS, and DAP4 locations use the linked NetCDF transport. Forcing is opened lazily as a bounded current/adjacent pair, and the adjacent normalized window is reused on the next iteration. It supports deterministic forward and backward traversal, configurable stochastic forward diffusion, an explicitly labelled stochastic backward ensemble mode, restart input/output, OpenMP, MPI, FlexMPI/EMPI, OpenACC, and optional CUDA. Unsupported URI schemes, transport capabilities, and adapter layouts are rejected rather than silently interpreted as another source or grid.
@@ -34,8 +22,20 @@ Install CMake 3.20+, a C++17 compiler, and any requested backend. The default `W
 cmake -S . -B build
 cmake --build build
 ctest --test-dir build --output-on-failure
-./build/wacommplusplus examples/forward-roms/forward-roms.json
+./build/wacommplusplus examples/forward-roms/forward-roms.json   # after staging its forcing
 ```
+
+The forcing for the example configurations is not bundled; each example guide lists what to stage. To check a fresh build offline, run the end-to-end regression. It drives the real executable forward and then backward on a generated analytic current and compares the result with the exact solution ([application verification](docs/application-verification.md)):
+
+```bash
+ctest --test-dir build -R '^application_end_to_end$' --output-on-failure
+```
+
+![Diagnostic EPSG:4326 map of sixteen parallel particle paths in the synthetic uniform-current verification case, rendered by the trajectory diagnostic tool from WaComM++ NetCDF snapshots; no coastline is drawn and the paths are not probabilities.](docs/figures/application-end-to-end-trajectories.svg)
+
+*Model result on synthetic analytic forcing (EPSG:4326 Plate Carrée, 14.04–14.09°E, 40.74–40.77°N, 01–06 UTC 2021-07-01). It is not an ocean forecast. See the [verification guide](docs/application-verification.md#documentation-case-and-diagnostic-figures) for the command that reproduces it.*
+
+On macOS, see the [Homebrew build notes](docs/build.md#macos). They include selecting a Python interpreter that has the optional plotting stack.
 
 For the dependency-free portable numerical tests:
 
@@ -55,7 +55,7 @@ Region-specific observational wind-error calibration is opt-in through non-overl
 
 ## Documentation and examples
 
-Start at the [documentation index](docs/README.md) for the [model](docs/model.md), [build guide](docs/build.md), [configuration](docs/configuration.md), [adapters](docs/adapters.md), [OpenDrift comparison and roadmap](docs/opendrift-comparison.md), [backtracking](docs/backtracking.md), [restart](docs/restart.md), [testing](docs/testing.md), [parallelism](docs/parallelism.md), [supported platforms](docs/supported-platforms.md), [Raspberry Pi ARM64 validation](docs/raspberry-pi.md), [RISC-V 64 validation](docs/riscv64-linux.md), [reproducibility](docs/reproducibility.md), and [trajectory diagnostics](docs/trajectory-diagnostics.md). The [examples index](examples/README.md) covers every checked-in run configuration and source artifact, including forward/backward ROMS, NEMO, HYCOM, and native WACOMM workflows.
+Start at the [documentation index](docs/README.md) for the [model](docs/model.md), [build guide](docs/build.md), [configuration](docs/configuration.md), [adapters](docs/adapters.md), [OpenDrift comparison and roadmap](docs/opendrift-comparison.md), [backtracking](docs/backtracking.md), [restart](docs/restart.md), [testing](docs/testing.md), [application end-to-end verification](docs/application-verification.md), [parallelism](docs/parallelism.md), [supported platforms](docs/supported-platforms.md), [Raspberry Pi ARM64 validation](docs/raspberry-pi.md), [RISC-V 64 validation](docs/riscv64-linux.md), [reproducibility](docs/reproducibility.md), and [trajectory diagnostics](docs/trajectory-diagnostics.md). The [examples index](examples/README.md) covers every checked-in run configuration and source artifact, including forward/backward ROMS, NEMO, HYCOM, and native WACOMM workflows.
 
 The [surface-drift guide](docs/sar-drift.md) defines the object-relative velocity model, coefficient provenance, units, ensemble assumptions, direction semantics, restart behavior, and supported object classes; the [catalog reference](docs/catalogs.md) lists every object and implemented process. Its paired catalog-mean [forward](examples/sar-person-forward/README.md) and [backward](examples/sar-person-backward/README.md) scenarios provide uniform-wind references, while the [kayak example](examples/sar-kayak-forward/README.md) exercises an asymmetric catalog entry. The ensemble and coupled-forcing examples are indexed in [examples](examples/README.md).
 
@@ -76,6 +76,19 @@ The webinar [explicit ROMS metadata repair](examples/webinar-roms-usecase-downlo
 rectilinear C-grid before correcting angle in derived inputs under a declared
 grid-axis interpretation. It preserves original forcing and does not alter
 solver equations or certify upstream ocean-model accuracy.
+
+## Recent changes
+
+- An offline [end-to-end regression](docs/application-verification.md) now runs the complete executable, serially, with OpenMP, and on two MPI ranks. It found and fixed four defects. Hourly history and gridded outputs could be skipped silently because of modified-Julian round-off. Text restarts were written with six significant digits. Text restarts truncated 64-bit identities. A `.json` restart silently loaded zero particles. `restart.interval` and `io.timestep` must now be whole positive seconds.
+- `USE_PROJ=ON` failed to configure on macOS and Linux because pkg-config had not been loaded in that scope. It now prefers PROJ's CMake package, and CI builds it on Ubuntu and macOS.
+- ROMS input now rotates declared grid-relative U/V into east/north after the
+  existing wet-face interpolation. Explicit eastward/northward standard names
+  prevent double rotation. See the [metadata requirements and regression evidence](docs/adapters.md#roms-horizontal-vector-basis);
+  missing or inconsistent basis metadata fails, and old unrotated native forcing
+  must be regenerated. The webinar provider's angle/coordinate inconsistency is
+  tracked separately from this implementation fix.
+- The [native webinar protocol](examples/webinar-native-usecase/docs/performance-evaluation.md) uses 25 hourly forcing files from 2026-09-15 00:00 through 2026-09-16 00:00 UTC. Its paired ROMS conversion example prepares that same window; the native workflow applies the full CPU/hybrid and selected-CPU GPU matrix independently at each release rate.
+- The [ROMS webinar download example](examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) is a dry forcing-conversion workflow with isolated run archives and an application-wall-time benchmark. It does not execute the particle solver; historical endpoint availability and input metadata must be verified before use.
 
 ## References
 

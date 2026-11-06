@@ -80,5 +80,33 @@ int main() {
         invalid.loadFromNetCDF(restartFile,backward);
     } catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
+
+    // Text restart: exact 64-bit identity and full double precision round trip.
+    {
+        const string textFile="restart-test.txt";
+        Particles written;
+        Particle particle(9007199254740993ULL,-.123456789012345,5.85472728621506,5.32375564640966,
+                          .920044414487148,7200.0000133514404,1675900800.25);
+        particle.Drift(DriftObjectType::PERSON_IN_WATER,DriftSide::RIGHT);
+        written.push_back(particle);
+        written.saveAsTxt(textFile);
+        Particles read;
+        read.loadFromTxt(textFile);
+        assert(read.size()==1);
+        assert(read[0].Id()==9007199254740993ULL);
+        assert(read[0].K()==particle.K() && read[0].J()==particle.J() && read[0].I()==particle.I());
+        assert(read[0].Health()==particle.Health() && read[0].Age()==particle.Age());
+        assert(read[0].Time()==particle.Time());
+        assert(read[0].DriftObject()==DriftObjectType::PERSON_IN_WATER && read[0].Side()==DriftSide::RIGHT);
+        std::remove(textFile.c_str());
+    }
+
+    // GeoJSON histories are lossy visualization output and must not restart silently.
+    rejected=false;
+    try {
+        Particles invalid;
+        invalid.loadFromJson("history.json");
+    } catch (const std::runtime_error &) { rejected=true; }
+    assert(rejected);
     std::remove(restartFile.c_str()); std::remove(configFile.c_str()); std::remove(backwardFile.c_str());
 }
