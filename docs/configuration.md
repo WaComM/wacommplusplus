@@ -7,7 +7,7 @@ The [ROMS webinar conversion guide](../examples/webinar-roms-usecase-download/do
 Configuration is JSON or the legacy namelist form. New scientific runs should set an explicit seed and direction:
 
 ```json
-{"physics":{"random":false,"random_seed":5489,"dti":30},"tracking":{"direction":"forward","backward_diffusion":"none"}}
+{"physics":{"random":false,"random_seed":5489,"dti":30,"integrator":"midpoint"},"tracking":{"direction":"forward","backward_diffusion":"none"}}
 ```
 
 Calendar times in `simulation.start`, `simulation.end`, and source `start`/`end` are UTC values written as `YYYYMMDDhh`, `YYYYMMDDZhh`, or `YYYYMMDDZhhmm`. Minutes are in 00–59 and enter physical time: a time of day $h$:$m$ maps to $86400\,d+3600h+60m$ seconds since 1968-05-23 00:00 UTC, where $d$ is the day count. Conversion back to a calendar rounds the time of day to the nearest whole second before splitting it into hours, minutes, and seconds, carrying a value that rounds to 24:00 into the next day; this absorbs the $O(10^{-5})$ s round-off of modified-Julian-day arithmetic. Any other length, a minute outside 00–59, or trailing characters are rejected at load time. Resolved configurations, source exports, and output-file stamps keep the historical `YYYYMMDDZhh` form for whole hours and use `YYYYMMDDZhhmm` otherwise. Earlier revisions parsed only the hour and silently discarded the rest, so `20210701Z0030` meant 00:00, and their calendar conversion rounded to the nearest hour.
@@ -37,6 +37,8 @@ With `physics.random_sources=true`, each released grid coordinate receives an in
 `direction` is `forward` or `backward`. Backward diffusion defaults to `none`; `symmetric_stochastic` enables an ensemble and must not be interpreted as exact path reconstruction. Closure values are `constraint`, `kill`, and `reflection`. Unknown direction and backward-diffusion values are errors.
 
 `physics.dti` and `physics.deltat` are seconds and must be finite and greater than zero. `physics.sigma` is a stochastic displacement scale in meters and `physics.shore_limit` is a positive-down water-column threshold in meters; both must be finite and non-negative. Invalid numerical or closure values fail during configuration loading rather than entering the integration loop.
+
+`physics.integrator` selects the deterministic time-integration scheme. The default `midpoint` is the explicit second-order midpoint method; `euler` is the legacy first-order step that earlier revisions always used and reproduces their results bit for bit. Any other value is an error. The equations, the near-boundary fallback, and the verification evidence are in [the model description](model.md#temporal-integration). The choice changes particle trajectories and must be archived with every run: a configuration that omits it now runs with `midpoint`, so reproducing results archived before this option existed requires `"integrator":"euler"`.
 
 Surface-object drift is opt-in:
 
@@ -167,3 +169,5 @@ solver equations or certify upstream ocean-model accuracy.
 - Barth, T. J., and Jespersen, D. C. (1989). The design and application of upwind schemes on unstructured meshes. *27th Aerospace Sciences Meeting*. [doi:10.2514/6.1989-366](https://doi.org/10.2514/6.1989-366).
 - Steele, G. L., Lea, D., and Flood, C. H. (2014). Fast splittable pseudorandom number generators. *ACM SIGPLAN Notices*, 49(10), 453–472 (OOPSLA 2014). [doi:10.1145/2714064.2660195](https://doi.org/10.1145/2714064.2660195).
 - Salmon, J. K., Moraes, M. A., Dror, R. O., and Shaw, D. E. (2011). Parallel random numbers: as easy as 1, 2, 3. *Proceedings of the 2011 International Conference for High Performance Computing, Networking, Storage and Analysis (SC11)*, article 16, 1–12. [doi:10.1145/2063384.2063405](https://doi.org/10.1145/2063384.2063405).
+- Runge, C. (1895). Ueber die numerische Auflösung von Differentialgleichungen. *Mathematische Annalen*, 46(2), 167–178. [doi:10.1007/BF01446807](https://doi.org/10.1007/BF01446807).
+- Nordam, T., and Duran, R. (2020). Numerical integrators for Lagrangian oceanography. *Geoscientific Model Development*, 13(12), 5935–5957. [doi:10.5194/gmd-13-5935-2020](https://doi.org/10.5194/gmd-13-5935-2020).

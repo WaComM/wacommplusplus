@@ -127,6 +127,9 @@ void Config::setDefault() {
     // Backward diffusion is disabled by default
     _data.backwardDiffusion = false;
 
+    // Deterministic advection uses the explicit midpoint (second-order) step by default
+    _data.integrator = Config::INTEGRATOR_MIDPOINT;
+
     // Physical restart checkpoint (not set by default)
     _data.restartCheckpoint = std::numeric_limits<double>::quiet_NaN();
 
@@ -365,6 +368,7 @@ std::uint64_t Config::RandomSeed() const { return _data.randomSeed; }
 bool Config::Backward() const { return _data.trackingDirection == Config::TRACKING_BACKWARD; }
 
 bool Config::BackwardDiffusion() const { return _data.backwardDiffusion; }
+int Config::Integrator() const { return _data.integrator; }
 
 bool Config::Leeway() const { return _data.driftModel==1; }
 bool Config::LeewayCoefficientEnsemble() const { return _data.leewayCoefficientEnsemble; }
@@ -646,6 +650,7 @@ string Config::asJson() const {
             { "horizontal_closure", _data.horizontalClosure == Config::CLOSURE_MODE_CONSTRAINT ? "constraint" :
                                       _data.horizontalClosure == Config::CLOSURE_MODE_KILL ? "kill" : "reflection" },
             { "random_seed", _data.randomSeed },
+            { "integrator", _data.integrator == Config::INTEGRATOR_EULER ? "euler" : "midpoint" },
     };
 
     json tracking = {
@@ -787,6 +792,12 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("upper_closure")) { _data.upperClosure = closureMode(physics["upper_closure"]); }
         if (physics.contains("lower_closure")) { _data.lowerClosure = closureMode(physics["lower_closure"]); }
         if (physics.contains("horizontal_closure")) { _data.horizontalClosure = closureMode(physics["horizontal_closure"]); }
+        if (physics.contains("integrator")) {
+            string integrator=physics["integrator"];
+            if (integrator == "midpoint") _data.integrator=Config::INTEGRATOR_MIDPOINT;
+            else if (integrator == "euler") _data.integrator=Config::INTEGRATOR_EULER;
+            else throw std::runtime_error("Unknown integrator: " + integrator);
+        }
     }
     if (config.contains("tracking")) {
         json tracking=config["tracking"];

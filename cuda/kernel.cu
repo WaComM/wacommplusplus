@@ -201,58 +201,67 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
             break;
         }
 
-        float uu=bilinear(u,timeIndex,nextTime,kI,sRho,jI,iI,jF,iF,eta,xi,alpha);
-        float vv=bilinear(v,timeIndex,nextTime,kI,sRho,jI,iI,jF,iF,eta,xi,alpha);
-        if (config->driftModel==1 &&
-            particle.driftObjectType!=(unsigned short)DriftObjectType::PASSIVE) {
-            LeewayCoefficients coefficients=driftObjectCoefficients((DriftObjectType)particle.driftObjectType);
-            long long uncertaintyInterval=llround(fmin(intervalStart,intervalEnd));
-            unsigned long long uncertaintySubstep=(unsigned long long)floor(elapsed/config->dti);
-            double windU=windU10 ? environmentAt(windU10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windU10;
-            double windV=windV10 ? environmentAt(windV10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha) : config->windV10;
-            double longitude=bilinear(lonRad,jI,iI,jF,iF,xi);
-            double latitude=bilinear(latRad,jI,iI,jF,iF,xi);
-            double windErrorStdDev=config->windErrorStdDev;
-            double windErrorCorrelation=config->windErrorComponentCorrelation;
-            double windErrorSpatialScale=config->windErrorSpatialScale;
-            double windErrorTemporalScale=config->windErrorTemporalScale;
-            int calibration=observationalCalibrationRegion(config->observationalCalibrationRegions,
-                    config->observationalCalibrationRegionCount,longitude,latitude);
-            if (calibration>=0) {
-                const observational_calibration_region& region=config->observationalCalibrationRegions[calibration];
-                windErrorStdDev=region.windErrorStdDev;
-                windErrorCorrelation=region.windErrorComponentCorrelation;
-                windErrorSpatialScale=region.windErrorSpatialScale;
-                windErrorTemporalScale=region.windErrorTemporalScale;
+        // Deterministic velocity at a fractional grid position and forcing-time weight
+        // (same composition as Particle::move's advectiveVelocity)
+        auto advectiveVelocity=[&](int kI, double kF, int jI, double jF, int iI, double iF,
+                                   double stageAlpha, float &uu, float &vv, double &ww) {
+            uu=bilinear(u,timeIndex,nextTime,kI,sRho,jI,iI,jF,iF,eta,xi,stageAlpha);
+            vv=bilinear(v,timeIndex,nextTime,kI,sRho,jI,iI,jF,iF,eta,xi,stageAlpha);
+            if (config->driftModel==1 &&
+                particle.driftObjectType!=(unsigned short)DriftObjectType::PASSIVE) {
+                LeewayCoefficients coefficients=driftObjectCoefficients((DriftObjectType)particle.driftObjectType);
+                long long uncertaintyInterval=llround(fmin(intervalStart,intervalEnd));
+                unsigned long long uncertaintySubstep=(unsigned long long)floor(elapsed/config->dti);
+                double windU=windU10 ? environmentAt(windU10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,stageAlpha) : config->windU10;
+                double windV=windV10 ? environmentAt(windV10,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,stageAlpha) : config->windV10;
+                double longitude=bilinear(lonRad,jI,iI,jF,iF,xi);
+                double latitude=bilinear(latRad,jI,iI,jF,iF,xi);
+                double windErrorStdDev=config->windErrorStdDev;
+                double windErrorCorrelation=config->windErrorComponentCorrelation;
+                double windErrorSpatialScale=config->windErrorSpatialScale;
+                double windErrorTemporalScale=config->windErrorTemporalScale;
+                int calibration=observationalCalibrationRegion(config->observationalCalibrationRegions,
+                        config->observationalCalibrationRegionCount,longitude,latitude);
+                if (calibration>=0) {
+                    const observational_calibration_region& region=config->observationalCalibrationRegions[calibration];
+                    windErrorStdDev=region.windErrorStdDev;
+                    windErrorCorrelation=region.windErrorComponentCorrelation;
+                    windErrorSpatialScale=region.windErrorSpatialScale;
+                    windErrorTemporalScale=region.windErrorTemporalScale;
+                }
+                if (windErrorStdDev>0) {
+                    double first=deviceForcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
+                            uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT,longitude,latitude,
+                            physicalTime+.5*direction*stepDt,windErrorSpatialScale,windErrorTemporalScale);
+                    double second=deviceForcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
+                            uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT,longitude,latitude,
+                            physicalTime+.5*direction*stepDt,windErrorSpatialScale,windErrorTemporalScale);
+                    windU+=windErrorStdDev*first;
+                    windV+=windErrorStdDev*correlatedNormal(first,second,windErrorCorrelation);
+                }
+                double downwindNormal=0,crosswindNormal=0;
+                if (config->leewayCoefficientEnsemble) {
+                    downwindNormal=normal(config->randomSeed,particle.id,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0);
+                    crosswindNormal=normal(config->randomSeed,particle.id,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,1);
+                    crosswindNormal=correlatedNormal(downwindNormal,crosswindNormal,
+                                                     config->leewayResidualCorrelation);
+                }
+                DriftVelocity leeway=computeLeeway(coefficients,windU,windV,
+                                                    (DriftSide)particle.driftSide,downwindNormal,crosswindNormal);
+                uu+=(float)leeway.u;
+                vv+=(float)leeway.v;
+                if (stokesU && stokesV) {
+                    uu+=(float)waveAt(stokesU,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,stageAlpha);
+                    vv+=(float)waveAt(stokesV,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,stageAlpha);
+                }
             }
-            if (windErrorStdDev>0) {
-                double first=deviceForcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
-                        uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT,longitude,latitude,
-                        physicalTime+.5*direction*stepDt,windErrorSpatialScale,windErrorTemporalScale);
-                double second=deviceForcingErrorNormal(config->randomSeed,particle.id,uncertaintyInterval,
-                        uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT,longitude,latitude,
-                        physicalTime+.5*direction*stepDt,windErrorSpatialScale,windErrorTemporalScale);
-                windU+=windErrorStdDev*first;
-                windV+=windErrorStdDev*correlatedNormal(first,second,windErrorCorrelation);
-            }
-            double downwindNormal=0,crosswindNormal=0;
-            if (config->leewayCoefficientEnsemble) {
-                downwindNormal=normal(config->randomSeed,particle.id,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0);
-                crosswindNormal=normal(config->randomSeed,particle.id,LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,1);
-                crosswindNormal=correlatedNormal(downwindNormal,crosswindNormal,
-                                                 config->leewayResidualCorrelation);
-            }
-            DriftVelocity leeway=computeLeeway(coefficients,windU,windV,
-                                                (DriftSide)particle.driftSide,downwindNormal,crosswindNormal);
-            uu+=(float)leeway.u;
-            vv+=(float)leeway.v;
-            if (stokesU && stokesV) {
-                uu+=(float)waveAt(stokesU,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha);
-                vv+=(float)waveAt(stokesV,timeIndex,nextTime,jI,iI,jF,iF,eta,xi,alpha);
-            }
-        }
-        double ww=bilinear(w,timeIndex,nextTime,kI,sW,jI,iI,jF,iF,eta,xi,alpha)*(1.0-kF)+
-                  bilinear(w,timeIndex,nextTime,kI-1,sW,jI,iI,jF,iF,eta,xi,alpha)*kF;
+            ww=bilinear(w,timeIndex,nextTime,kI,sW,jI,iI,jF,iF,eta,xi,stageAlpha)*(1.0-kF)+
+                      bilinear(w,timeIndex,nextTime,kI-1,sW,jI,iI,jF,iF,eta,xi,stageAlpha)*kF;
+        };
+        double alphaStart=intervalLength==0 ? 0 : elapsed/intervalLength;
+        bool midpoint=config->integrator==Config::INTEGRATOR_MIDPOINT;
+        float uu,vv; double ww;
+        advectiveVelocity(kI,kF,jI,jF,iI,iF,midpoint ? alphaStart : alpha,uu,vv,ww);
         double aa=bilinear(akt,timeIndex,nextTime,kI,sW,jI,iI,jF,iF,eta,xi,alpha)*(1.0-kF)+
                   bilinear(akt,timeIndex,nextTime,kI-1,sW,jI,iI,jF,iF,eta,xi,alpha)*kF;
         double xleap=direction*uu*stepDt,yleap=direction*vv*stepDt;
@@ -269,6 +278,43 @@ __global__ void move(config_data *config, particle_data *particles, int timeInde
         double ydist=distance(latRad[jI*xi+iI],lonRad[jI*xi+iI],latRad[(jI+1)*xi+iI],lonRad[(jI+1)*xi+iI]);
         double xdist=distance(latRad[jI*xi+iI],lonRad[jI*xi+iI],latRad[jI*xi+iI+1],lonRad[jI*xi+iI+1]);
         double zdist=hc*depthIntervals[kI+sW-2];
+        if (midpoint) {
+            // Explicit midpoint step (see Particle::move): half step with the start-cell metric,
+            // second stage at the midpoint and mid-substep time, Euler fallback off-domain or on land
+            double kHalfLeap=direction*(config->sv+ww)*.5*stepDt;
+            if (fabs(kHalfLeap)>zdist) kHalfLeap=sign(zdist,kHalfLeap);
+            double iMid=particle.i+direction*uu*.5*stepDt/xdist,jMid=particle.j+direction*vv*.5*stepDt/ydist;
+            double kMid=fmin(0.0,fmax(lowerLimit,particle.k+kHalfLeap/zdist));
+            int iMI=(int)floor(iMid),jMI=(int)floor(jMid);
+            bool midValid=validCell(jMI,iMI,eta,xi);
+            double hcMid=0;
+            if (midValid) {
+                hcMid=bilinear(h,jMI,iMI,jMid-jMI,iMid-iMI,xi)+
+                      bilinear(zeta,timeIndex,nextTime,jMI,iMI,jMid-jMI,iMid-iMI,eta,xi,alpha);
+                midValid=hcMid>config->shoreLimit && hcMid>0;
+            }
+            double deterministicX,deterministicY,deterministicZ;
+            if (midValid) {
+                int kMI=(int)ceil(kMid); double kMF=ceil(kMid)-kMid;
+                float um,vm; double wm;
+                advectiveVelocity(kMI,kMF,jMI,jMid-jMI,iMI,iMid-iMI,alpha,um,vm,wm);
+                double ydistMid=distance(latRad[jMI*xi+iMI],lonRad[jMI*xi+iMI],latRad[(jMI+1)*xi+iMI],lonRad[(jMI+1)*xi+iMI]);
+                double xdistMid=distance(latRad[jMI*xi+iMI],lonRad[jMI*xi+iMI],latRad[jMI*xi+iMI+1],lonRad[jMI*xi+iMI+1]);
+                double zdistMid=hcMid*depthIntervals[kMI+sW-2];
+                deterministicX=direction*um*stepDt*xdist/xdistMid;
+                deterministicY=direction*vm*stepDt*ydist/ydistMid;
+                deterministicZ=direction*(config->sv+wm)*stepDt*zdist/zdistMid;
+            } else {
+                float ue,ve; double we;
+                advectiveVelocity(kI,kF,jI,jF,iI,iF,alpha,ue,ve,we);
+                deterministicX=direction*ue*stepDt;
+                deterministicY=direction*ve*stepDt;
+                deterministicZ=direction*(config->sv+we)*stepDt;
+            }
+            xleap+=deterministicX-direction*uu*stepDt;
+            yleap+=deterministicY-direction*vv*stepDt;
+            zleap+=deterministicZ-direction*(config->sv+ww)*stepDt;
+        }
         if (fabs(zleap)>zdist) zleap=sign(zdist,zleap);
         double jdet=particle.j+yleap/ydist,idet=particle.i+xleap/xdist,kdet=particle.k+zleap/zdist;
         if (kdet>0) {

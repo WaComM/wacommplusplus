@@ -70,13 +70,13 @@ $$
 
 W-level quantities use the tensor product of these four horizontal weights and the two vertical weights, yielding trilinear interpolation over eight values. The weights sum to one, so constants are preserved. This particle-sampling operator is separate from optional adapter-layer regridding.
 
-For chronological forcing records at $T_0<T_1$, the solver samples every dynamic field at the substep midpoint $t_{n+1/2}$ with
+For chronological forcing records at $T_0<T_1$, the solver samples dynamic fields at a substep time $t$ with weight $\alpha(t)=(t-T_0)/(T_1-T_0)$. Diffusivity, free-surface elevation, closure checks, and the second stage of the default integrator use the substep midpoint $t_{n+1/2}$:
 
 $$
 \alpha_n=\frac{t_{n+1/2}-T_0}{T_1-T_0},\qquad F(t_{n+1/2})=(1-\alpha_n)F(T_0)+\alpha_nF(T_1).
 $$
 
-The implementation clips $\alpha_n$ to $[0,1]$. Static coordinates and bathymetry are not interpolated in time. The maximum step `physics.dti` is in seconds, and the final step is shortened so that the trajectory lands exactly on the forcing boundary. Midpoint sampling integrates a velocity that is linear in time exactly if its spatial value is constant along the substep; it does not make the complete spatially varying trajectory second-order. Because position is updated once from the velocity sampled at the old spatial position, spatial trajectory integration remains first-order explicit.
+The implementation clips $\alpha_n$ to $[0,1]$. Static coordinates and bathymetry are not interpolated in time. The maximum step `physics.dti` is in seconds, and the final step is shortened so that the trajectory lands exactly on the forcing boundary. Midpoint sampling alone integrates a velocity that is linear in time exactly only if its spatial value is constant along the substep. Second-order accuracy for spatially varying flow comes from the explicit midpoint integrator described under [temporal integration](#temporal-integration).
 
 ![Physical forcing interval divided into complete and shortened midpoint substeps](figures/lagrangian-time-stepping.svg)
 
@@ -103,6 +103,31 @@ j^*=j+\frac{\Delta y}{D_y},\qquad i^*=i+\frac{\Delta x}{D_x},\qquad k^*=k+\frac{
 $$
 
 The implementation limits $|\Delta z|$ to one local vertical cell thickness before calculating $k^*$. No corresponding horizontal Courant limiter is applied. Consequently users must select `dti` so horizontal displacements remain small relative to local cells and must demonstrate step-size convergence for the intended forcing resolution. Degenerate or unsuitable grid geometry is not repaired by the Lagrangian solver and should fail during adapter validation where detectable.
+
+## Temporal integration
+
+Let $\boldsymbol{X}=(i,j,k)$ be the fractional grid position and
+
+$$
+\boldsymbol{F}(\boldsymbol{X},t)=\left(\frac{V_x}{D_x},\ \frac{V_y}{D_y},\ \frac{w_o+w_t}{D_z}\right)\quad[\mathrm{s}^{-1}]
+$$
+
+the deterministic velocity of the next section divided by the local cell sizes, i.e. the rate of change of the grid indices. With tracking sign $s=\pm1$, substep length $\Delta t$ (s), substep start time $t_n$, and $t_{n+1/2}=t_n+s\Delta t/2$, the default `physics.integrator="midpoint"` is the explicit midpoint (second-order Runge–Kutta) method of Runge (1895):
+
+$$
+\boldsymbol{X}^{*}=\boldsymbol{X}_n+\frac{s\Delta t}{2}\,\boldsymbol{F}(\boldsymbol{X}_n,t_n),\qquad
+\boldsymbol{X}_{n+1}=\boldsymbol{X}_n+s\Delta t\,\boldsymbol{F}(\boldsymbol{X}^{*},t_{n+1/2})+\boldsymbol{R}_n,
+$$
+
+where $\boldsymbol{R}_n$ is the stochastic displacement converted with the start-cell metric. For a velocity field that is twice continuously differentiable along the trajectory, the local deterministic error is $O(\Delta t^3)$ and the global error over a fixed interval is $O(\Delta t^2)$. Nordam and Duran (2020) review this and higher-order integrators for interpolated ocean currents, including the loss of formal order where interpolated fields have discontinuous derivatives at cell faces; WaComM++'s bilinear and trilinear sampling has such discontinuities, so step-size convergence must still be demonstrated for each application.
+
+The implementation keeps the metre-based update of the previous section. The second-stage displacement is expressed in metres of the start cell, $\Delta x=s\,V_x(\boldsymbol{X}^*)\,\Delta t\,D_x(\boldsymbol{X}_n)/D_x(\boldsymbol{X}^*)$, and likewise for $y$ and $z$, so that division by $D_x(\boldsymbol{X}_n)$ in the index update recovers $s\Delta t\,F_x(\boldsymbol{X}^*)$ exactly; the vertical cap, closures, and boundary operators are applied unchanged to the final candidate. The half-step vertical displacement is capped at one start-cell thickness and $k^*$ is clipped to $[k_b,0]$. If the cell of $\boldsymbol{X}^*$ lies outside the interpolation domain, or its water depth $h+\zeta$ is not above `physics.shore_limit`, the second stage is replaced by the legacy step defined below. This fallback is a numerical safeguard with first-order local accuracy; it is not a boundary parameterization.
+
+`physics.integrator="euler"` selects the legacy forward Euler step $\boldsymbol{X}_{n+1}=\boldsymbol{X}_n+s\Delta t\,\boldsymbol{F}(\boldsymbol{X}_n,t_{n+1/2})+\boldsymbol{R}_n$, which samples the start position at the substep midpoint time. It is globally first-order in space for spatially varying flow and reproduces revisions before the midpoint integrator bit for bit. Results archived from those revisions were produced with this step.
+
+The stochastic increment is added once per substep from start-position quantities in Euler–Maruyama form. The midpoint construction improves only the deterministic drift; it does not raise the strong or weak order of the stochastic scheme, and no such claim is made. Both stages use the same direction $s$, environmental fields, and forcing bracket, so forward and backward runs share one solver. Substep boundaries do not depend on the integrator, so restart equivalence at completed substeps holds for either choice; the integrator is part of the configuration that a restarted run must reproduce.
+
+Verification (`particle_physical_interval`) integrates a steady sheared current $u=b\,i$ with known exponential solution: halving $\Delta t$ from 600 s to 300 s reduces the error by a factor of 1.96 with Euler and 3.92 with the midpoint step, the midpoint error at 600 s is 56 times smaller, midpoint backward tracking returns within the $O(\Delta t^2)$ error, a restarted run matches the continuous one, and a midpoint outside the domain reproduces the Euler step exactly. `cuda_particle_parity` compares CPU and CUDA under both integrators. These are verification of the discrete operator, not observational validation.
 
 ## Deterministic velocity composition
 
@@ -166,7 +191,7 @@ Concentration output bins computational particles after integration. Counts depe
 
 ## Forward, backward, and restart semantics
 
-Deterministic backward tracking evaluates the same normalized physical velocity field and applies $s=-1$ to the complete displacement. With diffusion, decay, source emission, jibing, and boundary interactions disabled, a sufficiently small-step constant or smooth-field forward/backward experiment is a reversibility test. It is not generally exact for a spatially varying field because explicit numerical integration is not self-adjoint.
+Deterministic backward tracking evaluates the same normalized physical velocity field and applies $s=-1$ to the complete displacement. With diffusion, decay, source emission, jibing, and boundary interactions disabled, a sufficiently small-step constant or smooth-field forward/backward experiment is a reversibility test. It is not generally exact for a spatially varying field because explicit numerical integration is not self-adjoint; with the default midpoint integrator the return error is $O(\Delta t^2)$ rather than $O(\Delta t)$.
 
 `tracking.backward_diffusion=symmetric_stochastic` samples dispersive candidate origins. It does not reconstruct the noise history of a forward particle and is not a unique inverse. Exact stochastic restart equivalence is claimed only at completed substep boundaries with unchanged forcing bracket, `dti`, seed, identities, direction, configuration, and resolved object state. See [backtracking](backtracking.md) and [restart](restart.md).
 
@@ -185,7 +210,7 @@ Every scientific study should, at minimum, report:
 7. comparison with independent observations where a validation claim is made;
 8. the complete reproducibility record defined in [reproducibility](reproducibility.md).
 
-Principal limitations are offline one-way coupling, interpolation error inherited from finite forcing resolution, fractional-index metric approximation, no automatic subgrid coastline geometry, no standard continuous-SDE claim for the legacy random displacement, and conditional—not unique—inference from backward ensembles.
+Principal limitations are offline one-way coupling, first-order local accuracy where the midpoint integrator falls back near open boundaries and coastlines, interpolation error inherited from finite forcing resolution, fractional-index metric approximation, no automatic subgrid coastline geometry, no standard continuous-SDE claim for the legacy random displacement, and conditional—not unique—inference from backward ensembles.
 
 The private Unix build (other than macOS) uses pinned OpenSSL 3.5.8 for HTTPS forcing transport, as documented in the [build guide](build.md). This dependency belongs to data access and does not change the governing equations, physical time, tracking direction, or restart state.
 
@@ -225,4 +250,6 @@ solver equations or certify upstream ocean-model accuracy.
 - Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).
 - Steele, G. L., Lea, D., and Flood, C. H. (2014). Fast splittable pseudorandom number generators. *ACM SIGPLAN Notices*, 49(10), 453–472 (OOPSLA 2014). [doi:10.1145/2714064.2660195](https://doi.org/10.1145/2714064.2660195).
 - Salmon, J. K., Moraes, M. A., Dror, R. O., and Shaw, D. E. (2011). Parallel random numbers: as easy as 1, 2, 3. *Proceedings of the 2011 International Conference for High Performance Computing, Networking, Storage and Analysis (SC11)*, article 16, 1–12. [doi:10.1145/2063384.2063405](https://doi.org/10.1145/2063384.2063405).
+- Runge, C. (1895). Ueber die numerische Auflösung von Differentialgleichungen. *Mathematische Annalen*, 46(2), 167–178. [doi:10.1007/BF01446807](https://doi.org/10.1007/BF01446807).
+- Nordam, T., and Duran, R. (2020). Numerical integrators for Lagrangian oceanography. *Geoscientific Model Development*, 13(12), 5935–5957. [doi:10.5194/gmd-13-5935-2020](https://doi.org/10.5194/gmd-13-5935-2020).
 - Box, G. E. P., and Muller, M. E. (1958). A note on the generation of random normal deviates. *The Annals of Mathematical Statistics*, 29(2), 610–611. [doi:10.1214/aoms/1177706645](https://doi.org/10.1214/aoms/1177706645).

@@ -78,7 +78,10 @@ int main() {
     config.trackingDirection=Config::TRACKING_FORWARD;
     config.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
 
-    for (int mode=0;mode<11;mode++) {
+    // Every mode under the legacy Euler step and the default explicit midpoint step
+    for (int run=0;run<22;run++) {
+        int mode=run%11;
+        config.integrator=run<11 ? Config::INTEGRATOR_EULER : Config::INTEGRATOR_MIDPOINT;
         bool stochastic=mode==1;
         bool leeway=mode>=2;
         DriftObjectType object=mode==6 ? DriftObjectType::PERSON_IN_WATER_SURVIVAL_SUIT :
@@ -137,8 +140,8 @@ int main() {
 
         double tolerance=stochastic ? 1e-9 : 1e-12;
         if (!close(result.i,cpu.I(),tolerance) || !close(result.j,cpu.J(),tolerance))
-            std::fprintf(stderr,"mode=%d cpu=(%.17g,%.17g) cuda=(%.17g,%.17g)\n",
-                         mode,cpu.I(),cpu.J(),result.i,result.j);
+            std::fprintf(stderr,"mode=%d integrator=%d cpu=(%.17g,%.17g) cuda=(%.17g,%.17g)\n",
+                         mode,config.integrator,cpu.I(),cpu.J(),result.i,result.j);
         assert(result.id==cpu.Id());
         assert(close(result.i,cpu.I(),tolerance) && close(result.j,cpu.J(),tolerance));
         assert(close(result.k,cpu.K(),tolerance) && close(result.health,cpu.Health(),tolerance));

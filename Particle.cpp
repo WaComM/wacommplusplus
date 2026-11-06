@@ -186,14 +186,16 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         auto zetaAt=[&](int j, int i) {
             return (float)NumericalHelpers::interpolateTime(zeta(ocean_time_idx,j,i),zeta(nextOceanTimeIdx,j,i),alpha);
         };
-        auto uAt=[&](int k, int j, int i) {
-            return (float)NumericalHelpers::interpolateTime(u(ocean_time_idx,k,j,i),u(nextOceanTimeIdx,k,j,i),alpha);
+        // Forcing-time weight at the start of the substep (first midpoint stage)
+        double alphaStart=intervalLength == 0 ? 0 : elapsed/intervalLength;
+        auto uAt=[&](int k, int j, int i, double stageAlpha) {
+            return (float)NumericalHelpers::interpolateTime(u(ocean_time_idx,k,j,i),u(nextOceanTimeIdx,k,j,i),stageAlpha);
         };
-        auto vAt=[&](int k, int j, int i) {
-            return (float)NumericalHelpers::interpolateTime(v(ocean_time_idx,k,j,i),v(nextOceanTimeIdx,k,j,i),alpha);
+        auto vAt=[&](int k, int j, int i, double stageAlpha) {
+            return (float)NumericalHelpers::interpolateTime(v(ocean_time_idx,k,j,i),v(nextOceanTimeIdx,k,j,i),stageAlpha);
         };
-        auto wAt=[&](int k, int j, int i) {
-            return (float)NumericalHelpers::interpolateTime(w(ocean_time_idx,k,j,i),w(nextOceanTimeIdx,k,j,i),alpha);
+        auto wAt=[&](int k, int j, int i, double stageAlpha) {
+            return (float)NumericalHelpers::interpolateTime(w(ocean_time_idx,k,j,i),w(nextOceanTimeIdx,k,j,i),stageAlpha);
         };
         auto aktAt=[&](int k, int j, int i) {
             return (float)NumericalHelpers::interpolateTime(akt(ocean_time_idx,k,j,i),akt(nextOceanTimeIdx,k,j,i),alpha);
@@ -344,127 +346,139 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             LOG4CPLUS_DEBUG(logger, "Floating: kI:" << kI << " jI:" << jI << " iI:" << iI);
 #endif
 
-            // Perform the bilinear interpolation (2D) in order to get
-            // the u component of the current field in the particle position.
-            float u1 = uAt(kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
-            float u2 = uAt(kI, jI + 1, iI) * (1.0 - iF) * jF;
-            float u3 = uAt(kI, jI + 1, iI + 1) * iF * jF;
-            float u4 = uAt(kI, jI, iI + 1) * iF * (1.0 - jF);
+            // Deterministic velocity [m s-1] at a fractional grid position and forcing-time
+            // weight: ocean current plus optional leeway and Stokes drift (horizontal) and
+            // ocean w (vertical). The solver applies trackingDirection to the displacement.
+            auto advectiveVelocity=[&](int kI, double kF, int jI, double jF, int iI, double iF,
+                                       double stageAlpha, float &uu, float &vv, float &ww) {
+                // Perform the bilinear interpolation (2D) in order to get
+                // the u component of the current field in the particle position.
+                float u1 = uAt(kI, jI, iI, stageAlpha) * (1.0 - iF) * (1.0 - jF);
+                float u2 = uAt(kI, jI + 1, iI, stageAlpha) * (1.0 - iF) * jF;
+                float u3 = uAt(kI, jI + 1, iI + 1, stageAlpha) * iF * jF;
+                float u4 = uAt(kI, jI, iI + 1, stageAlpha) * iF * (1.0 - jF);
 
-            // The current u component in the particle position
-            float uu = u1 + u2 + u3 + u4;
+                // The current u component in the particle position
+                uu = u1 + u2 + u3 + u4;
 
-
-#ifdef DEBUG
-            LOG4CPLUS_DEBUG(logger, "uu:" << uu);
-#endif
-
-            // Perform the bilinear interpolation (2D) in order to get
-            // the v component of the current field in the particle position.
-            float v1 = vAt(kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
-            float v2 = vAt(kI, jI + 1, iI) * (1.0 - iF) * jF;
-            float v3 = vAt(kI, jI + 1, iI + 1) * iF * jF;
-            float v4 = vAt(kI, jI, iI + 1) * iF * (1.0 - jF);
-
-            // The current v component in the particle position
-            float vv = v1 + v2 + v3 + v4;
-
-            // Object drift is direction-neutral. The solver applies trackingDirection below.
-            if (configData->driftModel==1 &&
-                localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE)) {
-                const auto& object=DriftObjectCatalog::definition(
-                        static_cast<DriftObjectType>(localParticleData.driftObjectType));
-                auto environmentAt=[&](Array3<float> *field) {
-                    if (!field) return 0.0;
-                    float f1=(*field)(ocean_time_idx,jI,iI)*(1-iF)*(1-jF);
-                    float f2=(*field)(ocean_time_idx,jI+1,iI)*(1-iF)*jF;
-                    float f3=(*field)(ocean_time_idx,jI+1,iI+1)*iF*jF;
-                    float f4=(*field)(ocean_time_idx,jI,iI+1)*iF*(1-jF);
-                    float n1=(*field)(nextOceanTimeIdx,jI,iI)*(1-iF)*(1-jF);
-                    float n2=(*field)(nextOceanTimeIdx,jI+1,iI)*(1-iF)*jF;
-                    float n3=(*field)(nextOceanTimeIdx,jI+1,iI+1)*iF*jF;
-                    float n4=(*field)(nextOceanTimeIdx,jI,iI+1)*iF*(1-jF);
-                    return NumericalHelpers::interpolateTime(f1+f2+f3+f4,n1+n2+n3+n4,alpha);
-                };
-                double windU=windU10 ? environmentAt(windU10) : configData->windU10;
-                double windV=windV10 ? environmentAt(windV10) : configData->windV10;
-                std::int64_t uncertaintyInterval=static_cast<std::int64_t>(std::llround(std::min(intervalStart,intervalEnd)));
-                std::uint64_t uncertaintySubstep=static_cast<std::uint64_t>(std::floor(elapsed/dti));
-                double longitude=lonRad(jI,iI)*(1-iF)*(1-jF)+lonRad(jI+1,iI)*(1-iF)*jF+
-                          lonRad(jI+1,iI+1)*iF*jF+lonRad(jI,iI+1)*iF*(1-jF);
-                double latitude=latRad(jI,iI)*(1-iF)*(1-jF)+latRad(jI+1,iI)*(1-iF)*jF+
-                         latRad(jI+1,iI+1)*iF*jF+latRad(jI,iI+1)*iF*(1-jF);
-                double windErrorStdDev=configData->windErrorStdDev;
-                double windErrorCorrelation=configData->windErrorComponentCorrelation;
-                double windErrorSpatialScale=configData->windErrorSpatialScale;
-                double windErrorTemporalScale=configData->windErrorTemporalScale;
-                int calibration=observationalCalibrationRegion(configData->observationalCalibrationRegions,
-                        configData->observationalCalibrationRegionCount,longitude,latitude);
-                if (calibration>=0) {
-                    const auto& region=configData->observationalCalibrationRegions[calibration];
-                    windErrorStdDev=region.windErrorStdDev;
-                    windErrorCorrelation=region.windErrorComponentCorrelation;
-                    windErrorSpatialScale=region.windErrorSpatialScale;
-                    windErrorTemporalScale=region.windErrorTemporalScale;
-                }
-                if (windErrorStdDev>0) {
-                    double first=forcingErrorNormal(configData->randomSeed,localParticleData.id,
-                            uncertaintyInterval,uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT,
-                            longitude,latitude,physicalTime+.5*configData->trackingDirection*stepDt,windErrorSpatialScale,
-                            windErrorTemporalScale);
-                    double second=forcingErrorNormal(configData->randomSeed,localParticleData.id,
-                            uncertaintyInterval,uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT,
-                            longitude,latitude,physicalTime+.5*configData->trackingDirection*stepDt,windErrorSpatialScale,
-                            windErrorTemporalScale);
-                    windU+=windErrorStdDev*first;
-                    windV+=windErrorStdDev*correlatedNormal(first,second,windErrorCorrelation);
-                }
-                double downwindNormal=0,crosswindNormal=0;
-                if (configData->leewayCoefficientEnsemble) {
-                    downwindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
-                            LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0);
-                    crosswindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
-                            LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,1);
-                    crosswindNormal=correlatedNormal(downwindNormal,crosswindNormal,
-                                                     configData->leewayResidualCorrelation);
-                }
-                DriftVelocity leeway=computeLeeway(object.leeway,windU,windV,
-                        static_cast<DriftSide>(localParticleData.driftSide),downwindNormal,crosswindNormal);
-                uu+=static_cast<float>(leeway.u);
-                vv+=static_cast<float>(leeway.v);
-            }
-            if (configData->driftModel==1 &&
-                localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE) &&
-                stokesU && stokesV) {
-                auto waveAt=[&](Array3<float> *field) {
-                    double first=(*field)(ocean_time_idx,jI,iI)*(1-iF)*(1-jF)+(*field)(ocean_time_idx,jI+1,iI)*(1-iF)*jF+
-                                 (*field)(ocean_time_idx,jI+1,iI+1)*iF*jF+(*field)(ocean_time_idx,jI,iI+1)*iF*(1-jF);
-                    double next=(*field)(nextOceanTimeIdx,jI,iI)*(1-iF)*(1-jF)+(*field)(nextOceanTimeIdx,jI+1,iI)*(1-iF)*jF+
-                                (*field)(nextOceanTimeIdx,jI+1,iI+1)*iF*jF+(*field)(nextOceanTimeIdx,jI,iI+1)*iF*(1-jF);
-                    return NumericalHelpers::interpolateTime(first,next,alpha);
-                };
-                uu+=static_cast<float>(waveAt(stokesU)); vv+=static_cast<float>(waveAt(stokesV));
-            }
 
 #ifdef DEBUG
-            LOG4CPLUS_DEBUG(logger, "vv:" << vv );
+                LOG4CPLUS_DEBUG(logger, "uu:" << uu);
 #endif
 
-            // 0,0,690,533
+                // Perform the bilinear interpolation (2D) in order to get
+                // the v component of the current field in the particle position.
+                float v1 = vAt(kI, jI, iI, stageAlpha) * (1.0 - iF) * (1.0 - jF);
+                float v2 = vAt(kI, jI + 1, iI, stageAlpha) * (1.0 - iF) * jF;
+                float v3 = vAt(kI, jI + 1, iI + 1, stageAlpha) * iF * jF;
+                float v4 = vAt(kI, jI, iI + 1, stageAlpha) * iF * (1.0 - jF);
 
-            // Perform the bilinear interpolation (3D) in order to get
-            // the w component of the current field in the particle position.
-            float w1 = wAt(kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
-            float w2 = wAt(kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
-            float w3 = wAt(kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
-            float w4 = wAt(kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
-            float w5 = wAt(kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
-            float w6 = wAt(kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
-            float w7 = wAt(kI - 1, jI + 1, iI + 1) * iF * jF * kF;
-            float w8 = wAt(kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
+                // The current v component in the particle position
+                vv = v1 + v2 + v3 + v4;
 
-            // The current w component in the particle position
-            float ww = w1 + w2 + w3 + w4 + w5 + w6 + w7 + w8;
+                // Object drift is direction-neutral. The solver applies trackingDirection below.
+                if (configData->driftModel==1 &&
+                    localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE)) {
+                    const auto& object=DriftObjectCatalog::definition(
+                            static_cast<DriftObjectType>(localParticleData.driftObjectType));
+                    auto environmentAt=[&](Array3<float> *field) {
+                        if (!field) return 0.0;
+                        float f1=(*field)(ocean_time_idx,jI,iI)*(1-iF)*(1-jF);
+                        float f2=(*field)(ocean_time_idx,jI+1,iI)*(1-iF)*jF;
+                        float f3=(*field)(ocean_time_idx,jI+1,iI+1)*iF*jF;
+                        float f4=(*field)(ocean_time_idx,jI,iI+1)*iF*(1-jF);
+                        float n1=(*field)(nextOceanTimeIdx,jI,iI)*(1-iF)*(1-jF);
+                        float n2=(*field)(nextOceanTimeIdx,jI+1,iI)*(1-iF)*jF;
+                        float n3=(*field)(nextOceanTimeIdx,jI+1,iI+1)*iF*jF;
+                        float n4=(*field)(nextOceanTimeIdx,jI,iI+1)*iF*(1-jF);
+                        return NumericalHelpers::interpolateTime(f1+f2+f3+f4,n1+n2+n3+n4,stageAlpha);
+                    };
+                    double windU=windU10 ? environmentAt(windU10) : configData->windU10;
+                    double windV=windV10 ? environmentAt(windV10) : configData->windV10;
+                    std::int64_t uncertaintyInterval=static_cast<std::int64_t>(std::llround(std::min(intervalStart,intervalEnd)));
+                    std::uint64_t uncertaintySubstep=static_cast<std::uint64_t>(std::floor(elapsed/dti));
+                    double longitude=lonRad(jI,iI)*(1-iF)*(1-jF)+lonRad(jI+1,iI)*(1-iF)*jF+
+                              lonRad(jI+1,iI+1)*iF*jF+lonRad(jI,iI+1)*iF*(1-jF);
+                    double latitude=latRad(jI,iI)*(1-iF)*(1-jF)+latRad(jI+1,iI)*(1-iF)*jF+
+                             latRad(jI+1,iI+1)*iF*jF+latRad(jI,iI+1)*iF*(1-jF);
+                    double windErrorStdDev=configData->windErrorStdDev;
+                    double windErrorCorrelation=configData->windErrorComponentCorrelation;
+                    double windErrorSpatialScale=configData->windErrorSpatialScale;
+                    double windErrorTemporalScale=configData->windErrorTemporalScale;
+                    int calibration=observationalCalibrationRegion(configData->observationalCalibrationRegions,
+                            configData->observationalCalibrationRegionCount,longitude,latitude);
+                    if (calibration>=0) {
+                        const auto& region=configData->observationalCalibrationRegions[calibration];
+                        windErrorStdDev=region.windErrorStdDev;
+                        windErrorCorrelation=region.windErrorComponentCorrelation;
+                        windErrorSpatialScale=region.windErrorSpatialScale;
+                        windErrorTemporalScale=region.windErrorTemporalScale;
+                    }
+                    if (windErrorStdDev>0) {
+                        double first=forcingErrorNormal(configData->randomSeed,localParticleData.id,
+                                uncertaintyInterval,uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT,
+                                longitude,latitude,physicalTime+.5*configData->trackingDirection*stepDt,windErrorSpatialScale,
+                                windErrorTemporalScale);
+                        double second=forcingErrorNormal(configData->randomSeed,localParticleData.id,
+                                uncertaintyInterval,uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT,
+                                longitude,latitude,physicalTime+.5*configData->trackingDirection*stepDt,windErrorSpatialScale,
+                                windErrorTemporalScale);
+                        windU+=windErrorStdDev*first;
+                        windV+=windErrorStdDev*correlatedNormal(first,second,windErrorCorrelation);
+                    }
+                    double downwindNormal=0,crosswindNormal=0;
+                    if (configData->leewayCoefficientEnsemble) {
+                        downwindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0);
+                        crosswindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,1);
+                        crosswindNormal=correlatedNormal(downwindNormal,crosswindNormal,
+                                                         configData->leewayResidualCorrelation);
+                    }
+                    DriftVelocity leeway=computeLeeway(object.leeway,windU,windV,
+                            static_cast<DriftSide>(localParticleData.driftSide),downwindNormal,crosswindNormal);
+                    uu+=static_cast<float>(leeway.u);
+                    vv+=static_cast<float>(leeway.v);
+                }
+                if (configData->driftModel==1 &&
+                    localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE) &&
+                    stokesU && stokesV) {
+                    auto waveAt=[&](Array3<float> *field) {
+                        double first=(*field)(ocean_time_idx,jI,iI)*(1-iF)*(1-jF)+(*field)(ocean_time_idx,jI+1,iI)*(1-iF)*jF+
+                                     (*field)(ocean_time_idx,jI+1,iI+1)*iF*jF+(*field)(ocean_time_idx,jI,iI+1)*iF*(1-jF);
+                        double next=(*field)(nextOceanTimeIdx,jI,iI)*(1-iF)*(1-jF)+(*field)(nextOceanTimeIdx,jI+1,iI)*(1-iF)*jF+
+                                    (*field)(nextOceanTimeIdx,jI+1,iI+1)*iF*jF+(*field)(nextOceanTimeIdx,jI,iI+1)*iF*(1-jF);
+                        return NumericalHelpers::interpolateTime(first,next,stageAlpha);
+                    };
+                    uu+=static_cast<float>(waveAt(stokesU)); vv+=static_cast<float>(waveAt(stokesV));
+                }
+
+#ifdef DEBUG
+                LOG4CPLUS_DEBUG(logger, "vv:" << vv );
+#endif
+
+                // 0,0,690,533
+
+                // Perform the bilinear interpolation (3D) in order to get
+                // the w component of the current field in the particle position.
+                float w1 = wAt(kI, jI, iI, stageAlpha) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
+                float w2 = wAt(kI, jI + 1, iI, stageAlpha) * (1.0 - iF) * jF * (1.0 - kF);
+                float w3 = wAt(kI, jI + 1, iI + 1, stageAlpha) * iF * jF * (1.0 - kF);
+                float w4 = wAt(kI, jI, iI + 1, stageAlpha) * iF * (1.0 - jF) * (1.0 - kF);
+                float w5 = wAt(kI - 1, jI, iI, stageAlpha) * (1.0 - iF) * (1.0 - jF) * kF;
+                float w6 = wAt(kI - 1, jI + 1, iI, stageAlpha) * (1.0 - iF) * jF * kF;
+                float w7 = wAt(kI - 1, jI + 1, iI + 1, stageAlpha) * iF * jF * kF;
+                float w8 = wAt(kI - 1, jI, iI + 1, stageAlpha) * iF * (1.0 - jF) * kF;
+
+                // The current w component in the particle position
+                ww = w1 + w2 + w3 + w4 + w5 + w6 + w7 + w8;
+            };
+
+            // Explicit midpoint (default) starts from the start-of-substep velocity; the
+            // legacy forward Euler step uses the mid-substep velocity at the start position.
+            bool midpoint=configData->integrator==Config::INTEGRATOR_MIDPOINT;
+            float uu, vv, ww;
+            advectiveVelocity(kI, kF, jI, jF, iI, iF, midpoint ? alphaStart : alpha, uu, vv, ww);
 
 #ifdef DEBUG
             LOG4CPLUS_DEBUG(logger, "ww:" << ww);
@@ -567,6 +581,64 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 #ifdef DEBUG
             LOG4CPLUS_DEBUG(logger, "hc:" << hc << " depthIntervals(" << kI <<"):" << depthIntervals(kI) << " zdist:" << zdist << " ydist:" << ydist << " xdist:" << xdist );
 #endif
+
+            if (midpoint) {
+                // Explicit midpoint step for the deterministic displacement:
+                //   X* = X + s F(X, t) dt/2,   X' = X + s F(X*, t + s dt/2) dt
+                // in grid-index coordinates, F being the velocity divided by the local cell size.
+                // Half-step position with the start-cell metric (vertical half leap capped at one cell)
+                double kHalfLeap = direction * (sv + ww) * 0.5 * stepDt;
+                if (abs(kHalfLeap) > zdist) kHalfLeap = sign(zdist, kHalfLeap);
+                double iMid = localParticleData.i + direction * uu * 0.5 * stepDt / xdist;
+                double jMid = localParticleData.j + direction * vv * 0.5 * stepDt / ydist;
+                double kMid = std::min(0.0, std::max(kLowerLimit, localParticleData.k + kHalfLeap / zdist));
+                int iMI = NumericalHelpers::horizontalCell(iMid);
+                int jMI = NumericalHelpers::horizontalCell(jMid);
+                bool midValid = NumericalHelpers::validInterpolationCell(jMI, iMI, eta_rho, xi_rho);
+                double hcMid = 0;
+                if (midValid) {
+                    double iMF = iMid - iMI, jMF = jMid - jMI;
+                    hcMid = h(jMI, iMI) * (1.0 - iMF) * (1.0 - jMF) + h(jMI + 1, iMI) * (1.0 - iMF) * jMF +
+                            h(jMI + 1, iMI + 1) * iMF * jMF + h(jMI, iMI + 1) * iMF * (1.0 - jMF) +
+                            zetaAt(jMI, iMI) * (1.0 - iMF) * (1.0 - jMF) + zetaAt(jMI + 1, iMI) * (1.0 - iMF) * jMF +
+                            zetaAt(jMI + 1, iMI + 1) * iMF * jMF + zetaAt(jMI, iMI + 1) * iMF * (1.0 - jMF);
+                    midValid = hcMid > shoreLimit && hcMid > 0;
+                }
+                if (midValid) {
+                    // Second stage: velocity and cell size at the midpoint and mid-substep time
+                    double iMF = iMid - iMI, jMF = jMid - jMI;
+                    int kMI = NumericalHelpers::upperVerticalLevel(kMid);
+                    double kMF = NumericalHelpers::lowerVerticalWeight(kMid);
+                    float um, vm, wm;
+                    advectiveVelocity(kMI, kMF, jMI, jMF, iMI, iMF, alpha, um, vm, wm);
+
+                    // Cell sizes at the midpoint (same Haversine formulas as above)
+                    double mLat = latRad(jMI + 1, iMI) - latRad(jMI, iMI);
+                    double mLatLon = pow(sin(0.5 * mLat), 2);
+                    double ydistMid = 2.0 * atan2(pow(mLatLon, .5), pow(1.0 - mLatLon, .5)) * 6371000.0;
+                    double mLon = lonRad(jMI, iMI + 1) - lonRad(jMI, iMI);
+                    mLatLon = pow(sin(0.5 * mLon), 2) * cos(latRad(jMI, iMI + 1)) * cos(latRad(jMI, iMI));
+                    double xdistMid = 2.0 * atan2(pow(mLatLon, .5), pow(1.0 - mLatLon, .5)) * 6371000.0;
+                    double zdistMid = hcMid * depthIntervals(kMI);
+
+                    // Express the midpoint displacement in metres of the start cell, so that the
+                    // index update, vertical cap and closures below apply unchanged:
+                    // (s u* dt / dx*) dx = s u* dt dx / dx*
+                    dxleap = direction * um * stepDt * xdist / xdistMid;
+                    dyleap = direction * vm * stepDt * ydist / ydistMid;
+                    dzleap = direction * (sv + wm) * stepDt * zdist / zdistMid;
+                } else {
+                    // Midpoint outside the interpolation domain or on land: legacy Euler step
+                    float ue, ve, we;
+                    advectiveVelocity(kI, kF, jI, jF, iI, iF, alpha, ue, ve, we);
+                    dxleap = direction * ue * stepDt;
+                    dyleap = direction * ve * stepDt;
+                    dzleap = direction * (sv + we) * stepDt;
+                }
+                xleap = dxleap + rxleap;
+                yleap = dyleap + ryleap;
+                zleap = dzleap + rzleap;
+            }
 
             // Check if the vertical leap is greather than the vertical dimension of the cell in meters
             if (abs(zleap) > zdist) {

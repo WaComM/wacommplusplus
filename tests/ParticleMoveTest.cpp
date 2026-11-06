@@ -235,4 +235,66 @@ int main() {
                          &windU,&windV,&stokesU,&stokesV);
     assert(std::abs(coupledBackward.I()-.25)<1.e-8);
     assert(std::abs(coupledBackward.J()-.25)<1.e-8);
+
+    // Explicit midpoint step. A steady current u=b*i (b=10 m/s across one cell of width
+    // xdist) gives di/dt=b*i/xdist, whose exact solution is i(t)=i0*exp(b*t/xdist).
+    config_data midpointConfig{};
+    midpointConfig.random=false; midpointConfig.deltat=3600; midpointConfig.survprob=0;
+    midpointConfig.tau0=86400; midpointConfig.crid=1; midpointConfig.sigma=3.46;
+    midpointConfig.shoreLimit=.25;
+    midpointConfig.upperClosure=Config::CLOSURE_MODE_CONSTRAINT;
+    midpointConfig.lowerClosure=Config::CLOSURE_MODE_CONSTRAINT;
+    midpointConfig.horizontalClosure=Config::CLOSURE_MODE_CONSTRAINT;
+    midpointConfig.trackingDirection=Config::TRACKING_FORWARD;
+    midpointConfig.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+    Array1<double> hourTime(2); hourTime(0)=0; hourTime(1)=3600;
+    Array4<float> shearU(2,2,2,2,0,-1,0,0); shearU=0.0f;
+    for (int t=0;t<2;t++) for (int k=-1;k<=0;k++) for (int j=0;j<2;j++) shearU(t,k,j,1)=10.0f;
+    double exactShear=.25*std::exp(10.0*3600.0/xdist);
+    auto shearError=[&](int integrator,double dti) {
+        midpointConfig.integrator=integrator; midpointConfig.dti=dti;
+        Particle particle(40,-.5,.25,.25,0);
+        particle.move(&midpointConfig,0,hourTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,shearU,v,w,akt);
+        assert(particle.Health()>0);
+        return std::abs(particle.I()-exactShear);
+    };
+    double euler600=shearError(Config::INTEGRATOR_EULER,600),euler300=shearError(Config::INTEGRATOR_EULER,300);
+    double midpoint600=shearError(Config::INTEGRATOR_MIDPOINT,600),midpoint300=shearError(Config::INTEGRATOR_MIDPOINT,300);
+    // First-order error halves, second-order error quarters when the step is halved
+    assert(euler600/euler300>1.8 && euler600/euler300<2.2);
+    assert(midpoint600/midpoint300>3.6 && midpoint600/midpoint300<4.4);
+    assert(midpoint600<euler600/20);
+
+    // Midpoint backward tracking returns to the release point within the O(dt^2) error
+    midpointConfig.integrator=Config::INTEGRATOR_MIDPOINT; midpointConfig.dti=300;
+    Particle shearForward(41,-.5,.25,.25,0);
+    shearForward.move(&midpointConfig,0,hourTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,shearU,v,w,akt);
+    midpointConfig.trackingDirection=Config::TRACKING_BACKWARD;
+    Particle shearBackward(42,-.5,shearForward.J(),shearForward.I(),3600);
+    shearBackward.move(&midpointConfig,1,hourTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,shearU,v,w,akt);
+    assert(std::abs(shearBackward.I()-.25)<2*midpoint300);
+    assert(std::abs(shearBackward.Age()-3600)<1e-12);
+
+    // Continuous and restarted midpoint integration take the same substeps
+    midpointConfig.trackingDirection=Config::TRACKING_FORWARD;
+    Array1<double> halfHourTime(2); halfHourTime(0)=0; halfHourTime(1)=1800;
+    Particle shearRestarted(41,-.5,.25,.25,0);
+    shearRestarted.move(&midpointConfig,0,halfHourTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,shearU,v,w,akt);
+    midpointConfig.restartCheckpoint=1800;
+    shearRestarted.move(&midpointConfig,0,hourTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,shearU,v,w,akt);
+    assert(std::abs(shearRestarted.I()-shearForward.I())<1e-12);
+    assert(std::abs(shearRestarted.Age()-shearForward.Age())<1e-12);
+    midpointConfig.restartCheckpoint=std::numeric_limits<double>::quiet_NaN();
+
+    // A midpoint outside the interpolation domain falls back to the legacy Euler step
+    Array1<double> stepTime(2); stepTime(0)=0; stepTime(1)=600;
+    midpointConfig.dti=600;
+    midpointConfig.integrator=Config::INTEGRATOR_EULER;
+    Particle edgeEuler(43,-.5,.25,.99,0);
+    edgeEuler.move(&midpointConfig,0,stepTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,shearU,v,w,akt);
+    midpointConfig.integrator=Config::INTEGRATOR_MIDPOINT;
+    Particle edgeMidpoint(43,-.5,.25,.99,0);
+    edgeMidpoint.move(&midpointConfig,0,stepTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,shearU,v,w,akt);
+    assert(edgeMidpoint.I()==edgeEuler.I() && edgeMidpoint.J()==edgeEuler.J());
+    assert(edgeMidpoint.K()==edgeEuler.K() && edgeMidpoint.Health()==edgeEuler.Health());
 }

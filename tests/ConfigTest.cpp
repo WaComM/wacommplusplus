@@ -76,6 +76,8 @@ int main() {
     assert(restored.LowerClosure()==config.LowerClosure());
     assert(restored.HorizontalClosure()==config.HorizontalClosure());
     assert(restored.RestartInterval()==config.RestartInterval());
+    // The explicit midpoint step is the default integrator and survives the round trip.
+    assert(config.Integrator()==Config::INTEGRATOR_MIDPOINT && restored.Integrator()==Config::INTEGRATOR_MIDPOINT);
     // Minute-resolution simulation times survive parsing and the JSON round trip.
     assert(std::llround(config.JulianStart()*86400.0)==std::llround(JulianDate::toModJulian(Calendar(2020,1,1,6,30,0))*86400.0));
     assert(std::llround(restored.JulianStart()*86400.0)==std::llround(config.JulianStart()*86400.0));
@@ -305,6 +307,25 @@ int main() {
     try { Config invalidStepConfig(invalidStep); }
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
+    {
+        std::ofstream file(invalidStep);
+        file << R"({"physics":{"integrator":"euler"}})";
+    }
+    Config eulerConfig(invalidStep);
+    assert(eulerConfig.Integrator()==Config::INTEGRATOR_EULER);
+    eulerConfig.saveAsJson(saved);
+    Config eulerRestored(saved);
+    assert(eulerRestored.Integrator()==Config::INTEGRATOR_EULER);
+    for (const char *value: {"rk4","Midpoint",""}) {
+        {
+            std::ofstream file(invalidStep);
+            file << "{\"physics\":{\"integrator\":\"" << value << "\"}}";
+        }
+        rejected=false;
+        try { Config unknownIntegrator(invalidStep); }
+        catch (const std::runtime_error &) { rejected=true; }
+        assert(rejected);
+    }
     std::remove(input.c_str()); std::remove(saved.c_str()); std::remove(invalid.c_str());
     std::remove(invalidStep.c_str());
     std::remove(leeway.c_str());

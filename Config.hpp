@@ -50,6 +50,7 @@ struct config_data {
     std::uint64_t randomSeed;
     int trackingDirection;
     int backwardDiffusion;
+    int integrator;
     double restartCheckpoint;
     int driftModel;
     bool leewayCoefficientEnsemble;
@@ -113,6 +114,7 @@ public:
     std::uint64_t RandomSeed() const;
     bool Backward() const;
     bool BackwardDiffusion() const;
+    int Integrator() const;
     bool Leeway() const;
     bool LeewayCoefficientEnsemble() const;
     double LeewayResidualCorrelation() const;
@@ -189,6 +191,8 @@ public:
     static const int CLOSURE_MODE_REFLECTION=3;
     static const int TRACKING_FORWARD=1;
     static const int TRACKING_BACKWARD=-1;
+    static const int INTEGRATOR_EULER=1;
+    static const int INTEGRATOR_MIDPOINT=2;
 
 private:
     struct ObservationalCalibrationMetadata {

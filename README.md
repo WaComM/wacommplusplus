@@ -79,6 +79,8 @@ solver equations or certify upstream ocean-model accuracy.
 
 ## Recent changes
 
+- Particle positions are now advanced with the explicit second-order midpoint method by default (`physics.integrator="midpoint"`). On a steady sheared current, halving the step reduces the error 3.9 times, against 2.0 times for the previous forward Euler step. That step remains available as `"integrator":"euler"` and reproduces earlier results bit for bit; configurations that omit the key change trajectories. CPU and CUDA share the scheme. See the [model description](docs/model.md#temporal-integration).
+
 - An offline [end-to-end regression](docs/application-verification.md) now runs the complete executable, serially, with OpenMP, and on two MPI ranks. It found and fixed four defects. Hourly history and gridded outputs could be skipped silently because of modified-Julian round-off. Text restarts were written with six significant digits. Text restarts truncated 64-bit identities. A `.json` restart silently loaded zero particles. `restart.interval` and `io.timestep` must now be whole positive seconds.
 - `USE_PROJ=ON` failed to configure on macOS and Linux because pkg-config had not been loaded in that scope. It now prefers PROJ's CMake package, and CI builds it on Ubuntu and macOS.
 - ROMS input now rotates declared grid-relative U/V into east/north after the
