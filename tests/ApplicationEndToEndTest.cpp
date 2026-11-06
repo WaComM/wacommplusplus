@@ -13,7 +13,8 @@
 //   application_end_to_end_test verify <directory>
 //       compares the JSON particle histories produced by the executable with
 //       the analytic solution of dx/dt=u, dy/dt=v and with the forward/backward
-//       round trip.
+//       round trip, and checks a run whose start and release are at 00:30
+//       (YYYYMMDDZhhmm) for release time, age, position, and whole-hour output.
 //
 // The uniform current makes the exact Lagrangian displacement independent of
 // the interpolation operator, so the comparison verifies the executable path
@@ -121,6 +122,18 @@ void generate(const std::string& directory) {
     std::ofstream(directory+"/sources.json") << pointSource(PARTICLES).dump(2) << "\n";
     for (const std::string direction: {"forward","backward"})
         std::ofstream(directory+"/"+direction+".json") << configuration(direction).dump(2) << "\n";
+
+    // Minute-resolution case: simulation and release at 00:30 inside the first window
+    json source=pointSource(PARTICLES);
+    source["features"][0]["properties"]["start"]="20210701Z0030";
+    source["features"][0]["properties"]["end"]="20210701Z0030";
+    std::ofstream(directory+"/sources-minutes.json") << source.dump(2) << "\n";
+    json minutes=configuration("forward");
+    minutes["simulation"]["start"]="20210701Z0030";
+    minutes["sources"]["sources_file"]="sources-minutes.json";
+    minutes["io"]["nc_output_root"]="minutes-conc-";
+    minutes["io"]["history_root"]="minutes-history-";
+    std::ofstream(directory+"/minutes.json") << minutes.dump(2) << "\n";
 }
 
 // Documentation case: six hourly windows, NetCDF snapshots, and seeded
@@ -214,6 +227,26 @@ void verify(const std::string& directory) {
         std::cout << "backward id=" << id << " lon=" << lonBack << " lat=" << latBack
                   << " round_trip_m=" << round << "\n";
         assert(round<1e-3);
+    }
+
+    // Release at 00:30: output cadence stays on whole hours (origin = start of the hour
+    // containing simulation.start), the particle is 1800 s old at 01:00 and 5400 s at 02:00.
+    auto minutesMiddle=particles(directory+"/minutes-history-20210701Z01.txt");
+    auto minutesEnd=particles(directory+"/minutes-history-20210701Z02.txt");
+    assert((int)minutesEnd.size()==PARTICLES && minutesMiddle.size()==minutesEnd.size());
+    double releaseTime=modJulianSeconds(0)+1800.0;
+    double Tm=WINDOWS*WINDOW-1800.0;
+    double latEndM=SOURCE_LAT+V*Tm/EARTH_RADIUS*180.0/PI;
+    double phi1m=latEndM*PI/180.0;
+    double lonEndM=SOURCE_LON+(U/V)*std::log(std::tan(PI/4+phi1m/2)/std::tan(PI/4+phi0/2))*180.0/PI;
+    for (auto& [id,state]: minutesEnd) {
+        assert(std::abs(minutesMiddle.at(id).age-1800.0)<1e-3);
+        assert(std::abs(state.age-Tm)<1e-3);
+        assert(std::abs(state.time-releaseTime)<1e-3);
+        double dx=(state.lon-lonEndM)*PI/180.0*EARTH_RADIUS*std::cos(phi1m);
+        double dy=(state.lat-latEndM)*PI/180.0*EARTH_RADIUS;
+        std::cout << "minutes id=" << id << " age=" << state.age << " error_m=" << std::hypot(dx,dy) << "\n";
+        assert(std::hypot(dx,dy)<1e-3*std::hypot(U,V)*Tm);
     }
 }
 

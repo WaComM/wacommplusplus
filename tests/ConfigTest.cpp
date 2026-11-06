@@ -2,6 +2,7 @@
 #include "../JulianDate.hpp"
 
 #include <cassert>
+#include <cmath>
 #include <cstdio>
 #include <fstream>
 #include <stdexcept>
@@ -14,13 +15,28 @@ int main() {
     try { Calendar invalidCalendar("2020130100"); }
     catch (const std::invalid_argument &) { invalidCalendarRejected=true; }
     assert(invalidCalendarRejected);
-    // YYYYMMDDZhhmm is accepted only with 00 minutes; configured times have whole-hour
-    // resolution, so 20200101Z0030 must not silently become 00:00.
-    Calendar zuluMinutes("20200101Z0600");
-    assert(zuluMinutes.get(Calendar::HOUR_OF_DAY)==6 && zuluMinutes.get(Calendar::MINUTES)==0);
-    assert(JulianDate::toModJulian(zuluMinutes)==JulianDate::toModJulian(Calendar("20200101Z06")));
-    for (const char *value: {"20200101Z0030","20200101Z000","2020010100Z","20200101Z00x","202001010000",
-                             "20200101Z0060","2020010100 "}) {
+    // YYYYMMDDZhhmm carries minutes into physical time and back.
+    Calendar zuluHour("20200101Z0600"),zuluMinutes("20200101Z0630");
+    assert(zuluHour.get(Calendar::HOUR_OF_DAY)==6 && zuluHour.get(Calendar::MINUTES)==0);
+    assert(JulianDate::toModJulian(zuluHour)==JulianDate::toModJulian(Calendar("20200101Z06")));
+    assert(zuluMinutes.get(Calendar::HOUR_OF_DAY)==6 && zuluMinutes.get(Calendar::MINUTES)==30);
+    assert(std::llround((JulianDate::toModJulian(zuluMinutes)-JulianDate::toModJulian(zuluHour))*86400.0)==1800);
+    assert(zuluHour.asNCEPdate()=="20200101Z06" && zuluMinutes.asNCEPdate()=="20200101Z0630");
+    // Every minute of a day, including 23:59 and the midnight carry, round-trips exactly.
+    for (int minuteOfDay=0;minuteOfDay<1440;minuteOfDay++) {
+        Calendar original(2021,7,1,minuteOfDay/60,minuteOfDay%60,0),restored;
+        JulianDate::fromModJulian(JulianDate::toModJulian(original),restored);
+        assert(restored.get(Calendar::DAY_OF_MONTH)==1 && restored.get(Calendar::HOUR_OF_DAY)==minuteOfDay/60);
+        assert(restored.get(Calendar::MINUTES)==minuteOfDay%60 && restored.get(Calendar::SECONDS)==0);
+    }
+    Calendar beforeMidnight,afterMidnight;
+    JulianDate::fromModJulian(JulianDate::toModJulian(Calendar("20210630Z23"))+3599.99999/86400.0,beforeMidnight);
+    assert(beforeMidnight.get(Calendar::DAY_OF_MONTH)==1 && beforeMidnight.get(Calendar::HOUR_OF_DAY)==0);
+    JulianDate::fromModJulian(JulianDate::toModJulian(Calendar("20210701Z00"))-0.00001/86400.0,afterMidnight);
+    assert(afterMidnight.get(Calendar::DAY_OF_MONTH)==1 && afterMidnight.get(Calendar::HOUR_OF_DAY)==0 &&
+           afterMidnight.get(Calendar::MINUTES)==0);
+    for (const char *value: {"20200101Z000","2020010100Z","20200101Z00x","202001010000",
+                             "20200101Z0060","20200101Z006x","2020010100 "}) {
         invalidCalendarRejected=false;
         try { Calendar invalidCalendar(value); }
         catch (const std::invalid_argument &) { invalidCalendarRejected=true; }
@@ -37,7 +53,7 @@ int main() {
     {
         std::ofstream file(input);
         file << R"({
-          "simulation":{"start":"2020010100","end":"2020010200"},
+          "simulation":{"start":"20200101Z0630","end":"20200102Z0045"},
           "io":{"ocean_model":"ROMS","base_path":".","nc_inputs":["forcing.nc"]},
           "restart":{"active":true,"restart_file":"checkpoint.nc","interval":1800},
           "physics":{"random":true,"random_seed":9007199254740993,"sigma":2.5,"shore_limit":0.4,
@@ -60,6 +76,12 @@ int main() {
     assert(restored.LowerClosure()==config.LowerClosure());
     assert(restored.HorizontalClosure()==config.HorizontalClosure());
     assert(restored.RestartInterval()==config.RestartInterval());
+    // Minute-resolution simulation times survive parsing and the JSON round trip.
+    assert(std::llround(config.JulianStart()*86400.0)==std::llround(JulianDate::toModJulian(Calendar(2020,1,1,6,30,0))*86400.0));
+    assert(std::llround(restored.JulianStart()*86400.0)==std::llround(config.JulianStart()*86400.0));
+    assert(std::llround(restored.JulianEnd()*86400.0)==std::llround(config.JulianEnd()*86400.0));
+    assert(config.asJson().find("\"20200101Z0630\"")!=string::npos);
+    assert(config.asJson().find("\"20200102Z0045\"")!=string::npos);
     const string leeway="config-test-leeway.json";
     {
         std::ofstream file(leeway);
@@ -76,7 +98,12 @@ int main() {
     assert(drift.WindErrorComponentCorrelation()==.4 && drift.WindErrorSpatialScale()==10000);
     assert(drift.WindErrorTemporalScale()==3600);
     drift.saveAsJson(saved);
+    // A configuration without a simulation section has no start or end: they are not
+    // serialized (previously undefined values could be written and fail to reload).
+    assert(std::isnan(drift.JulianStart()) && std::isnan(drift.JulianEnd()));
+    assert(drift.asJson().find("\"start\"")==string::npos);
     Config driftRestored(saved);
+    assert(std::isnan(driftRestored.JulianStart()));
     assert(driftRestored.DriftObject()==DriftObjectType::KAYAK_WITH_PERSON);
     assert(driftRestored.LeewayCoefficientEnsemble());
     assert(driftRestored.LeewayResidualCorrelation()==-.35 && driftRestored.WindErrorStdDev()==1.5);

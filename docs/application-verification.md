@@ -1,6 +1,6 @@
 # Application end-to-end verification
 
-The `application_end_to_end` CTest case runs the complete `wacommplusplus` executable on a generated analytic forcing case, without external data or network access. The component tests exercise adapters, particle motion, restart I/O, and configuration parsing separately. This test checks that the executable joins them correctly: JSON configuration, native WACOMM adapter, cross-file boundary assembly, GeoJSON source emission, forward integration, text restart output and input, backward integration, hourly particle histories, and hourly gridded-count output.
+The `application_end_to_end` CTest case runs the complete `wacommplusplus` executable on a generated analytic forcing case, without external data or network access. The component tests exercise adapters, particle motion, restart I/O, and configuration parsing separately. This test checks that the executable joins them correctly: JSON configuration, native WACOMM adapter, cross-file boundary assembly, GeoJSON source emission, forward integration, text restart output and input, backward integration, hourly particle histories, and hourly gridded-count output. A third run starts the simulation and a point release at `20210701Z0030` and checks the release time, particle age, analytic position, and that whole-hour outputs are still written.
 
 It is numerical verification of the implemented equations on a synthetic case (Oberkampf and Trucano, 2002). It is not observational validation, and it says nothing about the accuracy of any ocean product.
 

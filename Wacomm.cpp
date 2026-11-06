@@ -826,8 +826,13 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
     if (world_rank==0) {
         Calendar calFinal;
 
-        // Get initial oceanTime from config file
-        double startOceanTime=config->JulianStart()*86400;
+        // Output cadence origin: the start of the UTC hour containing simulation.start
+        // (whole seconds). Equal to simulation.start for whole-hour starts; a start such as
+        // 10:30 keeps outputs on the whole-hour forcing records instead of never matching.
+        if (!std::isfinite(config->JulianStart()))
+            throw std::runtime_error("simulation.start is required: it is the output cadence origin");
+        long long startSecond=std::llround(config->JulianStart()*86400);
+        double startOceanTime=(double)(startSecond-((startSecond%3600)+3600)%3600);
 
         // Calculate the oceanTime at the end of calculations
         double finalOceanTime=config->Backward() ? oceanModelAdapter->OceanTime()[0] :

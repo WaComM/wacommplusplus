@@ -4,6 +4,7 @@
 
 #include "JulianDate.hpp"
 #include <math.h>
+#include <cmath>
 #include <chrono>
 #include <ctime>
 #include <stdexcept>
@@ -36,8 +37,8 @@ double JulianDate::toJulian(int year, int month, int day, int hour, int minute, 
         int ja = (int)(0.01 * julianYear);
         julian += 2 - ja + (0.25 * ja);
     }
-    //julian=floor(julian)+hour/24.+minute/1440.+second/86400.;
-    julian=floor(julian)+hour/24.;
+    // Day count from midnight plus the time of day in seconds
+    julian=floor(julian)+(hour*3600.0+minute*60.0+second)/86400.0;
 
     return julian;
 }
@@ -60,14 +61,16 @@ void JulianDate::fromJulian(double injulian, Calendar &cal) {
  */
 void JulianDate::fromJulian(double injulian, int &year, int &month, int &day, int &hour, int &minute, int &second) {
     int jalpha,ja,jb,jc,jd,je;
-    double hf=injulian-floor(injulian);
-    hour=(int)round(24*hf);
-    double mf=24*hf - hour;
-    minute=(int)round(60*mf);
-    double sf=60*mf-minute;
-    second=(int)round(60*sf);
-    double julian = injulian + HALFSECOND / 86400.0;
-    ja = (int) julian;
+    // Time of day rounded to the nearest whole second: day counts near 2.4e6 carry
+    // O(1e-5) s round-off, and rounding the hour alone mis-assigned minutes (00:30
+    // became hour 1, minute -30). A value that rounds to 86400 s is the next midnight.
+    double dayCount=floor(injulian);
+    long long secondOfDay=std::llround((injulian-dayCount)*86400.0);
+    if (secondOfDay>=86400) { secondOfDay-=86400; dayCount+=1; }
+    hour=(int)(secondOfDay/3600);
+    minute=(int)((secondOfDay%3600)/60);
+    second=(int)(secondOfDay%60);
+    ja = (int) dayCount;
     if (ja>= JGREG) {
         jalpha = (int) (((ja - 1867216) - 0.25) / 36524.25);
         ja = ja + 1 + jalpha - jalpha / 4;
@@ -170,13 +173,11 @@ string Calendar::format(string format) {
 void Calendar::parse(string format, string value) {
     tm my_tm{};
     if (format=="%Y%m%dZ%H") {
-        // Accepted forms: YYYYMMDDhh, YYYYMMDDZhh and YYYYMMDDZhhmm. Configured times
-        // have whole-hour resolution (toJulian keeps hours only), so a minute field
-        // must be 00: a nonzero value is rejected rather than silently truncated.
+        // Accepted UTC forms: YYYYMMDDhh, YYYYMMDDZhh and YYYYMMDDZhhmm (minutes 00-59).
         bool zulu=value.size()>8 && value[8]=='Z';
         if (!(value.size()==10 && !zulu) && !(value.size()==11 && zulu) && !(value.size()==13 && zulu))
             throw std::invalid_argument("Invalid calendar value: " + value +
-                                        " (expected YYYYMMDDhh, YYYYMMDDZhh or YYYYMMDDZhh00)");
+                                        " (expected YYYYMMDDhh, YYYYMMDDZhh or YYYYMMDDZhhmm)");
         auto digits=[&](std::size_t offset,std::size_t count) {
             for (std::size_t index=offset;index<offset+count;index++)
                 if (value[index]<'0' || value[index]>'9')
@@ -187,9 +188,7 @@ void Calendar::parse(string format, string value) {
         my_tm.tm_mon=digits(4,2)-1;
         my_tm.tm_mday=digits(6,2);
         my_tm.tm_hour=digits(zulu ? 9 : 8,2);
-        if (value.size()==13 && digits(11,2)!=0)
-            throw std::invalid_argument("Calendar value " + value +
-                                        " has nonzero minutes; configured times have whole-hour resolution");
+        if (value.size()==13) my_tm.tm_min=digits(11,2);
     } else {
         std::istringstream input(value);
         input >> std::get_time(&my_tm,format.c_str());
@@ -198,7 +197,7 @@ void Calendar::parse(string format, string value) {
             throw std::invalid_argument("Invalid calendar value: " + value);
     }
     if (my_tm.tm_mon<0 || my_tm.tm_mon>11 || my_tm.tm_mday<1 || my_tm.tm_mday>31 ||
-        my_tm.tm_hour<0 || my_tm.tm_hour>23)
+        my_tm.tm_hour<0 || my_tm.tm_hour>23 || my_tm.tm_min<0 || my_tm.tm_min>59)
         throw std::invalid_argument("Invalid calendar value: " + value);
     _data[YEAR]=my_tm.tm_year+1900;
     _data[MONTH] = my_tm.tm_mon;
@@ -246,5 +245,8 @@ int Calendar::get(int idx) { return _data[idx];}
 void Calendar::set(int idx, int value) { _data[idx] = value;}
 
 string Calendar::asNCEPdate() {
-    return format("%Y%m%dZ%H");
+    // Whole hours keep the historical YYYYMMDDZhh stamp; other times append the
+    // minutes (YYYYMMDDZhhmm) so sub-hour stamps neither collide nor lose time.
+    if (_data[MINUTES]==0) return format("%Y%m%dZ%H");
+    return format("%Y%m%dZ%H%M");
 }

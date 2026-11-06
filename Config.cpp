@@ -46,6 +46,10 @@ void Config::setDefault() {
     // Is the model dry mode?
     dry = false;
 
+    // Simulation start and end are unset (NaN) until configured
+    julianStart = std::numeric_limits<double>::quiet_NaN();
+    julianEnd = std::numeric_limits<double>::quiet_NaN();
+
     // Input time step in s
     _data.deltat=3600;
 
@@ -585,18 +589,23 @@ void Config::OceanModel(string value) {
 
 string Config::asJson() const {
 
-    Calendar calStart, calEnd;
-
-    JulianDate::fromModJulian(julianStart, calStart);
-    JulianDate::fromModJulian(julianEnd, calEnd);
-
     json simulation = {
             { "name", name },
             { "institution", institution },
-            { "url", url},
-            { "start", calStart.asNCEPdate()},
-            { "end", calEnd.asNCEPdate() }
+            { "url", url}
     };
+
+    // Unset simulation times are omitted rather than serialized from an undefined value
+    if (std::isfinite(julianStart)) {
+        Calendar calStart;
+        JulianDate::fromModJulian(julianStart, calStart);
+        simulation["start"]=calStart.asNCEPdate();
+    }
+    if (std::isfinite(julianEnd)) {
+        Calendar calEnd;
+        JulianDate::fromModJulian(julianEnd, calEnd);
+        simulation["end"]=calEnd.asNCEPdate();
+    }
 
     json io = {
             { "ocean_model", oceanModel},
