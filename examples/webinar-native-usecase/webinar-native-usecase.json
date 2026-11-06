@@ -53,6 +53,7 @@
 		"sources_file": "examples/sources-webinar/sources-webinar.json"
 	},
 	"physics": {
+		"integrator": "euler",
 		"random": true,
 		"random_sources": true,
 		"random_seed": 5489,

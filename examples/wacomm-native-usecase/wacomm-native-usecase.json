@@ -52,6 +52,7 @@
 		"sources_file": "examples/sources-campania_region/sources-campania_region.json"
 	},
 	"physics": {
+		"integrator": "midpoint",
 		"random": false,
 		"random_sources": false,
 		"random_seed": 5489,

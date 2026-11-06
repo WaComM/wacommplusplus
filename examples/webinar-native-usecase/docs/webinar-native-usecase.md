@@ -140,6 +140,8 @@ all required tuples pass. Population sampling density is not a physical flux;
 changing it creates a different workload with its own baseline. No probability,
 confidence region, unique backward origin or calibrated object drift is implied.
 
+`physics.integrator` is pinned to `euler`, the legacy first-order step that produced the archived results, timings, and figures of this guide. Those results remain reproducible with the current build; switching to the default `midpoint` integrator changes trajectories and roughly doubles velocity sampling per step, so the archived evidence must be regenerated before it is compared with a midpoint run. See [temporal integration](../../../docs/model.md#temporal-integration).
+
 ## Reproducibility
 
 All example-specific run archives live under ignored `examples/webinar-native-usecase/data/`.

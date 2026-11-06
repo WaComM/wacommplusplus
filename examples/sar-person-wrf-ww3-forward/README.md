@@ -20,6 +20,8 @@ WRF wind and WW3 Stokes components are bilinearly interpolated and therefore smo
 
 Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
 
+`physics.integrator` selects the explicit second-order midpoint step, which is the default. Results produced before this option existed used the first-order `euler` step and can be reproduced by setting `"integrator": "euler"`; the two differ by the time-step discretization error, which should be checked by halving `dti`. See [temporal integration](../../docs/model.md#temporal-integration).
+
 ## References
 
 - Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).

@@ -16,6 +16,8 @@ Configure and run with `cmake -S . -B build && cmake --build build` followed by 
 
 Compare two identical-seed output checksums, then repeat with a different seed. Check particle counts and domain bounds. The result is conditional on forcing resolution, closure choices, diffusion parameterization, and source assumptions; it represents possible dispersion, not observational uncertainty.
 
+`physics.integrator` selects the explicit second-order midpoint step, which is the default. Results produced before this option existed used the first-order `euler` step and can be reproduced by setting `"integrator": "euler"`; the two differ by the time-step discretization error, which should be checked by halving `dti`. See [temporal integration](../../docs/model.md#temporal-integration).
+
 ## Reproducibility
 
 Archive the Git revision, complete configuration, forcing/source checksums, seed, compiler and dependencies, CMake options, platform, parallel settings, tolerances, tests, and output checksums. Related material: [model](../../docs/model.md), [reproducibility](../../docs/reproducibility.md), and `numerical_helpers_test`.

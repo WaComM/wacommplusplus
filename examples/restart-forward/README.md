@@ -16,6 +16,8 @@ Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacom
 
 Run the same case continuously and compare final identity, position, health, age, particle count, and output checksum within the declared tolerance. A direction mismatch must fail. Exact continuation also requires identical forcing, configuration, seed, and substep policy.
 
+`physics.integrator` selects the explicit second-order midpoint step, which is the default. Results produced before this option existed used the first-order `euler` step and can be reproduced by setting `"integrator": "euler"`; the two differ by the time-step discretization error, which should be checked by halving `dti`. See [temporal integration](../../docs/model.md#temporal-integration).
+
 ## Reproducibility
 
 Archive revision, full configuration, forcing and restart checksums, compiler/dependencies, CMake options, platform/backend settings, tolerances, tests, and output checksums. See [restart](../../docs/restart.md) and [testing](../../docs/testing.md).

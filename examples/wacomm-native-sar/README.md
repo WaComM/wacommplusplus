@@ -33,6 +33,8 @@ The historical `WaComM` selector used here and uppercase `WACOMM` select the sam
 
 Apply the [shared strong-scaling and GPU evaluation protocol](../../docs/performance-evaluation.md) to this configuration. Archive a Codex performance-review note for each measured resource tuple; scientific equivalence and workload identity are prerequisites for interpreting timing.
 
+`physics.integrator` selects the explicit second-order midpoint step, which is the default. Results produced before this option existed used the first-order `euler` step and can be reproduced by setting `"integrator": "euler"`; the two differ by the time-step discretization error, which should be checked by halving `dti`. See [temporal integration](../../docs/model.md#temporal-integration).
+
 ## References
 
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).

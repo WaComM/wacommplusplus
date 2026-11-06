@@ -20,6 +20,8 @@ The adapter averages the two available wet U faces along xi and V faces along et
 
 Trajectories are conditional on ROMS resolution, forcing quality, source assumptions, closures, temporal/spatial interpolation, and processes represented by the configuration. A deterministic path does not quantify circulation or source uncertainty.
 
+`physics.integrator` selects the explicit second-order midpoint step, which is the default. Results produced before this option existed used the first-order `euler` step and can be reproduced by setting `"integrator": "euler"`; the two differ by the time-step discretization error, which should be checked by halving `dti`. See [temporal integration](../../docs/model.md#temporal-integration).
+
 ## Reproducibility
 
 Archive the Git revision, full configuration, forcing/source manifests and checksums, compiler/dependencies, CMake options, platform and architecture, MPI/OpenMP/CUDA settings, numerical tolerances, test results, and output checksums. See [model](../../docs/model.md), [adapters](../../docs/adapters.md), and [testing](../../docs/testing.md).

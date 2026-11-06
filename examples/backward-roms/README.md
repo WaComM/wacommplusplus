@@ -20,6 +20,8 @@ The adapter leaves timestamps and velocity signs unchanged. The solver traverses
 
 Finite resolution, forcing error, decay, sources, and boundary interactions can prevent exact reversibility. Report output as candidate origins conditional on circulation and model assumptions. Stochastic reverse-time interpretation is separately documented in [backtracking](../../docs/backtracking.md).
 
+`physics.integrator` selects the explicit second-order midpoint step, which is the default. Results produced before this option existed used the first-order `euler` step and can be reproduced by setting `"integrator": "euler"`; the two differ by the time-step discretization error, which should be checked by halving `dti`. See [temporal integration](../../docs/model.md#temporal-integration).
+
 ## Reproducibility
 
 Archive revision, configuration, forcing/restart checksums, seed, compiler/dependencies, CMake options, platform/backend settings, tolerances, test results, and output checksums. See [reproducibility](../../docs/reproducibility.md).

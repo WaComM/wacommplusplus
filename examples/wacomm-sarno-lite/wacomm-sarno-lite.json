@@ -37,6 +37,7 @@
       "sources_file": "examples/sources-sarno_river/sources-sarno_river.json"
     },
     "physics": {
+      "integrator": "euler",
       "random": true,
       "random_sources": false,
       "random_seed": 5489,

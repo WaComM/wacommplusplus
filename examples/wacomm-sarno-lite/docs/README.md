@@ -313,6 +313,8 @@ The MPI reference is historical, not interleaved or rerun alongside OpenMP. Each
 
 The [detailed Sarno performance evaluation](performance-evaluation.md) applies the repository protocol to 1,000, 10,000, 100,000, and 1,000,000 particles emitted per hour. It gives the exact launcher and collector commands, validation gates, all requested resource tuples, versioned charts, observed results, limitations, and per-run Codex review-note workflow. At 10,000 particles/hour, the validated CPU optimum is `1/32/0` at 0.519478 s median solver time; all one- through four-GPU timings for this workload are slower than that CPU point. Compare each other emission rate against its own baseline and select its CPU configuration independently.
 
+`physics.integrator` is pinned to `euler`, the legacy first-order step that produced the archived results, timings, and figures of this guide. Those results remain reproducible with the current build; switching to the default `midpoint` integrator changes trajectories and roughly doubles velocity sampling per step, so the archived evidence must be regenerated before it is compared with a midpoint run. See [temporal integration](../../../docs/model.md#temporal-integration).
+
 ## References
 
 

@@ -16,6 +16,8 @@ Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacom
 
 Repeat with seed `5489` and compare outputs, then change the seed and compare the origin distribution. Verify that restart direction metadata is `backward`. Conclusions are conditional on circulation, diffusion, boundaries, endpoint uncertainty, and ensemble size; report candidate origins rather than an exact source.
 
+`physics.integrator` selects the explicit second-order midpoint step, which is the default. Results produced before this option existed used the first-order `euler` step and can be reproduced by setting `"integrator": "euler"`; the two differ by the time-step discretization error, which should be checked by halving `dti`. See [temporal integration](../../docs/model.md#temporal-integration).
+
 ## Reproducibility
 
 Record revision, configuration, forcing/restart checksums, seed, toolchain, dependencies, platform, backend settings, tolerances, tests, ensemble size, and output checksums. See [backtracking](../../docs/backtracking.md), [restart](../../docs/restart.md), and [references](../../docs/references.md).

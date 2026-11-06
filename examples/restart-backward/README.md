@@ -16,6 +16,8 @@ Build with `cmake -S . -B build && cmake --build build`, then run `./build/wacom
 
 Compare final particle identity, position, health, age, count, and checksums against an uninterrupted backward run. Boundary interactions and floating-point roundoff can make a forward/backward round trip non-exact; publish the tolerance used.
 
+`physics.integrator` selects the explicit second-order midpoint step, which is the default. Results produced before this option existed used the first-order `euler` step and can be reproduced by setting `"integrator": "euler"`; the two differ by the time-step discretization error, which should be checked by halving `dti`. See [temporal integration](../../docs/model.md#temporal-integration).
+
 ## Reproducibility
 
 Archive revision, configuration, forcing/restart checksums, seed, compiler/dependencies, CMake options, platform/backend settings, tests, tolerances, and output checksums. See [backtracking](../../docs/backtracking.md) and [restart](../../docs/restart.md).

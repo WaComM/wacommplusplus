@@ -209,6 +209,8 @@ repeat adapter reads; it is not a supported download acceleration strategy here.
 The example has no particle restart or forward/backward simulation result to
 compare. Those scientific properties remain covered by the common model tests.
 
+`physics.integrator` is set to the default `midpoint` for completeness. This dry conversion does not integrate particles, so the integrator does not affect its outputs. See [temporal integration](../../../docs/model.md#temporal-integration).
+
 ## Reproducibility
 
 Keep immutable run roots under this example's ignored `data/` directory and

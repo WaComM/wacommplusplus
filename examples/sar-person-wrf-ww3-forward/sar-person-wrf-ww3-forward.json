@@ -2,7 +2,7 @@
   "io": {"ocean_model":"ROMS", "base_path":".", "nc_inputs":["forcing.nc"], "nc_output_root":"sar-person-wrf-ww3-forward"},
   "sources": {"active":true, "sources_file":"sources.json"},
   "restart": {"active":false},
-  "physics": {"random":false, "random_seed":5489, "dti":30},
+  "physics": {"integrator":"midpoint","random":false, "random_seed":5489, "dti":30},
   "tracking": {"direction":"forward", "backward_diffusion":"none"},
   "drift": {"model":"leeway", "object_type":"PERSON_IN_WATER", "side":"right"},
   "environment": {"wind":{"adapter":"WRF", "nc_inputs":["wrf.nc"], "regrid":"bilinear_curvilinear_geographic"}, "wave":{"adapter":"WW3", "nc_inputs":["ww3.nc"], "regrid":"bilinear_geographic"}}
