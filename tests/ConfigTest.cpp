@@ -14,6 +14,24 @@ int main() {
     try { Calendar invalidCalendar("2020130100"); }
     catch (const std::invalid_argument &) { invalidCalendarRejected=true; }
     assert(invalidCalendarRejected);
+    // YYYYMMDDZhhmm is accepted only with 00 minutes; configured times have whole-hour
+    // resolution, so 20200101Z0030 must not silently become 00:00.
+    Calendar zuluMinutes("20200101Z0600");
+    assert(zuluMinutes.get(Calendar::HOUR_OF_DAY)==6 && zuluMinutes.get(Calendar::MINUTES)==0);
+    assert(JulianDate::toModJulian(zuluMinutes)==JulianDate::toModJulian(Calendar("20200101Z06")));
+    for (const char *value: {"20200101Z0030","20200101Z000","2020010100Z","20200101Z00x","202001010000",
+                             "20200101Z0060","2020010100 "}) {
+        invalidCalendarRejected=false;
+        try { Calendar invalidCalendar(value); }
+        catch (const std::invalid_argument &) { invalidCalendarRejected=true; }
+        assert(invalidCalendarRejected);
+    }
+    invalidCalendarRejected=false;
+    try { Calendar trailing("%Y-%m-%d","2020-01-01T06"); }
+    catch (const std::invalid_argument &) { invalidCalendarRejected=true; }
+    assert(invalidCalendarRejected);
+    Calendar dashed("%Y-%m-%d","2020-01-01");
+    assert(dashed.get(Calendar::YEAR)==2020 && dashed.get(Calendar::DAY_OF_MONTH)==1);
     const string input="config-test-input.json",saved="config-test-saved.json",invalid="config-test-invalid.json";
     const string invalidStep="config-test-invalid-step.json";
     {

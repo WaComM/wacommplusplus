@@ -169,7 +169,14 @@ string Calendar::format(string format) {
 
 void Calendar::parse(string format, string value) {
     tm my_tm{};
-    if (format=="%Y%m%dZ%H" && (value.size()==10 || (value.size()==11 && value[8]=='Z'))) {
+    if (format=="%Y%m%dZ%H") {
+        // Accepted forms: YYYYMMDDhh, YYYYMMDDZhh and YYYYMMDDZhhmm. Configured times
+        // have whole-hour resolution (toJulian keeps hours only), so a minute field
+        // must be 00: a nonzero value is rejected rather than silently truncated.
+        bool zulu=value.size()>8 && value[8]=='Z';
+        if (!(value.size()==10 && !zulu) && !(value.size()==11 && zulu) && !(value.size()==13 && zulu))
+            throw std::invalid_argument("Invalid calendar value: " + value +
+                                        " (expected YYYYMMDDhh, YYYYMMDDZhh or YYYYMMDDZhh00)");
         auto digits=[&](std::size_t offset,std::size_t count) {
             for (std::size_t index=offset;index<offset+count;index++)
                 if (value[index]<'0' || value[index]>'9')
@@ -179,11 +186,16 @@ void Calendar::parse(string format, string value) {
         my_tm.tm_year=digits(0,4)-1900;
         my_tm.tm_mon=digits(4,2)-1;
         my_tm.tm_mday=digits(6,2);
-        my_tm.tm_hour=digits(value.size()==10 ? 8 : 9,2);
+        my_tm.tm_hour=digits(zulu ? 9 : 8,2);
+        if (value.size()==13 && digits(11,2)!=0)
+            throw std::invalid_argument("Calendar value " + value +
+                                        " has nonzero minutes; configured times have whole-hour resolution");
     } else {
         std::istringstream input(value);
         input >> std::get_time(&my_tm,format.c_str());
-        if (input.fail()) throw std::invalid_argument("Invalid calendar value: " + value);
+        // Trailing characters would otherwise be ignored silently
+        if (input.fail() || input.peek()!=std::char_traits<char>::eof())
+            throw std::invalid_argument("Invalid calendar value: " + value);
     }
     if (my_tm.tm_mon<0 || my_tm.tm_mon>11 || my_tm.tm_mday<1 || my_tm.tm_mday>31 ||
         my_tm.tm_hour<0 || my_tm.tm_hour>23)

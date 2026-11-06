@@ -10,6 +10,8 @@ Configuration is JSON or the legacy namelist form. New scientific runs should se
 {"physics":{"random":false,"random_seed":5489,"dti":30},"tracking":{"direction":"forward","backward_diffusion":"none"}}
 ```
 
+Calendar times in `simulation.start`, `simulation.end`, and source `start`/`end` are UTC values written as `YYYYMMDDhh`, `YYYYMMDDZhh`, or `YYYYMMDDZhhmm`. Configured times have whole-hour resolution: the modified-Julian conversion keeps the hour only, so the minute field of the last form must be `00`. A nonzero minute (for example `20210701Z0030`), any other length, or trailing characters are rejected at load time. Earlier revisions parsed only the hour and silently discarded the rest, so `20210701Z0030` meant 00:00.
+
 ## Source emission
 
 Each GeoJSON source feature declares an explicit `emission` object. Continuous sources use a physical-time rate:
