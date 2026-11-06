@@ -7,6 +7,7 @@
 
 #include "BuildInfo.hpp"
 #include "Config.hpp"
+#include "NumericalHelpers.hpp"
 
 #include <netcdf>
 #ifdef WACOMM_USE_PROJ
@@ -21,6 +22,7 @@ namespace Provenance {
         file.putAtt("wacomm_cmake_options",WACOMM_CMAKE_OPTIONS);
         file.putAtt("wacomm_configuration_file",config.ConfigFile());
         file.putAtt("wacomm_configuration",config.asJson());
+        file.putAtt("wacomm_random_key_scheme",NumericalHelpers::RANDOM_KEY_SCHEME);
 #ifdef WACOMM_USE_PROJ
         file.putAtt("wacomm_proj_version",proj_info().version);
 #endif

@@ -48,6 +48,13 @@ int main() {
     double later=forcingErrorNormal(5489,99,9,7,LEEWAY_WIND_ERROR_U_COMPONENT,
                                     .100001,.500001,4800,10000,3600);
     assert(shared0!=later);
+    // Ordered spatial-cell key: with a 10 km support at the equator, diagonal cells
+    // (0,0),(1,1) and transposed cells (1,2),(2,1) must sample different values.
+    auto cellNormal=[](double longitude,double latitude) {
+        return forcingErrorNormal(5489,0,0,0,LEEWAY_WIND_ERROR_U_COMPONENT,longitude,latitude,1200,10000,3600);
+    };
+    assert(cellNormal(.0008,.0008)!=cellNormal(.0024,.0024));
+    assert(cellNormal(.0024,.0035)!=cellNormal(.0035,.0024));
     struct Region { double west,south,east,north; } regions[]={{10,40,12,42},{13,40,15,42}};
     constexpr double degreesToRadians=.017453292519943295769;
     assert(observationalCalibrationRegion(regions,2,11*degreesToRadians,41*degreesToRadians)==0);

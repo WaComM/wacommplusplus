@@ -21,11 +21,19 @@ __device__ unsigned long long mix(unsigned long long value) {
     return value^(value>>31U);
 }
 
+// Same ordered key as NumericalHelpers::combine/uniform (scheme ordered-splitmix64-v2)
+__device__ unsigned long long combine(unsigned long long state, unsigned long long coordinate) {
+    return mix(state^coordinate);
+}
+
 __device__ double uniform(unsigned long long seed, unsigned long long particle, long long interval,
                           unsigned long long substep, unsigned long long component) {
-    unsigned long long key=mix(seed)^mix(particle)^mix((unsigned long long)interval);
-    key^=mix(substep)^mix(component);
-    return (mix(key)>>11U)*0x1.0p-53;
+    unsigned long long key=mix(seed);
+    key=combine(key,particle);
+    key=combine(key,(unsigned long long)interval);
+    key=combine(key,substep);
+    key=combine(key,component);
+    return (key>>11U)*0x1.0p-53;
 }
 
 __device__ double normal(unsigned long long seed, unsigned long long particle, long long interval,
@@ -44,7 +52,7 @@ __device__ double deviceForcingErrorNormal(unsigned long long seed,unsigned long
         const double earthRadius=6371000.0;
         long long x=(long long)floor(earthRadius*longitude*cos(latitude)/spatialScale);
         long long y=(long long)floor(earthRadius*latitude/spatialScale);
-        spatialKey=mix((unsigned long long)x)^mix((unsigned long long)y);
+        spatialKey=combine(mix((unsigned long long)x),(unsigned long long)y);
     }
     long long timeKey=interval;
     unsigned long long sampleKey=substep;

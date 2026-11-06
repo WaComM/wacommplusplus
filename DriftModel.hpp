@@ -126,8 +126,9 @@ inline double forcingErrorNormal(std::uint64_t seed,std::uint64_t particle,std::
         constexpr double earthRadius=6371000.0;
         auto x=static_cast<std::int64_t>(std::floor(earthRadius*longitude*std::cos(latitude)/spatialScale));
         auto y=static_cast<std::int64_t>(std::floor(earthRadius*latitude/spatialScale));
-        spatialKey=NumericalHelpers::mix(static_cast<std::uint64_t>(x))^
-                   NumericalHelpers::mix(static_cast<std::uint64_t>(y));
+        // Ordered (x,y) cell key: transposed and diagonal cells remain distinct
+        spatialKey=NumericalHelpers::combine(NumericalHelpers::mix(static_cast<std::uint64_t>(x)),
+                                             static_cast<std::uint64_t>(y));
     }
     std::int64_t timeKey=interval;
     std::uint64_t sampleKey=substep;

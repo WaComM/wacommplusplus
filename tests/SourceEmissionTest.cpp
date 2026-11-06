@@ -31,6 +31,20 @@ int main() {
     assert(legacy.size()==1000);
     for (double time: legacy) assert(time==0);
 
+    // Legacy batch: closed source window over forcing-record times, as in the original
+    // WaComM record loop, so start==end releases exactly one batch.
+    auto instant=sourceEmissionTimes(EmissionMode::FORCING_INTERVAL_BATCH,4,3600,3600,3600,7200);
+    assert(instant.size()==4);
+    for (double time: instant) assert(time==3600);
+    assert(sourceEmissionTimes(EmissionMode::FORCING_INTERVAL_BATCH,4,3600,3600,7200,10800).empty());
+    assert(sourceEmissionTimes(EmissionMode::FORCING_INTERVAL_BATCH,4,3600,3600,0,3600).empty());
+    // The end record is included and a window inside one interval emits nothing after its start.
+    assert(sourceEmissionTimes(EmissionMode::FORCING_INTERVAL_BATCH,4,0,7200,7200,10800).size()==4);
+    assert(sourceEmissionTimes(EmissionMode::FORCING_INTERVAL_BATCH,4,0,1800,3600,7200).empty());
+    // Modified-Julian round-off of order 1e-5 s does not decide membership.
+    assert(sourceEmissionTimes(EmissionMode::FORCING_INTERVAL_BATCH,4,3600.00001,3600.00001,3600,7200).size()==4);
+    assert(sourceEmissionTimes(EmissionMode::FORCING_INTERVAL_BATCH,4,3599.99999,3599.99999,3600,7200).size()==4);
+
     auto pulse=sourceEmissionTimes(EmissionMode::SINGLE_PULSE,25,1800,-1,0,3600);
     assert(pulse.size()==25);
     for (double time: pulse) assert(time==1800);

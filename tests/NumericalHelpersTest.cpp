@@ -2,6 +2,9 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdint>
+#include <set>
+#include <string>
 
 int main() {
     assert(NumericalHelpers::validInterpolationCell(1, 2, 3, 4));
@@ -62,4 +65,26 @@ int main() {
     assert(random0 != NumericalHelpers::normal(5490, 7, 3600, 2, 0));
     assert(random0 != NumericalHelpers::normal(5489, 7, 3600, 3, 0));
     assert(random0 != NumericalHelpers::normal(5489, 7, 3600, 2, 1));
+
+    // Ordered keys: swapping coordinate values must not reproduce a draw, and a
+    // repeated value (particle==substep, seed==particle) must not cancel the key.
+    assert(NumericalHelpers::uniform(5489, 3, 3600, 7, 0) != NumericalHelpers::uniform(5489, 7, 3600, 3, 0));
+    assert(NumericalHelpers::uniform(5489, 5, 3600, 5, 0) != NumericalHelpers::uniform(5489, 9, 3600, 9, 0));
+    assert(NumericalHelpers::uniform(5489, 42, 3600, 2, 0) != NumericalHelpers::uniform(42, 5489, 3600, 2, 0));
+    assert(NumericalHelpers::uniform(5489, 42, 3600, 2, 0) != NumericalHelpers::uniform(5489, 42, 3600, 0, 2));
+    assert(NumericalHelpers::uniform(5489, 42, 3600, 5489, 0) != NumericalHelpers::uniform(5489, 43, 3600, 5489, 0));
+
+    // No duplicated draw over the particle x substep x component lattice of one
+    // forcing interval (the XOR-combined key duplicated about 6% of these values).
+    std::set<double> draws;
+    for (std::uint64_t particle=0;particle<1000;particle++)
+        for (std::uint64_t substep=0;substep<120;substep++)
+            for (std::uint64_t component=0;component<6;component++)
+                assert(draws.insert(NumericalHelpers::uniform(5489,particle,1675900800,substep,component)).second);
+
+    // Pinned values of scheme ordered-splitmix64-v2: a change here changes every
+    // seeded realization and requires a new NumericalHelpers::RANDOM_KEY_SCHEME.
+    assert(std::string(NumericalHelpers::RANDOM_KEY_SCHEME)=="ordered-splitmix64-v2");
+    assert(NumericalHelpers::uniform(5489, 7, 3600, 2, 0) == 0x1.bd90c6590112ep-1);
+    assert(NumericalHelpers::uniform(0, 0, 0, 0, 0) == 0x1.e2b96a69ad7f4p-2);
 }

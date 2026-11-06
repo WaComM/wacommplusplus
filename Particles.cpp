@@ -418,6 +418,17 @@ void Particles::loadFromNetCDF(const string &fileName, std::shared_ptr<Config> c
                 throw std::runtime_error("Restart random seed does not match the configured random seed");
             }
         }
+        // A restart written under another random-key scheme would continue with a different
+        // realization; restarts that predate the attribute carry no scheme and are accepted.
+        NcGroupAtt schemeAtt=dataFile.getAtt("wacomm_random_key_scheme");
+        if (!schemeAtt.isNull()) {
+            string restartScheme;
+            schemeAtt.getValues(restartScheme);
+            if (restartScheme != NumericalHelpers::RANDOM_KEY_SCHEME) {
+                throw std::runtime_error("Restart random-key scheme is " + restartScheme +
+                                         " but this build uses " + NumericalHelpers::RANDOM_KEY_SCHEME);
+            }
+        }
         NcGroupAtt modelAtt=dataFile.getAtt("ocean_model");
         if (!modelAtt.isNull()) {
             string restartModel;

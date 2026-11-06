@@ -53,17 +53,21 @@ inline std::vector<double> sourceEmissionTimes(EmissionMode mode, double value,
         return times;
     }
 
-    double activeStart=std::max(intervalStart,sourceStart);
-    double activeEnd=sourceEnd<0 ? intervalEnd : std::min(intervalEnd,sourceEnd);
-    if (activeEnd<=activeStart) return times;
-
     if (mode==EmissionMode::FORCING_INTERVAL_BATCH) {
         if (std::floor(value)!=value)
             throw std::runtime_error("forcing_interval_batch requires an integer particles_per_interval");
-        if (intervalStart>=sourceStart && (sourceEnd<0 || intervalStart<sourceEnd))
+        // Legacy WaComM rule: a batch at every forcing record whose time lies in the closed
+        // source window [start,end], so start==end releases one batch. Membership is decided
+        // on whole seconds because calendar-derived times carry modified-Julian round-off.
+        long long record=std::llround(intervalStart);
+        if (record>=std::llround(sourceStart) && (sourceEnd<0 || record<=std::llround(sourceEnd)))
             times.assign((std::size_t)value,intervalStart);
         return times;
     }
+
+    double activeStart=std::max(intervalStart,sourceStart);
+    double activeEnd=sourceEnd<0 ? intervalEnd : std::min(intervalEnd,sourceEnd);
+    if (activeEnd<=activeStart) return times;
     double spacing=3600.0/value;
     long long first=std::max(0LL,(long long)std::ceil((activeStart-sourceStart)/spacing-0.5));
     for (long long index=first;;index++) {

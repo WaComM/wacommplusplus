@@ -88,11 +88,27 @@ inline std::uint64_t mix(std::uint64_t value) {
     return value ^ (value >> 31U);
 }
 
+// Identifier of the stateless random-key scheme, archived with outputs and restarts.
+// Changing the coordinate combination below changes every seeded realization.
+static constexpr const char* RANDOM_KEY_SCHEME = "ordered-splitmix64-v2";
+
+// Ordered combination of one key coordinate into the running state. mix is a
+// bijection, so each stage is injective in its coordinate for a fixed prefix.
+// Unlike an XOR of independently mixed coordinates, swapping two coordinate
+// values (for example particle and substep) or repeating a value does not
+// reproduce or cancel a key.
+inline std::uint64_t combine(std::uint64_t state, std::uint64_t coordinate) {
+    return mix(state ^ coordinate);
+}
+
 inline double uniform(std::uint64_t seed, std::uint64_t particle, std::int64_t interval,
                       std::uint64_t substep, std::uint64_t component) {
-    std::uint64_t key = mix(seed) ^ mix(particle) ^ mix(static_cast<std::uint64_t>(interval));
-    key ^= mix(substep) ^ mix(component);
-    return (mix(key) >> 11U) * 0x1.0p-53;
+    std::uint64_t key = mix(seed);
+    key = combine(key, particle);
+    key = combine(key, static_cast<std::uint64_t>(interval));
+    key = combine(key, substep);
+    key = combine(key, component);
+    return (key >> 11U) * 0x1.0p-53;
 }
 
 inline double normal(std::uint64_t seed, std::uint64_t particle, std::int64_t interval,

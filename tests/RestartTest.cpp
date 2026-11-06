@@ -9,9 +9,10 @@
 
 using namespace netCDF;
 
-void createRestart(const string &fileName) {
+void createRestart(const string &fileName, const char *randomKeyScheme=nullptr) {
     NcFile file(fileName,NcFile::replace,NcFile::nc4);
     file.putAtt("wacomm_restart_version","3");
+    if (randomKeyScheme) file.putAtt("wacomm_random_key_scheme",randomKeyScheme);
     file.putAtt("tracking_direction","forward");
     file.putAtt("ocean_model","ROMS");
     file.putAtt("checkpoint_time",ncDouble,450.0);
@@ -54,6 +55,9 @@ int main() {
         check.getAtt("wacomm_cmake_options").getValues(options);
         check.getAtt("wacomm_configuration_file").getValues(configuration);
         check.getAtt("wacomm_configuration").getValues(resolvedConfiguration);
+        string randomKeyScheme;
+        check.getAtt("wacomm_random_key_scheme").getValues(randomKeyScheme);
+        assert(randomKeyScheme==NumericalHelpers::RANDOM_KEY_SCHEME);
         assert(!revision.empty() && !compiler.empty() && !options.empty());
         assert(configuration==configFile);
         assert(resolvedConfiguration.find("\"random_seed\": 5489")!=string::npos);
@@ -80,6 +84,23 @@ int main() {
         invalid.loadFromNetCDF(restartFile,backward);
     } catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);
+
+    // A restart recorded under another random-key scheme cannot continue the same realization.
+    {
+        const string schemeFile="restart-scheme-test.nc";
+        createRestart(schemeFile,NumericalHelpers::RANDOM_KEY_SCHEME);
+        Particles matching;
+        matching.loadFromNetCDF(schemeFile,config);
+        assert(matching.size()==1);
+        createRestart(schemeFile,"xor-splitmix64-v1");
+        rejected=false;
+        try {
+            Particles invalid;
+            invalid.loadFromNetCDF(schemeFile,config);
+        } catch (const std::runtime_error &) { rejected=true; }
+        assert(rejected);
+        std::remove(schemeFile.c_str());
+    }
 
     // Text restart: exact 64-bit identity and full double precision round trip.
     {
