@@ -112,9 +112,11 @@ Keep every failed attempt and actual scheduler order.
 
 The [performance evaluation](performance-evaluation.md) specifies the full
 matrix and estimators. CPU particle state and all gridded variables must agree
-exactly by stable ID and physical time. GPU discrete/state/time values are
-exact; horizontal great-circle separation is bounded by 10⁻⁶ m using radius
-6,371,000 m, depth by 10⁻⁸ m, and dimensionless grid indices by 10⁻⁸. These are
+exactly by stable ID and physical time. GPU discrete/state/time values and
+alive/dead status are exact; horizontal great-circle separation is bounded by
+10⁻⁶ m using radius 6,371,000 m, depth by 10⁻⁸ m, dimensionless grid indices by
+10⁻⁸, and the dimensionless health of a living particle by 10⁻¹⁵, which admits
+last-bit differences between host and CUDA `exp` implementations. These are
 inherited acceptance limits to test, not demonstrated webinar equivalence or
 observational error bounds. Missing/masked values must have identical masks;
 non-finite particle state fails. Incomplete or failed points never enter charts.

@@ -350,6 +350,8 @@ if(BUILD_TESTING)
         add_test(NAME sarno_protocol_collect COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/SarnoProtocolCollectTest.py")
         set_tests_properties(sarno_protocol_collect PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME sarno_core_sweep COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/SarnoCoreSweepTest.py")
         add_test(NAME webinar_native_protocol COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/examples/webinar-native-usecase/tools/WebinarProtocolTest.py")
         set_tests_properties(webinar_native_protocol PROPERTIES SKIP_RETURN_CODE 77)

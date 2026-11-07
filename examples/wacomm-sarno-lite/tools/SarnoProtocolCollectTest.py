@@ -14,7 +14,7 @@ from partial_sarno_diagnostic import write_notes
 from trajectory_diagnostics import TIME_UNITS
 
 
-def snapshot(directory, longitude):
+def snapshot(directory, longitude, health=(1, 1)):
     directory.mkdir(exist_ok=True)
     with netCDF4.Dataset(directory / 'particles.nc', 'w') as ds:
         ds.createDimension('particles', 2)
@@ -26,7 +26,7 @@ def snapshot(directory, longitude):
         for name, values in [('lat', [[40], [40]]), ('lon', [[longitude], [15]]),
                              ('depth', [[1], [2]]), ('i', [[1], [2]]),
                              ('j', [[1], [2]]), ('k', [[1], [2]]),
-                             ('health', [[1], [1]]), ('age', [[3600], [3600]]),
+                             ('health', [[health[0]], [health[1]]]), ('age', [[3600], [3600]]),
                              ('time', [[INTERVALS[1]], [INTERVALS[1]]])]:
             ds.createVariable(name, 'f8', ('particles', 'particle_time'))[:] = values
         ds.createVariable('object_type', 'u4', ('particles',))[:] = [0, 0]
@@ -48,6 +48,18 @@ def main():
         snapshot(b, 15 + 1e-12)
         report = gpu_compare(a, b)
         assert report['snapshots'][0]['maxima']['horizontal_m'] < 1e-6
+        (b / 'particles.nc').unlink()
+        snapshot(b, 15, (1 - 2**-53, 1))
+        assert gpu_compare(a, b)['snapshots'][0]['maxima']['health'] > 0
+        for health in ((1 - 1e-6, 1), (-1, 1)):
+            (b / 'particles.nc').unlink()
+            snapshot(b, 15, health)
+            try:
+                gpu_compare(a, b)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f'GPU health {health} accepted')
         (b / 'particles.nc').unlink()
         snapshot(b, 15 + 1e-3)
         try:

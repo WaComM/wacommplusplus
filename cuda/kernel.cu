@@ -372,11 +372,11 @@ cudaError_t cudaMoveParticle(config_data *config, particle_data *particles, int 
                              double *lonRad, double *latRad, double *depthIntervals, double *h,
                              float *zeta, float *u, float *v, float *w, float *akt,
                              float *windU10, float *windV10, float *stokesU, float *stokesV, int particleCount,
-                             int numThread, int numGPU) {
+                             int numThread, int numGPU, cudaStream_t stream) {
     (void)mask; (void)numThread; (void)numGPU;
     dim3 threads=128;
     dim3 blocks=particleCount/threads.x+((particleCount%threads.x)==0 ? 0 : 1);
-    move<<<blocks,threads>>>(config,particles,timeIndex,oceanTime,sW,sRho,eta,xi,times,mask,lonRad,latRad,
+    move<<<blocks,threads,0,stream>>>(config,particles,timeIndex,oceanTime,sW,sRho,eta,xi,times,mask,lonRad,latRad,
                             depthIntervals,h,zeta,u,v,w,akt,windU10,windV10,stokesU,stokesV,particleCount);
     return cudaGetLastError();
 }

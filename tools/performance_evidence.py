@@ -7,6 +7,9 @@ import netCDF4
 import numpy as np
 from compare_particle_snapshots import compare, snapshot_index, order
 
+# Dimensionless absolute tolerance for alive-particle health in CPU/GPU comparisons
+HEALTH_TOLERANCE = 1e-15
+
 def sha(path):
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -70,7 +73,7 @@ def gpu_compare(reference, candidate):
                 if xv.dtype.kind in 'fc' and (not np.isfinite(xv).all() or not np.isfinite(yv).all()):
                     raise ValueError(f'GPU non-finite value: {name}')
                 arrays[name] = (xv, yv)
-                if name not in ('lat', 'lon', 'depth', 'i', 'j', 'k') and not np.array_equal(xv, yv):
+                if name not in ('lat', 'lon', 'depth', 'i', 'j', 'k', 'health') and not np.array_equal(xv, yv):
                     raise ValueError(f'GPU discrete/time/state mismatch: {name}')
             lat1, lat2 = [np.radians(v) for v in arrays['lat']]
             lon1, lon2 = [np.radians(v) for v in arrays['lon']]
@@ -80,12 +83,19 @@ def gpu_compare(reference, candidate):
                       'depth_m': float(np.max(np.abs(arrays['depth'][0]-arrays['depth'][1]), initial=0))}
             for name in ('i', 'j', 'k'):
                 maxima[name] = float(np.max(np.abs(arrays[name][0]-arrays[name][1]), initial=0))
-            if maxima['horizontal_m'] > 1e-6 or maxima['depth_m'] > 1e-8 or any(maxima[k] > 1e-8 for k in ('i', 'j', 'k')):
+            # Health exp(-age/tau0) may differ in the last bits between host and device libm;
+            # survival state and dead-particle values must still agree exactly.
+            hx, hy = arrays['health']
+            if not np.array_equal(hx > 0, hy > 0) or not np.array_equal(hx[hx <= 0], hy[hy <= 0]):
+                raise ValueError(f'GPU survival state mismatch at {time}')
+            maxima['health'] = float(np.max(np.abs(hx-hy), initial=0))
+            if maxima['horizontal_m'] > 1e-6 or maxima['depth_m'] > 1e-8 or any(maxima[k] > 1e-8 for k in ('i', 'j', 'k')) or \
+                    maxima['health'] > HEALTH_TOLERANCE:
                 raise ValueError(f'GPU numerical mismatch at {time}: {maxima}')
             report.append({'physical_time': time, 'particles': ac, 'maxima': maxima,
                            'reference_sha256': sha(left[time]), 'candidate_sha256': sha(right[time])})
     return {'comparison': 'stable ID and physical time; exact discrete/state fields; declared absolute coordinate tolerances',
-            'horizontal_tolerance_m': 1e-6, 'depth_tolerance_m': 1e-8,
+            'horizontal_tolerance_m': 1e-6, 'depth_tolerance_m': 1e-8, 'health_tolerance': HEALTH_TOLERANCE,
             'grid_index_tolerance': 1e-8, 'snapshots': report}
 
 

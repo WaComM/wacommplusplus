@@ -83,7 +83,6 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
     LOG4CPLUS_DEBUG(logger,"Dry mode:" << config->Dry() );
     int num_gpus=0;
     int world_size=1, world_rank=0;
-    int ompMaxThreads=1, ompThreadNum=0;
 
 #ifdef USE_MPI
     // Get the size of the MPI world (the number of available processors)
@@ -123,11 +122,6 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
     /* start malelability region */
     ADM_MalleableRegion (ADM_SERVICE_START);
-#endif
-
-#ifdef USE_OMP
-    // Get the number of threads available for computation
-    ompMaxThreads=omp_get_max_threads();
 #endif
 
 #ifdef USE_CUDA
@@ -178,6 +172,16 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                 for (int i=0; i<xi_rho; i++) {
                     conc(t,k,j,i)=0;
                 }
+            }
+        }
+    }
+
+    // Land cells of the particle grid, masked in every level of each concentration time
+    vector<std::pair<int,int>> landCells;
+    if (world_rank==0 && config->MaskOutput()) {
+        for (int j=0; j<eta_rho; j++) {
+            for (int i=0; i<xi_rho; i++) {
+                if (oceanModelAdapter->Mask()(j, i) != 1) landCells.emplace_back(j, i);
             }
         }
     }
@@ -357,31 +361,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #else
         // Get the pointer to the particles' container
         pLocalParticles = particles.get();
-        int particlesToProcess = particles->size();
 #endif
         LOG4CPLUS_INFO(logger, world_rank << ": Local particles:" << pLocalParticles->size());
-
-        // Dafine an array with the number of particles to be processed by each thread
-        vector<size_t> thread_counts(ompMaxThreads);
-
-        // Define an array with the displacement of particles to be processed by each thread
-        vector<size_t> thread_displs(ompMaxThreads);
-
-        // The first thread get the spare
-        thread_counts[0] = NumericalHelpers::partitionCount(particlesToProcess,ompMaxThreads,0);
-
-        // The first tread starts from 0
-        thread_displs[0] = 0;
-
-        // For each available thread...
-        for (int tidx = 1; tidx < ompMaxThreads; tidx++) {
-
-            // Set the number of particles per thread
-            thread_counts[tidx] = NumericalHelpers::partitionCount(particlesToProcess,ompMaxThreads,tidx);
-
-            // Set the displaement
-            thread_displs[tidx]=NumericalHelpers::partitionOffset(particlesToProcess,ompMaxThreads,tidx);
-        }
 
 	    typedef struct WacommVariables{
             double *oceanTimeDevice, *depthIntervalsDevice, *lonRadDevice, *latRadDevice, *maskDevice, *hDevice;
@@ -411,7 +392,9 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             particlesHost = (struct particle_data*)malloc(pLocalParticles->size() * itemSize);
 
             // Copy each particle
-            for(int i=0; i<pLocalParticles->size(); i++){
+            size_t localCount = pLocalParticles->size();
+            #pragma omp parallel for default(none) shared(localCount, pLocalParticles, particlesHost)
+            for (long i = 0; i < (long) localCount; i++) {
                 particlesHost[i] = pLocalParticles->at(i).data();
             }
             // For each GPU...
@@ -492,171 +475,131 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         // Record start time
         auto startLocal = std::chrono::high_resolution_clock::now();
 
-        vector<vector<float>> time_array(ompMaxThreads,vector<float>(std::max(1,num_gpus),0));
+        // Device time of each GPU section (milliseconds)
+        vector<float> time_array(std::max(1,num_gpus),0);
 
-        // Begin the shared memory parallel section
-        #pragma omp parallel default(none) private(ompThreadNum) shared(thread_counts, thread_displs, config, pLocalParticles, ocean_time_idx, oceanModelAdapter, weatherModelAdapter, waveModelAdapter, num_gpus, particlesHost, stateVector, time_array)
-        {
+        // Check if no GPU is available
+        if (num_gpus<=0) {
 
-#ifdef USE_OMP
-            // Get the number of the current thread
-            ompThreadNum = omp_get_thread_num();
-#endif
+            size_t localCount = pLocalParticles->size();
 
-            // Get the index (array pLocalParticles) of the first particle the thread must process
-            size_t first = thread_displs[ompThreadNum];
+            /*
+             * Particles carry different amounts of work in one interval (newly emitted particles start
+             * part-way through it, stranded or dead ones stop early), so the threads take small chunks
+             * dynamically. Each update depends only on its own particle and identity-keyed random
+             * numbers, so the schedule does not change the result.
+             */
+            #pragma omp parallel for schedule(dynamic, 64) default(none) shared(localCount, config, pLocalParticles, ocean_time_idx, oceanModelAdapter, weatherModelAdapter, waveModelAdapter)
+            // For each particle...
+            for (long idx = 0; idx < (long) localCount; idx++) {
 
-            // Get the index (array pLocalParticles) of the last particle the thread must process
-            size_t last = first + thread_counts[ompThreadNum];
-
-            // Check if no GPU is available
-            if (num_gpus<=0) {
-
-		        // For each particle the thread must process...
-            	for (size_t idx = first; idx < last; idx++) {
-
-                	// Move the particle
-                	pLocalParticles->at(idx).move(config->dataptr(),
-                      	ocean_time_idx,
-                      	oceanModelAdapter->OceanTime(),
-                      	oceanModelAdapter->Mask(),
-                      	oceanModelAdapter->LonRad(),
-                      	oceanModelAdapter->LatRad(),
-                      	oceanModelAdapter->SW(),
-                      	oceanModelAdapter->DepthIntervals(),
-                      	oceanModelAdapter->H(),
-                      	oceanModelAdapter->Zeta(),
-                      	oceanModelAdapter->U(),
-                      	oceanModelAdapter->V(),
-                      	oceanModelAdapter->W(),
-                        oceanModelAdapter->AKT(),
-                        weatherModelAdapter ? &weatherModelAdapter->WindU10() : nullptr,
-                        weatherModelAdapter ? &weatherModelAdapter->WindV10() : nullptr,
-                        waveModelAdapter ? &waveModelAdapter->StokesU() : nullptr,
-                        waveModelAdapter ? &waveModelAdapter->StokesV() : nullptr
-                  );
-		        }
+                // Move the particle
+                pLocalParticles->at(idx).move(config->dataptr(),
+                    ocean_time_idx,
+                    oceanModelAdapter->OceanTime(),
+                    oceanModelAdapter->Mask(),
+                    oceanModelAdapter->LonRad(),
+                    oceanModelAdapter->LatRad(),
+                    oceanModelAdapter->SW(),
+                    oceanModelAdapter->DepthIntervals(),
+                    oceanModelAdapter->H(),
+                    oceanModelAdapter->Zeta(),
+                    oceanModelAdapter->U(),
+                    oceanModelAdapter->V(),
+                    oceanModelAdapter->W(),
+                    oceanModelAdapter->AKT(),
+                    weatherModelAdapter ? &weatherModelAdapter->WindU10() : nullptr,
+                    weatherModelAdapter ? &weatherModelAdapter->WindV10() : nullptr,
+                    waveModelAdapter ? &waveModelAdapter->StokesU() : nullptr,
+                    waveModelAdapter ? &waveModelAdapter->StokesV() : nullptr
+                );
             }
+        }
 #ifdef USE_CUDA
-	        else {
-                if (num_gpus>0) {
-                    size_t particlesToProcessGPU = thread_counts[ompThreadNum];
+        else {
+            /*
+             * Each GPU moves one contiguous section of the local particles with a single kernel launch
+             * on its own stream. The particle update depends only on the particle state and its
+             * identity-keyed random numbers, so the section layout does not change the result.
+             */
+            size_t localCount = pLocalParticles->size();
 
-                    if (particlesToProcessGPU > 0){
-                        // Dafine an array with the number of particles to be processed by each GPU
-                        vector<size_t> GPU_counts(num_gpus);
+            // Device sections, streams, and events, one per GPU
+            vector<struct particle_data *> sectionDevice(num_gpus, nullptr);
+            vector<cudaStream_t> streams(num_gpus);
+            vector<cudaEvent_t> starts(num_gpus), stops(num_gpus);
 
-                        // Define an array with the displacement of particles to be processed by each GPU
-                        vector<size_t> GPU_displs(num_gpus);
+            // Upload and launch on every GPU before waiting on any of them
+            for (int gidx = 0; gidx < num_gpus; gidx++) {
+                size_t count = NumericalHelpers::partitionCount(localCount, num_gpus, gidx);
+                size_t offset = NumericalHelpers::partitionOffset(localCount, num_gpus, gidx);
 
-                        // The first GPU get the spare
-                        GPU_counts[0] = NumericalHelpers::partitionCount(particlesToProcessGPU,num_gpus,0);
+                gpuErrchk(cudaSetDevice(gidx));
+                gpuErrchk(cudaStreamCreate(&streams[gidx]));
+                gpuErrchk(cudaEventCreate(&starts[gidx]));
+                gpuErrchk(cudaEventCreate(&stops[gidx]));
+                gpuErrchk(cudaEventRecord(starts[gidx], streams[gidx]));
 
-                        // The first GPU starts from 0
-                        GPU_displs[0] = 0;
+                if (count > 0) {
+                    gpuErrchk(cudaMalloc((void **) &(sectionDevice[gidx]), count * sizeof(struct particle_data)));
+                    gpuErrchk(cudaMemcpyAsync(sectionDevice[gidx], &particlesHost[offset], count * sizeof(struct particle_data),
+                                              cudaMemcpyHostToDevice, streams[gidx]));
 
-                        // For each available GPU...
-                        for (int gidx = 1; gidx < num_gpus; gidx++) {
-                            // Set the number of particles per GPU
-                            GPU_counts[gidx] = NumericalHelpers::partitionCount(particlesToProcessGPU,num_gpus,gidx);
-
-                            // Set the displaement
-                            GPU_displs[gidx] = NumericalHelpers::partitionOffset(particlesToProcessGPU,num_gpus,gidx);
-                        }
-
-                        typedef struct ThreadSectionDevice{
-                            struct particle_data *sectionParticlesDevice;
-                        } ThreadSectionDevice;
-
-                        ThreadSectionDevice *threadSectionDevice = new ThreadSectionDevice[num_gpus];
-
-                        for (int idx=0; idx < num_gpus; idx++){
-                            size_t GPU_first = GPU_displs[idx] + first;
-                            size_t GPU_last = GPU_first + GPU_counts[idx];
-
-                            //printf("GPU_first: %d, GPU_last: %d\n", GPU_first, GPU_last);
-
-                            struct particle_data *particlesThread = &particlesHost[GPU_first];
-
-                            int gpu_id = -1;
-                            gpuErrchk(cudaSetDevice(idx));
-                            gpuErrchk(cudaGetDevice(&gpu_id));
-
-                            gpuErrchk(cudaMalloc((void**) &(threadSectionDevice[gpu_id].sectionParticlesDevice), GPU_counts[idx] * sizeof(struct particle_data)));
-                            gpuErrchk(cudaMemcpyAsync(threadSectionDevice[gpu_id].sectionParticlesDevice, particlesThread, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyHostToDevice));
-
-                            cudaEvent_t start, stop;
-                            gpuErrchk(cudaEventCreate(&start));
-                            gpuErrchk(cudaEventCreate(&stop));
-
-                            gpuErrchk(cudaEventRecord(start));
-
-                            gpuErrchk(cudaMoveParticle(stateVector[gpu_id].configDevice,
-                                threadSectionDevice[gpu_id].sectionParticlesDevice,
-                                ocean_time_idx,
-                                oceanModelAdapter->OceanTime().Nx(),
-                                oceanModelAdapter->SW().Nx(),
-                                oceanModelAdapter->SRho().Nx(),
-                                oceanModelAdapter->Mask().Nx(),
-                                oceanModelAdapter->Mask().Ny(),
-                                stateVector[gpu_id].oceanTimeDevice,
-                                stateVector[gpu_id].maskDevice,
-                                stateVector[gpu_id].lonRadDevice,
-                                stateVector[gpu_id].latRadDevice,
-                                stateVector[gpu_id].depthIntervalsDevice,
-                                stateVector[gpu_id].hDevice,
-                                stateVector[gpu_id].zetaDevice,
-                                stateVector[gpu_id].uDevice,
-                                stateVector[gpu_id].vDevice,
-                                stateVector[gpu_id].wDevice,
-                                stateVector[gpu_id].aktDevice,
-                                stateVector[gpu_id].windU10Device,
-                                stateVector[gpu_id].windV10Device,
-                                stateVector[gpu_id].stokesUDevice,
-                                stateVector[gpu_id].stokesVDevice,
-                                GPU_counts[idx], idx, gpu_id));
-
-                            gpuErrchk(cudaEventRecord(stop));
-                            gpuErrchk(cudaEventSynchronize(stop));
-
-                            float gpuTime=0;
-                            gpuErrchk(cudaEventElapsedTime(&gpuTime, start, stop));
-                            time_array[ompThreadNum][gpu_id] = gpuTime;
-                            gpuErrchk(cudaEventDestroy(start));
-                            gpuErrchk(cudaEventDestroy(stop));
-                        }
-
-                        for (int idx=0; idx < num_gpus; idx++){
-                            size_t GPU_first = GPU_displs[idx] + first;
-                            size_t GPU_last = GPU_first + GPU_counts[idx];
-
-                            struct particle_data *particlesThread = &particlesHost[GPU_first];
-
-                            int gpu_id = -1;
-                            gpuErrchk(cudaSetDevice(idx));
-                            gpuErrchk(cudaGetDevice(&gpu_id));
-
-                            gpuErrchk(cudaDeviceSynchronize());
-
-                            //copy from device to host
-                            gpuErrchk(cudaMemcpyAsync(particlesThread, threadSectionDevice[gpu_id].sectionParticlesDevice, GPU_counts[idx] * sizeof(struct particle_data), cudaMemcpyDeviceToHost));
-                            gpuErrchk(cudaDeviceSynchronize());
-
-                            // Copy all thread particles to the local processor particles
-                            for(int i=GPU_first; i < GPU_last; i++){
-                                //printf("health: %f\n", particlesThread[k].health);
-                                pLocalParticles->at(i).data(particlesThread[i - GPU_first]);
-                            }
-
-                            gpuErrchk(cudaFree(threadSectionDevice[gpu_id].sectionParticlesDevice));
-                        }
-                        delete [] threadSectionDevice;
-                    }
+                    gpuErrchk(cudaMoveParticle(stateVector[gidx].configDevice,
+                        sectionDevice[gidx],
+                        ocean_time_idx,
+                        oceanModelAdapter->OceanTime().Nx(),
+                        oceanModelAdapter->SW().Nx(),
+                        oceanModelAdapter->SRho().Nx(),
+                        oceanModelAdapter->Mask().Nx(),
+                        oceanModelAdapter->Mask().Ny(),
+                        stateVector[gidx].oceanTimeDevice,
+                        stateVector[gidx].maskDevice,
+                        stateVector[gidx].lonRadDevice,
+                        stateVector[gidx].latRadDevice,
+                        stateVector[gidx].depthIntervalsDevice,
+                        stateVector[gidx].hDevice,
+                        stateVector[gidx].zetaDevice,
+                        stateVector[gidx].uDevice,
+                        stateVector[gidx].vDevice,
+                        stateVector[gidx].wDevice,
+                        stateVector[gidx].aktDevice,
+                        stateVector[gidx].windU10Device,
+                        stateVector[gidx].windV10Device,
+                        stateVector[gidx].stokesUDevice,
+                        stateVector[gidx].stokesVDevice,
+                        (int) count, 0, gidx, streams[gidx]));
                 }
             }
-#endif
+
+            // Download each section once its GPU has finished
+            for (int gidx = 0; gidx < num_gpus; gidx++) {
+                size_t count = NumericalHelpers::partitionCount(localCount, num_gpus, gidx);
+                size_t offset = NumericalHelpers::partitionOffset(localCount, num_gpus, gidx);
+
+                gpuErrchk(cudaSetDevice(gidx));
+                if (count > 0) {
+                    gpuErrchk(cudaMemcpyAsync(&particlesHost[offset], sectionDevice[gidx], count * sizeof(struct particle_data),
+                                              cudaMemcpyDeviceToHost, streams[gidx]));
+                }
+                gpuErrchk(cudaEventRecord(stops[gidx], streams[gidx]));
+                gpuErrchk(cudaStreamSynchronize(streams[gidx]));
+                gpuErrchk(cudaEventElapsedTime(&time_array[gidx], starts[gidx], stops[gidx]));
+
+                if (sectionDevice[gidx]) gpuErrchk(cudaFree(sectionDevice[gidx]));
+                gpuErrchk(cudaEventDestroy(starts[gidx]));
+                gpuErrchk(cudaEventDestroy(stops[gidx]));
+                gpuErrchk(cudaStreamDestroy(streams[gidx]));
+            }
+
+            // Copy the moved particles back to the local processor particles
+            #pragma omp parallel for default(none) shared(localCount, pLocalParticles, particlesHost)
+            for (long idx = 0; idx < (long) localCount; idx++) {
+                pLocalParticles->at(idx).data(particlesHost[idx]);
+            }
         }
-            
+#endif
+
         // Record end time
         auto finishLocal = std::chrono::high_resolution_clock::now();
 
@@ -724,19 +667,20 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                 cuda +=elapsTime;
 
 #ifdef USE_CUDA
-            float cuda_time = 0;
-            for (int i=0; i<ompMaxThreads; i++){
+            // Without a visible GPU the host timing above already applies
+            if (num_gpus > 0) {
+                float cuda_time = 0;
                 for (int j=0; j< num_gpus; j++){
-                    LOG4CPLUS_INFO(logger, "GPU Processed in sec: " << time_array[i][j] / 1000);
-                    cuda_time += time_array[i][j] / 1000;
+                    // Device time of the section: particle upload, kernel, and particle download
+                    LOG4CPLUS_INFO(logger, "GPU Processed in sec: " << time_array[j] / 1000);
+                    cuda_time += time_array[j] / 1000;
                 }
+                double averageCudaTime=cuda_time/num_gpus;
+                cuda += averageCudaTime;
+
+                nParticlesPerSecondLocal = pLocalParticles->size() / averageCudaTime;
+                elapsTime = averageCudaTime;
             }
-            double averageCudaTime=cuda_time/(num_gpus * ompMaxThreads);
-            cuda += averageCudaTime;
-
-            nParticlesPerSecondLocal = pLocalParticles->size() / averageCudaTime;
-            elapsTime = averageCudaTime;
-
 #endif
 
             // Calculate the local particles per second
@@ -769,24 +713,18 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             Concentration::evaluate(particles.get(), concentrationTimeIdx, s_rho, eta_rho, xi_rho, conc);
 
             if (config->MaskOutput()) {
+                long nLand = (long) landCells.size();
+
                 // Mask all grid cells belonging to the land
-                #pragma omp parallel for collapse(3) default(none) shared(concentrationTimeIdx, s_rho, eta_rho, xi_rho, conc)
+                #pragma omp parallel for collapse(2) default(none) shared(concentrationTimeIdx, s_rho, nLand, landCells, conc)
                 // For each level...
-                for (int k = -(int) s_rho + 1; k <= 0; k++) {
+                for (long k = -(long) s_rho + 1; k <= 0; k++) {
 
-                    // For each row...
-                    for (int j = 0; j < eta_rho; j++) {
+                    // For each land cell...
+                    for (long c = 0; c < nLand; c++) {
 
-                        // For each column...
-                        for (int i = 0; i < xi_rho; i++) {
-
-                            // Check if the cell is land
-                            if (oceanModelAdapter->Mask()(j, i) != 1) {
-
-                                // Mask the cell
-                                conc(concentrationTimeIdx, k, j, i) = 1e37;
-                            }
-                        }
+                        // Mask the cell
+                        conc(concentrationTimeIdx, (int) k, landCells[c].first, landCells[c].second) = 1e37;
                     }
                 }
             }
