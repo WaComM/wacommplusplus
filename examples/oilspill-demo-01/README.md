@@ -6,19 +6,27 @@
 
 ## Prerequisites and input
 
-Use forcing that covers the Gulf of Naples and a run configuration whose source reader accepts GeoJSON polygon releases. The polygon supplies particle count and zero-metre depth but no release timestamp; the enclosing configuration must define the time semantics.
+This file is a GeoJSON `Polygon` release area with a particle count and a zero-metre `depth`. It is not a WaComM++ source file. The C++ source reader accepts only `Point` positions or explicit grid indices, and rejects this file with an error naming the feature ([source position](../../docs/configuration.md#source-position)). Earlier revisions accepted it silently and created a source at the sentinel index $10^{37}$, whose particles never entered the domain. The release has no timestamp of its own; the enclosing configuration must define the timing.
 
 ## Configuration and exact use
 
-Set `sources.active:true` and point `sources.sources_file` at this file in a complete configuration, then run:
+The polygon is intended for the legacy `utilities/createRestartFileFromJson` tool. That tool samples particles uniformly inside the polygon and writes an unversioned NetCDF restart:
+
+```bash
+python3 utilities/createRestartFileFromJson/main.py d03.nc examples/oilspill-demo-01/oilspill-demo-01.json 20220915Z0000
+```
+
+The resulting `restart_20220915Z0000.nc` is then named in `restart.restart_file`, with `restart.active:true` and `sources.active:false`, and the run is:
 
 ```bash
 ./build/wacommplusplus path/to/configuration.json
 ```
 
+**This path has not been verified against the current model and should not be used for scientific results.** The tool expects one-dimensional `latitude`, `longitude`, and `depth` axes in the domain file. It stores the index of the nearest node and nearest depth value, as non-negative integers, whereas the solver uses fractional indices with $k\le0$ at the surface ([particle state and coordinates](../../docs/model.md#particle-state-and-coordinates)). It also writes identities as 32-bit floats. Until the tool is brought into line with the model's position mapping and restart format, these demonstrations have no verified execution path.
+
 ## Expected behavior and validation
 
-Initial particles should sample the polygon and valid wet cells. Plot the initialized cloud with the coastline, verify the total count, ensure no point lies outside supported interpolation cells, and compare repeated runs using an explicit `physics.random_seed` when random source placement is enabled.
+Once the preparation path is verified, the initial particles should lie inside the polygon on valid wet interpolation cells. Plot the initialized cloud with the coastline, verify the total count, and check that no particle lies outside a supported interpolation cell. The tool samples with Python's unseeded `random` module, so each preparation produces a different cloud. Archive the generated restart and its checksum; do not try to reproduce it from `physics.random_seed`, which the tool does not use.
 
 ## Limitations, interpretation, and reproducibility
 

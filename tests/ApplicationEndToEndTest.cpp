@@ -53,6 +53,9 @@ constexpr int DEMO_WINDOWS=6;       // number of forcing files (documentation ca
 constexpr double LON0=14.0, LAT0=40.7, DLON=0.01, DLAT=0.01;
 constexpr int NI=21, NJ=21;
 constexpr double SOURCE_LON=14.05, SOURCE_LAT=40.75;
+// [m], positive down; h=100 m and sW(0)=0, sW(-1)=-0.5 place it in the upper W interval
+// at k = -SOURCE_DEPTH/(h*0.5) (docs/model.md#vertical-coordinate-mapping).
+constexpr double SOURCE_DEPTH=10.0, SOURCE_K=-SOURCE_DEPTH/(100*0.5);
 constexpr int PARTICLES=4;
 constexpr double EARTH_RADIUS=6371000.0; // [m], WaComM++ spherical metric
 constexpr double PI=3.14159265358979323846; // portable: MSVC omits M_PI by default
@@ -111,7 +114,7 @@ json pointSource(int particles) {
             {"properties",{{"id","analytic-uniform-current"},{"start","20210701Z0000"},
                            {"end","20210701Z0000"},
                            {"emission",{{"mode","single_pulse"},{"particles",particles}}}}},
-            {"geometry",{{"type","Point"},{"coordinates",{SOURCE_LON,SOURCE_LAT,-10}}}}
+            {"geometry",{{"type","Point"},{"coordinates",{SOURCE_LON,SOURCE_LAT,-SOURCE_DEPTH}}}}
         }})}
     };
 }
@@ -219,6 +222,9 @@ void verify(const std::string& directory) {
         // spherical metric, not stochastic spread (random=false).
         assert(error<1e-3*displacement);
         assert(std::abs(state.age-T)<1e-3);
+        // w=0 and AKT=0: the release level is preserved in both directions
+        assert(std::abs(state.k-SOURCE_K)<1e-12);
+        assert(std::abs(backward.at(id).k-SOURCE_K)<1e-12);
 
         const State& origin=backward.at(id);
         double lonBack=origin.lon, latBack=origin.lat;

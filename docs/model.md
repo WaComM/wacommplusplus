@@ -58,7 +58,39 @@ Vertical coordinate $k\leq0$ increases upward, with the free surface at $k=0$. F
 
 $$F(k)=(1-\beta)F(k_u)+\beta F(k_u-1).$$
 
-Logical level $-N+1,\ldots,0$ maps to contiguous storage index $k+N-1$. Horizontal current components use the containing rho level, whereas vertical velocity and AKT use the two adjacent W levels. A source requested below local bathymetry is placed on the lowest valid particle level.
+Logical level $-N+1,\ldots,0$ maps to contiguous storage index $k+N-1$. Horizontal current components use the containing rho level, whereas vertical velocity and AKT use the two adjacent W levels.
+
+### Horizontal position mapping
+
+`kji2deplatlon` maps fractional horizontal indices to geographic position by bilinear interpolation of the node longitude $\lambda_{j,i}$ and latitude $\phi_{j,i}$, both in degrees. For cell $(j_c,i_c)=(\lfloor j\rfloor,\lfloor i\rfloor)$ with fractions $\eta=j-j_c$ and $\xi=i-i_c$,
+
+$$\boldsymbol{X}(\eta,\xi)=(1-\xi)(1-\eta)\boldsymbol{X}_{j_c,i_c}+(1-\xi)\eta\,\boldsymbol{X}_{j_c+1,i_c}+\xi\eta\,\boldsymbol{X}_{j_c+1,i_c+1}+\xi(1-\eta)\boldsymbol{X}_{j_c,i_c+1},\qquad \boldsymbol{X}=(\lambda,\phi).$$
+
+This is defined for $0\le j_c\le N_j-2$ and $0\le i_c\le N_i-2$, the cells the solver accepts. `deplatlon2kji` inverts this map exactly. It does not use a separate approximation. Cells are visited in source order, $j_c$ then $i_c$. A cell is skipped if the target lies outside its node bounding box, padded by $10^{-9}$ of the box width; this test only discards cells and does not change the operator. For each remaining cell it solves $\boldsymbol{X}(\eta,\xi)=\boldsymbol{X}^\star$ by Newton iteration from $(\tfrac12,\tfrac12)$ with the analytic $2\times2$ Jacobian. It stops when both index updates are below $10^{-11}$; that threshold sits above the round-off floor for degree-valued coordinates. A converged solution is accepted when $\eta,\xi\in[-10^{-9},1+10^{-9}]$. Fractions within $10^{-9}$ of 0 or 1 are snapped onto the cell edge, so a position on a shared edge gets the same index whichever cell is found first. The first accepted cell gives $j=j_c+\eta$ and $i=i_c+\xi$, provided $(\lfloor j\rfloor,\lfloor i\rfloor)$ is itself a valid interpolation cell. As a consequence, the southern and western node lines are inside the domain, and the outermost northern and eastern node lines are outside it, as in the solver.
+
+A position that no cell accepts, or a cell with a singular Jacobian, raises an out-of-domain error. Non-finite coordinates are rejected. Source loading reports either error together with the source identifier, instead of placing the source at an undefined index. Longitude is not treated as cyclic. Source and grid longitudes must therefore use the same convention, and grids that cross the antimeridian with a discontinuous longitude are not supported. The mask is not consulted, so a source in a land cell is placed there and is subject to the solver's shore treatment. Bilinear inversion of a non-degenerate convex quadrilateral has at most one solution in the unit square. On strongly non-convex cells the first accepted cell in source order is used.
+
+The previous inverse took the nearest node by haversine distance, then computed $j$ from latitude alone and $i$ from longitude alone, relative to a diagonal neighbour. This is exact on rectilinear longitude–latitude grids: there the new inverse gives the same indices to rounding. It is not an inverse on rotated or curvilinear grids. On the rotated, sheared fixture of `vertical_coordinate_round_trip`, it misplaced interior positions by up to 1.12 grid cells, against $4\times10^{-13}$ for the bilinear inversion. Near the northern and eastern boundaries it also read outside the coordinate and bathymetry arrays.
+
+### Vertical coordinate mapping
+
+Source depths are converted to $k$ once, at source loading, by `OceanModelAdapter::deplatlon2kji`. Output and source export use the inverse `kji2deplatlon`. Both are host code shared by the serial, OpenMP, MPI, and CUDA builds; CUDA kernels receive the resulting $k$ and contain no depth conversion. Let $\sigma_w(k)\in[-1,0]$ be the dimensionless W-level s-coordinate stored in `s_w`, with $\sigma_w(0)=0$ at the surface and $|\sigma_w|$ increasing downward, and let $h$ be the bilinearly interpolated bathymetry in metres at $(j,i)$. The W-level depth below the reference surface is $z_w(k)=h\,|\sigma_w(k)|$ in metres, positive down. Following the existing WaComM convention, the mapping uses the stored $\sigma_w$ directly and omits the instantaneous free-surface elevation $\zeta$ and any ROMS stretching transform. It is therefore the topography-following coordinate of the exported grid (Shchepetkin and McWilliams, 2005), not the full time-dependent ROMS depth. For $k_u=\lceil k\rceil$ and $\beta=k_u-k$, the forward map is
+
+$$d(k)=(1-\beta)\,z_w(k_u)+\beta\,z_w(k_u-1)\quad[\mathrm{m}],$$
+
+and the reported depth is $-d$. It is piecewise linear and strictly increasing in $-k$ on each W interval. Let $k_b=-N+2$ be the lowest valid particle level, the same limit the solver applies to the lower closure on CPU and CUDA. For a requested depth $d\geq0$ (the sign of the input is ignored), the inverse is
+
+$$
+k(d)=\begin{cases}
+0, & d\leq z_w(0),\\
+k_b, & d\geq z_w(k_b),\\
+k_u-\dfrac{d-z_w(k_u)}{z_w(k_u-1)-z_w(k_u)}, & z_w(k_u)\leq d<z_w(k_u-1),\ k_b<k_u\leq0.
+\end{cases}
+$$
+
+The interval is found by descending from the surface. On $[k_b,0]$ the two maps are mutual inverses, $d(k(d))=d$ and $k(d(k))=k$, up to floating-point rounding. A depth below $z_w(k_b)$, including one below $h$, is placed on $k_b$, so the release is not removed by the lower closure. The lowest W interval, between $k_b$ and $-N+1$, is not representable as a particle position under this limit; a source requested there is moved up to $z_w(k_b)$, at most one bottom-cell thickness. Non-finite depths or bathymetry are rejected.
+
+Until this correction, the inverse stepped toward the wrong neighbouring W level. For an interior depth just below a level it moved the particle upward instead of downward, and for depths above the first W level below the surface it read $\sigma_w(1)$, which lies outside the array. Debug builds aborted on that read; Release builds placed the source at an undefined level. Surface sources ($d=0$) map to $k=0$ in both versions and are unchanged. Every checked-in example source, including Sarno, is at the surface. Restart files store $k$ directly and are not affected. Placement occurs before tracking, so the correction is identical in forward and backward runs. Continuous and restarted runs re-read the same sources and obtain the same $k$. `vertical_coordinate_round_trip` checks both vertical compositions on a stretched five-level grid with sloping bathymetry: at 400 depths it requires agreement within $10^{-9}$ m, and at 301 levels in $[k_b,0]$ and at every W level within $10^{-12}$ in $k$. It also checks surface, $k_b$, and below-bottom clamping, monotonicity, and rejection of non-finite input. On a rotated, sheared, non-parallelogram curvilinear grid it requires the horizontal round trip $(j,i)\to(\lambda,\phi)\to(j,i)$ to agree within $10^{-9}$ at 2,091 positions. It also checks node lines on the domain edges, out-of-domain and non-finite rejection, and agreement with the analytic linear inverse on a rectilinear grid. `application_end_to_end` releases its source at 10 m and requires $k=-0.2$ within $10^{-12}$ at the forward end and the backward origin.
 
 ## Space and time interpolation
 
@@ -242,6 +274,7 @@ solver equations or certify upstream ocean-model accuracy.
 
 ## References
 
+- Shchepetkin, A. F., and McWilliams, J. C. (2005). The regional oceanic modeling system (ROMS): a split-explicit, free-surface, topography-following-coordinate oceanic model. *Ocean Modelling*, 9, 347–404. [doi:10.1016/j.ocemod.2004.08.002](https://doi.org/10.1016/j.ocemod.2004.08.002).
 - Dimou, K. N., and Adams, E. E. (1993). A random-walk, particle tracking model for well-mixed estuaries and coastal waters. *Estuarine, Coastal and Shelf Science*, 37, 99–110. [doi:10.1006/ecss.1993.1044](https://doi.org/10.1006/ecss.1993.1044).
 - Visser, A. W. (1997). Using random walk models to simulate the vertical distribution of particles in a turbulent water column. *Marine Ecology Progress Series*, 158, 275–281. [doi:10.3354/meps158275](https://doi.org/10.3354/meps158275).
 - Thygesen, U. H. (2011). How to reverse time in stochastic particle tracking models. *Journal of Marine Systems*, 88, 159–168. [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009).

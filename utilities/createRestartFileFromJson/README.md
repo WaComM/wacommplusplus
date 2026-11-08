@@ -20,11 +20,13 @@
 
 _domain.nc_: The domain definition of a WaComM++ simulation \
 _features.json_: stores info about area where create random particles (you can use http://geojson.io coords to insert into json file ) \
-_iDate_: YYYYMMDDZHH format
+_iDate_: YYYYMMDDZHHMM format (for example `20220915Z0000`)
 
 ### output
 
 NetCDF restart file containing particles
+
+**Not verified against the current model.** Particles are placed at the nearest node and the nearest `depth` value, and stored as non-negative integer indices. The solver uses fractional indices with `k <= 0` at the surface (see [the model description](../../docs/model.md#particle-state-and-coordinates)). Identities are written as 32-bit floats, and sampling uses Python's unseeded `random` module. The restart has no `wacomm_restart_version` attribute and is read as a legacy file.
 
 ![img.png](img.png)
 
@@ -56,7 +58,7 @@ wget https://api.meteo.uniparthenope.it/files/wcm3/domains/d03.nc
 
 Prepare the restart file
 ```bash
-    python3 main.py d03 ../examples/oilspill-demo-01 20220915Z00
+    python3 main.py d03.nc ../../examples/oilspill-demo-01/oilspill-demo-01.json 20220915Z0000
 ```
 
 Run the simulation

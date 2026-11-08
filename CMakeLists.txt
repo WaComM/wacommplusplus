@@ -214,6 +214,20 @@ if(BUILD_APPLICATION)
         target_link_libraries(native_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME native_adapter COMMAND native_adapter_test)
 
+        add_executable(vertical_coordinate_test tests/VerticalCoordinateTest.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp)
+        wacomm_enable_test_assertions(vertical_coordinate_test)
+        target_link_libraries(vertical_coordinate_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME vertical_coordinate_round_trip COMMAND vertical_coordinate_test)
+
+        add_executable(source_loading_test tests/SourceLoadingTest.cpp Sources.cpp Source.cpp Particles.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp Config.cpp EnvironmentalDataAccess.cpp
+                Utils.cpp JulianDate.cpp)
+        target_include_directories(source_loading_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+        wacomm_enable_test_assertions(source_loading_test)
+        target_link_libraries(source_loading_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME source_position_loading COMMAND source_loading_test)
+
         add_executable(config_test tests/ConfigTest.cpp Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
         wacomm_enable_test_assertions(config_test)
         target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})

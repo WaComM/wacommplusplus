@@ -32,6 +32,25 @@ The midpoint phase prevents a release from belonging to both adjacent half-open 
 
 All interval membership is evaluated in seconds on the normalized physical-time axis. Forward execution alone emits ordinary sources; backward execution continues to suppress them. Releases for an interval are created before particle distribution, with future members inactive until their stored release time, so serial, OpenMP, MPI, and CUDA use the same schedule. A restart checkpoint stores those inactive members and suppresses rescheduling of its partially completed forcing interval; subsequent interval schedules are reconstructed from physical time.
 
+### Source position
+
+Each feature must give its position in exactly one of two ways:
+
+- **Geographic.** A GeoJSON `Point` with coordinates `[longitude, latitude]` or `[longitude, latitude, depth]`, in degrees east, degrees north, and metres. It is converted once at loading by the [horizontal](model.md#horizontal-position-mapping) and [vertical](model.md#vertical-coordinate-mapping) inverse mappings. A `k` property is not allowed with a `Point` position.
+- **Grid.** Explicit fractional indices in the `j` and `i` properties, which must be given together, with an optional `k` (default 0, the surface). These are used as given; any geometry is ignored. They must address a valid interpolation cell of the selected forcing.
+
+The depth is read from the `depth` property, which is the name `saveAsJson` writes, or from the deprecated alias `dep`. A third `Point` coordinate may also carry it. The sign is ignored and the value is read as metres below the surface: GeoJSON's elevation `-20` and a `depth` of `20` are the same request. When more than one of these is present, their magnitudes must agree exactly. With no depth, the source is at the surface. For a grid position, a depth without `k` sets `k` at $(j,i)$; a depth with `k` must match the depth of `k` within $10^{-6}$ m. A depth below the lowest valid particle level is placed on that level.
+
+Loading stops with an error naming the source in any of these cases:
+
+- the feature has no position, or its geometry is not a `Point`, including `Polygon` and `MultiPoint`;
+- the `Point` has fewer than two or more than three coordinates, or a value that is not a number;
+- only one of `j` and `i` is given, or `k` is given without them;
+- the depths disagree;
+- the position is non-finite or outside the ocean model interpolation domain.
+
+Earlier revisions handled these cases silently. They read only `dep`, so the `depth` property written by `saveAsJson` and used by the example catalogs was ignored, and the third coordinate was used only when `dep` was zero. A feature without a usable position was added at the sentinel index $10^{37}$, and its particles never entered the domain. Polygon release areas, such as the [oil-spill demonstrations](../examples/oilspill-demo-01/README.md), are not source files. They are inputs to `utilities/createRestartFileFromJson`, which samples particles into an initial restart.
+
 With `physics.random_sources=true`, each released grid coordinate receives an independent normal offset with mean 0 and standard deviation 0.25 grid-index units. The three coordinates use disjoint stateless random components keyed by `physics.random_seed` and stable particle identity through the ordered key scheme `ordered-splitmix64-v2` defined in [model.md](model.md#stochastic-displacement). The offsets are consequently invariant under forcing-interval partition, restart, MPI rank count, thread scheduling, and accelerator scheduling. They describe computational source-position spread in fractional grid coordinates, not a distance-isotropic or observationally calibrated source footprint.
 
 `direction` is `forward` or `backward`. Backward diffusion defaults to `none`; `symmetric_stochastic` enables an ensemble and must not be interpreted as exact path reconstruction. Closure values are `constraint`, `kill`, and `reflection`. Unknown direction and backward-diffusion values are errors.
