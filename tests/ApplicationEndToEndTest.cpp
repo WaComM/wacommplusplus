@@ -14,7 +14,10 @@
 //       compares the JSON particle histories produced by the executable with
 //       the analytic solution of dx/dt=u, dy/dt=v and with the forward/backward
 //       round trip, and checks a run whose start and release are at 00:30
-//       (YYYYMMDDZhhmm) for release time, age, position, and whole-hour output.
+//       (YYYYMMDDZhhmm) for release time, age, position, and whole-hour output,
+//       and runs started from polygon-release restarts (createRestartFileFromJson,
+//       docs/model.md#polygon-releases) forward from 00:00 and backward from 02:00
+//       against the same analytic solution, particle by particle.
 //
 // The uniform current makes the exact Lagrangian displacement independent of
 // the interpolation operator, so the comparison verifies the executable path
@@ -24,6 +27,7 @@
 #include "../OceanModelAdapter.hpp"
 #include "../JulianDate.hpp"
 
+#include <netcdf>
 #include <nlohmann/json.hpp>
 
 #include <cassert>
@@ -34,6 +38,7 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <vector>
 
 using json = nlohmann::json;
 
@@ -57,6 +62,7 @@ constexpr double SOURCE_LON=14.05, SOURCE_LAT=40.75;
 // at k = -SOURCE_DEPTH/(h*0.5) (docs/model.md#vertical-coordinate-mapping).
 constexpr double SOURCE_DEPTH=10.0, SOURCE_K=-SOURCE_DEPTH/(100*0.5);
 constexpr int PARTICLES=4;
+constexpr int POLYGON_PARTICLES=8;
 constexpr double EARTH_RADIUS=6371000.0; // [m], WaComM++ spherical metric
 constexpr double PI=3.14159265358979323846; // portable: MSVC omits M_PI by default
 
@@ -137,6 +143,26 @@ void generate(const std::string& directory) {
     minutes["io"]["nc_output_root"]="minutes-conc-";
     minutes["io"]["history_root"]="minutes-history-";
     std::ofstream(directory+"/minutes.json") << minutes.dump(2) << "\n";
+
+    // Polygon release: a concave area around the point source, at the same depth
+    json polygon={
+        {"type","FeatureCollection"},
+        {"features",json::array({{
+            {"type","Feature"},
+            {"properties",{{"name","analytic-polygon"},{"particles",POLYGON_PARTICLES},{"depth",SOURCE_DEPTH}}},
+            {"geometry",{{"type","Polygon"},{"coordinates",json::array({json{
+                {14.04,40.74},{14.07,40.745},{14.06,40.76},{14.05,40.752},{14.045,40.765},{14.04,40.74}}})}}}
+        }})}
+    };
+    std::ofstream(directory+"/polygon.geojson") << polygon.dump(2) << "\n";
+    for (const std::string direction: {"forward","backward"}) {
+        json config=configuration(direction);
+        config["sources"]["active"]=false;
+        config["restart"]={{"active",true},{"restart_file","polygon-"+direction+"-restart.nc"}};
+        config["io"]["nc_output_root"]="polygon-"+direction+"-conc-";
+        config["io"]["history_root"]="polygon-"+direction+"-history-";
+        std::ofstream(directory+"/polygon-"+direction+".json") << config.dump(2) << "\n";
+    }
 }
 
 // Documentation case: six hourly windows, NetCDF snapshots, and seeded
@@ -174,7 +200,54 @@ std::map<std::uint64_t,State> particles(const std::string& fileName) {
     return result;
 }
 
+// Read the initial particle state of a polygon-release restart.
+std::map<std::uint64_t,State> restartParticles(const std::string& fileName) {
+    netCDF::NcFile file(fileName,netCDF::NcFile::read);
+    std::size_t count=file.getDim("particles").getSize();
+    std::vector<std::uint64_t> id(count);
+    std::vector<double> i(count),j(count),k(count),time(count);
+    file.getVar("id").getVar(id.data());
+    file.getVar("i").getVar({0,0},{count,1},i.data());
+    file.getVar("j").getVar({0,0},{count,1},j.data());
+    file.getVar("k").getVar({0,0},{count,1},k.data());
+    file.getVar("time").getVar({0,0},{count,1},time.data());
+    std::map<std::uint64_t,State> result;
+    for (std::size_t n=0;n<count;n++) result[id[n]]={LON0+i[n]*DLON,LAT0+j[n]*DLAT,k[n],1,0,time[n]};
+    return result;
+}
+
+// Analytic end position of dx/dt=U, dy/dt=V on the sphere after a signed time T.
+void analyticEnd(double lon, double lat, double T, double& lonEnd, double& latEnd) {
+    latEnd=lat+V*T/EARTH_RADIUS*180.0/PI;
+    double phi0=lat*PI/180.0, phi1=latEnd*PI/180.0;
+    lonEnd=lon+(U/V)*std::log(std::tan(PI/4+phi1/2)/std::tan(PI/4+phi0/2))*180.0/PI;
+}
+
+void verifyPolygon(const std::string& directory) {
+    // Forward from the 00:00 release and backward from the 02:00 release
+    for (const std::string direction: {"forward","backward"}) {
+        bool backward=direction=="backward";
+        auto initial=restartParticles(directory+"/polygon-"+direction+"-restart.nc");
+        auto final=particles(directory+"/polygon-"+direction+"-history-20210701Z"+(backward ? "00" : "02")+".txt");
+        assert((int)initial.size()==POLYGON_PARTICLES && final.size()==initial.size());
+        double releaseTime=modJulianSeconds(backward ? WINDOWS : 0);
+        double T=(backward ? -1 : 1)*WINDOWS*WINDOW;
+        for (auto& [id,start]: initial) {
+            const State& state=final.at(id);
+            assert(std::abs(start.time-releaseTime)<1e-3 && std::abs(state.time-releaseTime)<1e-3);
+            assert(std::abs(start.k-SOURCE_K)<1e-12 && std::abs(state.k-SOURCE_K)<1e-12);
+            double lonEnd,latEnd;
+            analyticEnd(start.lon,start.lat,T,lonEnd,latEnd);
+            double dx=(state.lon-lonEnd)*PI/180.0*EARTH_RADIUS*std::cos(latEnd*PI/180.0);
+            double dy=(state.lat-latEnd)*PI/180.0*EARTH_RADIUS;
+            std::cout << "polygon " << direction << " id=" << id << " error_m=" << std::hypot(dx,dy) << "\n";
+            assert(std::hypot(dx,dy)<1e-3*std::hypot(U,V)*WINDOWS*WINDOW);
+        }
+    }
+}
+
 void verify(const std::string& directory) {
+    verifyPolygon(directory);
     auto forward=particles(directory+"/forward-history-20210701Z02.txt");
     auto backward=particles(directory+"/backward-history-20210701Z00.txt");
     assert((int)forward.size()==PARTICLES);

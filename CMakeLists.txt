@@ -57,6 +57,13 @@ function(wacomm_enable_test_assertions target)
     endif()
 endfunction()
 
+# Polygon release positions must be bitwise identical across platforms (docs/model.md#polygon-releases)
+if(MSVC)
+    set_source_files_properties(PolygonRelease.cpp PROPERTIES COMPILE_OPTIONS "/fp:precise")
+else()
+    set_source_files_properties(PolygonRelease.cpp PROPERTIES COMPILE_OPTIONS "-ffp-contract=off")
+endif()
+
 if(USE_MPI AND USE_EMPI)
     message(FATAL_ERROR "You can not use both MPI and EMPI.")
 endif()
@@ -176,6 +183,16 @@ if(BUILD_APPLICATION)
     target_include_directories(wacommplusplus PRIVATE "${WACOMM_GENERATED_INCLUDE}")
     install(TARGETS wacommplusplus RUNTIME DESTINATION bin)
 
+    # Polygon release areas to a versioned NetCDF restart (docs/model.md#polygon-releases)
+    add_executable(createRestartFileFromJson utilities/createRestartFileFromJson/main.cpp
+            PolygonRelease.cpp Particle.cpp Particles.cpp Config.cpp DriftModel.cpp OceanModelAdapter.cpp
+            OceanModelAdapterFactory.cpp Utils.cpp JulianDate.cpp EnvironmentalDataAccess.cpp
+            OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
+            OceanModelAdapters/StructuredGridAdapter.cpp)
+    target_link_libraries(createRestartFileFromJson PRIVATE ${WACOMM_LIBRARIES})
+    target_include_directories(createRestartFileFromJson PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+    install(TARGETS createRestartFileFromJson RUNTIME DESTINATION bin)
+
     if(BUILD_TESTING)
         if(TARGET wacomm_openssl)
             add_executable(openssl_dependency_test tests/OpenSSLDependencyTest.cpp)
@@ -228,6 +245,14 @@ if(BUILD_APPLICATION)
         target_link_libraries(source_loading_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME source_position_loading COMMAND source_loading_test)
 
+        add_executable(polygon_release_test tests/PolygonReleaseTest.cpp PolygonRelease.cpp Particles.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp Config.cpp EnvironmentalDataAccess.cpp
+                Utils.cpp JulianDate.cpp)
+        target_include_directories(polygon_release_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+        wacomm_enable_test_assertions(polygon_release_test)
+        target_link_libraries(polygon_release_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME polygon_release COMMAND polygon_release_test "${CMAKE_CURRENT_SOURCE_DIR}/examples")
+
         add_executable(config_test tests/ConfigTest.cpp Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
         wacomm_enable_test_assertions(config_test)
         target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
@@ -269,6 +294,7 @@ if(BUILD_APPLICATION)
         add_test(NAME application_end_to_end COMMAND ${CMAKE_COMMAND}
                 -DHELPER=$<TARGET_FILE:application_end_to_end_test>
                 -DEXECUTABLE=$<TARGET_FILE:wacommplusplus>
+                -DPOLYGON_TOOL=$<TARGET_FILE:createRestartFileFromJson>
                 -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/application-end-to-end
                 "-DLAUNCHER=${WACOMM_END_TO_END_LAUNCHER}"
                 -DREQUIRE_CUDA_DEVICE=${USE_CUDA}

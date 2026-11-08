@@ -27,6 +27,8 @@ $$
 
 The spatially uniform field is reproduced exactly by any consistent interpolation operator. Any remaining endpoint error therefore comes from the time integration, the single-precision storage of the forcing, and the discrete spherical grid metric, not from the choice of stencil. Four particles are released as a single pulse at $14.05^\circ$E, $40.75^\circ$N at 00 UTC and integrated for $T=7200$ s with `physics.dti=30` s. The great-circle path length is $\sqrt{u^2+v^2}\,T\approx805$ m.
 
+Two further runs start from [polygon releases](model.md#polygon-releases). `createRestartFileFromJson` samples eight particles at 10 m depth inside a concave six-vertex polygon around the point source, with `physics.random_seed=5489`, and writes a version 3 NetCDF restart. One restart is released at 00 UTC and tracked forward to 02 UTC. The other is released at 02 UTC and tracked backward to 00 UTC, with $T=-7200$ s in the rhumb-line solution. Each particle's end position is compared with the analytic solution from its own sampled start, which the test reads from the restart. The release time and $k=-0.2$ must be preserved.
+
 ## Acceptance criteria
 
 | Quantity | Criterion | Measured on macOS arm64, AppleClang 21 (2026-11-06) |
@@ -37,6 +39,8 @@ The spatially uniform field is reproduced exactly by any consistent interpolatio
 | Particle age at 01 and 02 UTC | $3600$ s and $7200$ s within $10^{-3}$ s | passes |
 | Text histories | forward 01, 02 UTC; backward 01, 00 UTC | present |
 | Gridded counts | forward Z00, Z01; backward Z02, Z01 | present |
+| Polygon release, forward and backward, each of 8 particles vs. analytic solution | $< 10^{-3}$ of the path length (0.805 m) | 0.078 m forward, 0.085 m backward (2026-11-08) |
+| Polygon release time and level at both ends | $10^{-3}$ s and $10^{-12}$ in $k$ | passes |
 
 Gridded files are stamped with the start of the last forcing interval of each window in the tracking direction; particle histories are stamped with the final physical time of the window. With `USE_MPI=ON` both executable invocations run under `mpiexec -n 2`. With `USE_OMP=ON` the test uses `OMP_NUM_THREADS=2`. With `USE_CUDA=ON` the test reports a CTest skip unless `nvidia-smi -L` lists a device. A compile-only CUDA container therefore does not claim device execution, while the self-hosted GPU workflow runs the full comparison. The same thresholds apply in every configuration, so the test also checks backend equivalence for this case. On this macOS host it passed in serial, OpenMP, MPI, MPI+OpenMP, and PROJ-enabled builds.
 
@@ -55,6 +59,11 @@ mkdir -p data/end-to-end && cd data/end-to-end
 ../../build/application_end_to_end_test generate .
 ../../build/wacommplusplus forward.json
 ../../build/wacommplusplus backward.json
+../../build/wacommplusplus minutes.json
+../../build/createRestartFileFromJson polygon-forward.json polygon.geojson 20210701Z0000
+../../build/wacommplusplus polygon-forward.json
+../../build/createRestartFileFromJson polygon-backward.json polygon.geojson 20210701Z0200
+../../build/wacommplusplus polygon-backward.json
 ../../build/application_end_to_end_test verify .
 ```
 
@@ -91,7 +100,7 @@ On its first run, this test found four defects in the executable path that the c
 
 ## Limitations and interpretation
 
-The test covers one grid, a uniform and constant current, the native WACOMM adapter, and passive drift with closures inactive. It does not test spatially varying interpolation, vertical motion, stochastic diffusion, leeway, ROMS/NEMO/HYCOM decoding, CUDA, or continuation from a NetCDF restart. Those are covered by the component tests listed in [testing](testing.md). Passing this test shows that the executable integrates this case correctly in the tested build. It does not show that a simulation driven by real forcing is physically accurate.
+The test covers one grid, a uniform and constant current, the native WACOMM adapter, and passive drift with closures inactive. It does not test spatially varying interpolation, vertical motion, stochastic diffusion, leeway, ROMS/NEMO/HYCOM decoding, or CUDA. The only NetCDF restarts it loads are the generated polygon releases. The polygon endpoint errors are larger than the point-source error because the samples start away from the node rows. The solver evaluates the zonal cell width at the southern node row of each cell, which shortens the eastward displacement by about $\tan\phi\,\eta\,\Delta\phi$ relative, with $\eta$ the fractional position across the cell ([metric conversion](model.md#metric-conversion-and-position-update)). This was isolated by releasing Point sources at four positions whose starting $\eta$ ranges from 0 to 0.5. Their errors were 0.018, 0.031, 0.064, and 0.072 m, all eastward with less than 0.001 m northward, matching the estimate. The polygon errors fall in the same range and within the tolerance. Those are covered by the component tests listed in [testing](testing.md). Passing this test shows that the executable integrates this case correctly in the tested build. It does not show that a simulation driven by real forcing is physically accurate.
 
 ## Reproducibility metadata
 

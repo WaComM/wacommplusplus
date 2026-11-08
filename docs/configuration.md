@@ -49,7 +49,19 @@ Loading stops with an error naming the source in any of these cases:
 - the depths disagree;
 - the position is non-finite or outside the ocean model interpolation domain.
 
-Earlier revisions handled these cases silently. They read only `dep`, so the `depth` property written by `saveAsJson` and used by the example catalogs was ignored, and the third coordinate was used only when `dep` was zero. A feature without a usable position was added at the sentinel index $10^{37}$, and its particles never entered the domain. Polygon release areas, such as the [oil-spill demonstrations](../examples/oilspill-demo-01/README.md), are not source files. They are inputs to `utilities/createRestartFileFromJson`, which samples particles into an initial restart.
+Earlier revisions handled these cases silently. They read only `dep`, so the `depth` property written by `saveAsJson` and used by the example catalogs was ignored, and the third coordinate was used only when `dep` was zero. A feature without a usable position was added at the sentinel index $10^{37}$, and its particles never entered the domain. Polygon release areas, such as the [oil-spill demonstrations](../examples/oilspill-demo-01/README.md), are not source files. They are read by `createRestartFileFromJson`, which samples particles into an initial restart ([polygon release files](#polygon-release-files)).
+
+### Polygon release files
+
+`createRestartFileFromJson` turns a GeoJSON `FeatureCollection` of `Polygon` features into the restart that a configuration names. It is built with the application (`BUILD_APPLICATION=ON`) and installed next to `wacommplusplus`:
+
+```bash
+./build/createRestartFileFromJson configuration.json polygons.geojson 20220915Z0000
+```
+
+Each feature needs `particles`, a positive integer, and `depth`, in metres below the surface (non-negative). `name` is optional and is used in error messages. Other properties, such as `description`, are ignored. Positions are `[longitude, latitude]` in degrees, in the longitude convention of the forcing grid. A third coordinate is rejected so that it cannot be confused with `depth`. Holes are supported. The release time uses the calendar format of `simulation.start` and must lie inside the first forcing window in the tracking direction.
+
+The configuration is the one that will run. It must set `restart.active:true` and a `restart.restart_file` ending in `.nc`, which the tool overwrites. The grid comes from `io.ocean_model` and the first window of `io.nc_inputs` in `tracking.direction`. The sampled positions are keyed by `physics.random_seed` and particle identity. The drift object and crosswind side come from the `drift` settings, as for sources. The restart is version 3 and records the seed, direction, ocean model, checkpoint time, and full configuration. It adds `wacomm_polygon_release_file`, `wacomm_polygon_release_sampler`, and `wacomm_polygon_release_time`. The tool reads the file back with the production loader and exits non-zero unless every particle is reproduced exactly. It also fails on invalid geometry or properties, out-of-domain positions, and samples in an interpolation cell with a land node. Sources may stay active in the same run; their identities continue after the polygon particles. The sampling density, keying, and placement are defined in [the model description](model.md#polygon-releases).
 
 With `physics.random_sources=true`, each released grid coordinate receives an independent normal offset with mean 0 and standard deviation 0.25 grid-index units. The three coordinates use disjoint stateless random components keyed by `physics.random_seed` and stable particle identity through the ordered key scheme `ordered-splitmix64-v2` defined in [model.md](model.md#stochastic-displacement). The offsets are consequently invariant under forcing-interval partition, restart, MPI rank count, thread scheduling, and accelerator scheduling. They describe computational source-position spread in fractional grid coordinates, not a distance-isotropic or observationally calibrated source footprint.
 
@@ -190,3 +202,6 @@ solver equations or certify upstream ocean-model accuracy.
 - Salmon, J. K., Moraes, M. A., Dror, R. O., and Shaw, D. E. (2011). Parallel random numbers: as easy as 1, 2, 3. *Proceedings of the 2011 International Conference for High Performance Computing, Networking, Storage and Analysis (SC11)*, article 16, 1–12. [doi:10.1145/2063384.2063405](https://doi.org/10.1145/2063384.2063405).
 - Runge, C. (1895). Ueber die numerische Auflösung von Differentialgleichungen. *Mathematische Annalen*, 46(2), 167–178. [doi:10.1007/BF01446807](https://doi.org/10.1007/BF01446807).
 - Nordam, T., and Duran, R. (2020). Numerical integrators for Lagrangian oceanography. *Geoscientific Model Development*, 13(12), 5935–5957. [doi:10.5194/gmd-13-5935-2020](https://doi.org/10.5194/gmd-13-5935-2020).
+- Hormann, K., and Agathos, A. (2001). The point in polygon problem for arbitrary polygons. *Computational Geometry*, 20(3), 131–144. [doi:10.1016/S0925-7721(01)00012-8](https://doi.org/10.1016/S0925-7721(01)00012-8).
+
+Interoperability (not a scientific source): Butler, H., Daly, M., Doyle, A., Gillies, S., Hagen, S., and Schaub, T. (2016). *The GeoJSON Format*. RFC 7946, IETF. [doi:10.17487/RFC7946](https://doi.org/10.17487/RFC7946).
