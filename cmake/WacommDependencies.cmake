@@ -16,6 +16,13 @@ function(wacomm_configure_dependencies result)
     set(source "${prefix}/src")
     set(build "${prefix}/build")
     file(MAKE_DIRECTORY "${prefix}/include" "${prefix}/lib")
+    # A shared archive directory lets several build trees reuse one verified
+    # download; URL_HASH is still checked before every reuse.
+    set(download)
+    if(WACOMM_DEPENDENCY_DOWNLOAD_DIR)
+        file(MAKE_DIRECTORY "${WACOMM_DEPENDENCY_DOWNLOAD_DIR}")
+        set(download DOWNLOAD_DIR "${WACOMM_DEPENDENCY_DOWNLOAD_DIR}")
+    endif()
 
     # ON deliberately skips discovery: a private build must not silently select
     # headers from one installation and libraries from another.
@@ -28,7 +35,7 @@ function(wacomm_configure_dependencies result)
         endif()
         FetchContent_Declare(wacomm_json
                 URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
-                URL_HASH SHA256=d6c65aca6b1ed68e7a182f4757257b107ae403032760ed6ef121c9d55e81757d
+                URL_HASH SHA256=d6c65aca6b1ed68e7a182f4757257b107ae403032760ed6ef121c9d55e81757d ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
         FetchContent_MakeAvailable(wacomm_json)
     endif()
@@ -94,7 +101,7 @@ function(wacomm_configure_dependencies result)
             set(netcdf_cxx "${prefix}/lib/libnetcdf-cxx4.a")
         endif()
         ExternalProject_Add(wacomm_zlib URL https://zlib.net/fossils/zlib-1.3.1.tar.gz
-                URL_HASH SHA256=9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23
+                URL_HASH SHA256=9a93b2b7dfdac77ceba5a558a580e74667dd6fede4585b91eefb60f03b72df23 ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/zlib" BINARY_DIR "${build}/zlib"
                 CMAKE_ARGS ${common} -DZLIB_BUILD_EXAMPLES:BOOL=OFF BUILD_COMMAND ${build_cmd}
                 INSTALL_COMMAND ${install_cmd} BUILD_BYPRODUCTS "${zlib}")
@@ -102,7 +109,7 @@ function(wacomm_configure_dependencies result)
         # native MSVC generators; no Unix shell or obsolete VS project is needed.
         ExternalProject_Add(wacomm_libaec
                 URL https://github.com/MathisRosenhauer/libaec/releases/download/v1.1.3/libaec-1.1.3.tar.gz
-                URL_HASH SHA256=bd8bea8b69ca602796b2daf17b0a7de019ce3c3bd0ad56fa9ef4a631a4088058
+                URL_HASH SHA256=bd8bea8b69ca602796b2daf17b0a7de019ce3c3bd0ad56fa9ef4a631a4088058 ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/libaec" BINARY_DIR "${build}/libaec"
                 CMAKE_ARGS ${common} BUILD_COMMAND ${build_cmd} INSTALL_COMMAND ${install_cmd}
                 BUILD_BYPRODUCTS "${sz}")
@@ -130,7 +137,7 @@ function(wacomm_configure_dependencies result)
             set(openssl_crypto "${prefix}/lib/libcrypto.a")
             ExternalProject_Add(wacomm_openssl
                     URL https://github.com/openssl/openssl/releases/download/openssl-${WACOMM_OPENSSL_VERSION}/openssl-${WACOMM_OPENSSL_VERSION}.tar.gz
-                    URL_HASH SHA256=a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2
+                    URL_HASH SHA256=a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2 ${download}
                     DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/openssl" BINARY_DIR "${build}/openssl"
                     CONFIGURE_COMMAND ${CMAKE_COMMAND} -E env "CC=${CMAKE_C_COMPILER}"
                         "AR=${CMAKE_AR}" "RANLIB=${CMAKE_RANLIB}"
@@ -154,7 +161,7 @@ function(wacomm_configure_dependencies result)
             message(STATUS "WaComM++ private OpenSSL=${WACOMM_OPENSSL_VERSION}")
         endif()
         ExternalProject_Add(wacomm_curl URL https://curl.se/download/curl-8.7.1.tar.xz
-                URL_HASH SHA256=6fea2aac6a4610fbd0400afb0bcddbe7258a64c63f1f68e5855ebc0c659710cd
+                URL_HASH SHA256=6fea2aac6a4610fbd0400afb0bcddbe7258a64c63f1f68e5855ebc0c659710cd ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/curl" BINARY_DIR "${build}/curl"
                 CMAKE_ARGS ${common} ${curl_tls} -DBUILD_CURL_EXE:BOOL=OFF -DBUILD_EXAMPLES:BOOL=OFF
                     -DBUILD_LIBCURL_DOCS:BOOL=OFF -DCURL_ZLIB:BOOL=ON -DZLIB_ROOT:PATH=${prefix}
@@ -178,7 +185,7 @@ function(wacomm_configure_dependencies result)
         endif()
         ExternalProject_Add(wacomm_hdf5
                 URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.0/src/hdf5-1.12.0.tar.gz
-                URL_HASH SHA256=a62dcb276658cb78e6795dd29bf926ed7a9bc4edf6e77025cd2c689a8f97c17a
+                URL_HASH SHA256=a62dcb276658cb78e6795dd29bf926ed7a9bc4edf6e77025cd2c689a8f97c17a ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/hdf5" BINARY_DIR "${build}/hdf5"
                 CMAKE_ARGS ${common} ${hdf5_parallel} -DHDF5_BUILD_HL_LIB:BOOL=ON -DHDF5_BUILD_TOOLS:BOOL=OFF
                     -DHDF5_ENABLE_Z_LIB_SUPPORT:BOOL=ON -DZLIB_ROOT:PATH=${prefix}
@@ -188,7 +195,7 @@ function(wacomm_configure_dependencies result)
                 BUILD_BYPRODUCTS "${hdf5}" "${hdf5_hl}")
         ExternalProject_Add(wacomm_netcdf_c
                 URL https://downloads.unidata.ucar.edu/netcdf-c/4.8.1/netcdf-c-4.8.1.tar.gz
-                URL_HASH SHA256=808ac326ddecc8e0bb70f3ba35747fd6907f2b446817ce1465219974abe472b1
+                URL_HASH SHA256=808ac326ddecc8e0bb70f3ba35747fd6907f2b446817ce1465219974abe472b1 ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/netcdf-c" BINARY_DIR "${build}/netcdf-c"
                 # The official 4.8.1 release archive omits the optional fuzz
                 # submodule although its CMake file enters that directory.
@@ -206,7 +213,7 @@ function(wacomm_configure_dependencies result)
                 BUILD_BYPRODUCTS "${netcdf}")
         ExternalProject_Add(wacomm_netcdf_cxx
                 URL https://downloads.unidata.ucar.edu/netcdf-cxx/4.3.1/netcdf-cxx4-4.3.1.tar.gz
-                URL_HASH SHA256=6a1189a181eed043b5859e15d5c080c30d0e107406fbb212c8fb9814e90f3445
+                URL_HASH SHA256=6a1189a181eed043b5859e15d5c080c30d0e107406fbb212c8fb9814e90f3445 ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/netcdf-cxx" BINARY_DIR "${build}/netcdf-cxx"
                 CMAKE_ARGS ${common} -DCMAKE_PREFIX_PATH:PATH=${prefix}
                     -DnetCDF_LIBRARIES:FILEPATH=${netcdf} -DnetCDF_INCLUDE_DIR:PATH=${prefix}/include
@@ -257,7 +264,7 @@ function(wacomm_configure_dependencies result)
         endif()
         ExternalProject_Add(wacomm_log4cplus
                 URL https://github.com/log4cplus/log4cplus/releases/download/REL_2_1_1/log4cplus-2.1.1.tar.gz
-                URL_HASH SHA256=42dc435928917fd2f847046c4a0c6086b2af23664d198c7fc1b982c0bfe600c1
+                URL_HASH SHA256=42dc435928917fd2f847046c4a0c6086b2af23664d198c7fc1b982c0bfe600c1 ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/log4cplus" BINARY_DIR "${build}/log4cplus"
                 CMAKE_ARGS ${common} -DLOG4CPLUS_BUILD_TESTING:BOOL=OFF -DLOG4CPLUS_BUILD_EXAMPLES:BOOL=OFF
                 BUILD_COMMAND ${build_cmd} INSTALL_COMMAND ${install_cmd} BUILD_BYPRODUCTS "${log_library}")

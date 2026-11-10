@@ -15,6 +15,7 @@ The documentation is organized as a scientific model description rather than sol
 - [Surface drift objects](sar-drift.md)
 - [Restart](restart.md)
 - [Parallelism](parallelism.md)
+- [Backend matrix evaluation and improvement plan](backend-matrix-evaluation.md)
 - [Testing](testing.md)
 - [Application end-to-end verification](application-verification.md)
 - [Reproducibility](reproducibility.md)

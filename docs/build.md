@@ -48,6 +48,12 @@ cmake -S . -B build-private -DWACOMM_BOOTSTRAP_DEPENDENCIES=ON
 cmake -S . -B build-system -DWACOMM_BOOTSTRAP_DEPENDENCIES=OFF
 ```
 
+`WACOMM_DEPENDENCY_DOWNLOAD_DIR` (empty by default) names a directory of downloaded dependency archives shared by several build trees, for example one per backend combination. Each archive is fetched at most once and its pinned SHA-256 is verified before every reuse, so a mismatching or truncated file is rejected rather than built. Pre-seeding the directory with the pinned archives lets later configures proceed during an upstream outage; on 2026-11-08 all eight rainbow configures failed on a transient HTTP 504 from GitHub without it. Configure trees that share the directory one at a time, because concurrent downloads of the same archive are not coordinated.
+
+```bash
+cmake -S . -B build-omp -DUSE_OMP=ON -DWACOMM_DEPENDENCY_DOWNLOAD_DIR=$HOME/.cache/wacomm-downloads
+```
+
 The private curl retains HTTPS: Schannel is used on Windows, Secure Transport on macOS, and OpenSSL on other Unix platforms. Windows dependencies use native CMake builds with Visual Studio or Ninja; libaec supplies the SZIP-compatible `libsz` interface. On Unix other than macOS, the private stack builds SHA-256-pinned OpenSSL 3.5.8 with Perl and make through `ExternalProject_Add`; installed OpenSSL development files are not required. The build uses static position-independent libraries without dynamically loaded providers, and curl receives explicit private header and archive paths. Its imported include paths use normal include precedence so module-provided `CPATH` entries cannot override the private OpenSSL headers. Windows and macOS retain their native TLS backends. Private OpenSSL supports native builds; cross-compilation must use an installed dependency stack with `WACOMM_BOOTSTRAP_DEPENDENCIES=OFF`. HTTPS still requires a usable system CA trust store; the bootstrap does not install trust certificates. PROJ, OpenMP, CUDA, and FlexMPI remain optional system/toolchain facilities rather than members of the private stack.
 
 ### Serial build with private OpenSSL

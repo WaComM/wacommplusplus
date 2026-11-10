@@ -24,6 +24,8 @@ set(WACOMM_BOOTSTRAP_DEPENDENCIES "${WACOMM_BOOTSTRAP_DEPENDENCIES}" CACHE STRIN
 if(NOT WACOMM_BOOTSTRAP_DEPENDENCIES MATCHES "^(AUTO|ON|OFF)$")
     message(FATAL_ERROR "WACOMM_BOOTSTRAP_DEPENDENCIES must be AUTO, ON, or OFF (received '${WACOMM_BOOTSTRAP_DEPENDENCIES}').")
 endif()
+set(WACOMM_DEPENDENCY_DOWNLOAD_DIR "" CACHE PATH
+        "Optional directory of hash-verified dependency archives shared by several build trees.")
 option(WACOMM_BOOTSTRAP_PARALLEL_IO
         "Build bootstrapped HDF5 and NetCDF-C with MPI parallel I/O support." OFF)
 set(WACOMM_OPENSSL_VERSION "3.5.8")
@@ -392,6 +394,8 @@ if(BUILD_TESTING)
         set_tests_properties(sarno_protocol_collect PROPERTIES SKIP_RETURN_CODE 77)
         add_test(NAME sarno_core_sweep COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/SarnoCoreSweepTest.py")
+        add_test(NAME sarno_backend_matrix COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/SarnoBackendMatrixTest.py")
         add_test(NAME webinar_native_protocol COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/examples/webinar-native-usecase/tools/WebinarProtocolTest.py")
         set_tests_properties(webinar_native_protocol PROPERTIES SKIP_RETURN_CODE 77)
