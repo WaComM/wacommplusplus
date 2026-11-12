@@ -14,6 +14,7 @@
 #include "JulianDate.hpp"
 
 #include <chrono>
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <stdlib.h> /* getenv */
@@ -86,6 +87,9 @@ int main(int argc, char **argv) {
     // This variables can be set via the command line.
     std::string configFile = "namelist.wacomm";
     configFile = "wacomm.json";
+
+    // Flush every console write: a fatal error or a killed job must not lose buffered log lines
+    std::cout << std::unitbuf;
 
     // Inizitalizer
     log4cplus::initialize();
@@ -169,31 +173,42 @@ int main(int argc, char **argv) {
         LOG4CPLUS_INFO(logger, "Configuration: " << configFile);
     }
 
-    // Load the configuration file
-    auto config = std::make_shared<Config>(configFile);
-
-    // Check if it is the main process
-    if (world_rank == 0) {
-
-        // Show a message if it is a dry run
-        if (config->Dry()) {
-            LOG4CPLUS_INFO(logger, "*** Dry run ***");
-        }
-#ifdef USE_MPI
-        if (config->AsyncIO() && mpiThreadSupport<MPI_THREAD_FUNNELED) {
-            LOG4CPLUS_WARN(logger, "The MPI library provides no MPI_THREAD_FUNNELED support; "
-                                   "the asynchronous output writer runs without that guarantee");
-        }
-#endif
-    }
-
-    WacommPlusPlus wacommPlusPlus(config);
-
     // Record start time
     auto start_whole = std::chrono::high_resolution_clock::now();
 
-    wacommPlusPlus.run();
-    
+    try {
+        // Load the configuration file
+        auto config = std::make_shared<Config>(configFile);
+
+        // Check if it is the main process
+        if (world_rank == 0) {
+
+            // Show a message if it is a dry run
+            if (config->Dry()) {
+                LOG4CPLUS_INFO(logger, "*** Dry run ***");
+            }
+#ifdef USE_MPI
+            if (config->AsyncIO() && mpiThreadSupport<MPI_THREAD_FUNNELED) {
+                LOG4CPLUS_WARN(logger, "The MPI library provides no MPI_THREAD_FUNNELED support; "
+                                       "the asynchronous output writer runs without that guarantee");
+            }
+#endif
+        }
+
+        WacommPlusPlus wacommPlusPlus(config);
+
+        wacommPlusPlus.run();
+    } catch (const std::exception &e) {
+        // Log the cause before stopping all processes
+        LOG4CPLUS_ERROR(logger, world_rank << ": " << e.what());
+        std::cout.flush();
+        std::cerr.flush();
+#if defined(USE_MPI) || defined(USE_EMPI)
+        MPI_Abort(MPI_COMM_WORLD, 1);
+#endif
+        return 1;
+    }
+
     auto end_whole = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsedLocal = end_whole - start_whole;
     // LOG4CPLUS_INFO(logger,  "Global Execution Time (sec): " << elapsedLocal.count() / 24);
