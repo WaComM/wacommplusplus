@@ -70,13 +70,23 @@ function(wacomm_configure_dependencies result)
             -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON
             -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_TESTING:BOOL=OFF
             -DCMAKE_POLICY_VERSION_MINIMUM:STRING=3.5)
+    # A bare --parallel is an unlimited make -j for Makefile generators, which
+    # exhausts the process limit of small hosts inside the HDF5 sub-build.
+    if(DEFINED ENV{CMAKE_BUILD_PARALLEL_LEVEL} AND "$ENV{CMAKE_BUILD_PARALLEL_LEVEL}" MATCHES "^[1-9][0-9]*$")
+        set(jobs $ENV{CMAKE_BUILD_PARALLEL_LEVEL})
+    else()
+        cmake_host_system_information(RESULT jobs QUERY NUMBER_OF_LOGICAL_CORES)
+        if(NOT jobs GREATER 0)
+            set(jobs 2)
+        endif()
+    endif()
     if(CMAKE_CONFIGURATION_TYPES)
         list(APPEND common -DCMAKE_CONFIGURATION_TYPES:STRING=Release)
-        set(build_cmd ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release --parallel)
+        set(build_cmd ${CMAKE_COMMAND} --build <BINARY_DIR> --config Release --parallel ${jobs})
         set(install_cmd ${CMAKE_COMMAND} --install <BINARY_DIR> --config Release)
     else()
         list(APPEND common -DCMAKE_BUILD_TYPE:STRING=Release)
-        set(build_cmd ${CMAKE_COMMAND} --build <BINARY_DIR> --parallel)
+        set(build_cmd ${CMAKE_COMMAND} --build <BINARY_DIR> --parallel ${jobs})
         set(install_cmd ${CMAKE_COMMAND} --install <BINARY_DIR>)
     endif()
 
