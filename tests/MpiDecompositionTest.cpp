@@ -12,24 +12,30 @@ int main(int argc, char **argv) {
     MPI_Comm_size(MPI_COMM_WORLD,&worldSize);
     MPI_Comm_rank(MPI_COMM_WORLD,&worldRank);
 
+    // 11 particles leave a remainder on 2, 3, and 4 ranks
     const int particleCount=11;
     std::vector<int> counts(worldSize),displacements(worldSize);
     for (int rank=0;rank<worldSize;rank++) {
-        counts[rank]=(int)NumericalHelpers::partitionCount(particleCount,worldSize,rank);
-        displacements[rank]=(int)NumericalHelpers::partitionOffset(particleCount,worldSize,rank);
+        counts[rank]=(int)NumericalHelpers::interleavedCount(particleCount,worldSize,rank);
+        displacements[rank]=(int)NumericalHelpers::interleavedOffset(particleCount,worldSize,rank);
     }
-    std::vector<particle_data> input,parallelResult;
+    // Old particles (released at the interval start) alternate with young ones released at 30 s
+    std::vector<particle_data> input,sendBuffer,gathered,parallelResult;
     if (worldRank==0) {
         for (int idx=0;idx<particleCount;idx++) {
-            input.push_back({9007199254740993ULL+(std::uint64_t)idx,-.5,.25,.25,1,0,0,
+            input.push_back({9007199254740993ULL+(std::uint64_t)idx,-.5,.25,.25,1,0,idx%2 ? 30.0 : 0.0,
                              static_cast<std::uint16_t>(DriftObjectType::PERSON_IN_WATER),
                              static_cast<std::int8_t>(idx%2 ? DriftSide::LEFT : DriftSide::RIGHT)});
         }
-        parallelResult.resize(particleCount);
+        // Pack as Wacomm::run does: particle q in the block of rank q mod p
+        sendBuffer.resize(particleCount);
+        for (int idx=0;idx<particleCount;idx++)
+            sendBuffer[NumericalHelpers::interleavedSlot(idx,particleCount,worldSize)]=input[idx];
+        gathered.resize(particleCount);
     }
     std::vector<particle_data> local(counts[worldRank]);
     MPI_Datatype particleType=MpiHelpers::particleDataType();
-    MPI_Scatterv(input.data(),counts.data(),displacements.data(),particleType,
+    MPI_Scatterv(sendBuffer.data(),counts.data(),displacements.data(),particleType,
                  local.data(),counts[worldRank],particleType,0,MPI_COMM_WORLD);
 
     Array1<double> oceanTime(2); oceanTime(0)=0; oceanTime(1)=60;
@@ -64,9 +70,14 @@ int main(int argc, char **argv) {
         local[index]=particle.data();
     }
     MPI_Gatherv(local.data(),counts[worldRank],particleType,
-                parallelResult.data(),counts.data(),displacements.data(),particleType,0,MPI_COMM_WORLD);
+                gathered.data(),counts.data(),displacements.data(),particleType,0,MPI_COMM_WORLD);
 
     if (worldRank==0) {
+        // Unpack back to the emission order
+        parallelResult.resize(particleCount);
+        for (int idx=0;idx<particleCount;idx++)
+            parallelResult[idx]=gathered[NumericalHelpers::interleavedSlot(idx,particleCount,worldSize)];
+        bool youngMoved=false;
         for (int idx=0;idx<particleCount;idx++) {
             Particle particle(input[idx]);
             particle.move(&config,0,oceanTime,mask,lonRad,latRad,sW,depthIntervals,h,zeta,u,v,w,akt);
@@ -77,7 +88,9 @@ int main(int argc, char **argv) {
             assert(parallelResult[idx].age==serial.age && parallelResult[idx].time==serial.time);
             assert(parallelResult[idx].driftObjectType==serial.driftObjectType);
             assert(parallelResult[idx].driftSide==serial.driftSide);
+            if (idx%2) youngMoved=youngMoved || serial.age>0;
         }
+        assert(youngMoved);
     }
     MPI_Type_free(&particleType);
     MPI_Finalize();

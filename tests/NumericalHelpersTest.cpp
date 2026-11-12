@@ -60,6 +60,27 @@ int main() {
         partitionTotal+=count;
     }
     assert(partitionTotal==11);
+    // Interleaved decomposition: a permutation, counts within one, particle q on worker q mod W
+    for (std::size_t total: {0u, 1u, 11u, 12u}) {
+        for (std::size_t workers=1;workers<=5;workers++) {
+            std::set<std::size_t> slots;
+            std::size_t offset=0;
+            for (std::size_t worker=0;worker<workers;worker++) {
+                std::size_t count=NumericalHelpers::interleavedCount(total,workers,worker);
+                assert(NumericalHelpers::interleavedOffset(total,workers,worker)==offset);
+                assert(count==total/workers || count==total/workers+1);
+                offset+=count;
+            }
+            assert(offset==total);
+            for (std::size_t q=0;q<total;q++) {
+                std::size_t slot=NumericalHelpers::interleavedSlot(q,total,workers),worker=q%workers;
+                std::size_t begin=NumericalHelpers::interleavedOffset(total,workers,worker);
+                assert(slot>=begin && slot<begin+NumericalHelpers::interleavedCount(total,workers,worker));
+                slots.insert(slot);
+            }
+            assert(slots.size()==total && (total==0 || *slots.rbegin()==total-1));
+        }
+    }
     double random0=NumericalHelpers::normal(5489, 7, 3600, 2, 0);
     assert(random0 == NumericalHelpers::normal(5489, 7, 3600, 2, 0));
     assert(random0 != NumericalHelpers::normal(5490, 7, 3600, 2, 0));

@@ -81,6 +81,20 @@ inline std::size_t partitionOffset(std::size_t total, std::size_t workers, std::
     return worker==0 ? 0 : partitionCount(total,workers,0)+(worker-1)*(total/workers);
 }
 
+// Interleaved decomposition: particle q goes to worker q mod W, at slot floor(q/W) of its block,
+// so particles of every emission age are spread over all workers
+inline std::size_t interleavedCount(std::size_t total, std::size_t workers, std::size_t worker) {
+    return total/workers+(worker<total%workers ? 1 : 0);
+}
+
+inline std::size_t interleavedOffset(std::size_t total, std::size_t workers, std::size_t worker) {
+    return worker*(total/workers)+std::min(worker,total%workers);
+}
+
+inline std::size_t interleavedSlot(std::size_t index, std::size_t total, std::size_t workers) {
+    return interleavedOffset(total,workers,index%workers)+index/workers;
+}
+
 inline std::uint64_t mix(std::uint64_t value) {
     value += 0x9e3779b97f4a7c15ULL;
     value = (value ^ (value >> 30U)) * 0xbf58476d1ce4e5b9ULL;

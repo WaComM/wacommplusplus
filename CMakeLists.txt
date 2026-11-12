@@ -383,6 +383,14 @@ if(BUILD_APPLICATION)
             if(USE_OMP)
                 set_tests_properties(mpi_decomposition_parity PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
             endif()
+            # Interleaved decomposition with a remainder of 2 and 3 particles
+            foreach(ranks 3 4)
+                add_test(NAME mpi_decomposition_parity_${ranks}_ranks COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks}
+                        ${MPIEXEC_PREFLAGS} $<TARGET_FILE:mpi_decomposition_test> ${MPIEXEC_POSTFLAGS})
+                if(USE_OMP)
+                    set_tests_properties(mpi_decomposition_parity_${ranks}_ranks PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+                endif()
+            endforeach()
             if(USE_OMP)
                 add_test(NAME mpi_openmp_single_worker_parity COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1
                         ${MPIEXEC_PREFLAGS} $<TARGET_FILE:mpi_decomposition_test> ${MPIEXEC_POSTFLAGS})

@@ -280,29 +280,16 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             LOG4CPLUS_INFO(logger, "Emitted particles: " << (nParticles-nParticles0) << " Total particles: " << nParticles);
 
 #if defined(USE_MPI) || defined(USE_EMPI)
-            // Get the number of particles to be processed for each process
-            size_t particlesPerProcess = nParticles / world_size;
-
-            // Get the number of spare particles for the process with world_rank==0
-            size_t spare = nParticles % world_size;
-
-            // The process with world_rank==0 will calculate extra particles
-            send_counts[0] = (int)((particlesPerProcess + spare));
-
-            // The process with world_rank==0 will process the first particles
-            displs[0]=0;
-
-            LOG4CPLUS_DEBUG(logger, world_rank << ": send_counts[0]=" << send_counts.get()[0] << " displ[0]=" << displs.get()[0]);
-
-            // Prepare counts and displacement for data distribution
+            // Particles are stored in emission order, so contiguous blocks would give the oldest
+            // particles (a full interval each) to the first ranks: interleave them instead
             // For each process...
-            for (int i = 1; i < world_size; i++) {
+            for (int i = 0; i < world_size; i++) {
 
                 // Set the number of particles per process
-                send_counts.get()[i] = (int)(particlesPerProcess);
+                send_counts.get()[i] = (int)NumericalHelpers::interleavedCount(nParticles, world_size, i);
 
                 // Set the displacement if terms of particle_data size
-                displs.get()[i]=send_counts.get()[0]+particlesPerProcess*(i-1);
+                displs.get()[i] = (int)NumericalHelpers::interleavedOffset(nParticles, world_size, i);
 
                 LOG4CPLUS_DEBUG(logger, world_rank << ": send_counts[" << i << "]=" << send_counts.get()[i] << " displ[" << i << "]=" << displs.get()[i]);
             }
@@ -313,8 +300,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             // For each particle...
             for (int idx=0;idx<nParticles;idx++) {
 
-                // Copy data into the buffer
-                sendbuf[idx]=particles->at(idx).data();
+                // Copy data into the buffer slot of its process
+                sendbuf[NumericalHelpers::interleavedSlot(idx, nParticles, world_size)]=particles->at(idx).data();
             }
 #endif
         }
@@ -706,8 +693,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #if defined(USE_MPI) || defined(USE_EMPI)
             // For each particle...
             for (int idx = 0; idx < particles->size(); idx++) {
-                // Copy the particle status from the sending buffer
-                particles->at(idx).data(sendbuf[idx]);
+                // Copy the particle status from its slot in the sending buffer, restoring the emission order
+                particles->at(idx).data(sendbuf[NumericalHelpers::interleavedSlot(idx, particles->size(), world_size)]);
             }
 #endif
             // Get the old number of particles
