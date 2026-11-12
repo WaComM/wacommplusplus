@@ -17,6 +17,7 @@ The documentation is organized as a scientific model description rather than sol
 - [Output publication, asynchronous I/O, collective writes, and parallel file systems](io.md)
 - [Parallelism](parallelism.md)
 - [Backend matrix evaluation and improvement plan](backend-matrix-evaluation.md)
+- [Improvement plan as Claude Code tasks](improvement-plan.md)
 - [Testing](testing.md)
 - [Application end-to-end verification](application-verification.md)
 - [Reproducibility](reproducibility.md)

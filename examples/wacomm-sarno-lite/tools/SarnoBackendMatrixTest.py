@@ -64,6 +64,14 @@ def main():
         bound = launch_command("mpi-omp", 2, 6, "w", True)
         assert bound[:7] == ["mpirun", "-np", "2", "--map-by", "slot:PE=6", "--bind-to", "core"], bound
         assert launch_command("mpi", 2, 1, "w", False)[3:5] == ["--bind-to", "none"]
+        spread = launch_command("mpi-omp", 8, 28, "w", True, nodes=4)
+        assert spread[3:7] == ["--map-by", "ppr:2:node:PE=28", "--bind-to", "core"], spread
+        assert launch_command("mpi", 4, 1, "w", False, nodes=2)[3:7] == ["--map-by", "ppr:2:node", "--bind-to", "none"]
+        try:
+            launch_command("mpi", 3, 1, "w", True, nodes=2)
+            raise AssertionError("uneven rank placement accepted")
+        except ValueError:
+            pass
         # Wrong runtime rank count, wrong reference, and a missing CUDA line all invalidate the only sample.
         sample(root, "mpi", 2, 1, 0, "1", 4, runtime=3)
         assert rejected(lambda: suite(root)), "wrong rank count accepted"

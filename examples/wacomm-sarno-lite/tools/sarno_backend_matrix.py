@@ -55,7 +55,7 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def prepare(root, rate, forcing, builds):
+def prepare(root, rate, forcing, builds, nodes=1):
     """Write the suite provenance, configuration, and source once; verify the forcing checksums."""
     provenance = root / "provenance"
     if (provenance / "config.json").exists():
@@ -80,7 +80,7 @@ def prepare(root, rate, forcing, builds):
         raise ValueError("forcing checksums do not match prepared-forcing.sha256")
     shutil.copy(Path(forcing, "prepared-forcing.sha256"), provenance / "forcing.sha256")
     record = {"date_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(), "host": platform.node(),
-              "platform": platform.platform(), "machine": platform.machine(), "python": sys.version.split()[0],
+              "platform": platform.platform(), "machine": platform.machine(), "python": sys.version.split()[0], "nodes": nodes,
               "revision": subprocess.run(["git", "-C", str(REPOSITORY), "rev-parse", "HEAD"], capture_output=True,
                                          text=True).stdout.strip(),
               "working_tree_patch": subprocess.run(["git", "-C", str(REPOSITORY), "diff", "HEAD"], capture_output=True,
@@ -98,12 +98,20 @@ def prepare(root, rate, forcing, builds):
     (provenance / "suite.json").write_text(json.dumps(record, indent=2) + "\n")
 
 
-def launch_command(build, p, n, binary, bind, environment=None):
+def launch_command(build, p, n, binary, bind, environment=None, nodes=1):
     """Return the command line; MPI builds always go through mpirun so p=1 includes MPI start-up."""
     if "mpi" not in build:
         return [str(binary), "wacomm-sarno-lite-6h.json"]
     command = ["mpirun", "-np", str(p)]
-    if bind:
+    if nodes > 1:
+        # Under Slurm, Open MPI 4 binds slot:PE=n against one CPU per remote daemon;
+        # ppr places the same number of ranks on every node instead.
+        if p % nodes:
+            raise ValueError(f"{p} MPI processes do not divide evenly over {nodes} nodes")
+        mapping = f"ppr:{p // nodes}:node"
+        command += (["--map-by", f"{mapping}:PE={n}", "--bind-to", "core"] if bind
+                    else ["--map-by", mapping, "--bind-to", "none"])
+    elif bind:
         # One rank per n consecutive physical cores; OMP_PLACES=cores keeps its threads one per core.
         command += ["--map-by", f"slot:PE={n}", "--bind-to", "core"]
     else:
@@ -114,7 +122,7 @@ def launch_command(build, p, n, binary, bind, environment=None):
     return command + [str(binary), "wacomm-sarno-lite-6h.json"]
 
 
-def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune):
+def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune, nodes=1):
     sample = root / tuple_name(build, p, n, g) / f"sample-{label}"
     reference = root / tuple_name(*REFERENCE) / "sample-warmup"
     verdict = sample / "verdict.txt"
@@ -130,7 +138,7 @@ def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune):
                        CUDA_VISIBLE_DEVICES=",".join(str(i) for i in range(g)) if g else "-1")
     if bind:
         environment.update(OMP_PLACES="cores", OMP_PROC_BIND="close")
-    command = launch_command(build, p, n, binary, bind, environment)
+    command = launch_command(build, p, n, binary, bind, environment, nodes)
     (sample / "command.txt").write_text(" ".join(command) + "\n")
     start = time.monotonic()
     with open(sample / "stdout.txt", "w") as out, open(sample / "stderr.txt", "w") as err:
@@ -160,7 +168,11 @@ def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune):
 
 
 def run(args):
-    builds = dict(item.split("=", 1) for item in args.build)
+    # Samples run in their own directories, so a relative binary path must be resolved here.
+    builds = {name: Path(binary).resolve() for name, binary in (item.split("=", 1) for item in args.build)}
+    unusable = sorted(name for name, binary in builds.items() if not os.access(binary, os.X_OK))
+    if unusable:
+        raise ValueError(f"no executable binary for builds {unusable}")
     configs = [parse_config(c) for c in args.config]
     if REFERENCE not in configs:
         configs.insert(0, REFERENCE)
@@ -168,8 +180,10 @@ def run(args):
     if missing:
         raise ValueError(f"no binary for builds {sorted(missing)}")
     root = args.root.resolve()
-    prepare(root, args.rate, args.forcing, builds)
-    common = (root, args.forcing, args.bind, args.python, args.prune_snapshots)
+    if args.nodes < 1:
+        raise ValueError("--nodes must be positive")
+    prepare(root, args.rate, args.forcing, builds, args.nodes)
+    common = (root, args.forcing, args.bind, args.python, args.prune_snapshots, args.nodes)
 
     def one(config, label):
         build, p, n, g = config
@@ -242,7 +256,7 @@ def suite(root):
     rows.sort(key=lambda r: (list(FAMILIES).index(r["build"]), r["gpus"], r["mpi_processes"], r["openmp_threads"]))
     provenance = json.loads((root / "provenance/suite.json").read_text())
     return {"root": str(root), "particles_per_hour": int((root / "provenance/particles-per-hour.txt").read_text()),
-            "host": provenance["host"], "platform": provenance["platform"], "revision": provenance["revision"],
+            "host": provenance["host"], "nodes": provenance.get("nodes", 1), "platform": provenance["platform"], "revision": provenance["revision"],
             "working_tree_patch_bytes": len(provenance["working_tree_patch"]),
             "baseline_solver_seconds": base["solver_median"], "baseline_application_seconds": base["application_median"],
             "rows": rows}
@@ -404,6 +418,8 @@ def main():
     execute.add_argument("--build", action="append", required=True, metavar="NAME=BINARY")
     execute.add_argument("--config", action="append", required=True, metavar="BUILD:P:N:G")
     execute.add_argument("--bind", action="store_true", help="bind ranks and threads to physical cores (Linux)")
+    execute.add_argument("--nodes", type=int, default=1,
+                         help="nodes of the allocation; MPI ranks are spread evenly with ppr placement")
     execute.add_argument("--python", default=sys.executable)
     execute.add_argument("--prune-snapshots", action="store_true")
     collect = commands.add_parser("collect", help="summarize validated suites")

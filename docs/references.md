@@ -51,6 +51,10 @@ Thygesen (2011) is the basis for treating stochastic backward trajectories as co
 ## Performance evaluation
 
 - Hoefler, T., and Belli, R. (2015). Scientific benchmarking of parallel computing systems: twelve ways to tell the masses when reporting performance results. *Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis*, article 73, 1–12. [doi:10.1145/2807591.2807644](https://doi.org/10.1145/2807591.2807644). Repeated measurements, controlled conditions, and honest presentation of variability support the [shared performance protocol](performance-evaluation.md) and the [ROMS webinar conversion timing procedure](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md#performance-evaluation).
+- Hoefler, T., Dinan, J., Buntinas, D., Balaji, P., Barrett, B., Brightwell, R., Gropp, W., Kale, V., and Thakur, R. (2013). MPI + MPI: a new hybrid approach to parallel programming with MPI plus shared memory. *Computing*, 95(12), 1121–1136. [doi:10.1007/s00607-013-0324-2](https://doi.org/10.1007/s00607-013-0324-2). Supports the planned per-node shared forcing window in the [backend matrix evaluation](backend-matrix-evaluation.md#improvement-plan).
+- Okubo, A. (1971). Oceanic diffusion diagrams. *Deep Sea Research and Oceanographic Abstracts*, 18(8), 789–802. [doi:10.1016/0011-7471(71)90046-5](https://doi.org/10.1016/0011-7471(71)90046-5). Scale-dependent horizontal diffusivity context for the planned physical-unit horizontal diffusion operator; not implemented.
+
+Author lists, titles, venues, volumes, issues, pages, and DOIs of the two entries above were verified against their Crossref DOI records on 2026-11-12.
 
 The ROMS horizontal-vector normalization described in [adapters](adapters.md#roms-horizontal-vector-basis)
 uses the C-grid context of Shchepetkin and McWilliams (2005), listed above.
