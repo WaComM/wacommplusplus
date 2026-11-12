@@ -37,7 +37,7 @@ Other facts the tasks rely on:
 
 ## Execution order
 
-C5 first: it is small and protects every later experiment. Then C1, C2, C3, C4 in that order: each reuses the previous one's equivalence evidence, and C3 depends on C2's resident particle layout only if both are taken. C6–C8 are independent. N1–N4 and P1–P4 are independent of the computational tasks and of each other, except that P1 and P2 share the stochastic-operator configuration design: do P1 first.
+C5 first: it is small and protects every later experiment. Then C1 and C2; both are now measured ([reruns](backend-matrix-evaluation.md#reruns-after-the-first-improvements)). C2 step 2 is deferred, because the hourly Sarno output gathers particle states every interval and the step could save at most part of the 0.37 s distribution time. Most of the remaining time is outside the solver (70% of the four-node 16×14 application time), and in the full-socket OpenMP efficiency loss (96% at 14 threads, 72% at 56). The next step is to measure both. Rank-0 timers separate start-up, forcing input, and output, with `io.async` off and on, and a `numactl --interleave=all` run tests C6 without code changes. Those measurements decide the order of C6, C4, and C3. Overlap (C4) can hide input only behind solver time: at most 1.8 s for OpenMP 1×56 at $10^5$ particles/hour and 5.6 s for four-node 16×14. C3 matters most with many ranks per node. C7 and C8 are independent. N1–N4 and P1–P4 are independent of the computational tasks and of each other, except that P1 and P2 share the stochastic-operator configuration design: do P1 first.
 
 ## Computational tasks
 
