@@ -9,7 +9,7 @@ This report records verification and performance passes over the execution backe
 | Machine | Builds | Result |
 | --- | --- | --- |
 | Apple M4 Max (12 performance + 4 efficiency cores, 64 GiB), macOS 26.6.2, AppleClang 21, Open MPI 5.0.11, libomp 23.1.2 | Serial, OpenMP, MPI, MPI+OpenMP | 35, 35, 36, and 38 tests passed; no skips (Python 3.12 with `tools/requirements-figures.txt`) |
-| `hhcpu` partition, E4 cluster (4 nodes, each 2 × Intel Xeon Gold 5520+, 56 cores, no SMT, 2 NUMA domains, 239 GiB), Rocky Linux 8.10 kernel, GCC 12.2.1, Open MPI 4.1.4, CMake 3.26.5, Slurm 23.11.3 | Serial, OpenMP, MPI, MPI+OpenMP | At `5a49653`: 37, 37, 38, and 40 tests passed (Slurm job 1077295). At `25b716d` with this change: 38, 38, 39, and 41 passed (job 1077326). No skips (Python 3.13.2 with `tools/requirements-figures.txt`) |
+| `hhcpu` partition, E4 cluster (4 nodes, each 2 × Intel Xeon Gold 5520+, 56 cores, no SMT, 2 NUMA domains, 239 GiB), Rocky Linux 8.10 kernel, GCC 12.2.1, Open MPI 4.1.4, CMake 3.26.5, Slurm 23.11.3 | Serial, OpenMP, MPI, MPI+OpenMP | At `5a49653`: 37, 37, 38, and 40 tests passed (Slurm job 1077295). At `25b716d` with this change: 38, 38, 39, and 41 passed (job 1077326). At `94e9aa4` and `aa8378f`: 39, 39, 42, and 44 passed (jobs 1077482 and 1077961). No skips (Python 3.13.2 with `tools/requirements-figures.txt`) |
 | rainbow (Ryzen 9 9900X, RTX 4080 SUPER), GCC 13.3, Open MPI 4.1.8, CUDA 12.8 | Serial, OpenMP, MPI, MPI+OpenMP, CUDA, OpenMP+CUDA, MPI+CUDA, MPI+OpenMP+CUDA | **Pending.** Slurm job 1753 (tests, then `compute-sanitizer` memcheck) and job 1754 (benchmark, `afterany:1753`) are queued behind another user's job that holds all 24 CPUs of the only node |
 
 The first rainbow attempt (job 1747) failed in all eight configures on a transient HTTP 504 from GitHub while fetching nlohmann/json. This is an infrastructure fault, not a code defect, but it exposed that every build tree downloads every pinned archive again. The fix is the opt-in `WACOMM_DEPENDENCY_DOWNLOAD_DIR` cache described in the [build guide](build.md): archives are fetched once, their pinned SHA-256 is verified before every reuse, and a pre-seeded directory lets configures proceed during an outage. The four Mac builds were reconfigured with the option and passed again.
@@ -101,9 +101,46 @@ where $\overline{W}_k$ is the mean over the $p$ ranks, and $\eta$ is dimensionle
 
 **Best hhcpu configurations.** On one node, use OpenMP 1×56 with `OMP_PLACES=cores OMP_PROC_BIND=close` at both rates: it is the fastest solver and the fastest application (9.9 s and 29.6 s). Pure MPI and on-node hybrid placements are slower and multiply memory. For independent ensemble members, four concurrent 14-thread runs per node have the best throughput per core ($E$=96%). For the shortest time to solution at $10^6$ particles/hour, use four nodes with MPI+OpenMP 16×14 (4 ranks/node, solver 7.43 s) or 8×28 (2 ranks/node, the fastest application at 19.9 s), always with `--mem=0`. Pure MPI with many ranks per node is never the best choice on this machine.
 
+## Reruns after the first improvements
+
+Two reruns repeat the `hhcpu` suites with the same method, tuples subset, Sarno forcing, and job scripts. Revision `94e9aa4` contains C5 (resource limits, `59f9b91`), C1 (interleaved decomposition, `32679ce`), and C2 step 1 (OpenMP packing and the `DISTRIBUTE`/`COLLECT` timers, `e2c9a21`). Revision `aa8378f` adds the fatal-error logging of `83e6337` and the atomic-free concentration counting of `aa8378f` ([parallel execution](parallelism.md)). The test jobs passed 39, 39, 42, and 44 tests in the Serial, OpenMP, MPI, and MPI+OpenMP builds at both revisions (jobs 1077482 and 1077961), with no skips. The matrix jobs are 1077483–1077485 and 1077962–1077964. Every measured sample and warm-up of both reruns passed the exact equivalence gate against its suite's serial build. Particle states and every gridded variable are therefore bit-identical across the decompositions and to the serial build.
+
+Each suite runs its own serial reference. Between the two reruns the serial solver time changed by −0.4% (73.12 s to 72.83 s at $10^5$ particles/hour, 730.3 s to 727.6 s at $10^6$). The serial path is the same at both revisions, so differences of this size between revisions are job-to-job variation and are not attributed to the code. The concentration column is `EVALUATE sec:`, summed over the five intervals. It includes the land-mask pass. The distribution and collection columns are the rank-0 `DISTRIBUTE sec:` and `COLLECT sec:` sums. All values are medians of three samples, in seconds. The three samples of every tuple lie within 1% of the median, except MPI 4×1 at `94e9aa4` (3.2%).
+
+| Suite | Tuple | Solver `5a49653` | Solver `94e9aa4` | Solver `aa8378f` | $E$ at `aa8378f` | Concentration `94e9aa4` → `aa8378f` | Distribution, collection at `aa8378f` | Non-solver at `aa8378f` |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| $10^5$, one node | OpenMP 1×56 | 1.89 | 1.90 | **1.82** | 71% | 0.089 → 0.016 | – | 7.68 |
+| | MPI 2×1 | 43.84 | 36.80 | 36.80 | 99% | 0.099 → 0.100 | 0.071, 0.048 | 8.45 |
+| | MPI 4×1 | – | 18.50 | 18.48 | 98% | 0.101 → 0.100 | 0.061, 0.053 | 8.67 |
+| | MPI 28×1 | 4.85 | 3.91 | 3.92 | 66% | 0.143 → 0.141 | 0.101, 0.055 | 18.44 |
+| | MPI+OpenMP 4×14 | 2.35 | 1.93 | 1.90 | 69% | 0.059 → 0.020 | 0.047, 0.022 | 8.59 |
+| $10^6$, one node | OpenMP 1×56 | 18.81 | 18.88 | **18.14** | 72% | 0.793 → 0.070 | – | 10.92 |
+| | MPI+OpenMP 4×14 | 23.28 | 19.16 | 18.83 | 69% | 0.479 → 0.086 | 0.420, 0.229 | 12.20 |
+| $10^6$, four nodes | MPI+OpenMP 8×28 | – | 6.20 | 5.70 | 57% | 0.618 → 0.077 | 0.405, 0.199 | 12.45 |
+| | MPI+OpenMP 16×14 | 7.43 | 6.01 | **5.65** | 58% | 0.478 → 0.086 | 0.369, 0.206 | 12.96 |
+
+The `5a49653` column repeats the [first results](#results-on-hhcpu). The 8×28 tuple there was not measured with the `--nodes` placement. "–" marks tuples a suite did not run.
+
+![Bar chart of median solver time for the four-node hhcpu tuples at 1,000,000 particles per hour at revision aa8378f](figures/backend-matrix-hhcpu-rerun/solver-time-hhcpu-4node-q1e6.svg)
+
+![Line chart of CPU parallel efficiency in percent against workers for every hhcpu suite at revision aa8378f](figures/backend-matrix-hhcpu-rerun/cpu-efficiency.svg)
+
+![Stacked bars of solver and non-solver time for the fastest OpenMP, MPI, and hybrid tuples at revision aa8378f](figures/backend-matrix-hhcpu-rerun/application-split.svg)
+
+The three figures are measured model-execution diagnostics of the real Sarno forcing at revision `aa8378f`, without confidence intervals. They come from `sarno_backend_matrix.py collect` and `backend_matrix_supplement.py`, as in the first pass. The companion tables are [`results-94e9aa4.json`](figures/backend-matrix-hhcpu-rerun/results-94e9aa4.json) and [`results-aa8378f.json`](figures/backend-matrix-hhcpu-rerun/results-aa8378f.json).
+
+Findings:
+
+1. **The interleaved decomposition removed the MPI imbalance.** MPI 2×1 efficiency rose from 83.4% to 99.3%, and 4×1 reached 98.8%. The [load-balance model](#load-balance-model) predicted 100%. Its two time predictions also held: MPI+OpenMP 4×14 at $10^6$ particles/hour fell from 23.28 s to 19.16 s (predicted 19.3 s), and four-node 16×14 from 7.43 s to 6.01 s (predicted 6.1 s). On one node, 4×14 is now 1.5–4.4% slower than OpenMP 1×56, against 24% before. MPI 28×1 improved less (54% to 66%): at 28 ranks the full-socket loss of the first pass and the 18 s of non-solver time remain.
+2. **Atomic-free concentration removed most of the rank-0 counting time.** Sarno particles crowd into few cells (at 14:00 at $10^6$ particles/hour, 20 occupied cells hold 3.49 million particles, and 56.5% of them share one cell), so the atomic updates of all threads contended for one cache line. `EVALUATE sec:` fell from 0.793 s to 0.070 s for OpenMP 1×56 and from 0.478 s to 0.086 s for 16×14. Pure MPI rows count on one thread and are unchanged, as expected. The remaining time is mostly the land-mask pass. The solver gains match the concentration savings: 0.74 s against 0.72 s for 1×56, and 0.36 s against 0.39 s for 16×14.
+3. **The C2 acceptance is met for efficiency, not for time.** The plan defines four-node relative efficiency as the one-node OpenMP 1×56 time divided by four times the 16×14 time. It rose from 63% at `5a49653` to 78.5% at `94e9aa4` and 80.3% at `aa8378f`. Over the three-sample ranges this spans 80.1–80.5%, above the 80% target by less than one point. The 16×14 solver time is 5.65 s, 0.15 s above the 5.5 s target.
+4. **Distribution and collection are now the largest rank-0 terms.** At 16×14 they take 0.37 s and 0.21 s of the 5.65 s solver time. The Sarno run writes histories and gridded counts every hour, and each forcing window is one interval, so particle states must reach rank 0 every interval. Keeping particles resident (C2 step 2) could therefore save at most the scatter of the particles already present, a part of the 0.37 s. Outside the solver, 12–13 s of the 18–19 s application time on four nodes remains forcing input and output, as in the first pass.
+
+**Best hhcpu configurations at `aa8378f`.** On one node, OpenMP 1×56 remains the fastest solver and application at both rates (1.82 s and 9.50 s at $10^5$ particles/hour, 18.14 s and 29.06 s at $10^6$). MPI+OpenMP 4×14 is now within 5% of it and is no longer a poor choice, but it multiplies forcing memory by four. On four nodes at $10^6$ particles/hour, 16×14 gives the fastest solver (5.65 s) and 8×28 the fastest application (18.15 s). Both need `--mem=0`.
+
 ## Improvement plan
 
-Status: computational items 5 (revision `59f9b91`) and 1 (`32679ce`), and the OpenMP packing step of item 2 (`e2c9a21`), are implemented and pass the offline suite on macOS. None has been measured on `hhcpu`. Every other item is planned and not implemented. Items are ordered by measured or documented impact. Physical and numerical items change the governing configuration: each needs a mathematical description with units, peer-reviewed support, backend-equivalence, forward/backward, and restart evidence, and documentation and example updates. The [Claude Code improvement plan](improvement-plan.md) restates every item as an executable task with files, tests, and acceptance criteria.
+Status: computational items 5 (revision `59f9b91`) and 1 (`32679ce`), the OpenMP packing step of item 2 (`e2c9a21`), and atomic-free concentration counting (`aa8378f`) are implemented. They were measured on `hhcpu` at revisions `94e9aa4` and `aa8378f` ([reruns](#reruns-after-the-first-improvements)). Items 1 and 5 meet their targets: an oversubscribed 28-rank launch under the 56 GiB default grant now stops before reading forcing with a logged WaComM++ error (job 1078221). Item 2 meets its efficiency target but not its time target, and its resident-particle step is not implemented. Every other item is planned and not implemented. Items are ordered by measured or documented impact. Physical and numerical items change the governing configuration: each needs a mathematical description with units, peer-reviewed support, backend-equivalence, forward/backward, and restart evidence, and documentation and example updates. The [Claude Code improvement plan](improvement-plan.md) restates every item as an executable task with files, tests, and acceptance criteria.
 
 ### Computational
 
@@ -160,11 +197,31 @@ python3 -I examples/wacomm-sarno-lite/tools/sarno_backend_matrix.py collect --su
 python3 -I examples/wacomm-sarno-lite/tools/backend_matrix_supplement.py docs/figures/backend-matrix-hhcpu/results-hhcpu.json docs/figures/backend-matrix-hhcpu --node-memory-gib 239 --default-memory-gib 56
 ```
 
+The reruns use the suite roots `hh-q100000-REV`, `hh-q1000000-REV`, and `hh4-q1000000-REV`, with `REV` the short revision, and the tuples listed in [the reruns](#reruns-after-the-first-improvements). For revision `aa8378f`:
+
+```bash
+sbatch examples/wacomm-sarno-lite/tools/hhcpu_backend_matrix_job.sh 100000 hh-q100000-aa8378f serial:1:1:0 omp:1:56:0 mpi:2:1:0 mpi:4:1:0 mpi:28:1:0 mpi-omp:4:14:0
+```
+
+```bash
+sbatch examples/wacomm-sarno-lite/tools/hhcpu_backend_matrix_job.sh 1000000 hh-q1000000-aa8378f serial:1:1:0 omp:1:56:0 mpi-omp:4:14:0
+```
+
+```bash
+sbatch --nodes=4 examples/wacomm-sarno-lite/tools/hhcpu_backend_matrix_job.sh 1000000 hh4-q1000000-aa8378f serial:1:1:0 mpi-omp:16:14:0 mpi-omp:8:28:0
+```
+
+```bash
+python3 -I examples/wacomm-sarno-lite/tools/sarno_backend_matrix.py collect --suite hhcpu-q1e5=data/matrix-hhcpu/hh-q100000-aa8378f --suite hhcpu-q1e6=data/matrix-hhcpu/hh-q1000000-aa8378f --suite hhcpu-4node-q1e6=data/matrix-hhcpu/hh4-q1000000-aa8378f --output data/matrix-hhcpu/collect-aa8378f
+```
+
+Each rerun suite archives its revision, with no working-tree patch, in `provenance/suite.json`.
+
 The matrix commands list a subset of each suite's tuples; the full lists are in the job output and in [`results-hhcpu.json`](figures/backend-matrix-hhcpu/results-hhcpu.json). The test job reads `WACOMM_PERL5LIB` for the extracted Perl modules and `WACOMM_PYTHON` for the figure interpreter.
 
 ## Limitations
 
-One workload, three samples per tuple, and no confidence intervals. Threads are unpinned on macOS. On `hhcpu`, the forcing is read over NFS from a shared file system that other jobs may load. The 28-rank and 112-rank tuples were measured in a second job on the same nodes after the memory-limit fix, so they lie outside their original rotated blocks. Hardware counters, clocks, and energy were not recorded, so the full-socket efficiency loss is attributed to shared resources by elimination, not by measurement. The rainbow matrix and all CUDA tuples are not yet measured in this pass.
+One workload, three samples per tuple, and no confidence intervals. The reruns ran on whichever `hhcpu` nodes were free, so a revision-to-revision difference below about 0.5% is not separated from node and job variation. Threads are unpinned on macOS. On `hhcpu`, the forcing is read over NFS from a shared file system that other jobs may load. The 28-rank and 112-rank tuples were measured in a second job on the same nodes after the memory-limit fix, so they lie outside their original rotated blocks. Hardware counters, clocks, and energy were not recorded, so the full-socket efficiency loss is attributed to shared resources by elimination, not by measurement. The rainbow matrix and all CUDA tuples are not yet measured in this pass.
 
 ## References
 
