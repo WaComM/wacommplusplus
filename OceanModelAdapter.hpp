@@ -11,6 +11,7 @@
 #include "log4cplus/loggingmacros.h"
 
 #include "Array.h"
+#include "ResourceLimits.hpp"
 #include "netcdf"
 
 using namespace Array;
@@ -43,6 +44,9 @@ public:
 
 
     virtual void process()=0;
+
+    // Window dimensions from the file header, without reading fields (unknown by default)
+    virtual ResourceLimits::ForcingDimensions dimensions() { return {}; }
 
     void kji2deplatlon(double k, double j, double i, double &dep, double &lat, double &lon);
     void deplatlon2kji(double dep, double lat, double lon, double &k, double &j, double &i);

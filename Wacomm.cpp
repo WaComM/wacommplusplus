@@ -12,6 +12,7 @@
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "JulianDate.hpp"
 #include "NumericalHelpers.hpp"
+#include "ResourceLimits.hpp"
 #include "Provenance.hpp"
 
 #ifdef USE_OMP
@@ -268,8 +269,13 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             if (emitSources)
                 sources->emit(config,particles,intervalStart,intervalEnd);
 
-            // Get the total number of particles
-            nParticles = particles->size();
+            // Get the total number of particles: every MPI count and displacement below is bounded by it
+            try {
+                nParticles = ResourceLimits::particleCount(particles->size(), "The particle count");
+            } catch (const std::exception &e) {
+                LOG4CPLUS_ERROR(logger, e.what());
+                throw;
+            }
 
             LOG4CPLUS_INFO(logger, "Emitted particles: " << (nParticles-nParticles0) << " Total particles: " << nParticles);
 

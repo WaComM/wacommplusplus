@@ -85,6 +85,10 @@ public:
     void Dry(bool value);
     bool Dry() const;
 
+    // Forcing memory check before reading (docs/parallelism.md#resource-limits)
+    string MemoryCheck() const;
+    void MemoryCheck(string value);
+
     void JulianStart(double value);
     double JulianStart() const;
     void JulianEnd(double value);
@@ -224,6 +228,7 @@ private:
     string configFile;
 
     bool dry;
+    string memoryCheck;
     bool maskOutput;
     config_data _data;
 

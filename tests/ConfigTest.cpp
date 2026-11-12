@@ -178,11 +178,31 @@ int main() {
     Config remote(remoteEnvironment);
     assert(remote.NcInputs()[0]=="https://ocean.example.test/dap/ocean.nc");
     assert(remote.WeatherInputs()[0]=="https://weather.example.test/dap/wrf.nc");
+    // The forcing memory check defaults to error, accepts warn and off, and rejects other values
+    assert(remote.MemoryCheck()=="error");
+    {
+        std::ofstream file(invalid);
+        file << R"({"simulation":{"memory_check":"warn"}})";
+    }
+    Config memoryWarn(invalid);
+    assert(memoryWarn.MemoryCheck()=="warn");
+    assert(memoryWarn.asJson().find("\"memory_check\": \"warn\"")!=string::npos);
+    bool rejected=false;
+    for (const char *value: {R"("ignore")", "true"}) {
+        {
+            std::ofstream file(invalid);
+            file << "{\"simulation\":{\"memory_check\":" << value << "}}";
+        }
+        rejected=false;
+        try { Config invalidMemoryCheck(invalid); }
+        catch (const std::runtime_error &) { rejected=true; }
+        assert(rejected);
+    }
     {
         std::ofstream file(invalid);
         file << R"({"physics":{"upper_closure":"unknown"}})";
     }
-    bool rejected=false;
+    rejected=false;
     try { Config invalidConfig(invalid); }
     catch (const std::runtime_error &) { rejected=true; }
     assert(rejected);

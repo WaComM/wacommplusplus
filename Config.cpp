@@ -47,6 +47,9 @@ void Config::setDefault() {
     // Is the model dry mode?
     dry = false;
 
+    // Stop when the estimated forcing memory exceeds the node limit (error, warn, off)
+    memoryCheck = "error";
+
     // Simulation start and end are unset (NaN) until configured
     julianStart = std::numeric_limits<double>::quiet_NaN();
     julianEnd = std::numeric_limits<double>::quiet_NaN();
@@ -426,6 +429,10 @@ void Config::Dry(bool value) {
     dry=value;
 }
 
+string Config::MemoryCheck() const { return memoryCheck; }
+
+void Config::MemoryCheck(string value) { memoryCheck=value; }
+
 double Config::JulianStart() const {
     return julianStart;
 }
@@ -622,7 +629,8 @@ string Config::asJson() const {
     json simulation = {
             { "name", name },
             { "institution", institution },
-            { "url", url}
+            { "url", url},
+            { "memory_check", memoryCheck }
     };
 
     // Unset simulation times are omitted rather than serialized from an undefined value
@@ -763,6 +771,11 @@ void Config::loadFromJson(const string &fileName) {
     if (config.contains("simulation")) {
         json simulation=config["simulation"];
         if (simulation.contains("dry")) { dry = simulation["dry"]; }
+        if (simulation.contains("memory_check")) {
+            if (!simulation["memory_check"].is_string())
+                throw std::runtime_error("simulation.memory_check must be a string");
+            memoryCheck = simulation["memory_check"];
+        }
         if (simulation.contains("name")) { name = simulation["name"]; }
         if (simulation.contains("institution")) { institution = simulation["institution"]; }
         if (simulation.contains("url")) { url = simulation["url"]; }
@@ -1097,6 +1110,9 @@ void Config::loadFromJson(const string &fileName) {
     }
     if (asyncMaxPending<1) {
         throw std::runtime_error("io.async_max_pending must be at least 1");
+    }
+    if (memoryCheck!="error" && memoryCheck!="warn" && memoryCheck!="off") {
+        throw std::runtime_error("simulation.memory_check must be error, warn, or off");
     }
     if (filesystem!="posix" && filesystem!="lustre" && filesystem!="gpfs") {
         throw std::runtime_error("io.filesystem must be posix, lustre, or gpfs");

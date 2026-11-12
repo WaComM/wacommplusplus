@@ -7,6 +7,7 @@
 #include "OceanModelAdapterFactory.hpp"
 #include "WeatherModelAdapterFactory.hpp"
 #include "WaveModelAdapterFactory.hpp"
+#include "ResourceLimits.hpp"
 #include <algorithm>
 #include <stdexcept>
 #include <unordered_map>
@@ -23,6 +24,77 @@ extern "C" {
 #endif
 
 WacommPlusPlus::~WacommPlusPlus() = default;
+
+namespace {
+// Compare the estimated forcing of the ranks on each node with the node memory limit before
+// any field is read (docs/parallelism.md#resource-limits)
+void checkForcingMemory(const std::shared_ptr<Config> &config, log4cplus::Logger &logger, int world_rank,
+                        int inputFirst, int inputDirection) {
+    if (config->MemoryCheck()=="off") return;
+
+    // World rank 0 reads the header of the first window in the tracking direction
+    std::uint64_t rankBytes=0;
+    if (world_rank==0) {
+        try {
+            int adjacentIdx=inputFirst+inputDirection;
+            bool adjacent=adjacentIdx>=0 && adjacentIdx<(int)config->NcInputs().size();
+            std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+            auto adapter=OceanModelAdapterFactory::create(config->OceanModel(),config->NcInputs()[inputFirst]);
+            rankBytes=ResourceLimits::residentForcingBytes(adapter->dimensions(),adjacent);
+        } catch (const std::exception &e) {
+            // The adapter reports an unreadable input with its own validation message
+            LOG4CPLUS_DEBUG(logger, "Forcing memory estimate unavailable: " << e.what());
+        }
+    }
+
+    int nodeRanks=1, nodeRank=0;
+#if defined(USE_MPI) || defined(USE_EMPI)
+#ifdef USE_EMPI
+    MPI_Comm comm=ADM_COMM_WORLD;
+#else
+    MPI_Comm comm=MPI_COMM_WORLD;
+#endif
+    MPI_Bcast(&rankBytes,1,MPI_UINT64_T,0,comm);
+    MPI_Comm node;
+    MPI_Comm_split_type(comm,MPI_COMM_TYPE_SHARED,0,MPI_INFO_NULL,&node);
+    MPI_Comm_size(node,&nodeRanks);
+    MPI_Comm_rank(node,&nodeRank);
+    MPI_Comm_free(&node);
+#endif
+
+    // The first rank of each node compares its node demand with the limit it sees
+    int verdict=(int)ResourceLimits::MemoryVerdict::Unknown;
+    if (nodeRank==0 && rankBytes>0) {
+        std::uint64_t demand=rankBytes*(std::uint64_t)nodeRanks;
+        ResourceLimits::MemoryLimit limit=ResourceLimits::processMemoryLimit();
+        verdict=(int)ResourceLimits::assess(demand,limit);
+        std::string estimate="Estimated forcing memory on the node of world rank " + std::to_string(world_rank) + ": " +
+                             std::to_string(nodeRanks) + " rank(s) x " + ResourceLimits::gib(rankBytes) + " = " +
+                             ResourceLimits::gib(demand);
+        if (!limit.known()) {
+            LOG4CPLUS_INFO(logger, estimate << "; no memory limit is visible");
+        } else {
+            estimate+=" against " + ResourceLimits::gib(limit.bytes) + " (" + limit.source + ")";
+            if (verdict==(int)ResourceLimits::MemoryVerdict::Exceeds && config->MemoryCheck()=="error") {
+                LOG4CPLUS_ERROR(logger, estimate << "; the run would exceed the limit. Use fewer ranks per node, "
+                                                 << "OpenMP threads, or more memory (Slurm --mem), "
+                                                 << "or set simulation.memory_check to warn or off");
+            } else if (verdict>=(int)ResourceLimits::MemoryVerdict::Warn) {
+                LOG4CPLUS_WARN(logger, estimate << "; above 80% of the limit");
+            } else {
+                LOG4CPLUS_INFO(logger, estimate);
+            }
+        }
+    }
+
+#if defined(USE_MPI) || defined(USE_EMPI)
+    MPI_Allreduce(MPI_IN_PLACE,&verdict,1,MPI_INT,MPI_MAX,comm);
+#endif
+    if (verdict==(int)ResourceLimits::MemoryVerdict::Exceeds && config->MemoryCheck()=="error") {
+        throw std::runtime_error("estimated forcing memory exceeds the node memory limit (simulation.memory_check=error)");
+    }
+}
+}
 
 WacommPlusPlus::WacommPlusPlus(std::shared_ptr<Config> config): config(config) {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
@@ -93,6 +165,11 @@ void WacommPlusPlus::run() {
     std::shared_ptr<OutputWriter> outputWriter;
     if (world_rank == 0) {
         outputWriter = std::make_shared<OutputWriter>(*config);
+    }
+
+    // Fail before reading forcing that cannot fit in the node memory
+    if (!config->NcInputs().empty()) {
+        checkForcingMemory(config,logger,world_rank,inputFirst,inputDirection);
     }
 
     std::unordered_map<int,std::shared_ptr<OceanModelAdapter>> oceanWindows;

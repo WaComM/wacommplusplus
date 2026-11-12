@@ -21,6 +21,18 @@ NcVar StructuredGridAdapter::variable(NcFile &dataFile, const vector<string> &na
     throw std::runtime_error(model + " input is missing required variable (aliases: " + aliases + ")");
 }
 
+ResourceLimits::ForcingDimensions StructuredGridAdapter::dimensions() {
+    // Header only: the normalized grid is the U grid with s_rho+1 interfaces
+    NcFile dataFile(fileName,NcFile::read);
+    ResourceLimits::ForcingDimensions dims;
+    NcVar uVar=variable(dataFile,model == "NEMO" ? vector<string>{"uo","vozocrtx","u"} : vector<string>{"water_u","u"},true);
+    if (uVar.isNull() || uVar.getDimCount()!=4) return dims;
+    vector<NcDim> uDims=uVar.getDims();
+    dims.oceanTime=uDims[0].getSize(); dims.sRho=uDims[1].getSize(); dims.sW=dims.sRho+1;
+    dims.etaRho=uDims[2].getSize(); dims.xiRho=uDims[3].getSize();
+    return dims;
+}
+
 void StructuredGridAdapter::process() {
     LOG4CPLUS_DEBUG(logger,model << " file loading:" << fileName);
     NcFile dataFile(fileName,NcFile::read);

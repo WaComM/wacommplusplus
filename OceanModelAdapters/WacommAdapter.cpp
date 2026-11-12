@@ -12,6 +12,23 @@ WacommAdapter::WacommAdapter(string &fileName): fileName(fileName) {
 
 WacommAdapter::~WacommAdapter() = default;
 
+ResourceLimits::ForcingDimensions WacommAdapter::dimensions() {
+    // Header only: native files store the normalized dimensions
+    netCDF::NcFile dataFile(fileName, NcFile::read,NcFile::nc4);
+    ResourceLimits::ForcingDimensions dims;
+    NcDim oceanTimeDim = dataFile.getDim("ocean_time");
+    NcDim sRhoDim = dataFile.getDim("s_rho");
+    NcDim sWDim = dataFile.getDim("s_w");
+    NcDim etaRhoDim = dataFile.getDim("eta_rho");
+    NcDim xiRhoDim = dataFile.getDim("xi_rho");
+    if (xiRhoDim.isNull()) xiRhoDim=dataFile.getDim("eta_xi");
+    if (oceanTimeDim.isNull() || sRhoDim.isNull() || sWDim.isNull() ||
+        etaRhoDim.isNull() || xiRhoDim.isNull()) return dims;
+    dims.oceanTime=oceanTimeDim.getSize(); dims.sRho=sRhoDim.getSize(); dims.sW=sWDim.getSize();
+    dims.etaRho=etaRhoDim.getSize(); dims.xiRho=xiRhoDim.getSize();
+    return dims;
+}
+
 void WacommAdapter::process()  {
     LOG4CPLUS_DEBUG(logger, "Native file:" + fileName);
 

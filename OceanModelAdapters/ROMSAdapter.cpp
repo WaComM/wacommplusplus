@@ -53,6 +53,18 @@ ROMSAdapter::ROMSAdapter(string &fileName): fileName(fileName) {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 }
 
+ResourceLimits::ForcingDimensions ROMSAdapter::dimensions() {
+    // Header only: the normalized fields are on the rho grid with s_rho and s_w levels
+    netCDF::NcFile dataFile(fileName, NcFile::read);
+    ResourceLimits::ForcingDimensions dims;
+    NcDim oceanTime=dataFile.getDim("ocean_time"), sRho=dataFile.getDim("s_rho"), sW=dataFile.getDim("s_w");
+    NcDim etaRho=dataFile.getDim("eta_rho"), xiRho=dataFile.getDim("xi_rho");
+    if (oceanTime.isNull() || sRho.isNull() || sW.isNull() || etaRho.isNull() || xiRho.isNull()) return dims;
+    dims.oceanTime=oceanTime.getSize(); dims.sRho=sRho.getSize(); dims.sW=sW.getSize();
+    dims.etaRho=etaRho.getSize(); dims.xiRho=xiRho.getSize();
+    return dims;
+}
+
 void ROMSAdapter::process()
 {
     LOG4CPLUS_DEBUG(logger,"ROMS file loading:"+fileName);

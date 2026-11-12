@@ -8,6 +8,7 @@ public:
     StructuredGridAdapter(string &fileName, string model);
     ~StructuredGridAdapter();
     void process() override;
+    ResourceLimits::ForcingDimensions dimensions() override;
 
 private:
     log4cplus::Logger logger;

@@ -29,6 +29,8 @@ public:
 
     void process() override;
 
+    ResourceLimits::ForcingDimensions dimensions() override;
+
 private:
     log4cplus::Logger logger;
 
