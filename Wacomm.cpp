@@ -234,6 +234,9 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
         // Define the receiving buffer
         std::unique_ptr<struct particle_data[]> recvbuf;
+
+        // Rank-0 distribution (packing, scatter, local unpacking) and collection (gather, unpacking) times
+        auto distributeStart = std::chrono::steady_clock::now();
 #endif
         /*
          * Pointer to the local particles vector:
@@ -295,13 +298,18 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             }
 
             // Prepare a buffer of particle_data
+            distributeStart = std::chrono::steady_clock::now();
             sendbuf=std::make_unique<struct particle_data[]>(nParticles);
+            struct particle_data *packed=sendbuf.get();
+            int packSize=world_size;
+            Particles *allParticles=particles.get();
 
             // For each particle...
+            #pragma omp parallel for default(none) shared(nParticles, packSize, packed, allParticles)
             for (int idx=0;idx<nParticles;idx++) {
 
                 // Copy data into the buffer slot of its process
-                sendbuf[NumericalHelpers::interleavedSlot(idx, nParticles, world_size)]=particles->at(idx).data();
+                packed[NumericalHelpers::interleavedSlot(idx, nParticles, packSize)]=allParticles->at(idx).data();
             }
 #endif
         }
@@ -348,18 +356,28 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         // Define a container for the particles that the current processor must process
         Particles localParticles;
 
+        // Copies of one particle share its logger: constructing each particle would look the logger up
+        // under the log4cplus hierarchy lock, serializing the loop below
+        if (particlesToProcess>0) {
+            localParticles.resize(particlesToProcess, Particle(recvbuf[0]));
+        }
+        struct particle_data *received=recvbuf.get();
+
         // For each particle to process
+        #pragma omp parallel for default(none) shared(particlesToProcess, received, localParticles)
         for (int idx=0;idx<particlesToProcess;idx++) {
 
             // Read the particle from the receiving buffer
-            Particle particle(recvbuf[idx]);
-
-            // Add the particle to the local container
-            localParticles.push_back(particle);
+            localParticles[idx].data(received[idx]);
         }
 
         // Get the pointer to the local container
         pLocalParticles=&localParticles;
+
+        if (world_rank==0) {
+            std::chrono::duration<double> distribute = std::chrono::steady_clock::now() - distributeStart;
+            LOG4CPLUS_INFO(logger, "DISTRIBUTE sec: " << distribute.count());
+        }
 #else
         // Get the pointer to the particles' container
         pLocalParticles = particles.get();
@@ -606,10 +624,14 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         auto finishLocal = std::chrono::high_resolution_clock::now();
 
 #if defined(USE_MPI) || defined(USE_EMPI)
+        // Collection includes the wait for the slowest rank inside the gather
+        auto collectStart = std::chrono::steady_clock::now();
+
         // For each particle processed by the current process...
-        for (int idx=0;idx<localParticles.size();idx++) {
+        #pragma omp parallel for default(none) shared(particlesToProcess, received, localParticles)
+        for (int idx=0;idx<particlesToProcess;idx++) {
             // Copy the particle data in the receivig buffer
-            recvbuf[idx]=localParticles.at(idx).data();
+            received[idx]=localParticles[idx].data();
         }
 
 #if defined(USE_MPI)
@@ -691,11 +713,19 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                                                         << " particles/second).");
 
 #if defined(USE_MPI) || defined(USE_EMPI)
+            int nGathered=(int)particles->size();
+            struct particle_data *gathered=sendbuf.get();
+            int unpackSize=world_size;
+            Particles *allParticles=particles.get();
+
             // For each particle...
-            for (int idx = 0; idx < particles->size(); idx++) {
+            #pragma omp parallel for default(none) shared(nGathered, unpackSize, gathered, allParticles)
+            for (int idx = 0; idx < nGathered; idx++) {
                 // Copy the particle status from its slot in the sending buffer, restoring the emission order
-                particles->at(idx).data(sendbuf[NumericalHelpers::interleavedSlot(idx, particles->size(), world_size)]);
+                allParticles->at(idx).data(gathered[NumericalHelpers::interleavedSlot(idx, nGathered, unpackSize)]);
             }
+            std::chrono::duration<double> collect = std::chrono::steady_clock::now() - collectStart;
+            LOG4CPLUS_INFO(logger, "COLLECT sec: " << collect.count());
 #endif
             // Get the old number of particles
             size_t nParticles0 = particles->size();

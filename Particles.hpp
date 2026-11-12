@@ -28,6 +28,7 @@ public:
     using vector::begin;
     using vector::end;
     using vector::erase;
+    using vector::resize;
 
     void loadFromTxt(const string& fileName);
     void loadFromJson(const string &fileName);
