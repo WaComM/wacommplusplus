@@ -1,6 +1,12 @@
 name: CI
 
-on: [push, pull_request]
+# Tags are validated by release.yml, which calls this workflow before publishing.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -10,6 +16,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  workflow-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check workflow syntax and expressions
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+
   portable-core:
     timeout-minutes: 30
     strategy:
@@ -156,6 +172,14 @@ jobs:
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
       - run: cmake --build build --config Release --parallel
       - run: ctest --test-dir build -C Release --output-on-failure
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-windows-application
+          path: |
+            build/Testing/Temporary/LastTest*.log
+            build/external/build/*/CMakeFiles/CMakeConfigureLog.yaml
+          if-no-files-found: ignore
       - run: cmake --install build --config Release --prefix install
       - shell: pwsh
         run: if (-not (Test-Path install/bin/wacommplusplus.exe)) { exit 1 }
@@ -168,6 +192,7 @@ jobs:
       - name: Pin Rocky Linux 8.9 vault repositories
         run: |
           sed -i 's|^mirrorlist=|#mirrorlist=|' /etc/yum.repos.d/Rocky-*.repo
+          # shellcheck disable=SC2016 # $contentdir and $releasever are dnf variables
           sed -i 's|^#baseurl=http://dl.rockylinux.org/\$contentdir/\$releasever|baseurl=https://dl.rockylinux.org/vault/rocky/8.9|' /etc/yum.repos.d/Rocky-*.repo
       - name: Enable archived EPEL and PowerTools repositories
         run: |
@@ -189,6 +214,12 @@ jobs:
       - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build --parallel
       - run: ctest --test-dir build --output-on-failure
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-rocky-8-9
+          path: build/Testing/Temporary/LastTest*.log
+          if-no-files-found: ignore
       - run: cmake --install build --prefix install
       - name: Installed executable smoke check
         run: |

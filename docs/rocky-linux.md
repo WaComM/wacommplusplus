@@ -22,7 +22,7 @@ Successful output ends with all dependency-free tests passing. A compiler error 
 
 ## Full application
 
-The authoritative package and vault setup is the `rocky-8-9` job in `.github/workflows/ci.yml`. Reproduce that job rather than using a moving mirror. It installs the C++ compiler, CMake, pkg-config, NetCDF C/C++4, log4cplus, and a commit-verified nlohmann-json 3.11.3 tree, then runs:
+The authoritative package and vault setup is the `rocky-8-9` job in `.github/workflows/ci.yml`. Reproduce that job rather than using a moving mirror. It installs the C++ compiler, CMake, pkg-config, NetCDF C/C++4, log4cplus, and a commit-verified nlohmann-json 3.11.3 tree, then runs the commands below. The distribution GCC 8 keeps `std::filesystem` in `libstdc++fs`, which configuration detects and links ([build](build.md)).
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release

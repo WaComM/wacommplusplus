@@ -12,6 +12,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The complete CI matrix, including the MPI, parallel-I/O, Rocky, Windows,
+  # and macOS builds, must pass at the tagged revision before publication.
+  ci:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   openacc-validation:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -42,7 +49,7 @@ jobs:
       - run: ctest --test-dir build-cuda --output-on-failure
 
   source-archive:
-    needs: [openacc-validation, cuda-compile-validation]
+    needs: [ci, openacc-validation, cuda-compile-validation]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -59,12 +66,34 @@ jobs:
       - run: test -x install/bin/wacommplusplus && ldd install/bin/wacommplusplus
       - name: Create deterministic source archive
         run: |
-          git archive --format=tar --prefix=wacommplusplus-${GITHUB_REF_NAME}/ HEAD > wacommplusplus-${GITHUB_REF_NAME}.tar
-          gzip -n -9 wacommplusplus-${GITHUB_REF_NAME}.tar
-          sha256sum wacommplusplus-${GITHUB_REF_NAME}.tar.gz > wacommplusplus-${GITHUB_REF_NAME}.tar.gz.sha256
+          name="wacommplusplus-${GITHUB_REF_NAME}"
+          git archive --format=tar --prefix="${name}/" HEAD > "${name}.tar"
+          gzip -n -9 "${name}.tar"
+          sha256sum "${name}.tar.gz" > "${name}.tar.gz.sha256"
+      - name: Record release build metadata
+        # Reproducibility metadata of the validated release build (docs/reproducibility.md)
+        run: |
+          name="wacommplusplus-${GITHUB_REF_NAME}"
+          {
+            echo "tag: ${GITHUB_REF_NAME}"
+            echo "git_revision: $(git rev-parse HEAD)"
+            echo "workflow_run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "runner: ${RUNNER_OS} ${RUNNER_ARCH} $(lsb_release -ds)"
+            echo "compiler: $(c++ --version | head -1)"
+            echo "cmake: $(cmake --version | head -1)"
+            echo "cmake_options: -DCMAKE_BUILD_TYPE=Release"
+            echo "netcdf: $(nc-config --version)"
+            echo "log4cplus: $(dpkg-query -W -f='${Version}' liblog4cplus-dev)"
+            echo "nlohmann_json: $(dpkg-query -W -f='${Version}' nlohmann-json3-dev)"
+            echo "source_sha256: $(cut -d' ' -f1 "${name}.tar.gz.sha256")"
+            echo "installed_executable_sha256: $(sha256sum install/bin/wacommplusplus | cut -d' ' -f1)"
+          } > "${name}-build-metadata.txt"
+          ctest --test-dir build -N > "${name}-tests.txt"
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             wacommplusplus-${{ github.ref_name }}.tar.gz
             wacommplusplus-${{ github.ref_name }}.tar.gz.sha256
+            wacommplusplus-${{ github.ref_name }}-build-metadata.txt
+            wacommplusplus-${{ github.ref_name }}-tests.txt
           generate_release_notes: true

@@ -81,6 +81,29 @@ if(BUILD_APPLICATION)
     set(WACOMM_LIBRARIES Threads::Threads ${CMAKE_DL_LIBS}
             nlohmann_json::nlohmann_json ${WACOMM_DEPENDENCY_LIBRARIES})
 
+    # GCC 8 (Rocky Linux 8.9) and LLVM libc++ 8 keep std::filesystem in a
+    # separate library; newer toolchains provide it in the C++ runtime.
+    include(CheckCXXSourceCompiles)
+    set(wacomm_filesystem_probe "#include <filesystem>
+        int main() { return std::filesystem::exists(std::filesystem::path(\".\")) ? 0 : 1; }")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_CXX17_STANDARD_COMPILE_OPTION}")
+    check_cxx_source_compiles("${wacomm_filesystem_probe}" WACOMM_FILESYSTEM_IN_RUNTIME)
+    if(NOT WACOMM_FILESYSTEM_IN_RUNTIME)
+        set(CMAKE_REQUIRED_LIBRARIES stdc++fs)
+        check_cxx_source_compiles("${wacomm_filesystem_probe}" WACOMM_FILESYSTEM_IN_STDCXXFS)
+        set(CMAKE_REQUIRED_LIBRARIES c++fs)
+        check_cxx_source_compiles("${wacomm_filesystem_probe}" WACOMM_FILESYSTEM_IN_CXXFS)
+        unset(CMAKE_REQUIRED_LIBRARIES)
+        if(WACOMM_FILESYSTEM_IN_STDCXXFS)
+            list(APPEND WACOMM_LIBRARIES stdc++fs)
+        elseif(WACOMM_FILESYSTEM_IN_CXXFS)
+            list(APPEND WACOMM_LIBRARIES c++fs)
+        else()
+            message(FATAL_ERROR "The C++ toolchain cannot link std::filesystem")
+        endif()
+    endif()
+    unset(CMAKE_REQUIRED_FLAGS)
+
     # Collective output (docs/io.md#collective-writes) needs MPI decomposition and a
     # NetCDF-C with parallel HDF5; the sources detect netcdf_par.h, and the tests
     # below are registered only when the selected NetCDF provides it.
