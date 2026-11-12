@@ -15,6 +15,8 @@
 # CONFIG is BUILD:P:N:G as in sarno_backend_matrix.py. Every rank holds the full forcing
 # (4-7 GiB), so at most 28 MPI ranks are placed on one node. With --nodes=N, MPI ranks are
 # spread evenly (ppr placement); the serial and OpenMP tuples run on the first node.
+# WACOMM_MATRIX_OPTIONS adds run options, for example "--io-async" or "--interleave"
+# (numactl --interleave=all); give each setting its own SUITE.
 set -euo pipefail
 
 repository=${SLURM_SUBMIT_DIR:-$(cd "$(dirname "$0")/../../.." && pwd)}
@@ -29,7 +31,13 @@ arguments=()
 for config in "$@"; do
     arguments+=(--config "$config")
 done
-echo "revision=$(git rev-parse HEAD) nodes=${SLURM_JOB_NODELIST:-local} date=$(date -u +%FT%TZ)"
+for option in ${WACOMM_MATRIX_OPTIONS:-}; do
+    case "$option" in
+        --io-async|--interleave) arguments+=("$option") ;;
+        *) echo "unsupported WACOMM_MATRIX_OPTIONS entry: $option" >&2; exit 2 ;;
+    esac
+done
+echo "revision=$(git rev-parse HEAD) nodes=${SLURM_JOB_NODELIST:-local} date=$(date -u +%FT%TZ) options=${WACOMM_MATRIX_OPTIONS:-none}"
 "$python" -I examples/wacomm-sarno-lite/tools/sarno_backend_matrix.py run --root "data/matrix-hhcpu/$suite" \
     --rate "$rate" --blocks 3 --forcing data/wacomm-sarno-lite --prune-snapshots --bind --nodes "${SLURM_JOB_NUM_NODES:-1}" --python "$python" \
     --build serial=build-hhcpu-serial/wacommplusplus --build omp=build-hhcpu-omp/wacommplusplus \

@@ -792,6 +792,9 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #endif
     }
 
+    // Rank-0 output time: the writes themselves, or the snapshots and queueing with io.async
+    auto outputStart = std::chrono::steady_clock::now();
+
     // Outputs written by every rank instead of rank 0 alone (validated at configuration load)
     bool collective=config->ParallelWrite()=="collective";
     string collectiveHistory, collectiveConcentration;
@@ -916,6 +919,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #else
     (void)collectiveHistoryTime;
 #endif
+    if (world_rank==0) {
+        std::chrono::duration<double> output = std::chrono::steady_clock::now() - outputStart;
+        LOG4CPLUS_INFO(logger, "OUTPUT sec: " << output.count());
+    }
 
 #ifdef USE_EMPI
     ADM_RegisterSysAttributesDouble ("ADM_GLOBAL_TIME", &time);

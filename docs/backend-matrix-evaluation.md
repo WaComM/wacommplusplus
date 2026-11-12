@@ -215,7 +215,13 @@ sbatch --nodes=4 examples/wacomm-sarno-lite/tools/hhcpu_backend_matrix_job.sh 10
 python3 -I examples/wacomm-sarno-lite/tools/sarno_backend_matrix.py collect --suite hhcpu-q1e5=data/matrix-hhcpu/hh-q100000-aa8378f --suite hhcpu-q1e6=data/matrix-hhcpu/hh-q1000000-aa8378f --suite hhcpu-4node-q1e6=data/matrix-hhcpu/hh4-q1000000-aa8378f --output data/matrix-hhcpu/collect-aa8378f
 ```
 
-Each rerun suite archives its revision, with no working-tree patch, in `provenance/suite.json`.
+Each rerun suite archives its revision, with no working-tree patch, in `provenance/suite.json`. `sarno_backend_matrix.py run --io-async` sets `io.async=true` in the suite configuration, and `--interleave` runs every process under `numactl --interleave=all`. Both are recorded in `provenance/suite.json`, and a suite refuses to resume with other settings. The job script takes them from `WACOMM_MATRIX_OPTIONS`, for example:
+
+```bash
+WACOMM_MATRIX_OPTIONS=--interleave sbatch examples/wacomm-sarno-lite/tools/hhcpu_backend_matrix_job.sh 100000 hh-q100000-interleave serial:1:1:0 omp:1:56:0
+```
+
+From the revision that adds them, the collector also records the rank-0 `FORCING`, `SETUP`, `OUTPUT`, `FLUSH`, and `RUN` times described in [parallel execution](parallelism.md).
 
 The matrix commands list a subset of each suite's tuples; the full lists are in the job output and in [`results-hhcpu.json`](figures/backend-matrix-hhcpu/results-hhcpu.json). The test job reads `WACOMM_PERL5LIB` for the extracted Perl modules and `WACOMM_PYTHON` for the figure interpreter.
 

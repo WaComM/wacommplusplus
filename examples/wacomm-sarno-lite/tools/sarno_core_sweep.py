@@ -21,7 +21,14 @@ COMPONENTS = {"host_to_device_seconds": r"CUDA HOST2DEV sec: ([0-9.eE+-]+)",
               "concentration_seconds": r"EVALUATE sec: ([0-9.eE+-]+)",
               # Rank-0 MPI distribution and collection, from revision e2c9a21; zero before and without MPI
               "distribute_seconds": r"DISTRIBUTE sec: ([0-9.eE+-]+)",
-              "collect_seconds": r"COLLECT sec: ([0-9.eE+-]+)"}
+              "collect_seconds": r"COLLECT sec: ([0-9.eE+-]+)",
+              # Rank-0 run phases (forcing preparation with the slowest rank's, setup, output, flush, whole run); zero before they were logged
+              "forcing_seconds": r"FORCING sec: ([0-9.eE+-]+) max:",
+              "forcing_max_seconds": r"FORCING sec: [0-9.eE+-]+ max: ([0-9.eE+-]+)",
+              "setup_seconds": r"SETUP sec: ([0-9.eE+-]+)",
+              "output_seconds": r"OUTPUT sec: ([0-9.eE+-]+)",
+              "flush_seconds": r"FLUSH sec: ([0-9.eE+-]+)",
+              "run_seconds": r"RUN sec: ([0-9.eE+-]+)"}
 
 
 def validate(reference, candidate, gpus):

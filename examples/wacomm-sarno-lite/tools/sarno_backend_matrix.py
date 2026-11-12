@@ -55,10 +55,15 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def prepare(root, rate, forcing, builds, nodes=1):
+def prepare(root, rate, forcing, builds, nodes=1, io_async=False, launch_prefix=()):
     """Write the suite provenance, configuration, and source once; verify the forcing checksums."""
     provenance = root / "provenance"
     if (provenance / "config.json").exists():
+        # A resumed suite keeps its options: samples of different settings must not be pooled
+        record = json.loads((provenance / "suite.json").read_text())
+        if (record.get("io_async", False), record.get("launch_prefix", [])) != (io_async, list(launch_prefix)):
+            raise ValueError(f"{root} was prepared with io_async={record.get('io_async', False)} and "
+                             f"launch_prefix={record.get('launch_prefix', [])}; use a new --root")
         return
     provenance.mkdir(parents=True, exist_ok=True)
     source = json.loads((REPOSITORY / "examples/sources-sarno_river/sources-sarno_river.json").read_text())
@@ -69,6 +74,8 @@ def prepare(root, rate, forcing, builds, nodes=1):
     config = json.loads((REPOSITORY / "examples/wacomm-sarno-lite/wacomm-sarno-lite.json").read_text())
     config["io"].update(ocean_model="WaComM", base_path="processed-6h/", save_input=False,
                         nc_inputs=["ocm3_d03_20210701Z" + h + ".nc" for h in ("09", "10", "11", "13", "14", "15")])
+    if io_async:
+        config["io"]["async"] = True
     (provenance / "config.json").write_text(json.dumps(config, indent=2) + "\n")
     (provenance / "particles-per-hour.txt").write_text(f"{rate}\n")
     expected = {}
@@ -81,6 +88,7 @@ def prepare(root, rate, forcing, builds, nodes=1):
     shutil.copy(Path(forcing, "prepared-forcing.sha256"), provenance / "forcing.sha256")
     record = {"date_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(), "host": platform.node(),
               "platform": platform.platform(), "machine": platform.machine(), "python": sys.version.split()[0], "nodes": nodes,
+              "io_async": io_async, "launch_prefix": list(launch_prefix),
               "revision": subprocess.run(["git", "-C", str(REPOSITORY), "rev-parse", "HEAD"], capture_output=True,
                                          text=True).stdout.strip(),
               "working_tree_patch": subprocess.run(["git", "-C", str(REPOSITORY), "diff", "HEAD"], capture_output=True,
@@ -98,10 +106,11 @@ def prepare(root, rate, forcing, builds, nodes=1):
     (provenance / "suite.json").write_text(json.dumps(record, indent=2) + "\n")
 
 
-def launch_command(build, p, n, binary, bind, environment=None, nodes=1):
-    """Return the command line; MPI builds always go through mpirun so p=1 includes MPI start-up."""
+def launch_command(build, p, n, binary, bind, environment=None, nodes=1, prefix=()):
+    """Return the command line; MPI builds always go through mpirun so p=1 includes MPI start-up.
+    prefix (for example numactl --interleave=all) runs each process, inside mpirun for MPI builds."""
     if "mpi" not in build:
-        return [str(binary), "wacomm-sarno-lite-6h.json"]
+        return [*prefix, str(binary), "wacomm-sarno-lite-6h.json"]
     command = ["mpirun", "-np", str(p)]
     if nodes > 1:
         # Under Slurm, Open MPI 4 binds slot:PE=n against one CPU per remote daemon;
@@ -119,10 +128,10 @@ def launch_command(build, p, n, binary, bind, environment=None, nodes=1):
     for variable in ("OMP_NUM_THREADS", "OMP_PLACES", "OMP_PROC_BIND", "OMP_DYNAMIC", "CUDA_VISIBLE_DEVICES"):
         if environment is None or variable in environment:
             command += ["-x", variable]
-    return command + [str(binary), "wacomm-sarno-lite-6h.json"]
+    return command + [*prefix, str(binary), "wacomm-sarno-lite-6h.json"]
 
 
-def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune, nodes=1):
+def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune, nodes=1, prefix=()):
     sample = root / tuple_name(build, p, n, g) / f"sample-{label}"
     reference = root / tuple_name(*REFERENCE) / "sample-warmup"
     verdict = sample / "verdict.txt"
@@ -138,7 +147,7 @@ def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune, n
                        CUDA_VISIBLE_DEVICES=",".join(str(i) for i in range(g)) if g else "-1")
     if bind:
         environment.update(OMP_PLACES="cores", OMP_PROC_BIND="close")
-    command = launch_command(build, p, n, binary, bind, environment, nodes)
+    command = launch_command(build, p, n, binary, bind, environment, nodes, prefix)
     (sample / "command.txt").write_text(" ".join(command) + "\n")
     start = time.monotonic()
     with open(sample / "stdout.txt", "w") as out, open(sample / "stderr.txt", "w") as err:
@@ -182,8 +191,11 @@ def run(args):
     root = args.root.resolve()
     if args.nodes < 1:
         raise ValueError("--nodes must be positive")
-    prepare(root, args.rate, args.forcing, builds, args.nodes)
-    common = (root, args.forcing, args.bind, args.python, args.prune_snapshots, args.nodes)
+    prefix = ["numactl", "--interleave=all"] if args.interleave else []
+    if prefix and not shutil.which(prefix[0]):
+        raise ValueError("--interleave needs numactl on the PATH")
+    prepare(root, args.rate, args.forcing, builds, args.nodes, args.io_async, prefix)
+    common = (root, args.forcing, args.bind, args.python, args.prune_snapshots, args.nodes, prefix)
 
     def one(config, label):
         build, p, n, g = config
@@ -258,6 +270,7 @@ def suite(root):
     return {"root": str(root), "particles_per_hour": int((root / "provenance/particles-per-hour.txt").read_text()),
             "host": provenance["host"], "nodes": provenance.get("nodes", 1), "platform": provenance["platform"], "revision": provenance["revision"],
             "working_tree_patch_bytes": len(provenance["working_tree_patch"]),
+            "io_async": provenance.get("io_async", False), "launch_prefix": provenance.get("launch_prefix", []),
             "baseline_solver_seconds": base["solver_median"], "baseline_application_seconds": base["application_median"],
             "rows": rows}
 
@@ -422,6 +435,9 @@ def main():
                          help="nodes of the allocation; MPI ranks are spread evenly with ppr placement")
     execute.add_argument("--python", default=sys.executable)
     execute.add_argument("--prune-snapshots", action="store_true")
+    execute.add_argument("--io-async", action="store_true", help="set io.async=true in the suite configuration")
+    execute.add_argument("--interleave", action="store_true",
+                         help="run every process under numactl --interleave=all (Linux NUMA page interleaving)")
     collect = commands.add_parser("collect", help="summarize validated suites")
     collect.add_argument("--suite", action="append", required=True, metavar="LABEL=ROOT")
     collect.add_argument("--output", type=Path, required=True)

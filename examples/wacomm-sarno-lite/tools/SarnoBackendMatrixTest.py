@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sarno_backend_matrix import INTERVALS, best, launch_command, parse_config, suite
+from sarno_backend_matrix import INTERVALS, best, launch_command, parse_config, prepare, suite
 
 
 def sample(root, build, p, n, g, label, seconds, application=None, reference=None, runtime=None):
@@ -19,6 +19,8 @@ def sample(root, build, p, n, g, label, seconds, application=None, reference=Non
     lines.append("EVALUATE sec: 0.02")
     if "mpi" in build:
         lines += ["DISTRIBUTE sec: 0.03", "COLLECT sec: 0.04"] * 5
+    lines += ["FORCING sec: 0.5 max: 0.75", "SETUP sec: 0.01", "OUTPUT sec: 0.25"] * 6
+    lines += ["FLUSH sec: 0.125", f"RUN sec: {seconds + 2}"]
     (directory / "stdout.txt").write_text("\n".join(lines) + "\n")
     (directory / "time.txt").write_text(f"elapsed_seconds={application or seconds + 3} maxrss_kb=1048576\n")
     (directory / "exit.txt").write_text("0\n")
@@ -55,6 +57,11 @@ def main():
         assert abs(hybrid["components_median"]["distribute_seconds"] - 0.15) < 1e-12
         assert abs(hybrid["components_median"]["collect_seconds"] - 0.2) < 1e-12
         assert rows["serial", 1, 1, 0]["components_median"]["distribute_seconds"] == 0
+        # Run phases are summed over the six forcing windows
+        phases = hybrid["components_median"]
+        assert abs(phases["forcing_seconds"] - 3) < 1e-12 and abs(phases["forcing_max_seconds"] - 4.5) < 1e-12
+        assert abs(phases["setup_seconds"] - 0.06) < 1e-12 and abs(phases["output_seconds"] - 1.5) < 1e-12
+        assert phases["flush_seconds"] == 0.125 and abs(phases["run_seconds"] - 4.5) < 1e-12
         gpu = rows["omp-cuda", 1, 4, 1]
         assert gpu["cpu_efficiency"] is None and abs(gpu["speedup"] - 8) < 1e-12
         # The GPU tuple has the fastest solver but the hybrid CPU tuple has the fastest application.
@@ -67,6 +74,16 @@ def main():
             assert rejected(lambda: parse_config(text)), text
         assert parse_config("mpi-omp-cuda:2:6:1") == ("mpi-omp-cuda", 2, 6, 1)
         assert launch_command("omp", 1, 4, "w", True) == ["w", "wacomm-sarno-lite-6h.json"]
+        # A launch prefix runs each process: before the binary, inside mpirun for MPI builds
+        numa = ["numactl", "--interleave=all"]
+        assert launch_command("omp", 1, 4, "w", True, prefix=numa) == numa + ["w", "wacomm-sarno-lite-6h.json"]
+        assert launch_command("mpi", 2, 1, "w", False, prefix=numa)[-4:] == numa + ["w", "wacomm-sarno-lite-6h.json"]
+        assert result["io_async"] is False and result["launch_prefix"] == []
+        # A prepared suite refuses to resume with other output or launch options
+        (root / "provenance/config.json").write_text("{}")
+        prepare(root, 100000, root, {})
+        assert rejected(lambda: prepare(root, 100000, root, {}, io_async=True))
+        assert rejected(lambda: prepare(root, 100000, root, {}, launch_prefix=numa))
         bound = launch_command("mpi-omp", 2, 6, "w", True)
         assert bound[:7] == ["mpirun", "-np", "2", "--map-by", "slot:PE=6", "--bind-to", "core"], bound
         assert launch_command("mpi", 2, 1, "w", False)[3:5] == ["--bind-to", "none"]

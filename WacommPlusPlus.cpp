@@ -9,6 +9,7 @@
 #include "WaveModelAdapterFactory.hpp"
 #include "ResourceLimits.hpp"
 #include <algorithm>
+#include <chrono>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -111,6 +112,9 @@ WacommPlusPlus::WacommPlusPlus(std::shared_ptr<Config> config): config(config) {
 void WacommPlusPlus::run() {
     LOG4CPLUS_DEBUG(logger, "External loop...");
 
+    // Rank-0 time of the whole run, from configuration to the last published output
+    auto runStart=std::chrono::steady_clock::now();
+
     int world_size = 1, world_rank = 0;
     char mpi_name[128];
     int len, nParticles = 0;
@@ -209,6 +213,9 @@ void WacommPlusPlus::run() {
             LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
         }
 
+        // Forcing preparation: reading, normalization, boundary record, and regridding
+        auto forcingStart=std::chrono::steady_clock::now();
+
         shared_ptr<OceanModelAdapter> oceanModelAdapter=oceanWindow(inputIdx);
 
         shared_ptr<WeatherModelAdapter> weatherModelAdapter;
@@ -248,6 +255,22 @@ void WacommPlusPlus::run() {
             waveModelAdapter->regridBilinearCurvilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
         else if (waveModelAdapter && config->WaveRegridding()=="bilinear_projected")
             waveModelAdapter->regridBilinearProjected(oceanModelAdapter->Lon(),oceanModelAdapter->Lat(),config->WaveSourceCrs());
+
+        // Log the rank-0 preparation time and the slowest rank's, which the solver interval waits for
+        std::chrono::duration<double> forcing=std::chrono::steady_clock::now()-forcingStart;
+        double forcingSeconds=forcing.count(), forcingMax=forcingSeconds;
+#ifdef USE_MPI
+        MPI_Reduce(&forcingSeconds, &forcingMax, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+#endif
+#ifdef USE_EMPI
+        MPI_Reduce(&forcingSeconds, &forcingMax, 1, MPI_DOUBLE, MPI_MAX, 0, ADM_COMM_WORLD);
+#endif
+        if (world_rank == 0) {
+            LOG4CPLUS_INFO(logger, "FORCING sec: " << forcingSeconds << " max: " << forcingMax);
+        }
+
+        // Rank-0 setup: sources, saved input, and restart
+        auto setupStart=std::chrono::steady_clock::now();
 
         Calendar cal;
 
@@ -319,6 +342,11 @@ void WacommPlusPlus::run() {
             }
         }
 
+        if (world_rank == 0) {
+            std::chrono::duration<double> setup=std::chrono::steady_clock::now()-setupStart;
+            LOG4CPLUS_INFO(logger, "SETUP sec: " << setup.count());
+        }
+
         // Check if it is a dry run
         if (!config->Dry()) {
             // Create a new Wacomm object
@@ -356,7 +384,14 @@ void WacommPlusPlus::run() {
 
     // Wait for the queued outputs and report a failed write
     if (outputWriter) {
+        auto flushStart=std::chrono::steady_clock::now();
         outputWriter->flush();
+        std::chrono::duration<double> flush=std::chrono::steady_clock::now()-flushStart;
+        LOG4CPLUS_INFO(logger, "FLUSH sec: " << flush.count());
+    }
+    if (world_rank == 0) {
+        std::chrono::duration<double> run=std::chrono::steady_clock::now()-runStart;
+        LOG4CPLUS_INFO(logger, "RUN sec: " << run.count());
     }
 
 #ifdef USE_EMPI
