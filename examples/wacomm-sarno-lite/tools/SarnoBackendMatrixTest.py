@@ -17,6 +17,8 @@ def sample(root, build, p, n, g, label, seconds, application=None, reference=Non
         lines.append(f"Acceleration: CUDA {g} device(s)")
     lines += [f"Solver interval: start={a:.17g} end={b:.17g} seconds={seconds / 5}" for a, b in zip(INTERVALS[:-1], INTERVALS[1:])]
     lines.append("EVALUATE sec: 0.02")
+    if "mpi" in build:
+        lines += ["DISTRIBUTE sec: 0.03", "COLLECT sec: 0.04"] * 5
     (directory / "stdout.txt").write_text("\n".join(lines) + "\n")
     (directory / "time.txt").write_text(f"elapsed_seconds={application or seconds + 3} maxrss_kb=1048576\n")
     (directory / "exit.txt").write_text("0\n")
@@ -49,6 +51,10 @@ def main():
         hybrid = rows["mpi-omp", 2, 2, 0]
         assert abs(hybrid["speedup"] - 3.2) < 1e-12 and abs(hybrid["cpu_efficiency"] - 0.8) < 1e-12
         assert hybrid["cpu_workers"] == 4 and abs(hybrid["max_rss_kib_median"] - 1048576) < 1e-9
+        # Rank-0 distribution and collection are summed over the five intervals; zero without MPI
+        assert abs(hybrid["components_median"]["distribute_seconds"] - 0.15) < 1e-12
+        assert abs(hybrid["components_median"]["collect_seconds"] - 0.2) < 1e-12
+        assert rows["serial", 1, 1, 0]["components_median"]["distribute_seconds"] == 0
         gpu = rows["omp-cuda", 1, 4, 1]
         assert gpu["cpu_efficiency"] is None and abs(gpu["speedup"] - 8) < 1e-12
         # The GPU tuple has the fastest solver but the hybrid CPU tuple has the fastest application.

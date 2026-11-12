@@ -18,7 +18,10 @@ INTERVALS = [(t - EPOCH).total_seconds() for t in TIMES]
 REFERENCE = Path("p1_n1_g0") / "sample-warmup"
 COMPONENTS = {"host_to_device_seconds": r"CUDA HOST2DEV sec: ([0-9.eE+-]+)",
               "gpu_section_seconds": r"GPU Processed in sec: ([0-9.eE+-]+)",
-              "concentration_seconds": r"EVALUATE sec: ([0-9.eE+-]+)"}
+              "concentration_seconds": r"EVALUATE sec: ([0-9.eE+-]+)",
+              # Rank-0 MPI distribution and collection, from revision e2c9a21; zero before and without MPI
+              "distribute_seconds": r"DISTRIBUTE sec: ([0-9.eE+-]+)",
+              "collect_seconds": r"COLLECT sec: ([0-9.eE+-]+)"}
 
 
 def validate(reference, candidate, gpus):

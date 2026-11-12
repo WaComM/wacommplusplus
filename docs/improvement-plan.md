@@ -1,6 +1,6 @@
 # WaComM++ improvement plan: Claude Code task brief
 
-This note turns the [backend matrix evaluation](backend-matrix-evaluation.md#improvement-plan) into tasks that a coding agent can execute one at a time. It is written as a prompt. Open Claude Code at the repository root and ask, for example, *"Implement task C1 from docs/improvement-plan.md"*. Each task is self-contained: it states the evidence, the files, the approach, the invariants, the tests, the acceptance criteria, and the documentation that must change with it. Nothing here is implemented yet. The evidence is computational (timings, memory, and equivalence checks on the Sarno six-hour workload), not observational validation.
+This note turns the [backend matrix evaluation](backend-matrix-evaluation.md#improvement-plan) into tasks that a coding agent can execute one at a time. It is written as a prompt. Open Claude Code at the repository root and ask, for example, *"Implement task C1 from docs/improvement-plan.md"*. Each task is self-contained: it states the evidence, the files, the approach, the invariants, the tests, the acceptance criteria, and the documentation that must change with it. Status: C5 (revision `59f9b91`), C1 (`32679ce`), and C2 step 1 (`e2c9a21`) are implemented and pass the offline suite on macOS. None has been measured on `hhcpu`, so their acceptance criteria are open. Nothing else here is implemented. The evidence is computational (timings, memory, and equivalence checks on the Sarno six-hour workload), not observational validation.
 
 ## Rules that apply to every task
 
@@ -57,6 +57,7 @@ C5 first: it is small and protects every later experiment. Then C1, C2, C3, C4 i
 - **Invariant.** Particle states stay bit-identical. Floating-point concentration sums may change summation order. If they do, either keep a deterministic order (gather counts in particle-index order) or declare and test a tolerance, and document it in [testing.md](testing.md). Exact equality is preferred. Restart files must be identical whatever the decomposition.
 - **Tests.** `mpi_decomposition_parity`, `mpi_openmp_multi_worker_parity`, `restart_format`, and a new test that restarts a 3-rank run on 2 ranks and compares it with the continuous run.
 - **Acceptance.** The four-node 16×14 solver time at 10⁶ particles/hour falls from 7.43 s to at most 5.5 s, and relative four-node efficiency rises above 80%.
+- **Before step 2.** The [load-balance model](backend-matrix-evaluation.md#load-balance-model) predicts that C1 alone brings 16×14 to about 6.1 s. Rank-0 concentration is 0.47 s of the 7.43 s, so the dense `MPI_Reduce` above would move more data than it saves (a $3\times30\times1135\times1528$ `float` grid, about 624 MB per interval). The Sarno outputs are hourly, so states are gathered every interval anyway. Step 2 waits for the `DISTRIBUTE`/`COLLECT` timings of the rerun. FlexMPI/EMPI changes the rank count between windows, so resident particles would also need redistribution there.
 - **Documentation.** [parallelism.md](parallelism.md), [restart.md](restart.md), the backend matrix evaluation, and the README.
 
 ### C3. One forcing copy per node

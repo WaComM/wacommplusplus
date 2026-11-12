@@ -150,7 +150,8 @@ def main():
     axis.set_xlim(right=max(r["application_median"] for _, _, r in picks) * 1.3)
     tidy(axis)
     axis.grid(False, axis="y")
-    axis.legend(fontsize=7.5, frameon=False, loc="lower right")
+    # Bars are sorted longest first from the bottom: the upper right is clear of bars and labels
+    axis.legend(fontsize=7.5, frameon=False, loc="upper right")
     save(figure, "application-split.svg", "Solver and non-solver time of the fastest tuples",
          "Stacked horizontal bars of median solver time and remaining application wall time, in seconds, for the "
          "fastest solver tuple of the OpenMP, MPI, and hybrid builds in every suite, labelled with both parts. The "
