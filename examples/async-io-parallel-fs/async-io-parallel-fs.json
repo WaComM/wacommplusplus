@@ -1,0 +1,14 @@
+{
+  "simulation": {"dry": false, "start": "20210701Z00", "end": "20210701Z06"},
+  "io": {"ocean_model": "WACOMM", "base_path": ".",
+         "nc_inputs": ["wacomm-20210701Z00.nc", "wacomm-20210701Z01.nc", "wacomm-20210701Z02.nc",
+                       "wacomm-20210701Z03.nc", "wacomm-20210701Z04.nc", "wacomm-20210701Z05.nc"],
+         "nc_output_root": "output/conc-", "save_history": "nc", "history_root": "output/history-",
+         "timestep": 3600,
+         "async": true, "async_max_pending": 2,
+         "filesystem": "gpfs", "fsync": true, "staging_dir": "staging"},
+  "sources": {"active": true, "sources_file": "sources.json"},
+  "restart": {"active": false, "interval": 3600},
+  "physics": {"integrator": "midpoint", "random": false, "random_seed": 5489, "dti": 30},
+  "tracking": {"direction": "forward", "backward_diffusion": "none"}
+}

@@ -50,15 +50,22 @@ Wacomm::Wacomm(std::shared_ptr<Config> config,
                std::shared_ptr<Sources> sources,
                std::shared_ptr<Particles> particles,
                std::shared_ptr<WeatherModelAdapter> weatherModelAdapter,
-               std::shared_ptr<WaveModelAdapter> waveModelAdapter) :
+               std::shared_ptr<WaveModelAdapter> waveModelAdapter,
+               std::shared_ptr<OutputWriter> outputWriter) :
                config(std::move(config)),
                oceanModelAdapter(std::move(oceanModelAdapter)),
                sources(std::move(sources)),
                particles(std::move(particles)),
                weatherModelAdapter(std::move(weatherModelAdapter)),
-               waveModelAdapter(std::move(waveModelAdapter)) {
+               waveModelAdapter(std::move(waveModelAdapter)),
+               outputWriter(std::move(outputWriter)) {
 
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
+
+    // Without a shared writer, publish synchronously as the original implementation
+    if (!this->outputWriter) {
+        this->outputWriter = std::make_shared<OutputWriter>(OutputWriter::Options());
+    }
     auto validateEnvironment=[this](auto adapter,const char *name) {
         if (!adapter) return;
         if (adapter->Time().Nx()!=this->oceanModelAdapter->OceanTime().Nx() ||
@@ -161,8 +168,9 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
         LOG4CPLUS_INFO(logger, "eta_rho:" + std::to_string(eta_rho) + " xi_rho:" + std::to_string(xi_rho));
     }
 
-    // Define the final concentration matrix
-    Array4<float> conc(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
+    // Define the final concentration matrix (shared: an asynchronous write keeps it alive)
+    auto concentration=std::make_shared<Array4<float>>(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
+    Array4<float> &conc=*concentration;
 
     // Set the concentration matrix to 0
     #pragma omp parallel for collapse(4) default(none) shared(ocean_time, s_rho, eta_rho, xi_rho, conc)
@@ -789,23 +797,37 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
                 LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
 
+                // An asynchronous write gets a snapshot: the solver keeps updating the particles
+                bool historyFormat=config->SaveHistory()=="text" || config->SaveHistory()=="json" ||
+                                   config->SaveHistory()=="nc";
+                std::shared_ptr<Particles> snapshot=outputWriter->options().async && historyFormat ?
+                        std::make_shared<Particles>(*particles) : particles;
+                std::shared_ptr<OceanModelAdapter> adapter=oceanModelAdapter;
+                std::shared_ptr<Config> historyConfig=config;
+
                 // Check if the history has to be saved as text (Fortran WaComM compatibility)
                 if (config->SaveHistory() == "text") {
 
                     // Save the history as text
-                    particles->saveAsTxt(historyFilename+ ".txt");
+                    outputWriter->submit(historyFilename + ".txt", [snapshot](const string &path) {
+                        snapshot->saveAsTxt(path);
+                    }, false);
 
                     // Check if the history has to be saved as geojson - to be used only for a small amount of particles
                 } else if (config->SaveHistory() == "json") {
 
                     // Save the history as geojson
-                    particles->saveAsJson(historyFilename+ ".json", finalOceanTime, oceanModelAdapter);
+                    outputWriter->submit(historyFilename + ".json", [snapshot, finalOceanTime, adapter](const string &path) {
+                        snapshot->saveAsJson(path, finalOceanTime, adapter);
+                    }, false);
 
                     // Check if the history has to be saved as NetCDF file (new style, suggested)
                 } else if (config->SaveHistory() == "nc") {
 
                     // Save the history as NetCDF
-                    particles->saveAsNetCDF(historyFilename + ".nc", finalOceanTime, oceanModelAdapter, config);
+                    outputWriter->submit(historyFilename + ".nc", [snapshot, finalOceanTime, adapter, historyConfig](const string &path) {
+                        snapshot->saveAsNetCDF(path, finalOceanTime, adapter, historyConfig);
+                    }, true);
                 }
             }
         }
@@ -817,7 +839,11 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             LOG4CPLUS_INFO(logger, "Saving history:" << ncOutputFilename);
 
             // Save the history
-            save(ncOutputFilename,conc);
+            std::shared_ptr<OceanModelAdapter> adapter=oceanModelAdapter;
+            std::shared_ptr<Config> outputConfig=config;
+            outputWriter->submit(ncOutputFilename, [concentration, adapter, outputConfig](const string &path) {
+                save(path, *concentration, adapter, outputConfig);
+            }, true);
             //save(ncOutputFilename);
         }
     }
@@ -838,7 +864,10 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
 Wacomm::~Wacomm() = default;
 
-void Wacomm::save(const string &fileName, Array4<float> &conc) {
+void Wacomm::save(const string &fileName, Array4<float> &conc,
+                  std::shared_ptr<OceanModelAdapter> oceanModelAdapter, std::shared_ptr<Config> config) {
+
+    log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
     size_t ocean_time=oceanModelAdapter->OceanTime().Nx();
     size_t s_rho=oceanModelAdapter->SRho().Nx();

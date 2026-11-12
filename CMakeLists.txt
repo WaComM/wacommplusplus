@@ -174,7 +174,7 @@ if(BUILD_APPLICATION)
     add_executable(wacommplusplus
             main.cpp Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
             Config.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
-            EnvironmentalDataAccess.cpp
+            EnvironmentalDataAccess.cpp OutputWriter.cpp
             EnvironmentalMetadata.cpp EnvironmentalRegridder.cpp
             WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
             WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
@@ -259,6 +259,13 @@ if(BUILD_APPLICATION)
         wacomm_enable_test_assertions(config_test)
         target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME configuration_round_trip COMMAND config_test)
+
+        # Synchronous/asynchronous publication and parallel file system policy (docs/io.md)
+        add_executable(output_writer_test tests/OutputWriterTest.cpp OutputWriter.cpp
+                Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(output_writer_test)
+        target_link_libraries(output_writer_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME output_writer COMMAND output_writer_test)
 
         add_executable(example_config_test tests/ExampleConfigTest.cpp Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
         target_link_libraries(example_config_test PRIVATE ${WACOMM_LIBRARIES})

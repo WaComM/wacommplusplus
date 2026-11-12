@@ -57,8 +57,9 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef USE_MPI
-    // Initialize MPI
-    MPI_Init(&argc, &argv);
+    // Initialize MPI: OpenMP workers and the asynchronous output writer never call MPI
+    int mpiThreadSupport=MPI_THREAD_SINGLE;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &mpiThreadSupport);
 
     // Get the number of involved processes
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -178,6 +179,12 @@ int main(int argc, char **argv) {
         if (config->Dry()) {
             LOG4CPLUS_INFO(logger, "*** Dry run ***");
         }
+#ifdef USE_MPI
+        if (config->AsyncIO() && mpiThreadSupport<MPI_THREAD_FUNNELED) {
+            LOG4CPLUS_WARN(logger, "The MPI library provides no MPI_THREAD_FUNNELED support; "
+                                   "the asynchronous output writer runs without that guarantee");
+        }
+#endif
     }
 
     WacommPlusPlus wacommPlusPlus(config);

@@ -159,6 +159,16 @@ public:
     bool MaskOutput() const;
     void MaskOutput(bool value);
 
+    // Output publication (docs/io.md)
+    bool AsyncIO() const;
+    void AsyncIO(bool value);
+    int AsyncMaxPending() const;
+    string Filesystem() const;
+    bool Fsync() const;
+    string StagingDir() const;
+    int LustreStripeCount() const;
+    long long LustreStripeSize() const;
+
     bool UseSources() const;
     void UseSources(bool value);
     string SourcesFile() const;
@@ -255,6 +265,14 @@ private:
     string historyRoot;
 
     bool embeddedHistory;
+
+    bool asyncIO;
+    int asyncMaxPending;
+    string filesystem;
+    bool fsync;
+    string stagingDir;
+    int lustreStripeCount;
+    long long lustreStripeSize;
 
     void setDefault();
 

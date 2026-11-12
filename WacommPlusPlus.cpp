@@ -89,6 +89,12 @@ void WacommPlusPlus::run() {
 
     int inputDirection=config->Backward() ? -1 : 1;
     int inputFirst=config->Backward() ? (int)config->NcInputs().size()-1 : 0;
+    // Output publication, synchronous or asynchronous (docs/io.md); only rank 0 writes
+    std::shared_ptr<OutputWriter> outputWriter;
+    if (world_rank == 0) {
+        outputWriter = std::make_shared<OutputWriter>(*config);
+    }
+
     std::unordered_map<int,std::shared_ptr<OceanModelAdapter>> oceanWindows;
     std::unordered_map<int,std::shared_ptr<WeatherModelAdapter>> weatherWindows;
     std::unordered_map<int,std::shared_ptr<WaveModelAdapter>> waveWindows;
@@ -96,6 +102,8 @@ void WacommPlusPlus::run() {
         auto found=oceanWindows.find(index);
         if (found!=oceanWindows.end()) return found->second;
         string& input=config->NcInputs()[index];
+        // NetCDF is not thread safe: exclude the asynchronous output writer
+        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
         auto adapter=OceanModelAdapterFactory::create(config->OceanModel(),input);
         adapter->process(); oceanWindows[index]=adapter; return adapter;
     };
@@ -103,6 +111,8 @@ void WacommPlusPlus::run() {
         auto found=weatherWindows.find(index);
         if (found!=weatherWindows.end()) return found->second;
         string& input=config->WeatherInputs()[index];
+        // NetCDF is not thread safe: exclude the asynchronous output writer
+        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
         auto adapter=WeatherModelAdapterFactory::create(config->WeatherModel(),input,config->WeatherSourceCrs());
         adapter->process(); weatherWindows[index]=adapter; return adapter;
     };
@@ -110,6 +120,8 @@ void WacommPlusPlus::run() {
         auto found=waveWindows.find(index);
         if (found!=waveWindows.end()) return found->second;
         string& input=config->WaveInputs()[index];
+        // NetCDF is not thread safe: exclude the asynchronous output writer
+        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
         auto adapter=WaveModelAdapterFactory::create(config->WaveModel(),input,config->WaveSourceCrs());
         adapter->process(); waveWindows[index]=adapter; return adapter;
     };
@@ -199,6 +211,7 @@ void WacommPlusPlus::run() {
                 LOG4CPLUS_INFO(logger,  "Saving processed output: " << inputFilename);
 
                 // Save the processed input
+                std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
                 oceanModelAdapter->saveAsNetCDF(inputFilename);
             }
 
@@ -212,6 +225,7 @@ void WacommPlusPlus::run() {
                 if (fileName.substr(fileName.find_last_of('.') + 1) == "nc") {
 
                     // The restart is a NetCDF
+                    std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
                     particles->loadFromNetCDF(fileName,config);
 
                     // Check if the restart is a geojson
@@ -231,7 +245,7 @@ void WacommPlusPlus::run() {
         // Check if it is a dry run
         if (!config->Dry()) {
             // Create a new Wacomm object
-            Wacomm wacomm(config, oceanModelAdapter, sources, particles,weatherModelAdapter,waveModelAdapter);
+            Wacomm wacomm(config, oceanModelAdapter, sources, particles,weatherModelAdapter,waveModelAdapter,outputWriter);
 
             // Run the model
             double cuda=0;
@@ -261,6 +275,11 @@ void WacommPlusPlus::run() {
         oceanWindows.erase(inputIdx);
         weatherWindows.erase(inputIdx);
         waveWindows.erase(inputIdx);
+    }
+
+    // Wait for the queued outputs and report a failed write
+    if (outputWriter) {
+        outputWriter->flush();
     }
 
 #ifdef USE_EMPI

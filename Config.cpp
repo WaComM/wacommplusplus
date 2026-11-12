@@ -106,6 +106,25 @@ void Config::setDefault() {
     // Embedded history data into output (default false)
     embeddedHistory = false;
 
+    // Write outputs on the solver thread (default synchronous)
+    asyncIO = false;
+
+    // Queued or running asynchronous writes before the solver waits
+    asyncMaxPending = 2;
+
+    // Output file system (posix, lustre, gpfs)
+    filesystem = "posix";
+
+    // Flush outputs to stable storage before publication (default: true on parallel file systems)
+    fsync = false;
+
+    // Node-local staging directory (default none)
+    stagingDir = "";
+
+    // Lustre default layout of the output directories (0: inherit)
+    lustreStripeCount = 0;
+    lustreStripeSize = 0;
+
     // Use sources (default true)
     useSources = true;
 
@@ -618,7 +637,14 @@ string Config::asJson() const {
             { "nc_output_root", ncOutputRoot },
             { "save_history", saveHistory },
             { "save_input", saveInput},
-            { "nc_input_root", ncInputRoot}
+            { "nc_input_root", ncInputRoot},
+            { "async", asyncIO },
+            { "async_max_pending", asyncMaxPending },
+            { "filesystem", filesystem },
+            { "fsync", fsync },
+            { "staging_dir", stagingDir },
+            { "lustre_stripe_count", lustreStripeCount },
+            { "lustre_stripe_size", lustreStripeSize }
     };
 
     json restart = {
@@ -752,6 +778,27 @@ void Config::loadFromJson(const string &fileName) {
         if (io.contains("ocean_model")) { oceanModel = io["ocean_model"]; }
         if (io.contains("nc_output_root")) { ncOutputRoot = io["nc_output_root"]; }
         if (io.contains("timestep")) { timeStep = io["timestep"]; }
+        if (io.contains("async")) { asyncIO = io["async"]; }
+        if (io.contains("async_max_pending")) {
+            if (!io["async_max_pending"].is_number_integer())
+                throw std::runtime_error("io.async_max_pending must be an integer");
+            asyncMaxPending = io["async_max_pending"];
+        }
+        if (io.contains("filesystem")) { filesystem = io["filesystem"]; }
+        // Parallel file systems flush before publication unless explicitly disabled
+        fsync = filesystem!="posix";
+        if (io.contains("fsync")) { fsync = io["fsync"]; }
+        if (io.contains("staging_dir")) { stagingDir = io["staging_dir"]; }
+        if (io.contains("lustre_stripe_count")) {
+            if (!io["lustre_stripe_count"].is_number_integer())
+                throw std::runtime_error("io.lustre_stripe_count must be an integer");
+            lustreStripeCount = io["lustre_stripe_count"];
+        }
+        if (io.contains("lustre_stripe_size")) {
+            if (!io["lustre_stripe_size"].is_number_integer())
+                throw std::runtime_error("io.lustre_stripe_size must be an integer number of bytes");
+            lustreStripeSize = io["lustre_stripe_size"];
+        }
         if (io.contains("nc_inputs") && io["nc_inputs"].is_array()) {
             for (auto ncInput:io["nc_inputs"]) {
                 string file=ncInput;
@@ -1029,6 +1076,26 @@ void Config::loadFromJson(const string &fileName) {
     if (!std::isfinite(timeStep) || timeStep<1 || timeStep!=std::floor(timeStep)) {
         throw std::runtime_error("io.timestep must be a whole number of seconds greater than zero");
     }
+    if (asyncMaxPending<1) {
+        throw std::runtime_error("io.async_max_pending must be at least 1");
+    }
+    if (filesystem!="posix" && filesystem!="lustre" && filesystem!="gpfs") {
+        throw std::runtime_error("io.filesystem must be posix, lustre, or gpfs");
+    }
+    if ((lustreStripeCount!=0 || lustreStripeSize!=0) && filesystem!="lustre") {
+        throw std::runtime_error("io.lustre_stripe_count and io.lustre_stripe_size require io.filesystem=lustre");
+    }
+    if (lustreStripeCount<-1) {
+        throw std::runtime_error("io.lustre_stripe_count must be -1 (all OSTs), 0 (inherit), or positive");
+    }
+    if (lustreStripeSize<0 || lustreStripeSize%65536!=0) {
+        throw std::runtime_error("io.lustre_stripe_size must be 0 (inherit) or a positive multiple of 65536 bytes");
+    }
+#ifdef _WIN32
+    if (lustreStripeCount!=0 || lustreStripeSize!=0) {
+        throw std::runtime_error("Lustre striping is not available on Windows");
+    }
+#endif
     if (!std::isfinite(_data.deltat) || _data.deltat<=0) {
         throw std::runtime_error("physics.deltat must be a finite value greater than zero");
     }
@@ -1043,6 +1110,22 @@ void Config::loadFromJson(const string &fileName) {
 bool Config::MaskOutput() const {
     return maskOutput;
 }
+
+bool Config::AsyncIO() const { return asyncIO; }
+
+void Config::AsyncIO(bool value) { asyncIO = value; }
+
+int Config::AsyncMaxPending() const { return asyncMaxPending; }
+
+string Config::Filesystem() const { return filesystem; }
+
+bool Config::Fsync() const { return fsync; }
+
+string Config::StagingDir() const { return stagingDir; }
+
+int Config::LustreStripeCount() const { return lustreStripeCount; }
+
+long long Config::LustreStripeSize() const { return lustreStripeSize; }
 
 void Config::MaskOutput(bool value) {
     maskOutput = value;

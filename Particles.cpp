@@ -39,6 +39,10 @@ void Particles::saveAsTxt(const string& fileName)
         outfile << particle.Id() << " " << particle.I() << " "  << particle.J() << " " <<  particle.K() << " " << particle.Health() << " " <<  particle.Age() << " " << particle.Time() << " "
                 << static_cast<int>(particle.DriftObject()) << " " << static_cast<int>(particle.Side()) << endl;
     }
+
+    // A restart that cannot be written completely must not be published
+    outfile.close();
+    if (!outfile) throw std::runtime_error("Unable to write the text history " + fileName);
 }
 
 void Particles::saveAsJson(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter)
@@ -96,6 +100,8 @@ void Particles::saveAsJson(const string &fileName, double particleTime, std::sha
     // write prettified JSON to another file
     std::ofstream o(fileName);
     o << std::setw(4) << featureCollection << std::endl;
+    o.close();
+    if (!o) throw std::runtime_error("Unable to write the GeoJSON history " + fileName);
 }
 
 void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter,

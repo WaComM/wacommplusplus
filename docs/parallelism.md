@@ -12,6 +12,8 @@ Fast CI compiles serial, OpenMP, MPI, and combined MPI/OpenMP application config
 
 The `gn03` Slurm parity run used one V100, one MPI task, and one OpenMP thread. It verified the CPU/CUDA particle update on the synthetic regression fields after aligning the east–west metric and environmental interpolation order. It does not compare complete application NetCDF outputs or establish four-way equivalence for every rank/thread/GPU count.
 
+Rank 0 gathers the particles and writes every history and gridded file. With `io.async=true` it hands each output to one background writer thread and continues with the next forcing window; NetCDF writes overlap particle integration and concentration evaluation but not forcing reads, because NetCDF-C and HDF5 calls are serialized process-wide. The writer never calls MPI, and MPI builds request `MPI_THREAD_FUNNELED`. Parallel file system options (atomic publication, `fsync`, node-local staging, and Lustre striping) are described in [output publication](io.md); outputs are not written collectively with MPI-IO.
+
 Record ranks, threads, affinity, GPU and driver data with results. Validate deterministic output against serial execution before scientific use.
 
 The [two-process Sarno Slurm example](../examples/wacomm-sarno-lite/docs/README.md#two-process-mpi-calculation) runs the six-hour seeded ROMS calculation on `high-wn` with OpenMP/CUDA disabled. `bash examples/wacomm-sarno-lite/tools/run_sarno_lite.sh --mpi` requests two cores on one node and uses OpenMPI with explicit core binding. Its five particle snapshots match the serial run exactly after identity ordering; this evidence covers the documented case and excludes inter-node communication performance and observational validation.
@@ -29,4 +31,5 @@ The [Sarno shared-protocol workflow](../examples/wacomm-sarno-lite/docs/performa
 - Montella, R., et al. (2023). A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment. *Proceedings of PDP 2023*, 17–26. [doi:10.1109/PDP59025.2023.00012](https://doi.org/10.1109/PDP59025.2023.00012).
 - Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
 
+- Dorier, M., Antoniu, G., Cappello, F., Snir, M., and Orf, L. (2012). Damaris: how to efficiently leverage multicore parallelism to achieve scalable, jitter-free I/O. *2012 IEEE International Conference on Cluster Computing*, 155–163. [doi:10.1109/CLUSTER.2012.26](https://doi.org/10.1109/CLUSTER.2012.26).
 - Amdahl, G. M. (1967). Validity of the single processor approach to achieving large scale computing capabilities. *AFIPS Conference Proceedings*, 30 (Spring Joint Computer Conference), 483–485. [doi:10.1145/1465482.1465560](https://doi.org/10.1145/1465482.1465560).

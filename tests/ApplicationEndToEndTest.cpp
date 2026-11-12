@@ -17,7 +17,10 @@
 //       (YYYYMMDDZhhmm) for release time, age, position, and whole-hour output,
 //       and runs started from polygon-release restarts (createRestartFileFromJson,
 //       docs/model.md#polygon-releases) forward from 00:00 and backward from 02:00
-//       against the same analytic solution, particle by particle.
+//       against the same analytic solution, particle by particle, and requires
+//       the forward/backward runs with asynchronous, staged, fsync publication
+//       (docs/io.md) to reproduce the synchronous histories byte for byte and
+//       the gridded counts exactly.
 //
 // The uniform current makes the exact Lagrangian displacement independent of
 // the interpolation operator, so the comparison verifies the executable path
@@ -34,8 +37,10 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <string>
 #include <vector>
@@ -131,6 +136,20 @@ void generate(const std::string& directory) {
     std::ofstream(directory+"/sources.json") << pointSource(PARTICLES).dump(2) << "\n";
     for (const std::string direction: {"forward","backward"})
         std::ofstream(directory+"/"+direction+".json") << configuration(direction).dump(2) << "\n";
+
+    // Asynchronous publication through a node-local staging directory with fsync
+    // (docs/io.md): the outputs must equal the synchronous ones exactly.
+    for (const std::string direction: {"forward","backward"}) {
+        json config=configuration(direction);
+        config["io"]["nc_output_root"]=direction+"-async-conc-";
+        config["io"]["history_root"]=direction+"-async-history-";
+        config["io"]["async"]=true;
+        config["io"]["async_max_pending"]=1;
+        config["io"]["filesystem"]="gpfs";
+        config["io"]["staging_dir"]="staging";
+        if (direction=="backward") config["restart"]["restart_file"]="forward-async-history-20210701Z02.txt";
+        std::ofstream(directory+"/"+direction+"-async.json") << config.dump(2) << "\n";
+    }
 
     // Minute-resolution case: simulation and release at 00:30 inside the first window
     json source=pointSource(PARTICLES);
@@ -246,8 +265,52 @@ void verifyPolygon(const std::string& directory) {
     }
 }
 
+std::string fileContent(const std::string& fileName) {
+    std::ifstream input(fileName,std::ios::binary);
+    if (!input) {
+        std::cerr << "missing output " << fileName << "\n";
+        std::exit(1);
+    }
+    return std::string(std::istreambuf_iterator<char>(input),std::istreambuf_iterator<char>());
+}
+
+std::vector<float> concentration(const std::string& fileName) {
+    netCDF::NcFile file(fileName,netCDF::NcFile::read);
+    netCDF::NcVar conc=file.getVar("conc");
+    std::size_t size=1;
+    for (auto& dim: conc.getDims()) size*=dim.getSize();
+    std::vector<float> values(size);
+    conc.getVar(values.data());
+    return values;
+}
+
+// Asynchronous, staged, fsync-published outputs equal the synchronous ones.
+void verifyAsync(const std::string& directory) {
+    for (const std::string name: {"forward-history-20210701Z01.txt","forward-history-20210701Z02.txt",
+                                  "backward-history-20210701Z01.txt","backward-history-20210701Z00.txt"}) {
+        std::string direction=name.substr(0,name.find('-'));
+        std::string async=direction+"-async"+name.substr(direction.size());
+        assert(fileContent(directory+"/"+async)==fileContent(directory+"/"+name));
+    }
+    for (const std::string name: {"forward-conc-20210701Z00.nc","forward-conc-20210701Z01.nc",
+                                  "backward-conc-20210701Z02.nc","backward-conc-20210701Z01.nc"}) {
+        std::string direction=name.substr(0,name.find('-'));
+        std::string async=direction+"-async"+name.substr(direction.size());
+        assert(concentration(directory+"/"+async)==concentration(directory+"/"+name));
+    }
+    for (const auto& entry: std::filesystem::directory_iterator(directory)) {
+        if (entry.path().extension()==".partial") {
+            std::cerr << "unpublished temporary file " << entry.path() << "\n";
+            std::exit(1);
+        }
+    }
+    assert(std::filesystem::is_empty(directory+"/staging"));
+    std::cout << "asynchronous outputs equal synchronous outputs\n";
+}
+
 void verify(const std::string& directory) {
     verifyPolygon(directory);
+    verifyAsync(directory);
     auto forward=particles(directory+"/forward-history-20210701Z02.txt");
     auto backward=particles(directory+"/backward-history-20210701Z00.txt");
     assert((int)forward.size()==PARTICLES);
