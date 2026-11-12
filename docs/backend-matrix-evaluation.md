@@ -2,7 +2,7 @@
 
 ## Purpose and scope
 
-This report records verification and performance passes over the execution backends of revision `ffa9c18` plus the dependency-cache change below, and of revision `5a49653` plus the build and benchmark-tool fixes described in [Issues found on hhcpu](#issues-found-on-hhcpu-and-their-fixes). It answers two computational questions: do all backend combinations build and pass the offline suite, and which resource configuration runs the six-hour Sarno workload fastest on each machine. Timings characterize implementation and hardware. They are not observational validation, and no physical equation, parameter, or default changed.
+This report records verification and performance passes over the execution backends of revision `ffa9c18` plus the dependency-cache change below (Mac and rainbow), and of revision `5a49653` plus the build and benchmark-tool fixes described in [Issues found on hhcpu](#issues-found-on-hhcpu-and-their-fixes). It answers two computational questions: do all backend combinations build and pass the offline suite, and which resource configuration runs the six-hour Sarno workload fastest on each machine. Timings characterize implementation and hardware. They are not observational validation, and no physical equation, parameter, or default changed.
 
 ## Test matrix
 
@@ -10,7 +10,7 @@ This report records verification and performance passes over the execution backe
 | --- | --- | --- |
 | Apple M4 Max (12 performance + 4 efficiency cores, 64 GiB), macOS 26.6.2, AppleClang 21, Open MPI 5.0.11, libomp 23.1.2 | Serial, OpenMP, MPI, MPI+OpenMP | 35, 35, 36, and 38 tests passed; no skips (Python 3.12 with `tools/requirements-figures.txt`) |
 | `hhcpu` partition, E4 cluster (4 nodes, each 2 × Intel Xeon Gold 5520+, 56 cores, no SMT, 2 NUMA domains, 239 GiB), Rocky Linux 8.10 kernel, GCC 12.2.1, Open MPI 4.1.4, CMake 3.26.5, Slurm 23.11.3 | Serial, OpenMP, MPI, MPI+OpenMP | At `5a49653`: 37, 37, 38, and 40 tests passed (Slurm job 1077295). At `25b716d` with this change: 38, 38, 39, and 41 passed (job 1077326). At `94e9aa4` and `aa8378f`: 39, 39, 42, and 44 passed (jobs 1077482 and 1077961). No skips (Python 3.13.2 with `tools/requirements-figures.txt`) |
-| rainbow (Ryzen 9 9900X, RTX 4080 SUPER), GCC 13.3, Open MPI 4.1.8, CUDA 12.8 | Serial, OpenMP, MPI, MPI+OpenMP, CUDA, OpenMP+CUDA, MPI+CUDA, MPI+OpenMP+CUDA | **Pending.** Slurm job 1753 (tests, then `compute-sanitizer` memcheck) and job 1754 (benchmark, `afterany:1753`) are queued behind another user's job that holds all 24 CPUs of the only node |
+| rainbow (AMD Ryzen 9 9900X, 12 cores with SMT, one NVIDIA GeForce RTX 4080 SUPER, 60 GiB), Ubuntu 24.04, GCC 13.3, Open MPI 4.1.8, CUDA 12.8 (NVIDIA HPC SDK 25.3), CMake 3.31.6 | Serial, OpenMP, MPI, MPI+OpenMP, CUDA, OpenMP+CUDA, MPI+CUDA, MPI+OpenMP+CUDA | At `ffa9c18` with the dependency-cache change: 37, 37, 38, 40, 38, 38, 39, and 41 tests passed, no skips (Slurm job 1753, Python 3.11 with `tools/requirements-figures.txt`). `cuda_particle_parity` under `compute-sanitizer --tool memcheck` reported zero errors |
 
 The first rainbow attempt (job 1747) failed in all eight configures on a transient HTTP 504 from GitHub while fetching nlohmann/json. This is an infrastructure fault, not a code defect, but it exposed that every build tree downloads every pinned archive again. The fix is the opt-in `WACOMM_DEPENDENCY_DOWNLOAD_DIR` cache described in the [build guide](build.md): archives are fetched once, their pinned SHA-256 is verified before every reuse, and a pre-seeded directory lets configures proceed during an outage. The four Mac builds were reconfigured with the option and passed again.
 
@@ -41,7 +41,7 @@ Findings:
 
 **Best Mac configurations.** At $10^5$ particles/hour, OpenMP 1×16 (2.24 s) and MPI+OpenMP 4×4 (2.24 s) tie within their sample ranges; OpenMP 1×16 has the shortest application time (4.2 s). At $10^6$ particles/hour, OpenMP 1×16 is fastest (22.3 s, 10.6×). For throughput per core, OpenMP 1×12 on the performance cores is the efficient choice. MPI is not needed on one Mac node.
 
-The earlier rainbow physical-core sweep ([Sarno performance evaluation](../examples/wacomm-sarno-lite/docs/performance-evaluation.md)) measured 12-thread CPU efficiency of 90–93% and one GPU 2.8× faster than twelve cores at $10^5$ and 4.8× faster at $10^6$. The MPI, MPI+CUDA, and MPI+OpenMP+CUDA rainbow tuples of this matrix are what jobs 1753/1754 will add.
+The earlier rainbow physical-core sweep ([Sarno performance evaluation](../examples/wacomm-sarno-lite/docs/performance-evaluation.md)) measured 12-thread CPU efficiency of 90–93% and one GPU 2.8× faster than twelve cores at $10^5$ and 4.8× faster at $10^6$. The [rainbow results](#results-on-rainbow-cpu-and-cuda) below repeat those tuples and add the MPI, MPI+CUDA, and MPI+OpenMP+CUDA builds.
 
 ## Issues found on hhcpu and their fixes
 
@@ -138,6 +138,47 @@ Findings:
 
 **Best hhcpu configurations at `aa8378f`.** On one node, OpenMP 1×56 remains the fastest solver and application at both rates (1.82 s and 9.50 s at $10^5$ particles/hour, 18.14 s and 29.06 s at $10^6$). MPI+OpenMP 4×14 is now within 5% of it and is no longer a poor choice, but it multiplies forcing memory by four. On four nodes at $10^6$ particles/hour, 16×14 gives the fastest solver (5.65 s) and 8×28 the fastest application (18.15 s). Both need `--mem=0`.
 
+## Results on rainbow (CPU and CUDA)
+
+Two suites use the Sarno benchmark method above with `--bind` (ranks on consecutive physical cores, `OMP_PLACES=cores`, `OMP_PROC_BIND=close`) on the exclusive Slurm node, with the forcing on local disk. Suite `rainbow-q1e5` covers 27 tuples of all eight builds and suite `rainbow-q1e6` covers seven (job 1754). All 136 samples, warm-ups included, passed the equivalence gate against the serial build. CPU tuples matched the particle states exactly. CUDA tuples matched identities, counts, ages, and alive/dead states exactly, with living-particle health within $1.1\times10^{-16}$ and positions within 0.26 µm horizontally and 3.5 nm in depth, inside the declared $10^{-15}$, 1 µm, and 10 nm limits. Every gridded variable matched exactly. The serial references are 35.15 s at $10^5$ and 351.1 s at $10^6$ particles/hour.
+
+This pass ran at revision `ffa9c18`, which predates the interleaved MPI decomposition (`32679ce`) and the atomic-free concentration counting (`aa8378f`). Its MPI rows therefore measure the contiguous partition, like the [first hhcpu pass](#results-on-hhcpu).
+
+![Bar chart of median solver time for twenty-seven rainbow backend tuples, CPU and CUDA, at 100,000 particles per hour](figures/backend-matrix-rainbow/solver-time-rainbow-q1e5.svg)
+
+![Bar chart of median solver time for seven rainbow backend tuples, CPU and CUDA, at 1,000,000 particles per hour](figures/backend-matrix-rainbow/solver-time-rainbow-q1e6.svg)
+
+![Line chart of CPU speedup against workers for OpenMP, MPI, and hybrid placements on rainbow](figures/backend-matrix-rainbow/cpu-speedup.svg)
+
+![Stacked bars splitting application time into solver and remaining time for the best rainbow tuple of each build](figures/backend-matrix-rainbow/application-breakdown.svg)
+
+All four figures are measured model-execution diagnostics of the real Sarno forcing, without confidence intervals, produced by `sarno_backend_matrix.py collect`. The companion table is [`results-rainbow.json`](figures/backend-matrix-rainbow/results-rainbow.json).
+
+| $q$ (particles/hour) | Serial $T$ (s) | OpenMP 1×12 | MPI 8×1 | MPI+OpenMP 2×6 | CUDA 1×1 | OpenMP+CUDA 1×12 | MPI+CUDA 2×1 | MPI+OpenMP+CUDA 2×6 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| $10^5$ | 35.15 | 3.23 s, $E$=91% | 5.95 s, 74% | 3.87 s, 76% | **1.18 s**, 29.9× | 1.18 s, 29.7× | 1.64 s, 21.4× | 1.59 s, 22.1× |
+| $10^6$ | 351.1 | 32.53 s, 90% | – | 39.09 s, 75% | **6.70 s**, 52.4× | 6.99 s, 50.3× | 7.94 s, 44.2× | 8.09 s, 43.4× |
+
+GPU entries give the speedup $S$ over the serial build, because CPU efficiency is undefined for them. The rank-0 log separates two GPU-interval terms: `CUDA HOST2DEV sec:` (host clock around allocation and upload of the device forcing) and `GPU Processed in sec:` (CUDA events around the particle transfers and kernels on the stream). The table below gives the median, over three samples, of each term summed over the five intervals. With several ranks, the upload is the mean over ranks and the kernel term is rank 0's.
+
+| $q$ | Tuple | Forcing upload per rank (s) | Particle transfers and kernels (s) | Solver $T$ (s) | Upload share |
+| ---: | --- | ---: | ---: | ---: | ---: |
+| $10^5$ | CUDA 1×1 | 0.49 | 0.54 | 1.18 | 41% |
+| | MPI+CUDA 2×1 | 0.85 | 0.56 | 1.64 | 52% |
+| | MPI+CUDA 4×1 | 1.66 | 0.58 | 2.46 | 68% |
+| $10^6$ | CUDA 1×1 | 0.66 | 5.35 | 6.70 | 10% |
+| | MPI+CUDA 2×1 | 0.94 | 5.56 | 7.94 | 12% |
+
+Findings:
+
+1. **One GPU is the fastest configuration at both rates.** CUDA 1×1 is 2.75× faster than OpenMP 1×12 on the solver at $10^5$ particles/hour and 4.86× faster at $10^6$, matching the 2.8× and 4.8× of the earlier sweep. On application time the gain is 1.29× and 3.11×, because 4.6–5.3 s of each GPU run lies outside the solver.
+2. **Forcing upload dominates the GPU solver at small $q$.** Every interval allocates the device forcing, uploads all of it, and frees it again. That upload is 41% of the CUDA solver time at $10^5$ particles/hour and 10% at $10^6$, while the particle term scales with $q$ (0.54 s to 5.35 s).
+3. **Several ranks on one GPU are slower, not faster.** Each rank uploads the full forcing over the same PCIe link. The per-rank upload grows from 0.47 s at one rank to 0.85 s at two and 1.66 s at four, while rank 0's particle term does not fall. MPI+CUDA 4×1 is therefore 2.1× slower than CUDA 1×1. MPI+CUDA is useful only with one rank per GPU, which this one-GPU node cannot test.
+4. **Host threads barely affect CUDA builds.** OpenMP+CUDA 1×4 is 2% faster than CUDA 1×1 at $10^5$ particles/hour, with disjoint sample ranges, and 1×12 is 4% slower at $10^6$. These differences were not attributed to a phase.
+5. **CPU scaling repeats the other machines.** OpenMP keeps 91% efficiency at 12 threads. Contiguous-partition MPI reaches 83% at two ranks, as the [load-balance model](#load-balance-model) predicts (83.6%), and 74% at eight. Each rank holds 3.8–4.0 GiB at $10^5$ and 4.4–5.0 GiB at $10^6$ particles/hour.
+
+**Best rainbow configurations.** Use one process with the GPU: the CUDA build, or OpenMP+CUDA with a few host threads. At $10^5$ particles/hour, OpenMP+CUDA 1×4 has the shortest solver (1.15 s) and OpenMP+CUDA 1×12 the shortest application (5.53 s), both within 4% of CUDA 1×1. At $10^6$, CUDA 1×1 is fastest on both (6.70 s and 12.04 s). Never place more MPI ranks than GPUs. Without the GPU, use OpenMP 1×12 with `OMP_PLACES=cores OMP_PROC_BIND=close` (3.23 s and 32.53 s).
+
 ## Improvement plan
 
 Status: computational items 5 (revision `59f9b91`) and 1 (`32679ce`), the OpenMP packing step of item 2 (`e2c9a21`), and atomic-free concentration counting (`aa8378f`) are implemented. They were measured on `hhcpu` at revisions `94e9aa4` and `aa8378f` ([reruns](#reruns-after-the-first-improvements)). Items 1 and 5 meet their targets: an oversubscribed 28-rank launch under the 56 GiB default grant now stops before reading forcing with a logged WaComM++ error (job 1078221). Item 2 meets its efficiency target but not its time target, and its resident-particle step is not implemented. Every other item is planned and not implemented. Items are ordered by measured or documented impact. Physical and numerical items change the governing configuration: each needs a mathematical description with units, peer-reviewed support, backend-equivalence, forward/backward, and restart evidence, and documentation and example updates. The [Claude Code improvement plan](improvement-plan.md) restates every item as an executable task with files, tests, and acceptance criteria.
@@ -150,7 +191,7 @@ Status: computational items 5 (revision `59f9b91`) and 1 (`32679ce`), the OpenMP
 4. **Overlap forcing input with solving.** At $10^5$ particles/hour, 81% of the fastest application run is outside the solver. These timings predate asynchronous output (`io.async`, revision `d960e54`), so first re-measure with it enabled to separate output from input. Then prefetch record $k+1$ on a dedicated thread while interval $k$ integrates, using double-buffered adapter arrays. Restart and backward ordering must not change.
 5. **Fail fast on resource limits (done, `59f9b91` and `83e6337`).** Particle counts and displacements are `int` in the scatter/gather path, and `(int)` casts truncated silently above $2^{31}-1$ particles: 1,000,000 particles/hour for 90 days is $2.16\times10^9$. Such runs now stop with an explicit error. At start-up, the estimated per-node forcing memory is compared with the cgroup or `MemAvailable` limit. Before this change, runs were killed by the out-of-memory handler, as in jobs 1077303–1077305. Under the 56 GiB default grant, a 28-rank launch now stops after 1.1 s with a logged estimate (job 1078221).
 6. **NUMA placement and the full-socket drop.** OpenMP efficiency falls from 96% at 14 threads to 73% at 28 on one socket. Forcing arrays are first-touched by one thread, so at 56 threads half the cores read remote memory. Measure memory bandwidth and clock with hardware counters, then test parallel first-touch initialization or `numactl --interleave=all` against the archived timings.
-7. **Persistent CUDA device state.** Each interval currently allocates the device forcing, copies all time records, and frees them again inside the solver interval (`CUDA HOST2DEV`). Allocate once per run and upload only the new forcing record. This should dominate GPU-time gains at small $q$.
+7. **Persistent CUDA device state.** Each interval currently allocates the device forcing, copies all time records, and frees them again inside the solver interval (`CUDA HOST2DEV`). On rainbow that upload is 41% of the CUDA solver time at $10^5$ particles/hour and 10% at $10^6$, and with several ranks on one GPU each rank repeats it over the shared PCIe link ([rainbow results](#results-on-rainbow-cpu-and-cuda)). Allocate once per run and upload only the new forcing record. Also log a warning when more ranks than visible devices share a GPU. Target: `CUDA HOST2DEV` time per interval falls by at least the share of unchanged records, with particle results identical to the current CUDA build.
 8. **Heterogeneous-core awareness.** On hybrid-core CPUs, document a performance-cores-only default and report per-core-class efficiency.
 
 ### Numerical
@@ -223,11 +264,23 @@ WACOMM_MATRIX_OPTIONS=--interleave sbatch examples/wacomm-sarno-lite/tools/hhcpu
 
 From the revision that adds them, the collector also records the rank-0 `FORCING`, `SETUP`, `OUTPUT`, `FLUSH`, and `RUN` times described in [parallel execution](parallelism.md).
 
-The matrix commands list a subset of each suite's tuples; the full lists are in the job output and in [`results-hhcpu.json`](figures/backend-matrix-hhcpu/results-hhcpu.json). The test job reads `WACOMM_PERL5LIB` for the extracted Perl modules and `WACOMM_PYTHON` for the figure interpreter.
+The rainbow suites ran on revision `ffa9c18` with the dependency-cache patch, archived in each suite's `provenance/suite.json` together with binary and CMake-cache SHA-256 values, `nvidia-smi` and `lscpu` output, `mpirun --version`, forcing checksums, configuration, and source definition. The eight builds used the modules `sw/cmake-3.31.6 comps/gcc-13.3.0/openmpi-4.1.8 comps/nvidia/nvhpc-byo-compiler/25.3`, `OMPI_CXX=g++-13`, `CMAKE_CUDA_ARCHITECTURES=89`, and `-DWACOMM_DEPENDENCY_DOWNLOAD_DIR` pointing at one pre-seeded archive directory. The benchmark job (`sbatch --partition=gpu --exclusive --gres=gpu:1`) ran, for each rate, with one `--build NAME=build-NAME/wacommplusplus` per build and one `--config` per tuple listed in [`results-rainbow.json`](figures/backend-matrix-rainbow/results-rainbow.json):
+
+```bash
+python -I examples/wacomm-sarno-lite/tools/sarno_backend_matrix.py run --root rainbow-q100000 --rate 100000 --blocks 3 --forcing forcing --bind --prune-snapshots --build cuda=build-cuda/wacommplusplus --config cuda:1:1:1
+```
+
+The collector ran on rainbow, because each sample's validation record names its reference by absolute path:
+
+```bash
+python -I examples/wacomm-sarno-lite/tools/sarno_backend_matrix.py collect --suite rainbow-q1e5=$PWD/rainbow-q100000 --suite rainbow-q1e6=$PWD/rainbow-q1000000 --output collect-rainbow
+```
+
+The hhcpu matrix commands list a subset of each suite's tuples; the full lists are in the job output and in [`results-hhcpu.json`](figures/backend-matrix-hhcpu/results-hhcpu.json). The test job reads `WACOMM_PERL5LIB` for the extracted Perl modules and `WACOMM_PYTHON` for the figure interpreter.
 
 ## Limitations
 
-One workload, three samples per tuple, and no confidence intervals. The reruns ran on whichever `hhcpu` nodes were free, so a revision-to-revision difference below about 0.5% is not separated from node and job variation. Threads are unpinned on macOS. On `hhcpu`, the forcing is read over NFS from a shared file system that other jobs may load. The 28-rank and 112-rank tuples were measured in a second job on the same nodes after the memory-limit fix, so they lie outside their original rotated blocks. Hardware counters, clocks, and energy were not recorded, so the full-socket efficiency loss is attributed to shared resources by elimination, not by measurement. The rainbow matrix and all CUDA tuples are not yet measured in this pass.
+One workload, three samples per tuple, and no confidence intervals. The reruns ran on whichever `hhcpu` nodes were free, so a revision-to-revision difference below about 0.5% is not separated from node and job variation. Threads are unpinned on macOS. On `hhcpu`, the forcing is read over NFS from a shared file system that other jobs may load. The 28-rank and 112-rank tuples were measured in a second job on the same nodes after the memory-limit fix, so they lie outside their original rotated blocks. Hardware counters, clocks, and energy were not recorded, so the full-socket efficiency loss is attributed to shared resources by elimination, not by measurement. The rainbow pass predates the MPI and concentration improvements, has one GPU, and therefore cannot measure MPI+CUDA with one rank per device. Its upload and particle terms come from rank-0 log lines with different clocks (host clock and CUDA events), and the small OpenMP+CUDA differences were not attributed to a phase.
 
 ## References
 

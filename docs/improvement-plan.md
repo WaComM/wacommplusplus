@@ -97,8 +97,8 @@ C5 first: it is small and protects every later experiment. Then C1 and C2; both 
 
 ### C7. Persistent CUDA device state
 
-- **Evidence.** Each interval allocates device forcing, copies every time record, and frees it again inside the solver interval (`CUDA HOST2DEV`, `cudaFree` block in `Wacomm.cpp`).
-- **Approach.** Allocate once per run, and upload only the new record per interval.
+- **Evidence.** Each interval allocates device forcing, copies every time record, and frees it again inside the solver interval (`CUDA HOST2DEV`, `cudaFree` block in `Wacomm.cpp`). On rainbow (RTX 4080 SUPER, job 1754) the upload is 41% of the CUDA solver time at $10^5$ particles/hour and 10% at $10^6$. With two and four MPI ranks on the one GPU, each rank repeats it over the shared PCIe link, and the per-rank upload grows from 0.47 s to 0.85 s and 1.66 s ([backend matrix evaluation](backend-matrix-evaluation.md#results-on-rainbow-cpu-and-cuda)).
+- **Approach.** Allocate once per run, and upload only the new record per interval. Log a warning when more ranks than visible devices share a GPU.
 - **Tests.** `cuda_particle_parity` on the CUDA host, and the GPU tolerance rules in [testing.md](testing.md).
 - **Acceptance.** `CUDA HOST2DEV` time per interval falls by at least the share of unchanged records.
 
