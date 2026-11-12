@@ -20,7 +20,8 @@
 //       against the same analytic solution, particle by particle, and requires
 //       the forward/backward runs with asynchronous, staged, fsync publication
 //       (docs/io.md) to reproduce the synchronous histories byte for byte and
-//       the gridded counts exactly.
+//       the gridded counts exactly; with "collective", it requires the same of
+//       the runs written collectively with MPI-IO and parallel NetCDF-4.
 //
 // The uniform current makes the exact Lagrangian displacement independent of
 // the interpolation operator, so the comparison verifies the executable path
@@ -149,6 +150,19 @@ void generate(const std::string& directory) {
         config["io"]["staging_dir"]="staging";
         if (direction=="backward") config["restart"]["restart_file"]="forward-async-history-20210701Z02.txt";
         std::ofstream(directory+"/"+direction+"-async.json") << config.dump(2) << "\n";
+    }
+
+    // Collective MPI-IO text histories and parallel NetCDF-4 gridded counts
+    // (docs/io.md#collective-writes); run only by builds with parallel NetCDF.
+    for (const std::string direction: {"forward","backward"}) {
+        json config=configuration(direction);
+        config["io"]["nc_output_root"]=direction+"-collective-conc-";
+        config["io"]["history_root"]=direction+"-collective-history-";
+        config["io"]["parallel_write"]="collective";
+        config["io"]["fsync"]=true;
+        config["io"]["mpiio_hints"]={{"romio_cb_write","enable"}};
+        if (direction=="backward") config["restart"]["restart_file"]="forward-collective-history-20210701Z02.txt";
+        std::ofstream(directory+"/"+direction+"-collective.json") << config.dump(2) << "\n";
     }
 
     // Minute-resolution case: simulation and release at 00:30 inside the first window
@@ -284,20 +298,26 @@ std::vector<float> concentration(const std::string& fileName) {
     return values;
 }
 
-// Asynchronous, staged, fsync-published outputs equal the synchronous ones.
-void verifyAsync(const std::string& directory) {
+// Outputs of a publication variant ("async", "collective") equal the rank-0 synchronous ones.
+void verifyVariant(const std::string& directory, const std::string& variant) {
     for (const std::string name: {"forward-history-20210701Z01.txt","forward-history-20210701Z02.txt",
                                   "backward-history-20210701Z01.txt","backward-history-20210701Z00.txt"}) {
         std::string direction=name.substr(0,name.find('-'));
-        std::string async=direction+"-async"+name.substr(direction.size());
-        assert(fileContent(directory+"/"+async)==fileContent(directory+"/"+name));
+        std::string other=direction+"-"+variant+name.substr(direction.size());
+        assert(fileContent(directory+"/"+other)==fileContent(directory+"/"+name));
     }
     for (const std::string name: {"forward-conc-20210701Z00.nc","forward-conc-20210701Z01.nc",
                                   "backward-conc-20210701Z02.nc","backward-conc-20210701Z01.nc"}) {
         std::string direction=name.substr(0,name.find('-'));
-        std::string async=direction+"-async"+name.substr(direction.size());
-        assert(concentration(directory+"/"+async)==concentration(directory+"/"+name));
+        std::string other=direction+"-"+variant+name.substr(direction.size());
+        assert(concentration(directory+"/"+other)==concentration(directory+"/"+name));
     }
+    std::cout << variant << " outputs equal rank-0 synchronous outputs\n";
+}
+
+// Asynchronous, staged, fsync-published outputs equal the synchronous ones.
+void verifyAsync(const std::string& directory) {
+    verifyVariant(directory,"async");
     for (const auto& entry: std::filesystem::directory_iterator(directory)) {
         if (entry.path().extension()==".partial") {
             std::cerr << "unpublished temporary file " << entry.path() << "\n";
@@ -308,9 +328,10 @@ void verifyAsync(const std::string& directory) {
     std::cout << "asynchronous outputs equal synchronous outputs\n";
 }
 
-void verify(const std::string& directory) {
+void verify(const std::string& directory, bool collective) {
     verifyPolygon(directory);
     verifyAsync(directory);
+    if (collective) verifyVariant(directory,"collective");
     auto forward=particles(directory+"/forward-history-20210701Z02.txt");
     auto backward=particles(directory+"/backward-history-20210701Z00.txt");
     assert((int)forward.size()==PARTICLES);
@@ -395,14 +416,14 @@ void verify(const std::string& directory) {
 }
 
 int main(int argc, char** argv) {
-    if (argc!=3) {
-        std::cerr << "usage: " << argv[0] << " generate|demo|verify <directory>\n";
+    if (argc!=3 && !(argc==4 && std::string(argv[1])=="verify" && std::string(argv[3])=="collective")) {
+        std::cerr << "usage: " << argv[0] << " generate|demo|verify <directory> [collective]\n";
         return 2;
     }
     std::string mode=argv[1];
     if (mode=="generate") generate(argv[2]);
     else if (mode=="demo") generateDemo(argv[2]);
-    else if (mode=="verify") verify(argv[2]);
+    else if (mode=="verify") verify(argv[2],argc==4);
     else return 2;
     return 0;
 }

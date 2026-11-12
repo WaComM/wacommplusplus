@@ -35,6 +35,9 @@ Thygesen (2011) is the basis for treating stochastic backward trajectories as co
 - Liu, N., Cope, J., Carns, P., Carothers, C., Ross, R., Grider, G., Crume, A., and Maltzahn, C. (2012). On the role of burst buffers in leadership-class storage systems. *2012 IEEE 28th Symposium on Mass Storage Systems and Technologies (MSST)*, 1–11. [doi:10.1109/MSST.2012.6232369](https://doi.org/10.1109/MSST.2012.6232369).
 - Schmuck, F., and Haskin, R. (2002). GPFS: a shared-disk file system for large computing clusters. *Proceedings of the FAST 2002 Conference on File and Storage Technologies*, 231–244. [usenix.org/conference/fast-02/gpfs-shared-disk-file-system-large-computing-clusters](https://www.usenix.org/conference/fast-02/gpfs-shared-disk-file-system-large-computing-clusters).
 
+- Thakur, R., Gropp, W., and Lusk, E. (1999). Data sieving and collective I/O in ROMIO. *Proceedings of Frontiers '99, the Seventh Symposium on the Frontiers of Massively Parallel Computation*, 182–189. [doi:10.1109/FMPC.1999.750599](https://doi.org/10.1109/FMPC.1999.750599).
+- Li, J., Liao, W.-k., Choudhary, A., Ross, R., Thakur, R., Gropp, W., Latham, R., Siegel, A., Gallagher, B., and Zingale, M. (2003). Parallel netCDF: a high-performance scientific I/O interface. *Proceedings of the 2003 ACM/IEEE Conference on Supercomputing (SC'03)*, 39. [doi:10.1145/1048935.1050189](https://doi.org/10.1145/1048935.1050189).
+
 ## Build dependency provenance
 
 - OpenSSL Project. [OpenSSL release archives and checksums](https://www.openssl-library.org/source/). The private Unix TLS dependency is OpenSSL 3.5.8, SHA-256 `a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2`. This is software provenance, not support for a physical or numerical claim.

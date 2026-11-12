@@ -196,12 +196,22 @@ void OutputWriter::applyLustreLayout() {
 #endif
 }
 
+std::string OutputWriter::partialName(const std::string &fileName) {
+    return fileName + ".partial";
+}
+
+void OutputWriter::commit(const std::string &partial, const std::string &fileName, bool fsync) {
+    // Data first, then the name: a crash never publishes a file with unflushed data
+    if (fsync) syncFile(partial);
+    fs::rename(partial, fileName);
+    if (fsync) syncDirectory(parentDirectory(fs::path(fileName)));
+}
+
 void OutputWriter::publish(const Job &job) {
     auto start = std::chrono::steady_clock::now();
 
     fs::path finalPath(job.fileName);
-    fs::path destPartial=finalPath;
-    destPartial+=".partial";
+    fs::path destPartial(partialName(job.fileName));
 
     // Write in the staging directory when configured, otherwise next to the final file
     fs::path writePath=destPartial;
@@ -229,10 +239,7 @@ void OutputWriter::publish(const Job &job) {
             fs::remove(writePath);
         }
 
-        // Data first, then the name: a crash never publishes a file with unflushed data
-        if (opts.fsync) syncFile(destPartial);
-        fs::rename(destPartial, finalPath);
-        if (opts.fsync) syncDirectory(parentDirectory(finalPath));
+        commit(destPartial.string(), finalPath.string(), opts.fsync);
     } catch (const std::exception &e) {
         fs::remove(writePath, ec);
         fs::remove(destPartial, ec);

@@ -81,6 +81,12 @@ public:
     // NetCDF-C and HDF5 are not thread safe: every NetCDF call of the process must hold it
     static std::mutex& netcdfMutex();
 
+    // Temporary name of a file being written
+    static std::string partialName(const std::string &fileName);
+
+    // Publish a completely written temporary file: flush (optional), rename, flush the directory
+    static void commit(const std::string &partial, const std::string &fileName, bool fsync);
+
     // Parse a file system name ("posix", "lustre", "gpfs"); throws on unknown names
     static int filesystemFromName(const std::string &name);
     static std::string filesystemName(int filesystem);

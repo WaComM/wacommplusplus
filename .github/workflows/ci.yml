@@ -39,6 +39,9 @@ jobs:
             cmake_options: -DUSE_MPI=ON -DUSE_OMP=ON
           - name: proj
             cmake_options: -DUSE_PROJ=ON
+          # Private parallel HDF5/NetCDF-4: collective MPI-IO and parallel NetCDF output
+          - name: mpi-parallel-io
+            cmake_options: -DUSE_MPI=ON -DWACOMM_BOOTSTRAP_PARALLEL_IO=ON
     name: Ubuntu application (${{ matrix.name }})
     steps:
       - uses: actions/checkout@v5
@@ -60,7 +63,13 @@ jobs:
       - run: cmake --build build --parallel
       - name: Run CTest and reject skipped tests
         shell: bash
+        env:
+          OMPI_MCA_rmaps_base_oversubscribe: 'true'
+          PRTE_MCA_rmaps_default_mapping_policy: ':oversubscribe'
         run: |
+          if [ "${{ matrix.name }}" = mpi-parallel-io ]; then
+            ctest --test-dir build -N | grep -q parallel_output_3_ranks
+          fi
           ctest --test-dir build --output-on-failure --timeout 600 | tee ctest.log
           ! grep -E '\*\*\*Skipped|Not Run' ctest.log
       - name: End-to-end executable regression
@@ -95,6 +104,10 @@ jobs:
             name: openmp-mpi-proj
             brew_extra: libomp open-mpi proj
             cmake_options: -DUSE_OMP=ON -DUSE_MPI=ON -DUSE_PROJ=ON
+          - os: macos-15
+            name: mpi-parallel-io
+            brew_extra: open-mpi
+            cmake_options: -DUSE_MPI=ON -DWACOMM_BOOTSTRAP_PARALLEL_IO=ON
     name: macOS application (${{ matrix.os }}, ${{ matrix.name }})
     runs-on: ${{ matrix.os }}
     steps:
@@ -112,7 +125,13 @@ jobs:
       - run: cmake --build build --parallel
       - name: Run CTest and reject skipped tests
         shell: bash
+        env:
+          OMPI_MCA_rmaps_base_oversubscribe: 'true'
+          PRTE_MCA_rmaps_default_mapping_policy: ':oversubscribe'
         run: |
+          if [ "${{ matrix.name }}" = mpi-parallel-io ]; then
+            ctest --test-dir build -N | grep -q parallel_output_3_ranks
+          fi
           ctest --test-dir build --output-on-failure --timeout 600 | tee ctest.log
           ! grep -E '\*\*\*Skipped|Not Run' ctest.log
       - if: failure()

@@ -10,6 +10,7 @@
 
 #include "../OutputWriter.hpp"
 #include "../Config.hpp"
+#include "../ParallelIOSupport.hpp"
 
 #include <atomic>
 #include <cassert>
@@ -298,8 +299,30 @@ void configuration(const fs::path &root) {
                                R"({"filesystem":"nfs"})", R"({"lustre_stripe_count":2})",
                                R"({"filesystem":"lustre","lustre_stripe_count":-2})",
                                R"({"filesystem":"lustre","lustre_stripe_size":1000})",
-                               R"({"filesystem":"lustre","lustre_stripe_size":-65536})"}) {
+                               R"({"filesystem":"lustre","lustre_stripe_size":-65536})",
+                               R"({"parallel_write":"pnetcdf"})",
+                               R"({"mpiio_hints":{"romio_cb_write":"enable"}})",
+                               R"({"parallel_write":"collective","mpiio_hints":{"cb_nodes":4}})",
+                               R"({"parallel_write":"collective","mpiio_hints":["cb_nodes"]})"}) {
         assert(throws([&] { load(invalid); }));
+    }
+
+    // Collective output (docs/io.md#collective-writes)
+    assert(defaults.ParallelWrite()=="none" && defaults.MpiioHints().empty());
+    if (ParallelIOSupport::collectiveWrites) {
+        Config collective=load(R"({"parallel_write":"collective","fsync":true,
+                                   "mpiio_hints":{"romio_cb_write":"enable","striping_factor":"8"}})");
+        assert(collective.ParallelWrite()=="collective" && collective.MpiioHints().size()==2);
+        assert(collective.MpiioHints().at("striping_factor")=="8");
+        collective.saveAsJson((root/"collective.json").string());
+        Config reloaded((root/"collective.json").string());
+        assert(reloaded.ParallelWrite()=="collective" && reloaded.MpiioHints()==collective.MpiioHints());
+        assert(throws([&] { load(R"({"parallel_write":"collective","async":true})"); }, "io.async=false"));
+        assert(throws([&] { load(R"({"parallel_write":"collective","staging_dir":"stage"})"); }, "staging_dir"));
+        assert(throws([&] { load(R"({"parallel_write":"collective","save_history":"json"})"); }, "not json"));
+    } else {
+        // A build without MPI and parallel NetCDF rejects the option instead of writing serially
+        assert(throws([&] { load(R"({"parallel_write":"collective"})"); }, "parallel HDF5"));
     }
 }
 

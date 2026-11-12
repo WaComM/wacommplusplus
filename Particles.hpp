@@ -38,6 +38,23 @@ public:
     void saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
                       std::shared_ptr<Config> config);
 
+    // NetCDF history records: particles inside the interpolation domain, in particle order
+    struct NetCDFHistory {
+        vector<std::uint64_t> id;
+        vector<double> lat, lon, dep, j, i, k, health, age, time;
+        vector<unsigned int> driftObjectType;
+        vector<int> driftSide;
+    };
+    NetCDFHistory netcdfRecords(std::shared_ptr<OceanModelAdapter> oceanModelAdapter) const;
+
+    // Schema and metadata of a NetCDF history of count records; shared by serial and collective writers
+    static void defineNetCDF(netCDF::NcFile &dataFile, size_t count, double particleTime, std::shared_ptr<Config> config);
+    static void putNetCDF(netCDF::NcFile &dataFile, const NetCDFHistory &records);
+
+    // Text history layout; shared by serial and collective writers
+    static void writeTxtHeader(std::ostream &out, size_t count);
+    static void writeTxtRecord(std::ostream &out, const Particle &particle);
+
 private:
     log4cplus::Logger logger;
 };

@@ -21,6 +21,7 @@
 #if defined(USE_MPI) || defined(USE_EMPI)
 #include "MpiHelpers.hpp"
 #endif
+#include "ParallelOutput.hpp"
 
 #ifdef USE_EMPI
 extern "C" {
@@ -768,6 +769,11 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #endif
     }
 
+    // Outputs written by every rank instead of rank 0 alone (validated at configuration load)
+    bool collective=config->ParallelWrite()=="collective";
+    string collectiveHistory, collectiveConcentration;
+    double collectiveHistoryTime=0;
+
     // Check if this is the process with world_rank==0
     if (world_rank==0) {
         Calendar calFinal;
@@ -797,6 +803,11 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
                 LOG4CPLUS_INFO(logger, "Saving restart:" << historyFilename);
 
+                // Collective output: every rank writes after the rank-0 decision is broadcast
+                if (collective) {
+                    collectiveHistory=historyFilename;
+                    collectiveHistoryTime=finalOceanTime;
+                } else {
                 // An asynchronous write gets a snapshot: the solver keeps updating the particles
                 bool historyFormat=config->SaveHistory()=="text" || config->SaveHistory()=="json" ||
                                    config->SaveHistory()=="nc";
@@ -829,6 +840,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                         snapshot->saveAsNetCDF(path, finalOceanTime, adapter, historyConfig);
                     }, true);
                 }
+                }
             }
         }
 
@@ -839,14 +851,48 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             LOG4CPLUS_INFO(logger, "Saving history:" << ncOutputFilename);
 
             // Save the history
+            if (collective) {
+                collectiveConcentration=ncOutputFilename;
+            } else {
             std::shared_ptr<OceanModelAdapter> adapter=oceanModelAdapter;
             std::shared_ptr<Config> outputConfig=config;
             outputWriter->submit(ncOutputFilename, [concentration, adapter, outputConfig](const string &path) {
                 save(path, *concentration, adapter, outputConfig);
             }, true);
+            }
             //save(ncOutputFilename);
         }
     }
+
+#ifdef WACOMM_PARALLEL_NETCDF
+    // Collective output (docs/io.md#collective-writes): rank 0 decided the files and their names
+    if (collective) {
+        ParallelOutput::broadcast(MPI_COMM_WORLD, collectiveHistory);
+        ParallelOutput::broadcast(MPI_COMM_WORLD, collectiveConcentration);
+        MPI_Bcast(&collectiveHistoryTime, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        Particles *rootParticles=world_rank==0 ? particles.get() : nullptr;
+
+        if (!collectiveHistory.empty() && config->SaveHistory() == "text") {
+            ParallelOutput::writeTextHistory(MPI_COMM_WORLD, collectiveHistory + ".txt", rootParticles,
+                                             config->Fsync(), config->MpiioHints());
+        } else if (!collectiveHistory.empty() && config->SaveHistory() == "nc") {
+            ParallelOutput::writeNetCDFHistory(MPI_COMM_WORLD, collectiveHistory + ".nc", rootParticles,
+                                               collectiveHistoryTime, oceanModelAdapter, config,
+                                               config->Fsync(), config->MpiioHints());
+        }
+        if (!collectiveConcentration.empty()) {
+            std::shared_ptr<OceanModelAdapter> adapter=oceanModelAdapter;
+            std::shared_ptr<Config> outputConfig=config;
+            ParallelOutput::writeConcentration(MPI_COMM_WORLD, collectiveConcentration,
+                                               world_rank==0 ? concentration.get() : nullptr, oceanModelAdapter,
+                                               [concentration, adapter, outputConfig](const string &path) {
+                                                   save(path, *concentration, adapter, outputConfig, false);
+                                               }, config->Fsync(), config->MpiioHints());
+        }
+    }
+#else
+    (void)collectiveHistoryTime;
+#endif
 
 #ifdef USE_EMPI
     ADM_RegisterSysAttributesDouble ("ADM_GLOBAL_TIME", &time);
@@ -865,7 +911,8 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 Wacomm::~Wacomm() = default;
 
 void Wacomm::save(const string &fileName, Array4<float> &conc,
-                  std::shared_ptr<OceanModelAdapter> oceanModelAdapter, std::shared_ptr<Config> config) {
+                  std::shared_ptr<OceanModelAdapter> oceanModelAdapter, std::shared_ptr<Config> config,
+                  bool writeConcentration) {
 
     log4cplus::Logger logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
@@ -966,7 +1013,9 @@ void Wacomm::save(const string &fileName, Array4<float> &conc,
     concVar.putAtt("field","");
     concVar.putAtt("time","ocean_time");
     concVar.putAtt("_FillValue",ncFloat, 9.99999993e+36);
-    concVar.putVar(conc());
+
+    // Collective output defines the variable here and writes it from every rank
+    if (writeConcentration) concVar.putVar(conc());
 
 }
 /*

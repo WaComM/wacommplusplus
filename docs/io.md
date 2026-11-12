@@ -1,4 +1,4 @@
-# Output publication, asynchronous I/O, and parallel file systems
+# Output publication, asynchronous I/O, collective writes, and parallel file systems
 
 WaComM++ writes three kinds of files during a run: particle histories (`io.history_root`, the restart files of [restart](restart.md)), gridded concentration counts (`io.nc_output_root`), and, when `io.save_input=true`, normalized forcing. This page describes how the first two are published. Publication is software infrastructure: it changes when and where bytes reach storage, never the particle state, the physical time, the output cadence, or the file contents. The governing equations are described in the [model](model.md); the cadence rules are in [configuration](configuration.md#output-cadence-and-history-formats).
 
@@ -34,7 +34,7 @@ Overlapping output with computation through a dedicated resource is the approach
 
 ### MPI and OpenMP
 
-Only rank 0 writes. The writer thread never calls MPI or OpenMP. MPI builds request `MPI_THREAD_FUNNELED` at initialization, the level that permits additional threads when only the main thread calls MPI; this also describes the existing OpenMP workers. If the library provides less, the application logs a warning when `io.async=true`. FlexMPI/EMPI keeps its own initialization. CUDA execution is unchanged: devices finish their section and particles are copied back before any output snapshot is taken.
+Unless `io.parallel_write="collective"` ([collective writes](#collective-writes)), only rank 0 writes. The writer thread never calls MPI or OpenMP. MPI builds request `MPI_THREAD_FUNNELED` at initialization, the level that permits additional threads when only the main thread calls MPI; this also describes the existing OpenMP workers. If the library provides less, the application logs a warning when `io.async=true`. FlexMPI/EMPI keeps its own initialization. CUDA execution is unchanged: devices finish their section and particles are copied back before any output snapshot is taken.
 
 ## Parallel file systems
 
@@ -52,6 +52,21 @@ On Lustre, `io.lustre_stripe_count` and `io.lustre_stripe_size` set the default 
 
 `io.staging_dir` names a node-local directory, for example a local SSD, a burst buffer mount, or `$TMPDIR` on a compute node, where files are written before being copied to the output directory. The directory is created if absent. With `io.async=true`, the slow transfer to the shared file system happens on the writer thread. This is the staging pattern evaluated by Liu et al. (2012) for burst-buffer tiers. The staging directory must have space for the largest output and, like the output directory, must not be shared by concurrent runs writing the same names.
 
+## Collective writes
+
+With `io.parallel_write="collective"`, every MPI rank takes part in writing each particle history and gridded file, so the storage traffic of a large output is spread over several file system clients instead of one. The particle set is gathered on rank 0 in every solver interval for concentration evaluation ([parallelism](parallelism.md)), and that decomposition is unchanged; collective output redistributes rank 0's data for the write only.
+
+For a history of $N$ particles on $P$ ranks, rank $r$ receives the contiguous block of $n_r=\lfloor N/P\rfloor+[r<N \bmod P]$ particles starting at $o_r=\sum_{q<r}n_q$, where $[\cdot]$ is 1 when the condition holds and 0 otherwise, in the particle order of the serial file (`MPI_Scatterv` with the particle datatype of the solver decomposition). Gridded counts $c(t,s,\eta,\xi)$, indexed by forcing record $t$, vertical level $s$, and rho-point rows $\eta$ and columns $\xi$, are split in the same way along $\eta$ (`eta_rho`): rank $r$ receives rows $[o_r,o_r+n_r)$ of every time and level through an MPI subarray datatype. A rank may receive no particles or rows and still takes part.
+
+- **Text histories** are written entirely with MPI-IO. Each rank formats its block with the serial record layout (`id i j k health age time object side` at `max_digits10`), rank 0 adds the count header, an exclusive prefix sum of the byte lengths gives each rank its file offset, and all ranks call `MPI_File_write_at_all`. The file is byte-identical to the serial one.
+- **NetCDF histories and gridded counts** are written with parallel NetCDF-4 (HDF5 over MPI-IO). Rank 0 creates the file with the serial schema writer, so dimensions, attributes, provenance, and small coordinate variables (`particle_time`; `ocean_time`, `s_rho`, `lat_rho`, `lon_rho`, `mask_rho`, `h`, `zeta`) are those of the serial writer. All ranks then open it with `nc_open_par` and write the per-particle variables (`id`, `object_type`, `drift_side`, `lat`, `lon`, `depth`, `k`, `j`, `i`, `health`, `age`, `time`) or `conc` as hyperslabs in `NC_COLLECTIVE` mode. For a NetCDF history each rank first applies the serial selection of particles inside the interpolation domain to its block; a prefix sum of the selected counts gives the record offset, so the stored order and values equal the serial file.
+
+The MPI library aggregates these accesses with collective buffering and two-phase I/O, as implemented by ROMIO (Thakur et al., 1999). `io.mpiio_hints` passes string-valued hints such as `romio_cb_write`, `cb_nodes`, or `cb_buffer_size` to `MPI_File_open` and `nc_open_par`. Hints that set a file layout at creation, such as `striping_factor`, apply to text histories only, because NetCDF files are created by rank 0; use `io.lustre_stripe_count` for those. MPI implementations may ignore unknown hints, as the MPI standard allows. PnetCDF (Li et al., 2003) is not used; the output format remains netCDF-4.
+
+Publication is atomic as in the serial protocol: rank 0 removes any stale `<name>.partial`, the file is created and written under that name, every rank flushes it (`MPI_File_sync` or `nc_sync`) when `io.fsync=true`, and rank 0 flushes and renames it. After each stage the ranks agree on success with an `MPI_Allreduce`; a failure on any rank stops every rank with an error naming the file, and nothing is published. An I/O error raised inside a collective MPI or HDF5 call on only some ranks can still block the others in that call, which is a property of collective I/O.
+
+Collective writes are synchronous: the solver resumes when the file is published. They require a build with `USE_MPI=ON` and a NetCDF-C with parallel HDF5, for example the private stack of `WACOMM_BOOTSTRAP_PARALLEL_IO=ON` ([build](build.md)); CMake reports `WaComM++ collective output (io.parallel_write=collective)=ON` for such builds. Configuration loading rejects the option in other builds, with FlexMPI/EMPI, with `io.async=true`, with `io.staging_dir`, and with `io.save_history="json"`; it never falls back to rank-0 writes. A serial NetCDF library behind a parallel header is rejected by `nc_open_par` at the first write.
+
 ## Configuration
 
 All keys belong to the `io` object of the JSON configuration and are recorded in the resolved configuration embedded in NetCDF outputs. The legacy namelist form does not expose them.
@@ -65,6 +80,8 @@ All keys belong to the `io` object of the JSON configuration and are recorded in
 | `staging_dir` | path | empty (no staging) | must be creatable as a directory at run start |
 | `lustre_stripe_count` | integer, OSTs | `0` (inherit) | $\ge -1$; requires `filesystem="lustre"` |
 | `lustre_stripe_size` | integer, bytes | `0` (inherit) | $\ge 0$ and a multiple of 65536; requires `filesystem="lustre"` |
+| `parallel_write` | `none`, `collective` | `none` | `collective` requires MPI and parallel NetCDF, `async=false`, no `staging_dir`, and a `text` or `nc` history |
+| `mpiio_hints` | object of strings | `{}` | non-empty names with string values; requires `parallel_write="collective"` |
 
 ```json
 "io": {"save_history": "nc", "history_root": "/lustre/run/history/rst_",
@@ -74,18 +91,28 @@ All keys belong to the `io` object of the JSON configuration and are recorded in
        "staging_dir": "/local/scratch/wacomm"}
 ```
 
-The [asynchronous I/O example](../examples/async-io-parallel-fs/async-io-parallel-fs.md) runs this configuration on native forcing.
+The [asynchronous I/O example](../examples/async-io-parallel-fs/async-io-parallel-fs.md) runs this configuration on native forcing. A collective configuration replaces the asynchronous and staging keys:
+
+```json
+"io": {"save_history": "nc", "parallel_write": "collective", "filesystem": "lustre", "lustre_stripe_count": 8,
+       "mpiio_hints": {"romio_cb_write": "enable", "cb_nodes": "8"}}
+```
+
+The [collective-write example](../examples/collective-io-mpi/collective-io-mpi.md) runs it on several MPI ranks.
 
 ## Verification
 
 - `output_writer` checks that synchronous and asynchronous modes publish byte-identical files, that no `.partial` file remains, that the queue blocks a submission when `async_max_pending` writes are outstanding and drains on flush, that a failing or file-less writer publishes nothing and is reported once, that staged files reach their destination and leave the staging directory empty, that NetCDF jobs hold the process-wide NetCDF mutex while text jobs do not, that Lustre striping runs `lfs setstripe -c 4 -S 1048576 <directory>` through a recording stand-in for `lfs` and fails when it fails, and that the configuration keys validate and round-trip.
 - `application_end_to_end` runs the production executable forward and backward with `io.async=true`, `async_max_pending=1`, `filesystem="gpfs"` (so `fsync=true`), and a staging directory, the backward run restarting from the asynchronously written forward history. It requires the text histories to equal the synchronous ones byte for byte and the gridded `conc` arrays to be equal exactly, forward and backward, serially, with two OpenMP threads, and on two MPI ranks.
 
-Neither test uses a real Lustre or GPFS mount, and neither measures I/O performance. On a parallel file system, verify a run by comparing its output checksums with a run using `io.async=false`.
+- `parallel_output_1_ranks`, `parallel_output_2_ranks`, and `parallel_output_3_ranks`, registered only in builds with collective output, run the collective writers on 1, 2, and 3 MPI ranks against the serial writers. They require byte-identical text histories with identities above $2^{53}$, NetCDF histories equal in every attribute, dimension, variable, and variable attribute (including the out-of-domain selection and an empty history), equal gridded counts when a rank receives no rows, acceptance of MPI-IO hints and `fsync`, and a rank-0 failure that stops all ranks without publishing a file.
+- In builds with collective output, `application_end_to_end` additionally runs the executable forward and backward on two MPI ranks with `io.parallel_write="collective"`, `fsync=true`, and an MPI-IO hint, the backward run restarting from the collectively written forward history, and requires the text histories to equal the rank-0 synchronous ones byte for byte and the gridded `conc` arrays to be equal exactly.
+
+None of these tests uses a real Lustre or GPFS mount, and neither measures I/O performance. On a parallel file system, verify a run by comparing its output checksums with a run using `io.async=false`.
 
 ## Limitations
 
-- Outputs remain serialized through rank 0, which gathers all particles; there is no collective MPI-IO or parallel NetCDF write. For very large particle sets, the gather and the rank-0 write bandwidth bound the output rate.
+- Without `io.parallel_write="collective"`, outputs are serialized through rank 0, whose write bandwidth bounds the output rate. With it, the per-interval gather to rank 0 remains, each output file adds one scatter from rank 0, rank 0 still writes the NetCDF schema and coordinate variables, and the redistributed block is a second copy of the data on each rank. The collective path has not been timed on a parallel file system.
 - NetCDF writes do not overlap forcing reads, for the thread-safety reason above.
 - A pending snapshot increases rank-0 memory as stated above.
 - `io.fsync` cannot make a write durable on storage that ignores flush requests, and directory flushing is not available on Windows.
@@ -98,6 +125,8 @@ Asynchronous publication does not change scientific output, but runs should arch
 
 ## References
 
+- Thakur, R., Gropp, W., and Lusk, E. (1999). Data sieving and collective I/O in ROMIO. *Proceedings of Frontiers '99, the Seventh Symposium on the Frontiers of Massively Parallel Computation*, 182–189. [doi:10.1109/FMPC.1999.750599](https://doi.org/10.1109/FMPC.1999.750599).
+- Li, J., Liao, W.-k., Choudhary, A., Ross, R., Thakur, R., Gropp, W., Latham, R., Siegel, A., Gallagher, B., and Zingale, M. (2003). Parallel netCDF: a high-performance scientific I/O interface. *Proceedings of the 2003 ACM/IEEE Conference on Supercomputing (SC'03)*, 39. [doi:10.1145/1048935.1050189](https://doi.org/10.1145/1048935.1050189).
 - Pillai, T. S., Chidambaram, V., Alagappan, R., Al-Kiswany, S., Arpaci-Dusseau, A. C., and Arpaci-Dusseau, R. H. (2014). All file systems are not created equal: on the complexity of crafting crash-consistent applications. *11th USENIX Symposium on Operating Systems Design and Implementation (OSDI 14)*, 433–448. [usenix.org/conference/osdi14/technical-sessions/presentation/pillai](https://www.usenix.org/conference/osdi14/technical-sessions/presentation/pillai).
 - Dorier, M., Antoniu, G., Cappello, F., Snir, M., and Orf, L. (2012). Damaris: how to efficiently leverage multicore parallelism to achieve scalable, jitter-free I/O. *2012 IEEE International Conference on Cluster Computing*, 155–163. [doi:10.1109/CLUSTER.2012.26](https://doi.org/10.1109/CLUSTER.2012.26).
 - Liu, N., Cope, J., Carns, P., Carothers, C., Ross, R., Grider, G., Crume, A., and Maltzahn, C. (2012). On the role of burst buffers in leadership-class storage systems. *2012 IEEE 28th Symposium on Mass Storage Systems and Technologies (MSST)*, 1–11. [doi:10.1109/MSST.2012.6232369](https://doi.org/10.1109/MSST.2012.6232369).

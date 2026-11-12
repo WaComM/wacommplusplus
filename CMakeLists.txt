@@ -81,6 +81,27 @@ if(BUILD_APPLICATION)
     set(WACOMM_LIBRARIES Threads::Threads ${CMAKE_DL_LIBS}
             nlohmann_json::nlohmann_json ${WACOMM_DEPENDENCY_LIBRARIES})
 
+    # Collective output (docs/io.md#collective-writes) needs MPI decomposition and a
+    # NetCDF-C with parallel HDF5; the sources detect netcdf_par.h, and the tests
+    # below are registered only when the selected NetCDF provides it.
+    set(WACOMM_PARALLEL_NETCDF OFF)
+    if(USE_MPI)
+        if(WACOMM_BOOTSTRAP_PARALLEL_IO)
+            set(WACOMM_PARALLEL_NETCDF ON)
+        elseif(TARGET PkgConfig::WACOMM_NETCDF)
+            get_target_property(WACOMM_NETCDF_INCLUDES PkgConfig::WACOMM_NETCDF INTERFACE_INCLUDE_DIRECTORIES)
+            foreach(dir IN LISTS WACOMM_NETCDF_INCLUDES)
+                if(EXISTS "${dir}/netcdf_par.h" AND EXISTS "${dir}/netcdf_meta.h")
+                    file(STRINGS "${dir}/netcdf_meta.h" WACOMM_NETCDF_PARALLEL4 REGEX "#define NC_HAS_PARALLEL4 1")
+                    if(WACOMM_NETCDF_PARALLEL4)
+                        set(WACOMM_PARALLEL_NETCDF ON)
+                    endif()
+                endif()
+            endforeach()
+        endif()
+    endif()
+    message(STATUS "WaComM++ collective output (io.parallel_write=collective)=${WACOMM_PARALLEL_NETCDF}")
+
     if(USE_PROJ)
         # Prefer the PROJ CMake package on every platform; pkg-config is only
         # a fallback and must be loaded here because the dependency module
@@ -174,7 +195,7 @@ if(BUILD_APPLICATION)
     add_executable(wacommplusplus
             main.cpp Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
             Config.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
-            EnvironmentalDataAccess.cpp OutputWriter.cpp
+            EnvironmentalDataAccess.cpp OutputWriter.cpp ParallelOutput.cpp
             EnvironmentalMetadata.cpp EnvironmentalRegridder.cpp
             WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
             WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
@@ -260,6 +281,21 @@ if(BUILD_APPLICATION)
         target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME configuration_round_trip COMMAND config_test)
 
+        # Collective MPI-IO and parallel NetCDF-4 output against the serial writers (docs/io.md#collective-writes)
+        if(WACOMM_PARALLEL_NETCDF)
+            add_executable(parallel_output_test tests/ParallelOutputTest.cpp ParallelOutput.cpp OutputWriter.cpp
+                    Particles.cpp Particle.cpp DriftModel.cpp OceanModelAdapter.cpp
+                    Config.cpp EnvironmentalDataAccess.cpp Utils.cpp JulianDate.cpp)
+            target_include_directories(parallel_output_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+            wacomm_enable_test_assertions(parallel_output_test)
+            target_link_libraries(parallel_output_test PRIVATE ${WACOMM_LIBRARIES})
+            foreach(ranks 1 2 3)
+                add_test(NAME parallel_output_${ranks}_ranks COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks}
+                        ${MPIEXEC_PREFLAGS} $<TARGET_FILE:parallel_output_test> ${MPIEXEC_POSTFLAGS}
+                        "${CMAKE_CURRENT_BINARY_DIR}/parallel-output-${ranks}")
+            endforeach()
+        endif()
+
         # Synchronous/asynchronous publication and parallel file system policy (docs/io.md)
         add_executable(output_writer_test tests/OutputWriterTest.cpp OutputWriter.cpp
                 Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
@@ -306,6 +342,7 @@ if(BUILD_APPLICATION)
                 -DPOLYGON_TOOL=$<TARGET_FILE:createRestartFileFromJson>
                 -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/application-end-to-end
                 "-DLAUNCHER=${WACOMM_END_TO_END_LAUNCHER}"
+                -DCOLLECTIVE=${WACOMM_PARALLEL_NETCDF}
                 -DREQUIRE_CUDA_DEVICE=${USE_CUDA}
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ApplicationEndToEnd.cmake)
         set_tests_properties(application_end_to_end PROPERTIES TIMEOUT 300

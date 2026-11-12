@@ -25,19 +25,28 @@ Particles::Particles() {
     LOG4CPLUS_DEBUG(logger, "Empty Particles");
 }
 
+void Particles::writeTxtHeader(std::ostream &out, size_t count)
+{
+    out << "\t" << (int)count << endl;
+}
+
+void Particles::writeTxtRecord(std::ostream &out, const Particle &particle)
+{
+    // Round-trip precision: physical times are O(1e9) seconds
+    out << std::setprecision(std::numeric_limits<double>::max_digits10);
+    out << particle.Id() << " " << particle.I() << " "  << particle.J() << " " <<  particle.K() << " " << particle.Health() << " " <<  particle.Age() << " " << particle.Time() << " "
+        << static_cast<int>(particle.DriftObject()) << " " << static_cast<int>(particle.Side()) << endl;
+}
+
 void Particles::saveAsTxt(const string& fileName)
 {
     LOG4CPLUS_DEBUG(logger, "Saving restart file:"+fileName);
     std::ofstream outfile(fileName);
 
-    // Round-trip precision: physical times are O(1e9) seconds
-    outfile << std::setprecision(std::numeric_limits<double>::max_digits10);
     int count = size();
-    outfile << "\t" << count << endl;
+    writeTxtHeader(outfile, count);
     for(int idx=0; idx<count; idx++) {
-        Particle particle = at(idx);
-        outfile << particle.Id() << " " << particle.I() << " "  << particle.J() << " " <<  particle.K() << " " << particle.Health() << " " <<  particle.Age() << " " << particle.Time() << " "
-                << static_cast<int>(particle.DriftObject()) << " " << static_cast<int>(particle.Side()) << endl;
+        writeTxtRecord(outfile, at(idx));
     }
 
     // A restart that cannot be written completely must not be published
@@ -104,61 +113,17 @@ void Particles::saveAsJson(const string &fileName, double particleTime, std::sha
     if (!o) throw std::runtime_error("Unable to write the GeoJSON history " + fileName);
 }
 
-void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
-                             std::shared_ptr<Config> config)
+Particles::NetCDFHistory Particles::netcdfRecords(std::shared_ptr<OceanModelAdapter> oceanModelAdapter) const
 {
-    // https://github.com/NOAA-ORR-ERD/nc_particles
-    // https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/aphs04.html
-    
-    size_t particle_time=1;
-    size_t ocean_time=1;
+    NetCDFHistory records;
 
-    Array1<std::uint64_t> id(this->size());
-    Array2<double> lat(this->size(),particle_time);
-    Array2<double> lon(this->size(),particle_time);
-    Array2<double> dep(this->size(),particle_time);
-    Array2<double> j(this->size(),particle_time);
-    Array2<double> i(this->size(),particle_time);
-    Array2<double> k(this->size(),particle_time);
-    Array2<double> health(this->size(),particle_time);
-    Array2<double> age(this->size(),particle_time);
-    Array2<double> time(this->size(),particle_time);
-    Array1<unsigned int> driftObjectType(this->size());
-    Array1<int> driftSide(this->size());
-
-    /*
-    Array4<float> conc(particle_time,
-                        oceanModelAdapter->Depth().Nx(),
-                        oceanModelAdapter->Latitude().Nx(),
-                        oceanModelAdapter->Longitude().Nx());
-
-    for (int k=0; k<oceanModelAdapter->Depth().Nx(); k++) {
-        for (int j=0; k<oceanModelAdapter->Latitude().Nx(); j++) {
-            for (int i=0; k<oceanModelAdapter->Longitude().Nx(); i++) {
-                conc(0,k,j,i)=0;
-            }
-        }
-    }
-    */
-
-    LOG4CPLUS_INFO(logger,"Preparing NetCDF...");
-
-    //double maxDepth=oceanModelAdapter->Depth()[0];
-    //double minDepth=oceanModelAdapter->Depth()[oceanModelAdapter->Depth().Nx()-1];
-    //double minLat=oceanModelAdapter->Latitude()[0];
-    //double maxLat=oceanModelAdapter->Latitude()[oceanModelAdapter->Latitude().Nx()-1];
-    //double minLon=oceanModelAdapter->Longitude()[0];
-    //double maxLon=oceanModelAdapter->Longitude()[oceanModelAdapter->Longitude().Nx()-1];
-
-
-    int count=0;
+    // Only particles inside the interpolation domain are stored (the order is preserved)
     for (const auto& particle:*this) {
 
         if (particle.J() < 0 || particle.I() < 0 || particle.K() > 0) {
             continue;
         }
 
-        json coordinates = json::array();
         double depth, latitude, longitude;
         oceanModelAdapter->kji2deplatlon(particle.K(), particle.J(), particle.I(), depth, latitude, longitude);
 
@@ -166,33 +131,25 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
             continue;
         }
 
-        id(count)=particle.Id();
-        lat(count,0)=latitude;
-        lon(count,0)=longitude;
-        dep(count,0)=depth;
-        j(count,0)=particle.J();
-        i(count,0)=particle.I();
-        k(count,0)=particle.K();
-        health(count,0)=particle.Health();
-        age(count,0)=particle.Age();
-        time(count,0)=particle.Time();
-        driftObjectType(count)=static_cast<unsigned int>(particle.DriftObject());
-        driftSide(count)=static_cast<int>(particle.Side());
-
-        //double concK=oceanModelAdapter->Depth().Nx()*depth/(maxDepth-minDepth);
-        //double concJ=oceanModelAdapter->Latitude().Nx()*latitude/(maxLat-minLat);
-        //double concI=oceanModelAdapter->Longitude().Nx()*longitude/(maxLon-minLon);
-
-        //conc(ocean_time,concK,concJ,concI )++;
-
-        count++;
+        records.id.push_back(particle.Id());
+        records.lat.push_back(latitude);
+        records.lon.push_back(longitude);
+        records.dep.push_back(depth);
+        records.j.push_back(particle.J());
+        records.i.push_back(particle.I());
+        records.k.push_back(particle.K());
+        records.health.push_back(particle.Health());
+        records.age.push_back(particle.Age());
+        records.time.push_back(particle.Time());
+        records.driftObjectType.push_back(static_cast<unsigned int>(particle.DriftObject()));
+        records.driftSide.push_back(static_cast<int>(particle.Side()));
     }
+    return records;
+}
 
-
-    LOG4CPLUS_INFO(logger,"Saving NetCDF in: " << fileName);
-
-    // Open the file for read access
-    netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
+void Particles::defineNetCDF(netCDF::NcFile &dataFile, size_t count, double particleTime, std::shared_ptr<Config> config)
+{
+    size_t particle_time=1;
 
     Provenance::writeBuildMetadata(dataFile,*config);
 
@@ -217,15 +174,12 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     NcVar idVar = dataFile.addVar("id", ncUint64, particlesDim);
     idVar.putAtt("long_name","id");
     idVar.putAtt("cf_role", "trajectory_id");
-    idVar.putVar(id());
 
     NcVar objectTypeVar = dataFile.addVar("object_type", ncUint, particlesDim);
     objectTypeVar.putAtt("long_name","drift object type identifier");
-    objectTypeVar.putVar(driftObjectType());
 
     NcVar driftSideVar = dataFile.addVar("drift_side", ncInt, particlesDim);
     driftSideVar.putAtt("long_name","crosswind orientation: -1 left, 0 undefined, 1 right");
-    driftSideVar.putVar(driftSide());
 
     vector<NcDim> particlesParticleTimeDims;
     particlesParticleTimeDims.push_back(particlesDim);
@@ -237,7 +191,6 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     latVar.putAtt("standard_name","latitude");
     //latVar.putAtt("field","lat, scalar");
     //latVar.putAtt("_coordinateaxistype","lat");
-    latVar.putVar(lat());
 
     NcVar lonVar = dataFile.addVar("lon", ncDouble, particlesParticleTimeDims);
     lonVar.putAtt("long_name","longitude of particle");
@@ -245,7 +198,6 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     lonVar.putAtt("standard_name","longitude");
     //lonVar.putAtt("field","lon, scalar");
     //lonVar.putAtt("_coordinateaxistype","lon");
-    lonVar.putVar(lon());
 
     NcVar depVar = dataFile.addVar("depth", ncDouble, particlesParticleTimeDims);
     depVar.putAtt("long_name","particle depth below sea surface");
@@ -254,31 +206,25 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     depVar.putAtt("positive","up");
     depVar.putAtt("axis","Z");
     //depVar.putAtt("_coordinateaxistype","depth");
-    depVar.putVar(dep());
 
     NcVar KVar = dataFile.addVar("k", ncDouble, particlesParticleTimeDims);
     KVar.putAtt("long_name","depth fractional index");
-    KVar.putVar(k());
 
     NcVar JVar = dataFile.addVar("j", ncDouble, particlesParticleTimeDims);
     JVar.putAtt("long_name","latitude fractional index");
-    JVar.putVar(j());
 
     NcVar IVar = dataFile.addVar("i", ncDouble, particlesParticleTimeDims);
     IVar.putAtt("long_name","longitude fractional index");
-    IVar.putVar(i());
 
     NcVar HealthVar = dataFile.addVar("health", ncDouble, particlesParticleTimeDims);
     HealthVar.putAtt("long_name","health of the particle");
     HealthVar.putAtt("units","1e-9") ;
     HealthVar.putAtt("coordinates","ocean_time lon lat depth") ;
-    HealthVar.putVar(health());
 
     NcVar AgeVar = dataFile.addVar("age", ncDouble, particlesParticleTimeDims);
     AgeVar.putAtt("long_name","age of the particle");
     AgeVar.putAtt("units","seconds since emission");
     AgeVar.putAtt("coordinates","ocean_time lon lat depth") ;
-    AgeVar.putVar(age());
 
     NcVar TimeVar = dataFile.addVar("time", ncDouble, particlesParticleTimeDims);
     TimeVar.putAtt("long_name","emission time of the particle");
@@ -287,7 +233,44 @@ void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::s
     TimeVar.putAtt("coordinates","ocean_time lon lat depth") ;
     //TimeVar.putAtt("field","time, scalar, series");
     //TimeVar.putAtt("_CoordinateAxisType","Time");
-    TimeVar.putVar(time());
+}
+
+void Particles::putNetCDF(netCDF::NcFile &dataFile, const NetCDFHistory &records)
+{
+    // An empty history keeps zero-length variables
+    if (records.id.empty()) return;
+
+    dataFile.getVar("id").putVar(records.id.data());
+    dataFile.getVar("object_type").putVar(records.driftObjectType.data());
+    dataFile.getVar("drift_side").putVar(records.driftSide.data());
+    dataFile.getVar("lat").putVar(records.lat.data());
+    dataFile.getVar("lon").putVar(records.lon.data());
+    dataFile.getVar("depth").putVar(records.dep.data());
+    dataFile.getVar("k").putVar(records.k.data());
+    dataFile.getVar("j").putVar(records.j.data());
+    dataFile.getVar("i").putVar(records.i.data());
+    dataFile.getVar("health").putVar(records.health.data());
+    dataFile.getVar("age").putVar(records.age.data());
+    dataFile.getVar("time").putVar(records.time.data());
+}
+
+void Particles::saveAsNetCDF(const string &fileName, double particleTime, std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
+                             std::shared_ptr<Config> config)
+{
+    // https://github.com/NOAA-ORR-ERD/nc_particles
+    // https://cfconventions.org/Data/cf-conventions/cf-conventions-1.7/build/aphs04.html
+
+    LOG4CPLUS_INFO(logger,"Preparing NetCDF...");
+
+    NetCDFHistory records=netcdfRecords(oceanModelAdapter);
+
+    LOG4CPLUS_INFO(logger,"Saving NetCDF in: " << fileName);
+
+    // Open the file for read access
+    netCDF::NcFile dataFile(fileName, NcFile::replace,NcFile::nc4);
+
+    defineNetCDF(dataFile, records.id.size(), particleTime, config);
+    putNetCDF(dataFile, records);
 
 /*
     NcDim oceanTimeDim = dataFile.addDim("ocean_time", ocean_time);

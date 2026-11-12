@@ -76,7 +76,7 @@ The module commands apply to the host providing these module names; elsewhere us
 
 Archive the Git revision and working diff, module list, compiler/CMake versions, CMake caches, configure/build/test logs, pinned source hashes, and executable checksum. OpenSSL source and build provenance are under `build/external/src/openssl` and `build/external/build/openssl`. Preserve these with the scientific run metadata described below.
 
-`WACOMM_BOOTSTRAP_PARALLEL_IO=ON` forces the private HDF5/NetCDF portion even in `AUTO`, requires discoverable MPI C and C++ support, enables parallel HDF5 and NetCDF-4 I/O, and propagates MPI for their static libraries independently of solver-level `USE_MPI`. `WACOMM_BOOTSTRAP_DEPENDENCIES=OFF` with parallel bootstrap is rejected explicitly. This option controls library capability; `USE_MPI` separately controls WaComM++ particle decomposition.
+`WACOMM_BOOTSTRAP_PARALLEL_IO=ON` forces the private HDF5/NetCDF portion even in `AUTO`, requires discoverable MPI C and C++ support, enables parallel HDF5 and NetCDF-4 I/O, and propagates MPI for their static libraries independently of solver-level `USE_MPI`. `WACOMM_BOOTSTRAP_DEPENDENCIES=OFF` with parallel bootstrap is rejected explicitly. This option controls library capability; `USE_MPI` separately controls WaComM++ particle decomposition. Together with `USE_MPI=ON` it enables `io.parallel_write="collective"`, which writes histories and gridded counts from every rank with MPI-IO and parallel NetCDF-4; CMake then reports `WaComM++ collective output (io.parallel_write=collective)=ON`. An installed NetCDF-C with parallel HDF5 (`netcdf_par.h` and `NC_HAS_PARALLEL4`) enables it as well. See [collective writes](io.md#collective-writes).
 
 ```bash
 cmake -S . -B build-parallel-io \

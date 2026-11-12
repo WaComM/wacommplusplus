@@ -5,6 +5,7 @@
 #include "Config.hpp"
 #include "EnvironmentalDataAccess.hpp"
 #include "JulianDate.hpp"
+#include "ParallelIOSupport.hpp"
 #include <nlohmann/json.hpp>
 #include <cmath>
 #include <cctype>
@@ -124,6 +125,12 @@ void Config::setDefault() {
     // Lustre default layout of the output directories (0: inherit)
     lustreStripeCount = 0;
     lustreStripeSize = 0;
+
+    // Outputs are written by rank 0 (none) or by all MPI ranks (collective)
+    parallelWrite = "none";
+
+    // MPI-IO hints of collective writes (default none)
+    mpiioHints.clear();
 
     // Use sources (default true)
     useSources = true;
@@ -644,7 +651,9 @@ string Config::asJson() const {
             { "fsync", fsync },
             { "staging_dir", stagingDir },
             { "lustre_stripe_count", lustreStripeCount },
-            { "lustre_stripe_size", lustreStripeSize }
+            { "lustre_stripe_size", lustreStripeSize },
+            { "parallel_write", parallelWrite },
+            { "mpiio_hints", mpiioHints }
     };
 
     json restart = {
@@ -793,6 +802,16 @@ void Config::loadFromJson(const string &fileName) {
             if (!io["lustre_stripe_count"].is_number_integer())
                 throw std::runtime_error("io.lustre_stripe_count must be an integer");
             lustreStripeCount = io["lustre_stripe_count"];
+        }
+        if (io.contains("parallel_write")) { parallelWrite = io["parallel_write"]; }
+        if (io.contains("mpiio_hints")) {
+            if (!io["mpiio_hints"].is_object())
+                throw std::runtime_error("io.mpiio_hints must be an object of string values");
+            for (auto& hint: io["mpiio_hints"].items()) {
+                if (hint.key().empty() || !hint.value().is_string())
+                    throw std::runtime_error("io.mpiio_hints must map non-empty names to string values");
+                mpiioHints[hint.key()] = hint.value();
+            }
         }
         if (io.contains("lustre_stripe_size")) {
             if (!io["lustre_stripe_size"].is_number_integer())
@@ -1091,6 +1110,30 @@ void Config::loadFromJson(const string &fileName) {
     if (lustreStripeSize<0 || lustreStripeSize%65536!=0) {
         throw std::runtime_error("io.lustre_stripe_size must be 0 (inherit) or a positive multiple of 65536 bytes");
     }
+    if (parallelWrite!="none" && parallelWrite!="collective") {
+        throw std::runtime_error("io.parallel_write must be none or collective");
+    }
+    if (!mpiioHints.empty() && parallelWrite!="collective") {
+        throw std::runtime_error("io.mpiio_hints requires io.parallel_write=collective");
+    }
+    if (parallelWrite=="collective") {
+#ifdef USE_EMPI
+        throw std::runtime_error("io.parallel_write=collective is not available with USE_EMPI");
+#endif
+        if (!ParallelIOSupport::collectiveWrites) {
+            throw std::runtime_error("io.parallel_write=collective requires USE_MPI=ON and NetCDF-C with parallel HDF5 "
+                                     "(for example WACOMM_BOOTSTRAP_PARALLEL_IO=ON)");
+        }
+        if (asyncIO) {
+            throw std::runtime_error("io.parallel_write=collective requires io.async=false: every rank takes part in each write");
+        }
+        if (!stagingDir.empty()) {
+            throw std::runtime_error("io.parallel_write=collective writes the shared file directly; io.staging_dir must be empty");
+        }
+        if (saveHistory=="json") {
+            throw std::runtime_error("io.parallel_write=collective supports text and nc histories, not json");
+        }
+    }
 #ifdef _WIN32
     if (lustreStripeCount!=0 || lustreStripeSize!=0) {
         throw std::runtime_error("Lustre striping is not available on Windows");
@@ -1126,6 +1169,10 @@ string Config::StagingDir() const { return stagingDir; }
 int Config::LustreStripeCount() const { return lustreStripeCount; }
 
 long long Config::LustreStripeSize() const { return lustreStripeSize; }
+
+string Config::ParallelWrite() const { return parallelWrite; }
+
+const std::map<string,string>& Config::MpiioHints() const { return mpiioHints; }
 
 void Config::MaskOutput(bool value) {
     maskOutput = value;

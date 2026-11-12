@@ -168,6 +168,8 @@ public:
     string StagingDir() const;
     int LustreStripeCount() const;
     long long LustreStripeSize() const;
+    string ParallelWrite() const;
+    const std::map<string,string>& MpiioHints() const;
 
     bool UseSources() const;
     void UseSources(bool value);
@@ -273,6 +275,8 @@ private:
     string stagingDir;
     int lustreStripeCount;
     long long lustreStripeSize;
+    string parallelWrite;
+    std::map<string,string> mpiioHints;
 
     void setDefault();
 

@@ -1,4 +1,5 @@
 #include "../Config.hpp"
+#include "../ParallelIOSupport.hpp"
 
 #include <nlohmann/json.hpp>
 #include <filesystem>
@@ -27,6 +28,20 @@ int main(int argc, char **argv) {
                         continue;
                     }
 #endif
+                    if(!ParallelIOSupport::collectiveWrites && document.contains("io") &&
+                       document["io"].value("parallel_write", "") == "collective") {
+                        // The build must reject it rather than write from rank 0
+                        bool rejected = false;
+                        try { Config configuration(file.path().string()); }
+                        catch(const std::runtime_error &) { rejected = true; }
+                        if(!rejected) {
+                            std::cerr << file.path() << ": collective output accepted without parallel NetCDF" << std::endl;
+                            return 1;
+                        }
+                        std::cout << "Requires USE_MPI=ON and parallel NetCDF: " << file.path() << std::endl;
+                        ++unsupported;
+                        continue;
+                    }
                     Config configuration(file.path().string());
                     ++configurations;
                 } catch(const std::exception &error) {

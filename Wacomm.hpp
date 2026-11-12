@@ -57,7 +57,8 @@ class Wacomm {
 
         // Static: an asynchronous write may outlive this object
         static void save(const string &fileName, Array4<float> &conc,
-                         std::shared_ptr<OceanModelAdapter> oceanModelAdapter, std::shared_ptr<Config> config/*, bool add = false*/);
+                         std::shared_ptr<OceanModelAdapter> oceanModelAdapter, std::shared_ptr<Config> config,
+                         bool writeConcentration=true/*, bool add = false*/);
         //void save(const string &filename);
 
 };

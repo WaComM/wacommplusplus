@@ -14,7 +14,7 @@ The documentation is organized as a scientific model description rather than sol
 - [Backtracking](backtracking.md)
 - [Surface drift objects](sar-drift.md)
 - [Restart](restart.md)
-- [Output publication, asynchronous I/O, and parallel file systems](io.md)
+- [Output publication, asynchronous I/O, collective writes, and parallel file systems](io.md)
 - [Parallelism](parallelism.md)
 - [Backend matrix evaluation and improvement plan](backend-matrix-evaluation.md)
 - [Testing](testing.md)
