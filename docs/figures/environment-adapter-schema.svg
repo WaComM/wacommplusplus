@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="500" viewBox="0 0 1100 500" role="img" aria-labelledby="title desc">
+  <title id="title">WaComM++ environmental adapter architecture</title>
+  <desc id="desc">Ocean, weather, and wave products are normalized by independent adapters and combined once in the direction-neutral particle solver.</desc>
+  <defs><marker id="a" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L10,3 L0,6 Z" fill="#315a7d"/></marker></defs>
+  <rect width="1100" height="500" fill="#f7fafc"/>
+  <g font-family="Arial,sans-serif" text-anchor="middle">
+    <text x="550" y="38" font-size="24" font-weight="700" fill="#17324d">Product-independent environmental coupling</text>
+    <g fill="#e8f1f8" stroke="#315a7d" stroke-width="2">
+      <rect x="40" y="80" width="240" height="70" rx="10"/><rect x="430" y="80" width="240" height="70" rx="10"/><rect x="820" y="80" width="240" height="70" rx="10"/>
+    </g>
+    <g font-size="18" fill="#17324d"><text x="160" y="108">Ocean products</text><text x="160" y="132">ROMS · NEMO · HYCOM · native</text><text x="550" y="108">Weather products</text><text x="550" y="132">WRF</text><text x="940" y="108">Wave products</text><text x="940" y="132">WAVEWATCH III</text></g>
+    <g fill="#fff" stroke="#4b819f" stroke-width="2"><rect x="40" y="205" width="240" height="82" rx="10"/><rect x="430" y="205" width="240" height="82" rx="10"/><rect x="820" y="205" width="240" height="82" rx="10"/></g>
+    <g font-size="17" fill="#17324d"><text x="160" y="235">OceanModelAdapter</text><text x="160" y="261">u, v, w, K, grid, time</text><text x="550" y="235">WeatherModelAdapter</text><text x="550" y="261">eastward/northward U₁₀</text><text x="940" y="235">WaveModelAdapter</text><text x="940" y="261">eastward/northward Stokes</text></g>
+    <g stroke="#315a7d" stroke-width="3" marker-end="url(#a)"><path d="M160 150V198"/><path d="M550 150V198"/><path d="M940 150V198"/><path d="M160 287L440 365"/><path d="M550 287V350"/><path d="M940 287L660 365"/></g>
+    <rect x="355" y="355" width="390" height="92" rx="12" fill="#dcefe2" stroke="#39734d" stroke-width="2"/>
+    <text x="550" y="386" font-size="19" font-weight="700" fill="#204a30">Single particle-physics implementation</text><text x="550" y="414" font-size="17" fill="#204a30">V = Vcurrent + Vleeway(U₁₀) + VStokes</text><text x="550" y="438" font-size="15" fill="#204a30">tracking direction is applied once, after composition</text>
+  </g>
+</svg>

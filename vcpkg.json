@@ -1,0 +1,9 @@
+{
+  "name": "wacommplusplus",
+  "version-string": "1.0.0",
+  "dependencies": [
+    "log4cplus",
+    "netcdf-cxx4",
+    "nlohmann-json"
+  ]
+}

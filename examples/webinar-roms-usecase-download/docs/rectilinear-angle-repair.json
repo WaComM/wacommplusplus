@@ -1,0 +1,16 @@
+{
+  "operator": "validate_rectilinear_roms_grid_axes_set_zero_angle",
+  "velocity_basis": "roms_xi_eta_grid_axes",
+  "coordinate_reference": {
+    "type": "spherical_geographic",
+    "sphere_radius_m": 6371000.0,
+    "axis_order": ["longitude", "latitude"],
+    "units": "degrees",
+    "longitude_range": [-180.0, 180.0]
+  },
+  "coordinate_tolerance_degrees": 1e-10,
+  "expected_source_angle_radians": 1.5707963267948966,
+  "source_angle_tolerance_radians": 1e-8,
+  "replacement_angle_radians": 0.0,
+  "interpretation": "Explicit metadata repair for ROMS grid-axis components on a verified east/north rectilinear C-grid. No claim that upstream ROMS forcing or simulation errors are corrected."
+}

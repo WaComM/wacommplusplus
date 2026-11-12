@@ -1,0 +1,327 @@
+[1789174548.758526] [wn01:2870910:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.759225] [wn01:2870925:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.759443] [wn01:2870922:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.759676] [wn01:2870931:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.760805] [wn01:2870909:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.761208] [wn01:2870907:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.761551] [wn01:2870916:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.761831] [wn01:2870919:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.761912] [wn01:2870905:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.761919] [wn01:2870911:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762288] [wn01:2870918:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762425] [wn01:2870912:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762446] [wn01:2870915:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762570] [wn01:2870914:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762646] [wn01:2870906:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762648] [wn01:2870913:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762738] [wn01:2870917:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762809] [wn01:2870908:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762869] [wn01:2870920:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762990] [wn01:2870927:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.762987] [wn01:2870935:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763076] [wn01:2870923:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763118] [wn01:2870921:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763179] [wn01:2870934:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763231] [wn01:2870926:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763243] [wn01:2870933:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763245] [wn01:2870929:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763264] [wn01:2870932:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763270] [wn01:2870924:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763292] [wn01:2870930:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763303] [wn01:2870928:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+[1789174548.763309] [wn01:2870936:0]     ucp_context.c:2119 UCX  WARN  UCP API version is incompatible: required >= 1.18, actual 1.15.0 (loaded from /opt/share/libs/gcc-8.5.0/ucx-1.15.0/lib/libucp.so.0)
+26-09-12 02:55:49,008.747 INFO  WaComMINFO - WaComM - C++ Version
+26-09-12 02:55:49,008.966 INFO  WaComMINFO - Parallel: Distributed Memory
+26-09-12 02:55:49,008.974 INFO  WaComMINFO - Parallel: Shared Memory
+26-09-12 02:55:49,008.978 INFO  WaComMINFO - Acceleration: None
+26-09-12 02:55:49,008.984 INFO  WaComMINFO - 0: Using 1/32 processes, each on 1 threads.
+26-09-12 02:55:49,008.989 INFO  WaComMINFO - Configuration: wacomm-sarno-lite-6h.json
+26-09-12 02:55:49,009.520 INFO  WaComMINFO - 0: Input from Ocean Model: processed-6h/ocm3_d03_20210701Z09.nc
+26-09-12 02:55:56,469.472 INFO  WaComMINFO - Reading from json:examples/sources-sarno_river.json
+26-09-12 02:55:56,797.752 INFO  WaComMINFO - ocean_time:2
+26-09-12 02:55:56,797.914 INFO  WaComMINFO - s_rho:30
+26-09-12 02:55:56,797.923 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-12 02:55:59,122.873 INFO  WaComMINFO - Simulating:1.67593e+09 - 20210701Z09
+26-09-12 02:55:59,123.058 INFO  WaComMINFO - Sources:1
+26-09-12 02:55:59,125.298 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 10000
+26-09-12 02:55:59,140.951 INFO  WaComMINFO - 2: Local particles:312
+26-09-12 02:55:59,140.941 INFO  WaComMINFO - 1: Local particles:312
+26-09-12 02:55:59,140.982 INFO  WaComMINFO - 3: Local particles:312
+26-09-12 02:55:59,141.008 INFO  WaComMINFO - 4: Local particles:312
+26-09-12 02:55:59,141.028 INFO  WaComMINFO - 5: Local particles:312
+26-09-12 02:55:59,141.058 INFO  WaComMINFO - 6: Local particles:312
+26-09-12 02:55:59,141.207 INFO  WaComMINFO - 7: Local particles:312
+26-09-12 02:55:59,141.255 INFO  WaComMINFO - 9: Local particles:312
+26-09-12 02:55:59,141.254 INFO  WaComMINFO - 8: Local particles:312
+26-09-12 02:55:59,141.288 INFO  WaComMINFO - 10: Local particles:312
+26-09-12 02:55:59,141.319 INFO  WaComMINFO - 11: Local particles:312
+26-09-12 02:55:59,141.361 INFO  WaComMINFO - 12: Local particles:312
+26-09-12 02:55:59,141.363 INFO  WaComMINFO - 13: Local particles:312
+26-09-12 02:55:59,141.401 INFO  WaComMINFO - 14: Local particles:312
+26-09-12 02:55:59,141.449 INFO  WaComMINFO - 15: Local particles:312
+26-09-12 02:55:59,141.824 INFO  WaComMINFO - 0: Local particles:328
+26-09-12 02:55:59,152.097 INFO  WaComMINFO - 16: Local particles:312
+26-09-12 02:55:59,152.085 INFO  WaComMINFO - 18: Local particles:312
+26-09-12 02:55:59,152.085 INFO  WaComMINFO - 24: Local particles:312
+26-09-12 02:55:59,152.085 INFO  WaComMINFO - 17: Local particles:312
+26-09-12 02:55:59,152.085 INFO  WaComMINFO - 20: Local particles:312
+26-09-12 02:55:59,152.127 INFO  WaComMINFO - 19: Local particles:312
+26-09-12 02:55:59,152.132 INFO  WaComMINFO - 25: Local particles:312
+26-09-12 02:55:59,152.153 INFO  WaComMINFO - 26: Local particles:312
+26-09-12 02:55:59,152.185 INFO  WaComMINFO - 21: Local particles:312
+26-09-12 02:55:59,152.205 INFO  WaComMINFO - 30: Local particles:312
+26-09-12 02:55:59,152.213 INFO  WaComMINFO - 27: Local particles:312
+26-09-12 02:55:59,152.209 INFO  WaComMINFO - 28: Local particles:312
+26-09-12 02:55:59,152.205 INFO  WaComMINFO - 22: Local particles:312
+26-09-12 02:55:59,152.265 INFO  WaComMINFO - 29: Local particles:312
+26-09-12 02:55:59,152.271 INFO  WaComMINFO - 31: Local particles:312
+26-09-12 02:55:59,152.260 INFO  WaComMINFO - 23: Local particles:312
+26-09-12 02:55:59,721.137 INFO  WaComMINFO - Locally processed 328 in 0.0289009 seconds (11349.1 particles/second).
+26-09-12 02:55:59,721.315 INFO  WaComMINFO - Removed particles: 74 Particles: 9926
+26-09-12 02:55:59,721.328 INFO  WaComMINFO - Evaluate concentration
+26-09-12 02:55:59,862.244 INFO  WaComMINFO - EVALUATE sec: 0.140895
+26-09-12 02:55:59,862.285 INFO  WaComMINFO - Processed 10000 in 0.739442 seconds (13523.7 particles/second).
+26-09-12 02:55:59,862.294 INFO  WaComMINFO - Solver interval: start=1675933200 end=1675936800 seconds=0.73944236399999996
+26-09-12 02:55:59,862.317 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z10
+26-09-12 02:55:59,862.336 INFO  WaComMINFO - Preparing NetCDF...
+26-09-12 02:55:59,863.452 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z10.nc
+26-09-12 02:55:59,997.683 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z09.nc
+26-09-12 02:55:59,997.729 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z09.nc
+26-09-12 02:56:00,022.426 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z09.nc
+26-09-12 02:56:01,083.186 INFO  WaComMINFO - 0: Input from Ocean Model: processed-6h/ocm3_d03_20210701Z10.nc
+26-09-12 02:56:05,726.896 INFO  WaComMINFO - ocean_time:2
+26-09-12 02:56:05,727.082 INFO  WaComMINFO - s_rho:30
+26-09-12 02:56:05,727.122 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-12 02:56:06,356.360 INFO  WaComMINFO - Simulating:1.67594e+09 - 20210701Z10
+26-09-12 02:56:06,356.504 INFO  WaComMINFO - Sources:1
+26-09-12 02:56:06,358.040 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 19926
+26-09-12 02:56:06,359.042 INFO  WaComMINFO - 1: Local particles:622
+26-09-12 02:56:06,359.088 INFO  WaComMINFO - 3: Local particles:622
+26-09-12 02:56:06,359.065 INFO  WaComMINFO - 2: Local particles:622
+26-09-12 02:56:06,359.139 INFO  WaComMINFO - 5: Local particles:622
+26-09-12 02:56:06,359.113 INFO  WaComMINFO - 4: Local particles:622
+26-09-12 02:56:06,359.164 INFO  WaComMINFO - 6: Local particles:622
+26-09-12 02:56:06,359.192 INFO  WaComMINFO - 7: Local particles:622
+26-09-12 02:56:06,359.220 INFO  WaComMINFO - 8: Local particles:622
+26-09-12 02:56:06,359.245 INFO  WaComMINFO - 9: Local particles:622
+26-09-12 02:56:06,359.270 INFO  WaComMINFO - 10: Local particles:622
+26-09-12 02:56:06,359.304 INFO  WaComMINFO - 11: Local particles:622
+26-09-12 02:56:06,359.341 INFO  WaComMINFO - 12: Local particles:622
+26-09-12 02:56:06,359.350 INFO  WaComMINFO - 13: Local particles:622
+26-09-12 02:56:06,359.378 INFO  WaComMINFO - 14: Local particles:622
+26-09-12 02:56:06,359.418 INFO  WaComMINFO - 16: Local particles:622
+26-09-12 02:56:06,359.403 INFO  WaComMINFO - 15: Local particles:622
+26-09-12 02:56:06,359.553 INFO  WaComMINFO - 20: Local particles:622
+26-09-12 02:56:06,359.520 INFO  WaComMINFO - 19: Local particles:622
+26-09-12 02:56:06,359.467 INFO  WaComMINFO - 17: Local particles:622
+26-09-12 02:56:06,359.594 INFO  WaComMINFO - 22: Local particles:622
+26-09-12 02:56:06,359.563 INFO  WaComMINFO - 21: Local particles:622
+26-09-12 02:56:06,359.651 INFO  WaComMINFO - 23: Local particles:622
+26-09-12 02:56:06,359.680 INFO  WaComMINFO - 25: Local particles:622
+26-09-12 02:56:06,359.680 INFO  WaComMINFO - 24: Local particles:622
+26-09-12 02:56:06,359.711 INFO  WaComMINFO - 18: Local particles:622
+26-09-12 02:56:06,359.753 INFO  WaComMINFO - 26: Local particles:622
+26-09-12 02:56:06,359.792 INFO  WaComMINFO - 27: Local particles:622
+26-09-12 02:56:06,359.827 INFO  WaComMINFO - 29: Local particles:622
+26-09-12 02:56:06,359.819 INFO  WaComMINFO - 28: Local particles:622
+26-09-12 02:56:06,359.879 INFO  WaComMINFO - 30: Local particles:622
+26-09-12 02:56:06,359.884 INFO  WaComMINFO - 0: Local particles:644
+26-09-12 02:56:06,359.912 INFO  WaComMINFO - 31: Local particles:622
+26-09-12 02:56:06,418.490 INFO  WaComMINFO - Locally processed 644 in 0.0577971 seconds (11142.4 particles/second).
+26-09-12 02:56:06,419.188 INFO  WaComMINFO - Removed particles: 923 Particles: 19003
+26-09-12 02:56:06,419.253 INFO  WaComMINFO - Evaluate concentration
+26-09-12 02:56:06,558.379 INFO  WaComMINFO - EVALUATE sec: 0.139076
+26-09-12 02:56:06,558.501 INFO  WaComMINFO - Processed 19926 in 0.202168 seconds (98561.5 particles/second).
+26-09-12 02:56:06,558.541 INFO  WaComMINFO - Solver interval: start=1675936800 end=1675940400 seconds=0.202168243
+26-09-12 02:56:06,558.614 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z11
+26-09-12 02:56:06,558.672 INFO  WaComMINFO - Preparing NetCDF...
+26-09-12 02:56:06,561.119 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z11.nc
+26-09-12 02:56:06,597.554 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z10.nc
+26-09-12 02:56:06,597.693 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z10.nc
+26-09-12 02:56:06,613.320 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z10.nc
+26-09-12 02:56:09,797.990 INFO  WaComMINFO - 0: Input from Ocean Model: processed-6h/ocm3_d03_20210701Z11.nc
+26-09-12 02:56:13,566.918 INFO  WaComMINFO - ocean_time:2
+26-09-12 02:56:13,567.142 INFO  WaComMINFO - s_rho:30
+26-09-12 02:56:13,567.153 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-12 02:56:13,972.573 INFO  WaComMINFO - Simulating:1.67594e+09 - 20210701Z11
+26-09-12 02:56:13,972.728 INFO  WaComMINFO - Sources:1
+26-09-12 02:56:13,973.258 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 29003
+26-09-12 02:56:13,974.737 INFO  WaComMINFO - 1: Local particles:906
+26-09-12 02:56:13,974.774 INFO  WaComMINFO - 2: Local particles:906
+26-09-12 02:56:13,974.806 INFO  WaComMINFO - 3: Local particles:906
+26-09-12 02:56:13,974.847 INFO  WaComMINFO - 4: Local particles:906
+26-09-12 02:56:13,974.883 INFO  WaComMINFO - 5: Local particles:906
+26-09-12 02:56:13,974.923 INFO  WaComMINFO - 6: Local particles:906
+26-09-12 02:56:13,974.959 INFO  WaComMINFO - 7: Local particles:906
+26-09-12 02:56:13,975.007 INFO  WaComMINFO - 8: Local particles:906
+26-09-12 02:56:13,975.035 INFO  WaComMINFO - 9: Local particles:906
+26-09-12 02:56:13,975.077 INFO  WaComMINFO - 10: Local particles:906
+26-09-12 02:56:13,975.109 INFO  WaComMINFO - 11: Local particles:906
+26-09-12 02:56:13,975.156 INFO  WaComMINFO - 12: Local particles:906
+26-09-12 02:56:13,975.196 INFO  WaComMINFO - 13: Local particles:906
+26-09-12 02:56:13,975.235 INFO  WaComMINFO - 14: Local particles:906
+26-09-12 02:56:13,975.276 INFO  WaComMINFO - 15: Local particles:906
+26-09-12 02:56:13,975.339 INFO  WaComMINFO - 16: Local particles:906
+26-09-12 02:56:13,975.372 INFO  WaComMINFO - 17: Local particles:906
+26-09-12 02:56:13,975.492 INFO  WaComMINFO - 20: Local particles:906
+26-09-12 02:56:13,975.455 INFO  WaComMINFO - 19: Local particles:906
+26-09-12 02:56:13,975.471 INFO  WaComMINFO - 18: Local particles:906
+26-09-12 02:56:13,975.547 INFO  WaComMINFO - 21: Local particles:906
+26-09-12 02:56:13,975.587 INFO  WaComMINFO - 22: Local particles:906
+26-09-12 02:56:13,975.629 INFO  WaComMINFO - 23: Local particles:906
+26-09-12 02:56:13,975.666 INFO  WaComMINFO - 24: Local particles:906
+26-09-12 02:56:13,975.758 INFO  WaComMINFO - 26: Local particles:906
+26-09-12 02:56:13,975.740 INFO  WaComMINFO - 25: Local particles:906
+26-09-12 02:56:13,975.805 INFO  WaComMINFO - 27: Local particles:906
+26-09-12 02:56:13,975.858 INFO  WaComMINFO - 28: Local particles:906
+26-09-12 02:56:13,975.895 INFO  WaComMINFO - 29: Local particles:906
+26-09-12 02:56:13,975.933 INFO  WaComMINFO - 30: Local particles:906
+26-09-12 02:56:13,975.979 INFO  WaComMINFO - 31: Local particles:906
+26-09-12 02:56:13,975.969 INFO  WaComMINFO - 0: Local particles:917
+26-09-12 02:56:14,138.482 INFO  WaComMINFO - Locally processed 917 in 0.137041 seconds (6691.43 particles/second).
+26-09-12 02:56:14,139.156 INFO  WaComMINFO - Removed particles: 4442 Particles: 24561
+26-09-12 02:56:14,139.223 INFO  WaComMINFO - Evaluate concentration
+26-09-12 02:56:14,280.744 INFO  WaComMINFO - EVALUATE sec: 0.141472
+26-09-12 02:56:14,280.872 INFO  WaComMINFO - Processed 29003 in 0.308319 seconds (94068.2 particles/second).
+26-09-12 02:56:14,280.913 INFO  WaComMINFO - Solver interval: start=1675940400 end=1675947600 seconds=0.30831877299999999
+26-09-12 02:56:14,280.963 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z13
+26-09-12 02:56:14,281.009 INFO  WaComMINFO - Preparing NetCDF...
+26-09-12 02:56:14,283.677 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z13.nc
+26-09-12 02:56:14,319.277 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z11.nc
+26-09-12 02:56:14,319.412 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z11.nc
+26-09-12 02:56:14,328.164 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z11.nc
+26-09-12 02:56:15,393.268 INFO  WaComMINFO - 0: Input from Ocean Model: processed-6h/ocm3_d03_20210701Z13.nc
+26-09-12 02:56:17,633.529 INFO  WaComMINFO - ocean_time:2
+26-09-12 02:56:17,633.681 INFO  WaComMINFO - s_rho:30
+26-09-12 02:56:17,633.726 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-12 02:56:17,951.393 INFO  WaComMINFO - Simulating:1.67595e+09 - 20210701Z13
+26-09-12 02:56:17,951.535 INFO  WaComMINFO - Sources:1
+26-09-12 02:56:17,952.745 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 34561
+26-09-12 02:56:17,953.625 INFO  WaComMINFO - 1: Local particles:1080
+26-09-12 02:56:17,953.694 INFO  WaComMINFO - 3: Local particles:1080
+26-09-12 02:56:17,953.729 INFO  WaComMINFO - 4: Local particles:1080
+26-09-12 02:56:17,953.772 INFO  WaComMINFO - 5: Local particles:1080
+26-09-12 02:56:17,953.730 INFO  WaComMINFO - 2: Local particles:1080
+26-09-12 02:56:17,953.811 INFO  WaComMINFO - 6: Local particles:1080
+26-09-12 02:56:17,953.854 INFO  WaComMINFO - 7: Local particles:1080
+26-09-12 02:56:17,953.965 INFO  WaComMINFO - 8: Local particles:1080
+26-09-12 02:56:17,954.007 INFO  WaComMINFO - 9: Local particles:1080
+26-09-12 02:56:17,954.042 INFO  WaComMINFO - 10: Local particles:1080
+26-09-12 02:56:17,954.074 INFO  WaComMINFO - 11: Local particles:1080
+26-09-12 02:56:17,954.095 INFO  WaComMINFO - 12: Local particles:1080
+26-09-12 02:56:17,954.209 INFO  WaComMINFO - 15: Local particles:1080
+26-09-12 02:56:17,954.188 INFO  WaComMINFO - 14: Local particles:1080
+26-09-12 02:56:17,954.271 INFO  WaComMINFO - 17: Local particles:1080
+26-09-12 02:56:17,954.270 INFO  WaComMINFO - 16: Local particles:1080
+26-09-12 02:56:17,954.302 INFO  WaComMINFO - 18: Local particles:1080
+26-09-12 02:56:17,954.397 INFO  WaComMINFO - 20: Local particles:1080
+26-09-12 02:56:17,954.393 INFO  WaComMINFO - 19: Local particles:1080
+26-09-12 02:56:17,954.491 INFO  WaComMINFO - 21: Local particles:1080
+26-09-12 02:56:17,954.534 INFO  WaComMINFO - 22: Local particles:1080
+26-09-12 02:56:17,954.531 INFO  WaComMINFO - 23: Local particles:1080
+26-09-12 02:56:17,954.582 INFO  WaComMINFO - 24: Local particles:1080
+26-09-12 02:56:17,954.552 INFO  WaComMINFO - 13: Local particles:1080
+26-09-12 02:56:17,954.624 INFO  WaComMINFO - 25: Local particles:1080
+26-09-12 02:56:17,954.767 INFO  WaComMINFO - 28: Local particles:1080
+26-09-12 02:56:17,954.742 INFO  WaComMINFO - 26: Local particles:1080
+26-09-12 02:56:17,954.790 INFO  WaComMINFO - 27: Local particles:1080
+26-09-12 02:56:17,954.816 INFO  WaComMINFO - 29: Local particles:1080
+26-09-12 02:56:17,954.866 INFO  WaComMINFO - 30: Local particles:1080
+26-09-12 02:56:17,954.898 INFO  WaComMINFO - 0: Local particles:1081
+26-09-12 02:56:17,954.918 INFO  WaComMINFO - 31: Local particles:1080
+26-09-12 02:56:18,059.790 INFO  WaComMINFO - Locally processed 1081 in 0.0888774 seconds (12162.8 particles/second).
+26-09-12 02:56:18,060.443 INFO  WaComMINFO - Removed particles: 2168 Particles: 32393
+26-09-12 02:56:18,060.511 INFO  WaComMINFO - Evaluate concentration
+26-09-12 02:56:18,198.545 INFO  WaComMINFO - EVALUATE sec: 0.137986
+26-09-12 02:56:18,198.672 INFO  WaComMINFO - Processed 34561 in 0.247298 seconds (139754 particles/second).
+26-09-12 02:56:18,198.720 INFO  WaComMINFO - Solver interval: start=1675947600 end=1675951200 seconds=0.24729816700000001
+26-09-12 02:56:18,198.769 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z14
+26-09-12 02:56:18,198.810 INFO  WaComMINFO - Preparing NetCDF...
+26-09-12 02:56:18,202.259 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z14.nc
+26-09-12 02:56:18,237.824 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z13.nc
+26-09-12 02:56:18,237.958 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z13.nc
+26-09-12 02:56:18,244.425 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z13.nc
+26-09-12 02:56:19,240.923 INFO  WaComMINFO - 0: Input from Ocean Model: processed-6h/ocm3_d03_20210701Z14.nc
+26-09-12 02:56:20,794.027 INFO  WaComMINFO - ocean_time:2
+26-09-12 02:56:20,794.179 INFO  WaComMINFO - s_rho:30
+26-09-12 02:56:20,794.217 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-12 02:56:21,114.451 INFO  WaComMINFO - Simulating:1.67595e+09 - 20210701Z14
+26-09-12 02:56:21,114.593 INFO  WaComMINFO - Sources:1
+26-09-12 02:56:21,115.072 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 42393
+26-09-12 02:56:21,116.157 INFO  WaComMINFO - 2: Local particles:1324
+26-09-12 02:56:21,116.162 INFO  WaComMINFO - 1: Local particles:1324
+26-09-12 02:56:21,116.256 INFO  WaComMINFO - 3: Local particles:1324
+26-09-12 02:56:21,116.306 INFO  WaComMINFO - 4: Local particles:1324
+26-09-12 02:56:21,116.358 INFO  WaComMINFO - 5: Local particles:1324
+26-09-12 02:56:21,116.409 INFO  WaComMINFO - 6: Local particles:1324
+26-09-12 02:56:21,116.460 INFO  WaComMINFO - 7: Local particles:1324
+26-09-12 02:56:21,116.474 INFO  WaComMINFO - 8: Local particles:1324
+26-09-12 02:56:21,116.519 INFO  WaComMINFO - 9: Local particles:1324
+26-09-12 02:56:21,116.583 INFO  WaComMINFO - 10: Local particles:1324
+26-09-12 02:56:21,116.625 INFO  WaComMINFO - 11: Local particles:1324
+26-09-12 02:56:21,116.680 INFO  WaComMINFO - 12: Local particles:1324
+26-09-12 02:56:21,116.735 INFO  WaComMINFO - 13: Local particles:1324
+26-09-12 02:56:21,116.794 INFO  WaComMINFO - 14: Local particles:1324
+26-09-12 02:56:21,116.845 INFO  WaComMINFO - 15: Local particles:1324
+26-09-12 02:56:21,116.921 INFO  WaComMINFO - 16: Local particles:1324
+26-09-12 02:56:21,116.970 INFO  WaComMINFO - 17: Local particles:1324
+26-09-12 02:56:21,117.028 INFO  WaComMINFO - 18: Local particles:1324
+26-09-12 02:56:21,117.153 INFO  WaComMINFO - 20: Local particles:1324
+26-09-12 02:56:21,117.211 INFO  WaComMINFO - 21: Local particles:1324
+26-09-12 02:56:21,117.337 INFO  WaComMINFO - 23: Local particles:1324
+26-09-12 02:56:21,117.316 INFO  WaComMINFO - 22: Local particles:1324
+26-09-12 02:56:21,117.403 INFO  WaComMINFO - 24: Local particles:1324
+26-09-12 02:56:21,117.460 INFO  WaComMINFO - 25: Local particles:1324
+26-09-12 02:56:21,117.530 INFO  WaComMINFO - 26: Local particles:1324
+26-09-12 02:56:21,117.590 INFO  WaComMINFO - 27: Local particles:1324
+26-09-12 02:56:21,117.654 INFO  WaComMINFO - 28: Local particles:1324
+26-09-12 02:56:21,117.719 INFO  WaComMINFO - 29: Local particles:1324
+26-09-12 02:56:21,117.829 INFO  WaComMINFO - 30: Local particles:1324
+26-09-12 02:56:21,117.854 INFO  WaComMINFO - 0: Local particles:1349
+26-09-12 02:56:21,117.900 INFO  WaComMINFO - 19: Local particles:1324
+26-09-12 02:56:21,117.902 INFO  WaComMINFO - 31: Local particles:1324
+26-09-12 02:56:21,236.230 INFO  WaComMINFO - Locally processed 1349 in 0.111969 seconds (12048 particles/second).
+26-09-12 02:56:21,237.140 INFO  WaComMINFO - Removed particles: 2284 Particles: 40109
+26-09-12 02:56:21,237.208 INFO  WaComMINFO - Evaluate concentration
+26-09-12 02:56:21,375.362 INFO  WaComMINFO - EVALUATE sec: 0.138107
+26-09-12 02:56:21,375.486 INFO  WaComMINFO - Processed 42393 in 0.261052 seconds (162393 particles/second).
+26-09-12 02:56:21,375.527 INFO  WaComMINFO - Solver interval: start=1675951200 end=1675954800 seconds=0.26105198299999999
+26-09-12 02:56:21,375.577 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z15
+26-09-12 02:56:21,375.618 INFO  WaComMINFO - Preparing NetCDF...
+26-09-12 02:56:21,379.877 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z15.nc
+26-09-12 02:56:21,457.166 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z14.nc
+26-09-12 02:56:21,457.318 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z14.nc
+26-09-12 02:56:21,481.882 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z14.nc
+26-09-12 02:56:21,788.292 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,789.456 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,790.166 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,790.631 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,792.700 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,793.580 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,794.726 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,800.064 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,799.482 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,798.527 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,793.980 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,796.281 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,800.674 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,804.599 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,805.161 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,911.334 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,911.568 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,913.227 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,915.967 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,915.631 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,922.074 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,917.131 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,927.550 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,920.078 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,919.864 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,918.613 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,917.088 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,923.360 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,929.995 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,940.497 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:21,940.288 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it
+26-09-12 02:56:22,757.211 INFO  WaComMINFO - 0: Input from Ocean Model: processed-6h/ocm3_d03_20210701Z15.nc
+26-09-12 02:56:22,757.249 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it

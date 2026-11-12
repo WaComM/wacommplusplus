@@ -1,0 +1,10 @@
+# Labels of the self-hosted runners used by flexmpi.yml, gpu.yml, and
+# native-hardware.yml; actionlint rejects unknown labels otherwise.
+self-hosted-runner:
+  labels:
+    - flexmpi
+    - gpu
+    - cuda
+    - raspberry-pi
+    - riscv64
+    - riscv-hardware

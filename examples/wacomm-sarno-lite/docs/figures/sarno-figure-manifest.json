@@ -1,0 +1,417 @@
+{
+  "depth_bin_edges_m": [
+    0.0,
+    0.0005,
+    0.001,
+    0.0015,
+    0.002,
+    0.0025,
+    0.003,
+    0.0035,
+    0.004,
+    0.0045000000000000005,
+    0.005,
+    0.0055,
+    0.006,
+    0.006500000000000001,
+    0.007,
+    0.0075,
+    0.008,
+    0.0085,
+    0.009000000000000001,
+    0.0095,
+    0.01,
+    0.0105,
+    0.011,
+    0.0115,
+    0.012,
+    0.0125,
+    0.013000000000000001,
+    0.0135,
+    0.014,
+    0.0145,
+    0.015,
+    0.0155,
+    0.016
+  ],
+  "depth_display_unit": "mm",
+  "extent_degrees": [
+    14.461,
+    14.474,
+    40.721,
+    40.733
+  ],
+  "grid": {
+    "coastline": "ROMS wet/dry mask only",
+    "name": "rms3_d03_20210701Z0900.nc",
+    "sha256": "7fd6f78b1717156077ac850bbc4572f2122a190e9fed29c23505319160186c79"
+  },
+  "inputs": [
+    {
+      "excluded_inactive": 0,
+      "excluded_invalid": 0,
+      "name": "WACOMM_rst_20210701Z10.nc",
+      "provenance": {
+        "wacomm_cmake_options": "BUILD_APPLICATION=ON;BUILD_TESTING=ON;BUILD_REMOTE_INTEGRATION_TESTS=OFF;DEBUG=OFF;USE_MPI=OFF;USE_EMPI=OFF;USE_OMP=OFF;USE_OPENACC=OFF;USE_CUDA=OFF;USE_PROJ=OFF;WACOMM_BOOTSTRAP_DEPENDENCIES=AUTO;WACOMM_BOOTSTRAP_PARALLEL_IO=OFF",
+        "wacomm_compiler": "GNU 12.2.1",
+        "wacomm_configuration": "{\n    \"drift\": {\n        \"coefficient_ensemble\": false,\n        \"jibe_probability_per_hour\": 0.0,\n        \"model\": \"passive\",\n        \"object_type\": \"PASSIVE\",\n        \"residual_correlation\": 0.0,\n        \"side\": \"undefined\"\n    },\n    \"environment\": {\n        \"wave\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\"\n        },\n        \"wind\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\",\n            \"u10\": 0.0,\n            \"uncertainty_component_correlation\": 0.0,\n            \"uncertainty_spatial_scale\": 0.0,\n            \"uncertainty_stddev\": 0.0,\n            \"uncertainty_temporal_scale\": 0.0,\n            \"v10\": 0.0\n        }\n    },\n    \"io\": {\n        \"base_path\": \"roms/\",\n        \"nc_input_root\": \"processed-6h/ocm3_d03_\",\n        \"nc_inputs\": [\n            \"roms/rms3_d03_20210701Z0900.nc\",\n            \"roms/rms3_d03_20210701Z1000.nc\",\n            \"roms/rms3_d03_20210701Z1100.nc\",\n            \"roms/rms3_d03_20210701Z1300.nc\",\n            \"roms/rms3_d03_20210701Z1400.nc\",\n            \"roms/rms3_d03_20210701Z1500.nc\"\n        ],\n        \"nc_output_root\": \"output-6h/wacomm_his_\",\n        \"ocean_model\": \"ROMS\",\n        \"save_history\": \"nc\",\n        \"save_input\": true\n    },\n    \"observational_calibration\": {\n        \"regions\": []\n    },\n    \"physics\": {\n        \"crid\": 1.0,\n        \"deltat\": 3600.0,\n        \"dti\": 30.0,\n        \"horizontal_closure\": \"kill\",\n        \"lower_closure\": \"constraint\",\n        \"random\": true,\n        \"random_seed\": 5489,\n        \"random_sources\": false,\n        \"shore_limit\": 0.5,\n        \"sigma\": 3.46,\n        \"survprob\": 0.0001,\n        \"sv\": 0.0,\n        \"tau0\": 86400.0,\n        \"upper_closure\": \"reflection\"\n    },\n    \"restart\": {\n        \"active\": false,\n        \"interval\": 3600.0,\n        \"restart_file\": \"\"\n    },\n    \"simulation\": {\n        \"end\": \"20210701Z15\",\n        \"institution\": \"meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope\",\n        \"name\": \"Sarno lite emission\",\n        \"start\": \"20210701Z09\",\n        \"url\": \"https://meteo.uniparthenope.it\"\n    },\n    \"sources\": {\n        \"active\": true,\n        \"sources_file\": \"examples/sources-sarno_river.json\"\n    },\n    \"tracking\": {\n        \"backward_diffusion\": \"none\",\n        \"direction\": \"forward\"\n    }\n}",
+        "wacomm_configuration_file": "wacomm-sarno-lite-6h.json",
+        "wacomm_git_revision": "8c5285c7f7a1befee63475d7a383aebdbb243f99",
+        "wacomm_restart_version": "3"
+      },
+      "sha256": "48a9d9e35a4ae833a26853ff781571abcc830c13cfee91a6e73756914ab211fc"
+    },
+    {
+      "excluded_inactive": 0,
+      "excluded_invalid": 0,
+      "name": "WACOMM_rst_20210701Z11.nc",
+      "provenance": {
+        "wacomm_cmake_options": "BUILD_APPLICATION=ON;BUILD_TESTING=ON;BUILD_REMOTE_INTEGRATION_TESTS=OFF;DEBUG=OFF;USE_MPI=OFF;USE_EMPI=OFF;USE_OMP=OFF;USE_OPENACC=OFF;USE_CUDA=OFF;USE_PROJ=OFF;WACOMM_BOOTSTRAP_DEPENDENCIES=AUTO;WACOMM_BOOTSTRAP_PARALLEL_IO=OFF",
+        "wacomm_compiler": "GNU 12.2.1",
+        "wacomm_configuration": "{\n    \"drift\": {\n        \"coefficient_ensemble\": false,\n        \"jibe_probability_per_hour\": 0.0,\n        \"model\": \"passive\",\n        \"object_type\": \"PASSIVE\",\n        \"residual_correlation\": 0.0,\n        \"side\": \"undefined\"\n    },\n    \"environment\": {\n        \"wave\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\"\n        },\n        \"wind\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\",\n            \"u10\": 0.0,\n            \"uncertainty_component_correlation\": 0.0,\n            \"uncertainty_spatial_scale\": 0.0,\n            \"uncertainty_stddev\": 0.0,\n            \"uncertainty_temporal_scale\": 0.0,\n            \"v10\": 0.0\n        }\n    },\n    \"io\": {\n        \"base_path\": \"roms/\",\n        \"nc_input_root\": \"processed-6h/ocm3_d03_\",\n        \"nc_inputs\": [\n            \"roms/rms3_d03_20210701Z0900.nc\",\n            \"roms/rms3_d03_20210701Z1000.nc\",\n            \"roms/rms3_d03_20210701Z1100.nc\",\n            \"roms/rms3_d03_20210701Z1300.nc\",\n            \"roms/rms3_d03_20210701Z1400.nc\",\n            \"roms/rms3_d03_20210701Z1500.nc\"\n        ],\n        \"nc_output_root\": \"output-6h/wacomm_his_\",\n        \"ocean_model\": \"ROMS\",\n        \"save_history\": \"nc\",\n        \"save_input\": true\n    },\n    \"observational_calibration\": {\n        \"regions\": []\n    },\n    \"physics\": {\n        \"crid\": 1.0,\n        \"deltat\": 3600.0,\n        \"dti\": 30.0,\n        \"horizontal_closure\": \"kill\",\n        \"lower_closure\": \"constraint\",\n        \"random\": true,\n        \"random_seed\": 5489,\n        \"random_sources\": false,\n        \"shore_limit\": 0.5,\n        \"sigma\": 3.46,\n        \"survprob\": 0.0001,\n        \"sv\": 0.0,\n        \"tau0\": 86400.0,\n        \"upper_closure\": \"reflection\"\n    },\n    \"restart\": {\n        \"active\": false,\n        \"interval\": 3600.0,\n        \"restart_file\": \"\"\n    },\n    \"simulation\": {\n        \"end\": \"20210701Z15\",\n        \"institution\": \"meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope\",\n        \"name\": \"Sarno lite emission\",\n        \"start\": \"20210701Z09\",\n        \"url\": \"https://meteo.uniparthenope.it\"\n    },\n    \"sources\": {\n        \"active\": true,\n        \"sources_file\": \"examples/sources-sarno_river.json\"\n    },\n    \"tracking\": {\n        \"backward_diffusion\": \"none\",\n        \"direction\": \"forward\"\n    }\n}",
+        "wacomm_configuration_file": "wacomm-sarno-lite-6h.json",
+        "wacomm_git_revision": "8c5285c7f7a1befee63475d7a383aebdbb243f99",
+        "wacomm_restart_version": "3"
+      },
+      "sha256": "b3be68c9ca624b2ae9a43211f34784614066aa155cc4ea0ec90ef8e4a71fd4fc"
+    },
+    {
+      "excluded_inactive": 0,
+      "excluded_invalid": 0,
+      "name": "WACOMM_rst_20210701Z13.nc",
+      "provenance": {
+        "wacomm_cmake_options": "BUILD_APPLICATION=ON;BUILD_TESTING=ON;BUILD_REMOTE_INTEGRATION_TESTS=OFF;DEBUG=OFF;USE_MPI=OFF;USE_EMPI=OFF;USE_OMP=OFF;USE_OPENACC=OFF;USE_CUDA=OFF;USE_PROJ=OFF;WACOMM_BOOTSTRAP_DEPENDENCIES=AUTO;WACOMM_BOOTSTRAP_PARALLEL_IO=OFF",
+        "wacomm_compiler": "GNU 12.2.1",
+        "wacomm_configuration": "{\n    \"drift\": {\n        \"coefficient_ensemble\": false,\n        \"jibe_probability_per_hour\": 0.0,\n        \"model\": \"passive\",\n        \"object_type\": \"PASSIVE\",\n        \"residual_correlation\": 0.0,\n        \"side\": \"undefined\"\n    },\n    \"environment\": {\n        \"wave\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\"\n        },\n        \"wind\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\",\n            \"u10\": 0.0,\n            \"uncertainty_component_correlation\": 0.0,\n            \"uncertainty_spatial_scale\": 0.0,\n            \"uncertainty_stddev\": 0.0,\n            \"uncertainty_temporal_scale\": 0.0,\n            \"v10\": 0.0\n        }\n    },\n    \"io\": {\n        \"base_path\": \"roms/\",\n        \"nc_input_root\": \"processed-6h/ocm3_d03_\",\n        \"nc_inputs\": [\n            \"roms/rms3_d03_20210701Z0900.nc\",\n            \"roms/rms3_d03_20210701Z1000.nc\",\n            \"roms/rms3_d03_20210701Z1100.nc\",\n            \"roms/rms3_d03_20210701Z1300.nc\",\n            \"roms/rms3_d03_20210701Z1400.nc\",\n            \"roms/rms3_d03_20210701Z1500.nc\"\n        ],\n        \"nc_output_root\": \"output-6h/wacomm_his_\",\n        \"ocean_model\": \"ROMS\",\n        \"save_history\": \"nc\",\n        \"save_input\": true\n    },\n    \"observational_calibration\": {\n        \"regions\": []\n    },\n    \"physics\": {\n        \"crid\": 1.0,\n        \"deltat\": 3600.0,\n        \"dti\": 30.0,\n        \"horizontal_closure\": \"kill\",\n        \"lower_closure\": \"constraint\",\n        \"random\": true,\n        \"random_seed\": 5489,\n        \"random_sources\": false,\n        \"shore_limit\": 0.5,\n        \"sigma\": 3.46,\n        \"survprob\": 0.0001,\n        \"sv\": 0.0,\n        \"tau0\": 86400.0,\n        \"upper_closure\": \"reflection\"\n    },\n    \"restart\": {\n        \"active\": false,\n        \"interval\": 3600.0,\n        \"restart_file\": \"\"\n    },\n    \"simulation\": {\n        \"end\": \"20210701Z15\",\n        \"institution\": \"meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope\",\n        \"name\": \"Sarno lite emission\",\n        \"start\": \"20210701Z09\",\n        \"url\": \"https://meteo.uniparthenope.it\"\n    },\n    \"sources\": {\n        \"active\": true,\n        \"sources_file\": \"examples/sources-sarno_river.json\"\n    },\n    \"tracking\": {\n        \"backward_diffusion\": \"none\",\n        \"direction\": \"forward\"\n    }\n}",
+        "wacomm_configuration_file": "wacomm-sarno-lite-6h.json",
+        "wacomm_git_revision": "8c5285c7f7a1befee63475d7a383aebdbb243f99",
+        "wacomm_restart_version": "3"
+      },
+      "sha256": "29247db3e5de3c5f36759aefa3b546854beaea749a49c459c52fedcf743e0fbf"
+    },
+    {
+      "excluded_inactive": 0,
+      "excluded_invalid": 0,
+      "name": "WACOMM_rst_20210701Z14.nc",
+      "provenance": {
+        "wacomm_cmake_options": "BUILD_APPLICATION=ON;BUILD_TESTING=ON;BUILD_REMOTE_INTEGRATION_TESTS=OFF;DEBUG=OFF;USE_MPI=OFF;USE_EMPI=OFF;USE_OMP=OFF;USE_OPENACC=OFF;USE_CUDA=OFF;USE_PROJ=OFF;WACOMM_BOOTSTRAP_DEPENDENCIES=AUTO;WACOMM_BOOTSTRAP_PARALLEL_IO=OFF",
+        "wacomm_compiler": "GNU 12.2.1",
+        "wacomm_configuration": "{\n    \"drift\": {\n        \"coefficient_ensemble\": false,\n        \"jibe_probability_per_hour\": 0.0,\n        \"model\": \"passive\",\n        \"object_type\": \"PASSIVE\",\n        \"residual_correlation\": 0.0,\n        \"side\": \"undefined\"\n    },\n    \"environment\": {\n        \"wave\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\"\n        },\n        \"wind\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\",\n            \"u10\": 0.0,\n            \"uncertainty_component_correlation\": 0.0,\n            \"uncertainty_spatial_scale\": 0.0,\n            \"uncertainty_stddev\": 0.0,\n            \"uncertainty_temporal_scale\": 0.0,\n            \"v10\": 0.0\n        }\n    },\n    \"io\": {\n        \"base_path\": \"roms/\",\n        \"nc_input_root\": \"processed-6h/ocm3_d03_\",\n        \"nc_inputs\": [\n            \"roms/rms3_d03_20210701Z0900.nc\",\n            \"roms/rms3_d03_20210701Z1000.nc\",\n            \"roms/rms3_d03_20210701Z1100.nc\",\n            \"roms/rms3_d03_20210701Z1300.nc\",\n            \"roms/rms3_d03_20210701Z1400.nc\",\n            \"roms/rms3_d03_20210701Z1500.nc\"\n        ],\n        \"nc_output_root\": \"output-6h/wacomm_his_\",\n        \"ocean_model\": \"ROMS\",\n        \"save_history\": \"nc\",\n        \"save_input\": true\n    },\n    \"observational_calibration\": {\n        \"regions\": []\n    },\n    \"physics\": {\n        \"crid\": 1.0,\n        \"deltat\": 3600.0,\n        \"dti\": 30.0,\n        \"horizontal_closure\": \"kill\",\n        \"lower_closure\": \"constraint\",\n        \"random\": true,\n        \"random_seed\": 5489,\n        \"random_sources\": false,\n        \"shore_limit\": 0.5,\n        \"sigma\": 3.46,\n        \"survprob\": 0.0001,\n        \"sv\": 0.0,\n        \"tau0\": 86400.0,\n        \"upper_closure\": \"reflection\"\n    },\n    \"restart\": {\n        \"active\": false,\n        \"interval\": 3600.0,\n        \"restart_file\": \"\"\n    },\n    \"simulation\": {\n        \"end\": \"20210701Z15\",\n        \"institution\": \"meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope\",\n        \"name\": \"Sarno lite emission\",\n        \"start\": \"20210701Z09\",\n        \"url\": \"https://meteo.uniparthenope.it\"\n    },\n    \"sources\": {\n        \"active\": true,\n        \"sources_file\": \"examples/sources-sarno_river.json\"\n    },\n    \"tracking\": {\n        \"backward_diffusion\": \"none\",\n        \"direction\": \"forward\"\n    }\n}",
+        "wacomm_configuration_file": "wacomm-sarno-lite-6h.json",
+        "wacomm_git_revision": "8c5285c7f7a1befee63475d7a383aebdbb243f99",
+        "wacomm_restart_version": "3"
+      },
+      "sha256": "e711ccc3bd892a531d63ceea5466fa8cbfeb34d3d75333bfadd088015a012871"
+    },
+    {
+      "excluded_inactive": 0,
+      "excluded_invalid": 0,
+      "name": "WACOMM_rst_20210701Z15.nc",
+      "provenance": {
+        "wacomm_cmake_options": "BUILD_APPLICATION=ON;BUILD_TESTING=ON;BUILD_REMOTE_INTEGRATION_TESTS=OFF;DEBUG=OFF;USE_MPI=OFF;USE_EMPI=OFF;USE_OMP=OFF;USE_OPENACC=OFF;USE_CUDA=OFF;USE_PROJ=OFF;WACOMM_BOOTSTRAP_DEPENDENCIES=AUTO;WACOMM_BOOTSTRAP_PARALLEL_IO=OFF",
+        "wacomm_compiler": "GNU 12.2.1",
+        "wacomm_configuration": "{\n    \"drift\": {\n        \"coefficient_ensemble\": false,\n        \"jibe_probability_per_hour\": 0.0,\n        \"model\": \"passive\",\n        \"object_type\": \"PASSIVE\",\n        \"residual_correlation\": 0.0,\n        \"side\": \"undefined\"\n    },\n    \"environment\": {\n        \"wave\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\"\n        },\n        \"wind\": {\n            \"adapter\": \"none\",\n            \"nc_inputs\": [],\n            \"regrid\": \"none\",\n            \"source_crs\": \"\",\n            \"u10\": 0.0,\n            \"uncertainty_component_correlation\": 0.0,\n            \"uncertainty_spatial_scale\": 0.0,\n            \"uncertainty_stddev\": 0.0,\n            \"uncertainty_temporal_scale\": 0.0,\n            \"v10\": 0.0\n        }\n    },\n    \"io\": {\n        \"base_path\": \"roms/\",\n        \"nc_input_root\": \"processed-6h/ocm3_d03_\",\n        \"nc_inputs\": [\n            \"roms/rms3_d03_20210701Z0900.nc\",\n            \"roms/rms3_d03_20210701Z1000.nc\",\n            \"roms/rms3_d03_20210701Z1100.nc\",\n            \"roms/rms3_d03_20210701Z1300.nc\",\n            \"roms/rms3_d03_20210701Z1400.nc\",\n            \"roms/rms3_d03_20210701Z1500.nc\"\n        ],\n        \"nc_output_root\": \"output-6h/wacomm_his_\",\n        \"ocean_model\": \"ROMS\",\n        \"save_history\": \"nc\",\n        \"save_input\": true\n    },\n    \"observational_calibration\": {\n        \"regions\": []\n    },\n    \"physics\": {\n        \"crid\": 1.0,\n        \"deltat\": 3600.0,\n        \"dti\": 30.0,\n        \"horizontal_closure\": \"kill\",\n        \"lower_closure\": \"constraint\",\n        \"random\": true,\n        \"random_seed\": 5489,\n        \"random_sources\": false,\n        \"shore_limit\": 0.5,\n        \"sigma\": 3.46,\n        \"survprob\": 0.0001,\n        \"sv\": 0.0,\n        \"tau0\": 86400.0,\n        \"upper_closure\": \"reflection\"\n    },\n    \"restart\": {\n        \"active\": false,\n        \"interval\": 3600.0,\n        \"restart_file\": \"\"\n    },\n    \"simulation\": {\n        \"end\": \"20210701Z15\",\n        \"institution\": \"meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope\",\n        \"name\": \"Sarno lite emission\",\n        \"start\": \"20210701Z09\",\n        \"url\": \"https://meteo.uniparthenope.it\"\n    },\n    \"sources\": {\n        \"active\": true,\n        \"sources_file\": \"examples/sources-sarno_river.json\"\n    },\n    \"tracking\": {\n        \"backward_diffusion\": \"none\",\n        \"direction\": \"forward\"\n    }\n}",
+        "wacomm_configuration_file": "wacomm-sarno-lite-6h.json",
+        "wacomm_git_revision": "8c5285c7f7a1befee63475d7a383aebdbb243f99",
+        "wacomm_restart_version": "3"
+      },
+      "sha256": "122e954d7e763f4821940e894e46ffe411a9c95008fe1c23db1cd0776d16c243"
+    }
+  ],
+  "interpretation": "unweighted descriptive members, not mass, probabilities or confidence intervals",
+  "map_crs": "EPSG:4326",
+  "note": "12:00 forcing unavailable: interpolation spans 11:00\u201313:00 UTC; no 12:00 release batch.",
+  "outputs": [
+    {
+      "name": "sarno-maps.svg",
+      "sha256": "166e3cd280f6f65770ef178eaf2fd0f1bf225d748d09a4aeae50da840f6748c5"
+    },
+    {
+      "name": "sarno-maps.pdf",
+      "sha256": "55f0773abb41605a321ed8ad8817d0b9501144e0eb6ddb01dabd0fb83cebe1ab"
+    },
+    {
+      "name": "sarno-maps.png",
+      "sha256": "c6b8af1876f70844b90ee80958621174a0fee5f45b4c64554a8316d20a306ce9"
+    },
+    {
+      "name": "sarno-profiles.svg",
+      "sha256": "e8e0b29e902c2868d603d25a2ed8904a651829f864cdf987a6eedcd26712d756"
+    },
+    {
+      "name": "sarno-profiles.pdf",
+      "sha256": "29287ff68aae5ca7017ee7668ed5ad4120c577539d513945d0e7024711c519f3"
+    },
+    {
+      "name": "sarno-profiles.png",
+      "sha256": "360b077a273f80c4f8186a72c884f3f0cda097f4a84d54dc64b0d32680de5d15"
+    }
+  ],
+  "schema": "wacomm-publication-v1",
+  "selection": "finite unmasked geographic coordinates, depth and age; age >= 0; health > 0",
+  "software": {
+    "diagnostic_helpers_sha256": "9b48baf1700234d83e4086bca0e043ae9a9b95277358a6e8b029cd34cdda766a",
+    "matplotlib": "3.11.1",
+    "netCDF4": "1.7.4",
+    "numpy": "2.4.6",
+    "python": "3.11.7",
+    "script_sha256": "e0bbdbea04335bf8cd9ef786a73e6579f1a8a82f88ae9ea053601a0bbdfc19ea"
+  },
+  "source_lon_lat": [
+    14.466590881347654,
+    40.72813686316017
+  ],
+  "statistics": [
+    {
+      "depth_counts": [
+        6,
+        31,
+        51,
+        89,
+        126,
+        188,
+        266,
+        354,
+        432,
+        522,
+        609,
+        717,
+        732,
+        755,
+        787,
+        689,
+        698,
+        584,
+        504,
+        457,
+        346,
+        298,
+        228,
+        178,
+        122,
+        75,
+        51,
+        20,
+        3,
+        3,
+        4,
+        1
+      ],
+      "depth_outside_bins": 0,
+      "depth_quantiles_m": [
+        0.003846812312209037,
+        0.007046705889937475,
+        0.01048414931103134
+      ],
+      "radial_distance_from_source_m_quantiles": [
+        32.25032686785487,
+        72.48194647216354,
+        117.5756716717025
+      ],
+      "selected": 9926,
+      "time": 1675936800.0,
+      "utc": "2021-07-01T10:00:00+00:00"
+    },
+    {
+      "depth_counts": [
+        19003,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "depth_outside_bins": 0,
+      "depth_quantiles_m": [
+        1.5083464646559561e-05,
+        8.240391315605425e-05,
+        0.00020475257948810637
+      ],
+      "radial_distance_from_source_m_quantiles": [
+        41.74213254364448,
+        89.16134309282337,
+        141.727461852523
+      ],
+      "selected": 19003,
+      "time": 1675940400.0,
+      "utc": "2021-07-01T11:00:00+00:00"
+    },
+    {
+      "depth_counts": [
+        1918,
+        4168,
+        4181,
+        3651,
+        3032,
+        2500,
+        1944,
+        1220,
+        732,
+        450,
+        282,
+        196,
+        133,
+        88,
+        35,
+        21,
+        9,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "depth_outside_bins": 0,
+      "depth_quantiles_m": [
+        0.000574613315330288,
+        0.0017646036285650507,
+        0.00377444930238001
+      ],
+      "radial_distance_from_source_m_quantiles": [
+        53.86399508649705,
+        120.41317832108399,
+        209.56928579679928
+      ],
+      "selected": 24561,
+      "time": 1675947600.0,
+      "utc": "2021-07-01T13:00:00+00:00"
+    },
+    {
+      "depth_counts": [
+        32374,
+        19,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "depth_outside_bins": 0,
+      "depth_quantiles_m": [
+        3.6721573537652805e-05,
+        0.0001413672988881428,
+        0.00030385710548063306
+      ],
+      "radial_distance_from_source_m_quantiles": [
+        56.77534344070894,
+        121.55592413867814,
+        234.88639101048227
+      ],
+      "selected": 32393,
+      "time": 1675951200.0,
+      "utc": "2021-07-01T14:00:00+00:00"
+    },
+    {
+      "depth_counts": [
+        36678,
+        3431,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "depth_outside_bins": 0,
+      "depth_quantiles_m": [
+        5.0781642363821566e-05,
+        0.00020617187754955597,
+        0.0004794850438804247
+      ],
+      "radial_distance_from_source_m_quantiles": [
+        61.44088586358217,
+        131.9681665506763,
+        262.41910667508864
+      ],
+      "selected": 40109,
+      "time": 1675954800.0,
+      "utc": "2021-07-01T15:00:00+00:00"
+    }
+  ],
+  "title": "Sarno River \u2022 six-hour release"
+}

@@ -816,7 +816,7 @@ namespace Array {
         }
         array5(unsigned int nx0, unsigned int ny0, unsigned int nz0,
                unsigned int nw0, unsigned int nv0, T *v0) {
-            Dimension(nx0,ny0,nz0,nw0,nv0,nv0);
+            Dimension(nx0,ny0,nz0,nw0,nv0,v0);
         }
 
         unsigned int Nx() const {return nx;}
@@ -889,7 +889,7 @@ namespace Array {
             for(unsigned int j=0; j < A.Ny(); j++) {
                 for(unsigned int k=0; k < A.Nz(); k++) {
                     for(unsigned int l=0; l < A.N4(); l++) {
-                        for(unsigned int l=0; l < A.N5(); l++) {
+                        for(unsigned int m=0; m < A.N5(); m++) {
                             s << *(p++) << " ";
                         }
                         s << _newl;

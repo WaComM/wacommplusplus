@@ -1,0 +1,45 @@
+#ifndef WACOMMPLUSPLUS_ENVIRONMENTALREGRIDDER_HPP
+#define WACOMMPLUSPLUS_ENVIRONMENTALREGRIDDER_HPP
+
+#include "Array.h"
+#include <string>
+
+namespace EnvironmentalRegridder {
+    Array::Array3<float> bilinearGeographic(const Array::Array2<double>& sourceLon,
+                                            const Array::Array2<double>& sourceLat,
+                                            const Array::Array3<float>& source,
+                                            const Array::Array2<double>& targetLon,
+                                            const Array::Array2<double>& targetLat);
+    Array::Array3<float> bilinearCurvilinearGeographic(const Array::Array2<double>& sourceLon,
+                                                       const Array::Array2<double>& sourceLat,
+                                                       const Array::Array3<float>& source,
+                                                       const Array::Array2<double>& targetLon,
+                                                       const Array::Array2<double>& targetLat);
+    Array::Array3<float> bilinearProjected(const Array::Array2<double>& sourceX,
+                                           const Array::Array2<double>& sourceY,
+                                           const Array::Array3<float>& source,
+                                           const Array::Array2<double>& targetLon,
+                                           const Array::Array2<double>& targetLat,
+                                           const std::string& sourceCrs);
+    Array::Array3<float> bilinearCurvilinearCartesian(const Array::Array2<double>& sourceX,
+                                                      const Array::Array2<double>& sourceY,
+                                                      const Array::Array3<float>& source,
+                                                      const Array::Array2<double>& targetX,
+                                                      const Array::Array2<double>& targetY);
+    Array::Array3<float> conservativeRectilinearGeographicCellAverage(
+            const Array::Array2<double>& sourceLonBounds,
+            const Array::Array2<double>& sourceLatBounds,
+            const Array::Array3<float>& sourceCellAverage,
+            const Array::Array2<double>& targetLonBounds,
+            const Array::Array2<double>& targetLatBounds);
+    Array::Array3<float> conservativeCurvilinearGeographicCellAverage(
+            const Array::Array2<double>& sourceLonBounds,
+            const Array::Array2<double>& sourceLatBounds,
+            const Array::Array3<float>& sourceCellAverage,
+            const Array::Array2<double>& sourceActiveFraction,
+            const Array::Array2<double>& targetLonBounds,
+            const Array::Array2<double>& targetLatBounds,
+            bool secondOrder=false);
+}
+
+#endif

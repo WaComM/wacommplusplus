@@ -1,0 +1,109 @@
+26-09-11 15:49:31,576.074 INFO  WaComMINFO - WaComM - C++ Version
+26-09-11 15:49:31,576.279 INFO  WaComMINFO - Parallel: None
+26-09-11 15:49:31,576.282 INFO  WaComMINFO - Acceleration: None
+26-09-11 15:49:31,576.285 INFO  WaComMINFO - 0: Using 1/1 processes, each on 1 threads.
+26-09-11 15:49:31,576.287 INFO  WaComMINFO - Configuration: wacomm-sarno-lite-6h.json
+26-09-11 15:49:31,605.217 INFO  WaComMINFO - 0: Input from Ocean Model: roms/rms3_d03_20210701Z0900.nc
+26-09-11 15:50:15,503.147 INFO  WaComMINFO - Reading from json:examples/sources-sarno_river.json
+26-09-11 15:50:15,865.911 INFO  WaComMINFO - Saving processed output: processed-6h/ocm3_d03_20210701Z09.nc
+26-09-11 15:50:18,616.361 INFO  WaComMINFO - ocean_time:2
+26-09-11 15:50:18,616.376 INFO  WaComMINFO - s_rho:30
+26-09-11 15:50:18,616.379 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-11 15:50:20,563.582 INFO  WaComMINFO - Simulating:1.67593e+09 - 20210701Z09
+26-09-11 15:50:20,563.596 INFO  WaComMINFO - Sources:1
+26-09-11 15:50:20,564.966 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 10000
+26-09-11 15:50:20,564.972 INFO  WaComMINFO - 0: Local particles:10000
+26-09-11 15:50:23,299.643 INFO  WaComMINFO - Locally processed 10000 in 2.73466 seconds (3656.76 particles/second).
+26-09-11 15:50:23,299.891 INFO  WaComMINFO - Removed particles: 74 Particles: 9926
+26-09-11 15:50:23,299.894 INFO  WaComMINFO - Evaluate concentration
+26-09-11 15:50:24,559.977 INFO  WaComMINFO - EVALUATE sec: 1.26007
+26-09-11 15:50:24,559.989 INFO  WaComMINFO - Processed 10000 in 3.99643 seconds (2502.23 particles/second).
+26-09-11 15:50:24,560.001 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z10
+26-09-11 15:50:24,570.617 INFO  WaComMINFO - Preparing NetCDF...
+26-09-11 15:50:24,578.230 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z10.nc
+26-09-11 15:50:24,590.102 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z09.nc
+26-09-11 15:50:24,590.109 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z09.nc
+26-09-11 15:50:24,590.960 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z09.nc
+26-09-11 15:50:25,290.805 INFO  WaComMINFO - 0: Input from Ocean Model: roms/rms3_d03_20210701Z1000.nc
+26-09-11 15:50:56,540.836 INFO  WaComMINFO - Saving processed output: processed-6h/ocm3_d03_20210701Z10.nc
+26-09-11 15:50:59,377.512 INFO  WaComMINFO - ocean_time:2
+26-09-11 15:50:59,377.527 INFO  WaComMINFO - s_rho:30
+26-09-11 15:50:59,377.530 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-11 15:51:01,322.719 INFO  WaComMINFO - Simulating:1.67594e+09 - 20210701Z10
+26-09-11 15:51:01,322.732 INFO  WaComMINFO - Sources:1
+26-09-11 15:51:01,324.235 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 19926
+26-09-11 15:51:01,324.240 INFO  WaComMINFO - 0: Local particles:19926
+26-09-11 15:51:06,706.335 INFO  WaComMINFO - Locally processed 19926 in 5.38207 seconds (3702.29 particles/second).
+26-09-11 15:51:06,707.072 INFO  WaComMINFO - Removed particles: 923 Particles: 19003
+26-09-11 15:51:06,707.076 INFO  WaComMINFO - Evaluate concentration
+26-09-11 15:51:07,992.420 INFO  WaComMINFO - EVALUATE sec: 1.28533
+26-09-11 15:51:07,992.435 INFO  WaComMINFO - Processed 19926 in 6.66974 seconds (2987.52 particles/second).
+26-09-11 15:51:07,992.450 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z11
+26-09-11 15:51:07,992.471 INFO  WaComMINFO - Preparing NetCDF...
+26-09-11 15:51:08,006.815 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z11.nc
+26-09-11 15:51:08,017.488 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z10.nc
+26-09-11 15:51:08,017.499 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z10.nc
+26-09-11 15:51:08,018.295 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z10.nc
+26-09-11 15:51:08,762.801 INFO  WaComMINFO - 0: Input from Ocean Model: roms/rms3_d03_20210701Z1100.nc
+26-09-11 15:51:40,111.967 INFO  WaComMINFO - Saving processed output: processed-6h/ocm3_d03_20210701Z11.nc
+26-09-11 15:51:43,045.661 INFO  WaComMINFO - ocean_time:2
+26-09-11 15:51:43,045.677 INFO  WaComMINFO - s_rho:30
+26-09-11 15:51:43,045.680 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-11 15:51:45,009.171 INFO  WaComMINFO - Simulating:1.67594e+09 - 20210701Z11
+26-09-11 15:51:45,009.184 INFO  WaComMINFO - Sources:1
+26-09-11 15:51:45,009.944 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 29003
+26-09-11 15:51:45,009.948 INFO  WaComMINFO - 0: Local particles:29003
+26-09-11 15:51:59,781.049 INFO  WaComMINFO - Locally processed 29003 in 14.7711 seconds (1963.5 particles/second).
+26-09-11 15:51:59,781.804 INFO  WaComMINFO - Removed particles: 4442 Particles: 24561
+26-09-11 15:51:59,781.808 INFO  WaComMINFO - Evaluate concentration
+26-09-11 15:52:01,043.106 INFO  WaComMINFO - EVALUATE sec: 1.26129
+26-09-11 15:52:01,043.119 INFO  WaComMINFO - Processed 29003 in 16.034 seconds (1808.85 particles/second).
+26-09-11 15:52:01,043.132 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z13
+26-09-11 15:52:01,043.149 INFO  WaComMINFO - Preparing NetCDF...
+26-09-11 15:52:01,061.522 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z13.nc
+26-09-11 15:52:01,103.567 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z11.nc
+26-09-11 15:52:01,103.579 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z11.nc
+26-09-11 15:52:01,104.333 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z11.nc
+26-09-11 15:52:01,837.707 INFO  WaComMINFO - 0: Input from Ocean Model: roms/rms3_d03_20210701Z1300.nc
+26-09-11 15:52:33,071.037 INFO  WaComMINFO - Saving processed output: processed-6h/ocm3_d03_20210701Z13.nc
+26-09-11 15:52:35,779.218 INFO  WaComMINFO - ocean_time:2
+26-09-11 15:52:35,779.234 INFO  WaComMINFO - s_rho:30
+26-09-11 15:52:35,779.237 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-11 15:52:37,714.220 INFO  WaComMINFO - Simulating:1.67595e+09 - 20210701Z13
+26-09-11 15:52:37,714.233 INFO  WaComMINFO - Sources:1
+26-09-11 15:52:37,716.098 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 34561
+26-09-11 15:52:37,716.103 INFO  WaComMINFO - 0: Local particles:34561
+26-09-11 15:52:46,893.786 INFO  WaComMINFO - Locally processed 34561 in 9.17767 seconds (3765.77 particles/second).
+26-09-11 15:52:46,894.620 INFO  WaComMINFO - Removed particles: 2168 Particles: 32393
+26-09-11 15:52:46,894.623 INFO  WaComMINFO - Evaluate concentration
+26-09-11 15:52:48,156.274 INFO  WaComMINFO - EVALUATE sec: 1.26164
+26-09-11 15:52:48,156.287 INFO  WaComMINFO - Processed 34561 in 10.4421 seconds (3309.78 particles/second).
+26-09-11 15:52:48,156.299 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z14
+26-09-11 15:52:48,156.308 INFO  WaComMINFO - Preparing NetCDF...
+26-09-11 15:52:48,180.377 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z14.nc
+26-09-11 15:52:48,203.855 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z13.nc
+26-09-11 15:52:48,203.866 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z13.nc
+26-09-11 15:52:48,204.561 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z13.nc
+26-09-11 15:52:48,946.400 INFO  WaComMINFO - 0: Input from Ocean Model: roms/rms3_d03_20210701Z1400.nc
+26-09-11 15:53:20,158.882 INFO  WaComMINFO - Saving processed output: processed-6h/ocm3_d03_20210701Z14.nc
+26-09-11 15:53:23,589.748 INFO  WaComMINFO - ocean_time:2
+26-09-11 15:53:23,589.764 INFO  WaComMINFO - s_rho:30
+26-09-11 15:53:23,589.767 INFO  WaComMINFO - eta_rho:1135 xi_rho:1528
+26-09-11 15:53:25,547.688 INFO  WaComMINFO - Simulating:1.67595e+09 - 20210701Z14
+26-09-11 15:53:25,547.702 INFO  WaComMINFO - Sources:1
+26-09-11 15:53:25,548.338 INFO  WaComMINFO - Emitted particles: 10000 Total particles: 42393
+26-09-11 15:53:25,548.342 INFO  WaComMINFO - 0: Local particles:42393
+26-09-11 15:53:36,832.752 INFO  WaComMINFO - Locally processed 42393 in 11.2844 seconds (3756.78 particles/second).
+26-09-11 15:53:36,833.803 INFO  WaComMINFO - Removed particles: 2284 Particles: 40109
+26-09-11 15:53:36,833.806 INFO  WaComMINFO - Evaluate concentration
+26-09-11 15:53:38,128.569 INFO  WaComMINFO - EVALUATE sec: 1.29474
+26-09-11 15:53:38,132.344 INFO  WaComMINFO - Processed 42393 in 12.5847 seconds (3368.62 particles/second).
+26-09-11 15:53:38,132.359 INFO  WaComMINFO - Saving restart:snapshots-6h/WACOMM_rst_20210701Z15
+26-09-11 15:53:38,132.370 INFO  WaComMINFO - Preparing NetCDF...
+26-09-11 15:53:38,162.746 INFO  WaComMINFO - Saving NetCDF in: snapshots-6h/WACOMM_rst_20210701Z15.nc
+26-09-11 15:53:38,175.067 INFO  WaComMINFO - Saving history:output-6h/wacomm_his_20210701Z14.nc
+26-09-11 15:53:38,175.074 INFO  WaComMINFO - Saving in: output-6h/wacomm_his_20210701Z14.nc
+26-09-11 15:53:38,176.021 INFO  WaComMINFO - --------------: output-6h/wacomm_his_20210701Z14.nc
+26-09-11 15:53:38,925.493 INFO  WaComMINFO - 0: Input from Ocean Model: roms/rms3_d03_20210701Z1500.nc
+26-09-11 15:53:38,925.519 INFO  WaComMINFO - Saving processed output: processed-6h/ocm3_d03_20210701Z15.nc
+26-09-11 15:53:40,490.841 WARN  WaComMWARN - The forcing window does not contain a physical time interval; skipping it

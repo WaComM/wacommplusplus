@@ -1,0 +1,224 @@
+{
+  "binary_sha256": {
+    "cpu": "1d2b48953e643f86ab7543e918ec39633e751245a580434d790862701ba5ebf6",
+    "gpu": "16d9fae6a7e2dd14f493bb34b3b2df5de996084d43a9f72f0491acf81c429b0c"
+  },
+  "config_sha256": "17df9ec6c8e360d2b6bdc3df00a6da545a57bfd4e2440f9208e2aba58b5c722d",
+  "discrete_and_time_fields": "exact equality after integer particle-ID ordering",
+  "gpu": "Tesla V100-SXM2-32GB",
+  "gridded": [
+    {
+      "cpu_sha256": "1e1e80053ef40bddc671394f03793d4c83d6230f76cc9b47335fb78814704c41",
+      "gpu_sha256": "f1a655b5f1c5a31fb1325d4d1531ec02ca72028096cdaa69328f817b4694789a",
+      "name": "wacomm_his_20210701Z09.nc",
+      "variables_equal": [
+        "conc",
+        "h",
+        "lat_rho",
+        "lon_rho",
+        "mask_rho",
+        "ocean_time",
+        "s_rho",
+        "zeta"
+      ]
+    },
+    {
+      "cpu_sha256": "c2c78be9f9bf7c78f506d28a83b4f2ec5ccf3d3adb4894b8b7b72442f452a46d",
+      "gpu_sha256": "d8a9b9ce43ddefbcf68ea534ad873b4d1b30fc582f15782d61d438fea9a33b0b",
+      "name": "wacomm_his_20210701Z10.nc",
+      "variables_equal": [
+        "conc",
+        "h",
+        "lat_rho",
+        "lon_rho",
+        "mask_rho",
+        "ocean_time",
+        "s_rho",
+        "zeta"
+      ]
+    },
+    {
+      "cpu_sha256": "facb45e06c0aadef146df9bda2a9ddb40f28a470a8c5eef04a283325e8010c70",
+      "gpu_sha256": "f46701f45391f1325663d96855849e0f591c680d470549eb9042fcea2aa08418",
+      "name": "wacomm_his_20210701Z11.nc",
+      "variables_equal": [
+        "conc",
+        "h",
+        "lat_rho",
+        "lon_rho",
+        "mask_rho",
+        "ocean_time",
+        "s_rho",
+        "zeta"
+      ]
+    },
+    {
+      "cpu_sha256": "b3669afae0ff707423e5963278c91ff53afde584577d12ad8ddab90f09afe9f2",
+      "gpu_sha256": "30a83af9d7c2ee3377238276feb8a75399c4c40bedb0b4dbdfa8d0c8358eb987",
+      "name": "wacomm_his_20210701Z13.nc",
+      "variables_equal": [
+        "conc",
+        "h",
+        "lat_rho",
+        "lon_rho",
+        "mask_rho",
+        "ocean_time",
+        "s_rho",
+        "zeta"
+      ]
+    },
+    {
+      "cpu_sha256": "d3849146016080708c61bca6f6fe26f3cafedc005698e473de280edc8b19a1f1",
+      "gpu_sha256": "8fc253242b893936f2c19ea839b9550048577861210a5d9e23f1d97742f09a19",
+      "name": "wacomm_his_20210701Z14.nc",
+      "variables_equal": [
+        "conc",
+        "h",
+        "lat_rho",
+        "lon_rho",
+        "mask_rho",
+        "ocean_time",
+        "s_rho",
+        "zeta"
+      ]
+    }
+  ],
+  "horizontal_distance": "haversine on sphere, radius 6371000 m",
+  "interpretation": "Numerical backend equivalence within declared absolute state tolerances; not observational validation. Exact floating-point equality fails at first saved time.",
+  "mpi_ranks": 1,
+  "node": "gn03",
+  "openmp_threads": 1,
+  "result": "pass",
+  "schema": "wacomm-sarno-backend-consistency-v1",
+  "slurm_jobs": {
+    "cpu": 6360,
+    "gpu": 6361
+  },
+  "snapshots": [
+    {
+      "cpu_sha256": "16d0509ac431ce399b637b436b3d734c7eba240b3444c759b805b2ad2fed773d",
+      "exact_fields": [
+        "id",
+        "object_type",
+        "drift_side",
+        "health",
+        "age",
+        "time",
+        "particle_time"
+      ],
+      "gpu_sha256": "f4b595bc2994abf75cd06a5ebdb9d058939f3c4008611a2f29c08054b3d15931",
+      "max_abs": {
+        "depth": 5.104324758004042e-10,
+        "i": 1.8610535335028544e-10,
+        "j": 9.526957001071423e-11,
+        "k": 7.94779709059612e-10,
+        "lat": 1.2789769243681803e-13,
+        "lon": 3.3573144264664734e-13
+      },
+      "max_horizontal_m": 2.8852161210620176e-08,
+      "particles": 9926,
+      "time_utc": "20210701Z10"
+    },
+    {
+      "cpu_sha256": "795c4cf3a722d0b54554f0e69d4a0254a0de49a24c9a4808ad7e3fafe508e699",
+      "exact_fields": [
+        "id",
+        "object_type",
+        "drift_side",
+        "health",
+        "age",
+        "time",
+        "particle_time"
+      ],
+      "gpu_sha256": "43a2d3a42711460f60855e618bc6ef518e7414d2bc32ca99fafa92f56e786e18",
+      "max_abs": {
+        "depth": 9.930867170271362e-10,
+        "i": 1.921307557495311e-10,
+        "j": 1.8542323232395574e-10,
+        "k": 1.239118951488951e-09,
+        "lat": 2.5579538487363607e-13,
+        "lon": 3.410605131648481e-13
+      },
+      "max_horizontal_m": 3.1112192591358635e-08,
+      "particles": 19003,
+      "time_utc": "20210701Z11"
+    },
+    {
+      "cpu_sha256": "c116f686cacda850e2a93bae9085d77fb085ae9145ff5e9066c04e81ed954041",
+      "exact_fields": [
+        "id",
+        "object_type",
+        "drift_side",
+        "health",
+        "age",
+        "time",
+        "particle_time"
+      ],
+      "gpu_sha256": "9f64328521700c22dc7ae204f308089e6cda9a34c6886ec37d81251f9bb59e2d",
+      "max_abs": {
+        "depth": 1.2222112003024144e-09,
+        "i": 3.764171196962707e-10,
+        "j": 4.604316927725449e-10,
+        "k": 1.5643800005404884e-09,
+        "lat": 6.252776074688882e-13,
+        "lon": 6.785683126508957e-13
+      },
+      "max_horizontal_m": 6.931818085877825e-08,
+      "particles": 24561,
+      "time_utc": "20210701Z13"
+    },
+    {
+      "cpu_sha256": "8e317c0df4dd892bcf734bedb7dbb18610e1dbfe71c5009aa76dc7403bffab4a",
+      "exact_fields": [
+        "id",
+        "object_type",
+        "drift_side",
+        "health",
+        "age",
+        "time",
+        "particle_time"
+      ],
+      "gpu_sha256": "fb6435d96b5ff2fd70ba37fabf72557d7c9a0321c24efb217a1b944b15318921",
+      "max_abs": {
+        "depth": 1.4775281151563693e-09,
+        "i": 5.571791916736402e-10,
+        "j": 6.477876013377681e-10,
+        "k": 1.7128353487611513e-09,
+        "lat": 8.881784197001252e-13,
+        "lon": 1.0018652574217413e-12
+      },
+      "max_horizontal_m": 1.1989118834355703e-07,
+      "particles": 32394,
+      "time_utc": "20210701Z14"
+    },
+    {
+      "cpu_sha256": "7fc1549f83a5210b92bd7fe19c450a8a68316d237bedf61854a9d4541739a63c",
+      "exact_fields": [
+        "id",
+        "object_type",
+        "drift_side",
+        "health",
+        "age",
+        "time",
+        "particle_time"
+      ],
+      "gpu_sha256": "87c4946f1e028dd4819b0b943d9907a5c3763c7d9290ec537cfdc7ef46add677",
+      "max_abs": {
+        "depth": 2.2400476735562162e-09,
+        "i": 6.493792170658708e-10,
+        "j": 1.3876615412300453e-09,
+        "k": 2.65491516217211e-09,
+        "lat": 1.8971491044794675e-12,
+        "lon": 1.1688428003253648e-12
+      },
+      "max_horizontal_m": 2.1837576216563632e-07,
+      "particles": 40109,
+      "time_utc": "20210701Z15"
+    }
+  ],
+  "tolerances": {
+    "depth_m": 1e-08,
+    "grid_index": 1e-08,
+    "horizontal_m": 1e-06
+  }
+}

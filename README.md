@@ -1,311 +1,110 @@
 # WaComM++
-WaComM++, the Water quality COMmunity Model in C++, is a highly scalable, high-performance Lagrangian transport and diffusion model for marine pollutants assessment.
-WaComM++ supports CUDA GPU computation, shared memory (OpenMP), distributed memory (MPI) parallelization, and computational malleability with FlexMPI.
 
-The Water Community Model (WaComM) uses a particle-based Lagrangian approach that relies on a tridimensional marine dynamics field produced by Eulerian atmosphere and ocean models.
-WaComM has been developed to match the hierarchical parallelization design requirements.
+WaComM++ (Water quality COMmunity Model in C++) is a C++17 Lagrangian transport and diffusion framework for marine pollutants and drifting surface objects. Gridded Eulerian ocean forcing drives compact, independently advected particles whose state includes position, emission time, age, health, a stable 64-bit identity, and restart-safe drift-object metadata.
 
-WaComM is an evolution of the Lagrangian Assessment for Marine Pollution 3D (LAMP3D, https://people.mio.osupytheas.fr/~doglioli/lamp.htm) model.
-We strongly optimized the algorithms to improve performance in high-performance computing environments by adding features such as restarting, GPU acceleration, and distributed and shared memory parallelization.
+The current release reads local or remote ROMS, NEMO, HYCOM, and native WACOMM products through direction-neutral adapters. HTTP, HTTPS, and DAP4 locations use the linked NetCDF transport. Forcing is opened lazily as a bounded current/adjacent pair, and the adjacent normalized window is reused on the next iteration. It supports deterministic forward and backward traversal, configurable stochastic forward diffusion, an explicitly labelled stochastic backward ensemble mode, restart input/output, OpenMP, MPI, FlexMPI/EMPI, OpenACC, and optional CUDA. Unsupported URI schemes, transport capabilities, and adapter layouts are rejected rather than silently interpreted as another source or grid.
 
-![Concentration of suspended matter in sea water](images/wacommplusplus-surface-suspended-matter-bay-of-naples.png)
+Surface-object tracking augments the ambient current with an empirically parameterized leeway velocity resolved into downwind and crosswind components relative to 10 m wind, plus optional surface Stokes drift. Generic weather and wave interfaces keep transport physics independent of forcing products; the initial concrete adapters read WRF wind and WAVEWATCH III Stokes velocity. The restart-stable object catalog covers people in several immersion states, liferafts, person-powered and small craft, vessels, containers, debris, drums, mines, refugee rafts, and medical waste. Its left and right crosswind regressions remain distinct where the source data are asymmetric. A separate process catalog documents the configuration, units, stochastic character, and state requirements of the implemented current, leeway, Stokes, diffusion, settling/rise, decay, wind-error, and jibing operators. Opt-in ensembles remain reproducible and passive transport remains the default. Tracking direction remains solver policy; stochastic backward output is a candidate-origin ensemble rather than an exact inverse realization.
 
-WaComM is operatively used for pollutants transport and diffusion at the Center for Monitoring and Modelling Marine and Atmosphere applications (CMMMA, https://meteo.uniparthenope.it) run by the Department of Science and Technologies (DiST, https://dist.uniparthenope.it) of the University of Naples "Parthenope" (https://www.uniparthenope.it).
+Environmental adapters validate declared velocity and coordinate units and normalize supported CF numeric time coordinates to the WaComM physical epoch. Ambiguous units, unsupported calendars, unequal grids, and inconsistent timestamps are rejected before particle integration. Dynamic WRF wind and WW3 Stokes components use the same normalized-grid space/time interpolation in CPU and CUDA particle execution.
 
-It is used to compute the transport and diffusion of pollutants for assessing the water quality for mussel farming and 
-fish breeding.
+Environmental grids remain exact-match by default. Explicit geographic options interpolate Earth-relative WRF or WW3 vectors from rectilinear or valid curvilinear grids without extrapolation, with deterministic indexed curvilinear lookup. Optional `USE_PROJ=ON` adds declared-CRS transformation for rectilinear or valid curvilinear projected grids with metric `x/y` coordinates. Separate first- and limited second-order conservative operators remap rectilinear or convex-curvilinear geographic cell averages, including explicit fractional active area; they are not selectable for point-valued wind or Stokes velocity. Coordinate transformation never substitutes for vector rotation.
 
-In WaComM, several basic algorithms have been optimized and to improve its performance on a High-Performance
-Computing environment, some features like restarting and parallelization techniques in shared memory environments have
-been added.
+Backward deterministic tracking reverses forcing traversal and resolved/terminal motion and suppresses normal forward sources. It can identify candidate prior locations under the supplied circulation and model assumptions; stochastic backward tracking is not a unique inverse trajectory.
 
-Pollutants are modeled as inert Lagrangian particles.
+A read-only [trajectory diagnostic workflow](docs/trajectory-diagnostics.md) joins stable particle identities across output snapshots, computes explicitly descriptive ensemble-spread statistics, and creates a self-documenting SVG map with projection, extent, time, provenance, and uncertainty semantics. It does not infer probability contours or modify solver physics.
 
-No interactions with other particles or feedback are included in the model.
-The pollution sources are defined as a geographic location in terms of longitude, latitude, depth, the total amount
-of Lagrangian particles released in one hour, and the emission profile that could be set statically or changed during the
-simulation.
+## Quick start
 
-The WaComM system can be used in more ways: as a decision support tool, to aid in the selection of the most suitable
-areas for farming activity deployment or in an ex-post fashion to achieve better management of offshore
-activities.
-
-# Parallelization schema
-WaComM++ uses a particle-based Lagrangian approach relying on a tridimensional ocean dynamics field produced by coupled Eulerian ocean model.
-
-WaComM++ has been designed with hierarchical parallelism in mind. Nevertheless, some requirements have been strongly driven by the transport and diffusion Lagrangian model, for example, the need for data exchange using standard and well-known formats.
-
-The WaComM++ overall structure design is shown in the following figure.
-
-
-![WaComM++ parallelation schema.](images/wacommplusplus-parallelization-schema.png)
-
-The ocean state, adapted by the OceanModelAdapter component to be used for the transport and diffusion computation, is described by the variables _u_, _v_, _w_
-(the horizontal and the vertical components of the sea current velocity vector), _zeta_ (the sea surface height),
-and _AKT_ (vertical diffusivity for the temperature) at a given time _T_ in _K_, _J_, _I_ position.
-The overall computation is performed over three nested cycles:
-* *Ocean state outer cycle:* for each time-referenced dataset (usually 1-hour), a WaComM component is instanced. 
-* *Particles outer cycle:* moves the particle to process using ocean data. 
-* *Particle inner cycle:* moves the particle within the considered time slice, applying the Lagrangian transport and diffusion equations integrated on a given time step.
-
-While time-dependent iterations characterize the ocean state outer cycle and the inner particle cycle, the particles' outer cycle has been hierarchically parallelized because each particle movement is independent.
-
-Therefore, the OceanModelAdapter component prepares and adapts data from ocean simulations or forecasts to the data structures managed by the transport and diffusion model.
-This data is managed as multidimensional matrices usually stored in NetCDF files. Although most parts of environmental models use the [NetCDF CF Conventions and Metadata](https://cfconventions.org),
-some processing is needed to prepare the ocean state for WaComM++.
-
-The Source component implements the sea pollutant emission generator. Each emission source is defined by its position (latitude, longitude, and depth),
-the number of Lagrangian particles spilled out per hour and the emission time interval. 
-
-We designed WaComM++ using an Object-Oriented approach applied to the physics equation solver embedded in the Particle component. First, each particle is moved using the algorithm implemented in the Particle component.
-
-This component represents a Lagrangian particle characterized by its _3D position_, _timestamp of generation_, _age_, and _health_.
-
-The _Particles_ component is composed of the _particle_ components.
-Its duty deals with particle-related I/O operations as the state persistence among two simulations (restarting). 
-
-The WaComMPlusPlus component aggregates OceanModelAdapter, Sources, and Particles.
-This component manages the ocean state outer cycle, providing, for each time-related dataset, the WaComM component with the momentum (u, v, and w components of the current sea vector),
-the variation of the sea surface height (zeta), and the vertical turbulent diffusion (AKT). The actual particle movement is encapsulated in the Particle component.
-
-The WaComM component encapsulates the particles' outer cycle of the transport and diffusion model as detailed in [Montella et Al.](https://ieeexplore.ieee.org/abstract/document/10137219). 
-
-# Acknowledgments
-The following initiatives support waComM++ development:
-* Research agreement MytilAI (CUP I65F21000040002, http://meteo.uniparthenope.it/mytiluse/) - Supporting operational pollutant transport and diffusion for AI-based farmed mussels contamination prediction.
-* EuroHPC H2020 project ADMIRE (956748-ADMIRE-H2020-JTI-EuroHPC-2019-1, https://www.admire-eurohpc.eu) - WP7: Environmental application. Using malleability to improve the balance between the overall performance and the computational resource allocation. 
-
-# Cite WaComM++
-* Montella Raffaele, Diana Di Luccio, Ciro Giuseppe De Vita, Gennaro Mellone, Marco Lapegna, Gloria Ortega, Livia Marcellino, Enrico Zambianchi, and Giulio Giunta. "A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment." In 2023 31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing (PDP), pp. 17-26. IEEE, 2023.[Paper](https://ieeexplore.ieee.org/abstract/document/10137219) [BibText](https://scholar.googleusercontent.com/scholar.bib?q=info:lm5MT5UXsbsJ:scholar.google.com/&output=citation&scisdr=ClHkMdBFEO_Nu9tFARo:AFWwaeYAAAAAZXhDGRqgCwHQSP46ByXPJ7rmjkA&scisig=AFWwaeYAAAAAZXhDGcaIZF6NQTQBw0yZiqBLSsc&scisf=4&ct=citation&cd=-1&hl=en)
-  
-* Di Luccio Diana, Angelo Riccio, Ardelio Galletti, Giuliano Laccetti, Marco Lapegna, Livia Marcellino, Sokol Kosta, and Raffaele Montella. "Coastal marine data crowdsourcing using the Internet of Floating Things: Improving the results of a water quality model." Ieee Access (2020). [Paper](https://ieeexplore.ieee.org/abstract/document/9098885) [BibText](https://scholar.googleusercontent.com/scholar.bib?q=info:zfxBb1pXu6AJ:scholar.google.com/&output=citation&scisdr=CgVAs4t4EOqOsfORuKc:AAGBfm0AAAAAYmKXoKfXYbP_udXdxi_gRtDgpRDUlAmz&scisig=AAGBfm0AAAAAYmKXoDu_U64Tee-yjLp6iEBcYJ-8OeL3&scisf=4&ct=citation&cd=-1&hl=en)
-  
-* Montella Raffaele, Diana Di Luccio, Pasquale Troiano, Angelo Riccio, Alison Brizius, and Ian Foster. "WaComM: A parallel Water quality Community Model for pollutant transport and dispersion operational predictions." In Signal-Image Technology & Internet-Based Systems (SITIS), 2016 12th International Conference on, pp. 717-724. IEEE, 2016. [Paper](https://ieeexplore.ieee.org/abstract/document/7907547/) [BibText](https://scholar.googleusercontent.com/scholar.bib?q=info:GQ2xgOQgTAIJ:scholar.google.com/&output=citation&scisdr=CgVAs4t4EOqOsfOeWMg:AAGBfm0AAAAAYmKYQMjD60Uri5Fxi4GPm3sA0XYgFUze&scisig=AAGBfm0AAAAAYmKYQNXh2mxdhne78C84APWfiPyHNB9e&scisf=4&ct=citation&cd=-1&hl=en)
-
-# Compiling
-
-WaComM++ is developed using C++17. Be sure a compatible toolchain is installed and available.
-* Linux CentOS:
-  - install as root with
-    ```bash
-    yum install devtoolset-9
-    ```
-  - Set the environment as user
-    ```bash
-    scl enable devtoolset-9 -- bash
-    ``
-  
-* MacOS:
-  CLang
-    
-* Windows: Visual Sutudio
-
-* Compiling on purpleJeans (http://rcf.uniparthenope.it) HPC-GPU-DNN Cluster.
-Set the environment:
-```bash
-module load gcc-8.3.1 
-module load ompi-4.1.0-gcc-8.3.1 
-module load cmake/3.19.2 
-module load cuda/10.1 
-```
-
-## Dependencies
-Most dependencies involved in the WaComM++ building are automatically resolved by cmake at the source
-preparation time (when cmake is invoked). Nevertheless, some dependencies have to be satisfied a priori:
-
-1) [CMake](https://cmake.org): the latest is the better, the minimum required is the 3.13, but we are currently using the 3.19.
-If your environment doesn't support an updated cmake version, you can install it in your user space.
-   
-
-2) [MPI](https://www.mpich.org): usually the most part of cluster environments offer one or more versions of already compiled MPI libraries.
-Those MPI libraries are already integrated with the local scheduler and configured/optimized for the networking hardware 
-available in the cluster. [OpenMPI](https://www.open-mpi.org) and [MVAPICH2](https://mvapich.cse.ohio-state.edu) have been tested. In conjunction with InfiniBand networks, we experienced 
-some troubles in mixing MPI and OpenMP while using OpenMPI, but we successfully switched to MVAPICH2.
-
-
-3) [CUDA](https://developer.nvidia.com/cuda-toolkit): we tested WaComM++ with CUDA 10.1 on GeeForce TitanX, Quadro and Tesla V100 equipments with success.
-At the current development state, just the computing capabilities level 3.0 are required, so it could be possible to
-use devices that are not recent CUDA-enabled. The production usage of non-Tesla devices could result
-in irreversible hardware damage. By default, the CUDA Toolkit libraries are statically linked. If your environment uses
-GPU remoting as [GVirtuS](https://github.com/gvirtus/) or [rCUDA](http://www.rcuda.net), please link the libraries
-dynamically.
-**NB:** Since version 11.0, the CUDA Toolkit is not longer available for MacOS. The latest supported
-MacOS version is the 10.13.
-
-
-4) [FlexMPI](https://gitlab.arcos.inf.uc3m.es/desingh/FlexMPI): ...
-   
-## Using the command line interface
-
-1) Clone the repository
-```bash
-git clone https://github.com/CCMMMA/wacommplusplus.git
-```
-2) Enter the project directory
-```bash
-cd wacomplusplus
-```
-3) Create the build directory
-```bash
-mkdir build
-```
-4) Enter the build directory
-```bash
-cd build
-```
-5) Invoke cmake using the following options:
-- USE_MPI - Activate the distributed memory parallelization.
-- USE_OMP - Activate the shared memory parallelization.
-- USE_FLEXMPI - Activate the computational malleability.
-- USE_CUDA - Activate the CUDA acceleration.
-- DEBUG - Add logging printouts (do not use for production or evaluation.)
-
-WaComM++ uses cmake version 3. In some Linux systems, cmake is version 3 by default. In other systems, version 3
-must be specified using the cmake3 command. 
-
-- Example: compile vanilla WaComM++ (No parallelization)
-```bash
-cmake ..
-```
-
-- Example: compile with CUDA, OpenMP, and MPI support, but without extra debug logging:
-```bash
-cmake -DUSE_OMP=ON -DUSE_MPI=ON -DUSE_CUDA=ON -DDEBUG=OFF ..
-```
-
-6) Run, make, and wait
+Install CMake 3.20+, a C++17 compiler, and any requested backend. The default `WACOMM_BOOTSTRAP_DEPENDENCIES=AUTO` prefers installed application libraries and builds missing pinned dependencies privately below the build tree. Private Unix builds other than macOS include pinned OpenSSL 3.5.8 and require Perl and make; see the [serial build example](docs/build.md#serial-build-with-private-openssl). Then run:
 
 ```bash
-make
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+./build/wacommplusplus examples/forward-roms/forward-roms.json   # after staging its forcing
 ```
 
-## Using CLion 
-
-1) Clone a new project from CVS
-2) Enter https://github.com/CCMMMA/wacommplusplus.git as the project URL
-3) Press the Clone Button
-4) Select *wacomplusplus* | Debug as target
-5) Click on menu *Build*, option *Build Project*
-6) Wait
-
-
-# Testing
-Download the data.
-
-1) Open a console application (I.e. Terminal)
-2) Change the current working directory to the WaComM++ building directory
-3) Create the input, processed, output, and restart directories
-```bash
-mkdir input processed output restarts
-```
-4) Download the restart file
-```bash
-wget http://data.meteo.uniparthenope.it/opendap/opendap/wcm3/restart/WACOMM_rst_20201130Z00.txt
-```
-5) Link the source file
-```bash
-ln -sf ../examples/sources-campania_region.json sources.json
-```
-6) Link the configuration file
-```bash
-ln -sf ../examples/wacomm-roms-usecase-download.json wacomm.json
-```
-7) Launch WaComM++
-```bash
-./wacommplusplus
-```
-WaComM++ will perform a dry run (the model will not calculate the particles' transport and diffusion).
-The demo data files will be downloaded from [meteo@uniparthenope](http://data.meteo.uniparthenope.it:/opendap/opendap/wcm3/d04/),
-preprocessed, and saved in processed directory.
-
-8) Link the configuration file
-```bash
-ln -sf ../examples/wacomm-native-usecase.json wacomm.json
-```
-Now, WaComM++ is ready to run.
-
-# Running
-Can you have a configuration file?
-WaComM++ can read Fortran namelists used by classic WaComM implementation (https://github.com/ccmmma/wacomm).
-If possible, use a native json configuration file.
-
-## Vanilla (no MPI, no OMP, no acceleration)
-WaComM++ can be used on machines with really poor computing resources, nevertheless producing an High-Performace
-Computing cluster is warmly accompanied.
+The forcing for the example configurations is not bundled; each example guide lists what to stage. To check a fresh build offline, run the end-to-end regression. It drives the real executable forward and then backward on a generated analytic current and compares the result with the exact solution ([application verification](docs/application-verification.md)):
 
 ```bash
-./wacommplusplus
+ctest --test-dir build -R '^application_end_to_end$' --output-on-failure
 ```
 
-Automatically search for namelist.wacomm or wacomm.json configuration file.
+![Diagnostic EPSG:4326 map of sixteen parallel particle paths in the synthetic uniform-current verification case, rendered by the trajectory diagnostic tool from WaComM++ NetCDF snapshots; no coastline is drawn and the paths are not probabilities.](docs/figures/application-end-to-end-trajectories.svg)
+
+*Model result on synthetic analytic forcing (EPSG:4326 Plate Carrée, 14.04–14.09°E, 40.74–40.77°N, 01–06 UTC 2021-07-01). It is not an ocean forecast. See the [verification guide](docs/application-verification.md#documentation-case-and-diagnostic-figures) for the command that reproduces it.*
+
+On macOS, see the [Homebrew build notes](docs/build.md#macos). They include selecting a Python interpreter that has the optional plotting stack.
+
+For the dependency-free portable numerical tests:
 
 ```bash
-./wacommplusplus namelist|json
+cmake -S . -B build-core -DBUILD_APPLICATION=OFF
+cmake --build build-core
+ctest --test-dir build-core --output-on-failure
 ```
 
-Use a namelist or a json configuration file.
+Options include `USE_OMP`, `USE_MPI`, `USE_EMPI`, `USE_OPENACC`, `USE_CUDA`, `USE_PROJ`, `DEBUG`, `BUILD_APPLICATION`, `BUILD_TESTING`, and `BUILD_REMOTE_INTEGRATION_TESTS`. `WACOMM_BOOTSTRAP_DEPENDENCIES` accepts `AUTO`, `ON` (force the complete private stack), or `OFF` (installed packages only). `WACOMM_BOOTSTRAP_PARALLEL_IO=ON` builds private MPI-enabled HDF5 and NetCDF-4 independently of `USE_MPI`; see the [build guide](docs/build.md). MPI and EMPI are mutually exclusive. CUDA is unavailable on modern macOS; PROJ is optional and required only for projected environmental grids. The network integration test is opt-in so the default suite remains deterministic offline.
 
-## Shared memory parallelism (OpenMP)
-WaComM++ supports shared memory parallelization using OpenMP threads.
-Select the number of threads to use, exporting the OMP_NUM_THREADS environment variable.
-Due to the embarrassing parallel algorithm, there is no limitation in the number of used threads.
+## Reproducible operation
 
-```bash
-export OMP_NUM_THREADS=n
-./wacommplusplus
-```
-If the OMP_NUM_THREADS is not specified, OpenMPI assumes the number of threads is equal to the number of available CPU
-cores.
+Set `physics.random_seed` explicitly. Wind forcing error can declare a PSD-validated east/north covariance and reproducible spatial and physical-time support scales; zero scales retain identity/substep white noise. Archive the complete configuration, Git revision, forcing and restart checksums, compiler/dependency versions, platform, parallel settings, tolerances, test output, and result checksums. Production random behavior does not use wall-clock time; random variates use the ordered counter-key scheme `ordered-splitmix64-v2` recorded in output and restart metadata, and seeded realizations from revisions that used the earlier symmetric key cannot be regenerated. Legacy `particlesPerHour` and `forcing_interval_batch` sources release at forcing records inside the closed `[start, end]` window, so `start` equal to `end` releases one batch. Calendar times are UTC `YYYYMMDDhh`, `YYYYMMDDZhh`, or `YYYYMMDDZhhmm`; minutes enter physical time (a release at `20210701Z1030` starts at 10:30), output cadence is anchored at the start of the hour containing `simulation.start`, and malformed values are rejected instead of being truncated silently. Examples, documentation, tests, source implementation, and physical definitions are versioned together.
 
-## Distributed memory parallelism (Open MPI)
-WaComM++ supports distributed memory parallelization using the Open MPI library.
-Select the number of processes to use, specifying the -n or -np mpirun parameter.
-Due to the embarrassing parallel algorithm, there is no limitation in the number of used processes.
+Region-specific observational wind-error calibration is opt-in through non-overlapping EPSG:4326 bounds. Each entry must identify the matching object and forcing adapter plus estimator, sample size, observation period, dataset, SHA-256 checksum, and DOI. The same selector and stochastic equations run on CPU and CUDA; outside a declared region the global sensitivity parameters apply. Configuration validation checks consistency, not the scientific validity of supplied evidence.
 
-```bash
-mpirun -n np ./wacommplusplus
-```
+## Documentation and examples
 
-If WaComM++ has been compiled with both USE_MPI and USE_OMP options, it is possible to balance the number of threads
-for each project.
+Start at the [documentation index](docs/README.md) for the [model](docs/model.md), [build guide](docs/build.md), [configuration](docs/configuration.md), [adapters](docs/adapters.md), [OpenDrift comparison and roadmap](docs/opendrift-comparison.md), [backtracking](docs/backtracking.md), [restart](docs/restart.md), [output publication and parallel file systems](docs/io.md), [testing](docs/testing.md), [application end-to-end verification](docs/application-verification.md), [parallelism](docs/parallelism.md), [supported platforms](docs/supported-platforms.md), [Raspberry Pi ARM64 validation](docs/raspberry-pi.md), [RISC-V 64 validation](docs/riscv64-linux.md), [reproducibility](docs/reproducibility.md), and [trajectory diagnostics](docs/trajectory-diagnostics.md). The [examples index](examples/README.md) covers every checked-in run configuration and source artifact, including forward/backward ROMS, NEMO, HYCOM, and native WACOMM workflows.
 
-Let be n the number of threads per process and np the number of processes, WaCom++ can be run as
-follows:
+The [surface-drift guide](docs/sar-drift.md) defines the object-relative velocity model, coefficient provenance, units, ensemble assumptions, direction semantics, restart behavior, and supported object classes; the [catalog reference](docs/catalogs.md) lists every object and implemented process. Its paired catalog-mean [forward](examples/sar-person-forward/README.md) and [backward](examples/sar-person-backward/README.md) scenarios provide uniform-wind references, while the [kayak example](examples/sar-kayak-forward/README.md) exercises an asymmetric catalog entry. The ensemble and coupled-forcing examples are indexed in [examples](examples/README.md).
 
-```bash
-export OMP_NUM_THREADS=n
-mpirun -n np ./wacommplusplus
-```
-## Computational malleability (FlexMPI)
+The [six-hour Sarno example](examples/wacomm-sarno-lite/docs/README.md) includes serial and two-process MPI Slurm workflows and an [MPI/OpenMP scaling sweep](examples/wacomm-sarno-lite/docs/README.md#mpiopenmp-strong-scaling) over 1–32 processes, saved native forcing, and publication maps/profiles generated by `examples/wacomm-sarno-lite/tools/publication_figures.py`. A one-process job regenerates `processed-6h/` before the scaling sweep; solver speedup and efficiency exclude forcing downloading, preparation, and loading. The sweep reuses native forcing directly; identical saved boundary records are reused and conflicting overlaps rejected. Its physical-time source rate remains continuous across the missing 12:00 forcing record; see the [diagnostic methods](docs/trajectory-diagnostics.md#publication-maps-and-profiles).
 
-FLEX-MPI is a runtime system that extends the functionalities of the MPI library by providing dynamic load balancing and performance-aware malleability capabilities to MPI applications. Dynamic load balancing allows FLEX-MPI to adapt the workload assignments at runtime to the performance of the computing elements that execute the parallel application. Performance-aware malleability improves the performance of applications by changing the number of processes at runtime.
+The [one-process OpenMP sweep](examples/wacomm-sarno-lite/docs/README.md#openmp-strong-scaling-and-mpi-comparison) compares 1–32 threads with the MPI experiment, using the same native forcing and executable. It reports solver and application timing separately, with efficiency/speedup figures and exact particle-state verification.
 
-### Installation
+An [extended Sarno MPI sweep](examples/wacomm-sarno-lite/docs/README.md#extended-mpi-performance-test-164-processes) measures 1–64 ranks with one OpenMP thread each on `norm-wn`; the 64-rank case uses two nodes. Its separate plots and report retain timing, allocation, and exact particle-state evidence.
 
-Follow the instructions (https://gitlab.arcos.inf.uc3m.es/acascajo/adm_fmpi) to install Flex-MPI and IC (the intelligent controller communication library). Once Flex-MPI and IC are installed, edit the CMakeLists.txt file (lines 44-47) with the correct paths to where the different components were installed, e.g:
+A [Sarno CUDA performance diagnostic](examples/wacomm-sarno-lite/docs/README.md#mpi-openmp-and-cuda-performance-diagnostic-on-low-gn) measures one, two, and four MPI ranks with one V100 GPU and one OpenMP thread per rank on `low-gn`. Those archived performance outputs predate the grid-metric and interpolation corrections. After synthetic parity passed in Slurm job 6358, a fresh six-hour Sarno CPU/CUDA comparison on `gn03` (jobs 6360 and 6361) passed declared numerical state tolerances and matched all gridded variables exactly; see the [consistency report](examples/wacomm-sarno-lite/docs/figures/gn03-cpu-gpu-consistency.json). The historical plots remain performance diagnostics from the earlier implementation.
 
-```
-find_library(EMPI_LIBRARY empi HINTS "path_EMPI_lib")
-find_library(PAPI_LIBRARY papi HINTS "path_PAPI_lib")
-find_library(GLPK_LIBRARY glpk HINTS "path_GLPK_lib")
-find_library(ICC_LIBRARY icc HINTS "path_ICC_lib")
-```
+The [shared performance-evaluation protocol](docs/performance-evaluation.md) applies to every runnable example and use case; it defines the CPU/GPU resource matrix, scientific equivalence gate, repeat measurements, charts, and per-test Codex review notes.
 
-- Example: compile with OpenMP, and Flex-MPI support:
-```bash
-cmake -DUSE_OMP=ON -DUSE_MPI=OFF -DUSE_EMPI=ON -DUSE_CUDA=OFF -DDEBUG=OFF ..
-make
-mpirun -n np ./wacommplusplus
-```
+The [Sarno shared-protocol workflow](examples/wacomm-sarno-lite/docs/performance-evaluation.md) stages the complete MPI, OpenMP, and hybrid CPU matrix in rotated replicate blocks, selects the fastest measured CPU tuple, and gates the subsequent GPU sweep on numerical equivalence. It preserves a Codex review note for each valid performance configuration.
 
-NB: you hare to require access to https://gitlab.arcos.inf.uc3m.es/acascajo/adm_fmpi repository.
 
-NB: the overall performance is strictly influenced by the architecture used.
+The webinar [explicit ROMS metadata repair](examples/webinar-roms-usecase-download/docs/rectilinear-angle-repair.md) validates the full
+rectilinear C-grid before correcting angle in derived inputs under a declared
+grid-axis interpretation. It preserves original forcing and does not alter
+solver equations or certify upstream ocean-model accuracy.
 
-# Data sources
-The Center for Monitoring and Modelling Marine and Atmosphere applications (CMMMA, http://meteo.uniparthenope.it) produces data in a routinary fashion.
+## Recent changes
 
-Data is available via OPeNDAP server (http://data.meteo.uniparthenope.it/opendap/opendap/) and via HTTP server (http://api.meteo.uniparthenope.it/files/).
-Simulations produced by the Regional Ocean Model System (ROMS) set up in the Campania Region (Italy) are available here: http://api.meteo.uniparthenope.it/files/rms3/d03/history/
+- Particle histories, restarts, and gridded outputs can now be written asynchronously (`io.async=true`): rank 0 hands each file to a background writer thread and continues with the next forcing window, with at most `io.async_max_pending` writes outstanding. Every output is now written under a `.partial` name and renamed when complete, so a restart never reads a truncated file; a failed text write now stops the run instead of publishing a short file. For parallel file systems, `io.filesystem` (`posix`, `lustre`, `gpfs`) enables durable `fsync` publication by default, `io.staging_dir` writes through node-local storage, and `io.lustre_stripe_count`/`io.lustre_stripe_size` set the Lustre layout of the output directories. Outputs are identical to synchronous ones; `output_writer` and `application_end_to_end` check this forward and backward. MPI builds now initialize with `MPI_THREAD_FUNNELED`. See [output publication](docs/io.md) and the [example](examples/async-io-parallel-fs/async-io-parallel-fs.md).
+- MPI builds with a parallel NetCDF-C, such as `WACOMM_BOOTSTRAP_PARALLEL_IO=ON`, can now write histories and gridded counts collectively from every rank (`io.parallel_write="collective"`): text histories with `MPI_File_write_at_all`, NetCDF histories and counts with parallel NetCDF-4 hyperslabs in collective mode, and `io.mpiio_hints` passed to MPI-IO. The values equal rank-0 output; `parallel_output_*_ranks` and `application_end_to_end` check this on 1–3 ranks, and CI now builds the parallel I/O stack on Ubuntu and macOS. Other builds reject the option instead of writing from rank 0. See [collective writes](docs/io.md#collective-writes) and the [example](examples/collective-io-mpi/collective-io-mpi.md).
+- Source files now read the `depth` property, which is the name `saveAsJson` writes and the example catalogs use. `dep` remains as an alias, and a third `Point` coordinate is also accepted. If more than one is present they must agree. A feature with no position stops loading with an error naming it, as do a non-`Point` geometry such as a `Polygon`, a lone `j` or `i`, `k` without `j` and `i`, and explicit indices outside the domain. Before, such a source was added silently at the index $10^{37}$ and never entered the domain. The oil-spill polygon demos are therefore not source files; their guides now say that their preparation tool has not been verified. See [source position](docs/configuration.md#source-position).
+- GeoJSON source positions are now converted to grid indices by exact inversion of the bilinear longitude/latitude map that the solver uses. The previous inverse was exact only on rectilinear grids: on a rotated test grid it misplaced sources by up to 1.12 cells. It also read past the arrays near the northern and eastern boundaries. Rectilinear grids give the same indices to rounding. A source outside the interpolation domain, or with non-finite coordinates, now stops loading with an error naming the source, instead of entering the run at an undefined index. See the [horizontal position mapping](docs/model.md#horizontal-position-mapping).
+- Subsurface sources are now placed at the requested depth. Until now, the depth-to-level inverse `deplatlon2kji` stepped toward the wrong W level, and above the first sub-surface W level it read past the `s_w` array. Debug builds aborted there and Release builds used an undefined level. It is now the exact inverse of `kji2deplatlon` on the valid particle levels $[-N+2,0]$. Depths below the lowest valid level are clamped to it, and non-finite depths are rejected. Surface sources, which include every checked-in example, are unchanged. A new `vertical_coordinate_round_trip` test and a release-depth check in `application_end_to_end` cover the mapping. See the [vertical coordinate mapping](docs/model.md#vertical-coordinate-mapping).
+- Polygon release areas, such as the [oil-spill demonstrations](examples/oilspill-demo-01/README.md), are now turned into a version 3 NetCDF restart by the C++ tool `createRestartFileFromJson`, built with the application. It samples uniformly per unit spherical area with `physics.random_seed`, keyed by particle identity. It places particles with the exact `deplatlon2kji` inverse used for Point sources, and fails on invalid geometry and on out-of-domain or land-cell samples. It then reads the restart back and requires an exact match. The earlier Python script stored nearest-node integer indices, float identities, and an unseeded, unversioned restart, and has been removed. `polygon_release` and `application_end_to_end` cover the new path, forward and backward. See [polygon releases](docs/model.md#polygon-releases).
+- The OpenMP particle loop now uses dynamic scheduling, the CUDA path launches one stream per device outside the OpenMP region, and the land mask is written from a precomputed cell list. On one 12-core Ryzen 9 9900X node with an RTX 4080 SUPER, Sarno CPU efficiency on 12 physical cores rose from 75–76% to 90–93%, and GPU time no longer grows with the host thread count; one GPU is 2.8× (100,000 particles/hour) and 4.8× (1,000,000) faster than twelve cores, while twelve cores beat the GPU at 10,000. GPU equivalence now allows particle health to differ by at most 1e-15 (CUDA and glibc `exp` differ by one unit in the last place) while survival must match exactly. See the [physical-core CPU/GPU comparison](examples/wacomm-sarno-lite/docs/performance-evaluation.md#physical-core-cpugpu-comparison-on-one-workstation-class-node).
+- Particle positions are now advanced with the explicit second-order midpoint method by default (`physics.integrator="midpoint"`). On a steady sheared current, halving the step reduces the error 3.9 times, against 2.0 times for the previous forward Euler step. That step remains available as `"integrator":"euler"` and reproduces earlier results bit for bit; configurations that omit the key change trajectories. CPU and CUDA share the scheme. See the [model description](docs/model.md#temporal-integration).
 
-Data are stored as NetCDF files with a semantic consistent naming convention. Those data can be used to drive the WaComM++ model.
+- An offline [end-to-end regression](docs/application-verification.md) now runs the complete executable, serially, with OpenMP, and on two MPI ranks. It found and fixed four defects. Hourly history and gridded outputs could be skipped silently because of modified-Julian round-off. Text restarts were written with six significant digits. Text restarts truncated 64-bit identities. A `.json` restart silently loaded zero particles. `restart.interval` and `io.timestep` must now be whole positive seconds.
+- `USE_PROJ=ON` failed to configure on macOS and Linux because pkg-config had not been loaded in that scope. It now prefers PROJ's CMake package, and CI builds it on Ubuntu and macOS.
+- ROMS input now rotates declared grid-relative U/V into east/north after the
+  existing wet-face interpolation. Explicit eastward/northward standard names
+  prevent double rotation. See the [metadata requirements and regression evidence](docs/adapters.md#roms-horizontal-vector-basis);
+  missing or inconsistent basis metadata fails, and old unrotated native forcing
+  must be regenerated. The webinar provider's angle/coordinate inconsistency is
+  tracked separately from this implementation fix.
+- The [native webinar protocol](examples/webinar-native-usecase/docs/performance-evaluation.md) uses 25 hourly forcing files from 2026-09-15 00:00 through 2026-09-16 00:00 UTC. Its paired ROMS conversion example prepares that same window; the native workflow applies the full CPU/hybrid and selected-CPU GPU matrix independently at each release rate.
+- The [ROMS webinar download example](examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) is a dry forcing-conversion workflow with isolated run archives and an application-wall-time benchmark. It does not execute the particle solver; historical endpoint availability and input metadata must be verified before use.
+
+## References
+
+Montella, R., et al. (2023), “A highly scalable high-performance Lagrangian transport and diffusion model for marine pollutants assessment,” *31st Euromicro International Conference on Parallel, Distributed and Network-Based Processing*, 17–26. Earlier WaComM publications and ocean-model references are listed in [references](docs/references.md).
+
+Scientific use of surface-object drift should additionally cite the peer-reviewed leeway methodology and object-specific studies identified in [references](docs/references.md). Model output is conditional on forcing, parameterization, resolution, boundary treatment, and numerical configuration; it is not an observation or a unique reconstruction of an unobserved trajectory.
+
+## License
+
+WaComM++ is distributed under the terms in [LICENSE](LICENSE).

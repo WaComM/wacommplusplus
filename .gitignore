@@ -35,3 +35,8 @@
 *.nc
 WACOMM_rst_*
 namelist.wacomm
+/data/
+
+# Python diagnostic caches
+__pycache__/
+*.pyc

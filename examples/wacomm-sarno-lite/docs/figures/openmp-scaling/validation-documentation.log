@@ -1,0 +1,9 @@
+Test project /home/montella/devel/wacommplusplus/build
+    Start 17: example_documentation
+1/2 Test #17: example_documentation ............   Passed    0.07 sec
+    Start 18: documentation_visuals
+2/2 Test #18: documentation_visuals ............   Passed    0.06 sec
+
+100% tests passed out of 2
+
+Total Test time (real) =   0.13 sec

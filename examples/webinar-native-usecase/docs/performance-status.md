@@ -1,0 +1,173 @@
+# Webinar protocol execution status
+
+## Recorded status on 2026-09-25
+
+Forcing preparation and both serial smoke replays are complete. The primary
+250,000-particles/hour CPU matrix was submitted as jobs **6712–6759** on
+`low-gn`. Jobs 6712–6716 completed their first measured samples, but the
+`32/1/0` warm-up in job **6717** was killed by the node out-of-memory handler.
+Jobs 6718–6760 were consequently held by failed dependencies. The failed
+attempt and its binding and runtime logs are retained. Resumed execution places
+at most eight MPI ranks on each homogeneous 178 GB Xeon Gold 5218 node while
+preserving the workload. The intervening two-node retry, job 6785, completed
+all solver intervals but did not terminate at the final forcing boundary and
+was cancelled without yielding a sample. See the performance protocol for the
+resulting four- and eight-node placements. After terminal-file staging was
+corrected, job 7015 completed all intervals and then hung in `MPI_Finalize`.
+Stack traces identified the OpenMPI UCX PML teardown; the module reports UCX
+1.15 while requesting at least 1.18. Jobs 7015--7058 were cancelled, and the
+immutable failed suite is excluded. Its replacement records and uses the
+OpenMPI `ob1` PML with `self,vader,tcp` BTLs for every CPU and GPU sample so
+transport does not vary within the suite. This is a dated execution record,
+not a completed performance result.
+
+| Stage | Recorded evidence | Remaining work |
+| --- | --- | --- |
+| ROMS download | 25 original files; checksums and physical times verified | None |
+| Explicit angle repair | 25 derived files; complete grid checks passed | None under the documented interpretation |
+| Native conversion | 25 files converted and validated; 24 two-record files are solver inputs and the terminal-boundary file is provenance-only | None |
+| Serial smoke replays | Two successful runs; exact particle and gridded agreement | None |
+| Primary CPU matrix | First samples through `16/1/0` completed in an excluded diagnostic suite; job 7015 exposed the UCX finalization defect | Run the fresh transport-controlled suite and validate every tuple |
+| Selected-CPU GPU matrix | Conditional dispatch scheduled by validation job 7116 | Select CPU reference after validation; run four device counts |
+| Final results | Conditional collection and export configured | Validate complete CPU/GPU sweep before accepting charts |
+| Additional release rates | Separate suites documented | Not yet submitted |
+
+## Forcing and preparation evidence
+
+The original archive contains 155,758,245,200 bytes covering **2026-09-15
+00:00–2026-09-16 00:00 UTC**, including all 25 hourly boundaries. The supplied
+`/files/rms3/d03/history/` endpoint succeeded after earlier OPeNDAP timeouts.
+See the [download record](../../webinar-roms-usecase-download/docs/download-20260915.json).
+
+The [explicit repair policy](../../webinar-roms-usecase-download/docs/rectilinear-angle-repair.md)
+assumes ROMS grid-axis components, checks the entire east/north rectilinear
+C-grid, and sets angle to zero in derived copies. The original downloads and
+source angle are preserved. All geometry residuals were zero, and retained
+fields other than angle were unchanged. This is a documented preprocessing
+interpretation, not provider confirmation or validation of upstream dynamics.
+
+The [repair and conversion record](../../webinar-roms-usecase-download/docs/angle-repair-results.json)
+contains checksums for 25 derived files (56,388,777,875 bytes) and 25 native
+files (95,568,478,517 bytes). Serial conversion exited successfully in
+406.171 seconds; this single preparation duration is not a solver benchmark.
+
+The [smoke evidence](preparation-results.json) records two seeded serial runs at
+1,000 particles/hour. Each produced 24 hourly gridded outputs and 12 two-hour
+particle histories. Nonempty particle histories and all compared gridded fields
+agreed exactly. This demonstrates repeatability for the reduced workload; it
+does not establish MPI/OpenMP/GPU equivalence at the primary workload. Live
+stack evidence from jobs 6785 and 6871 showed prolonged HDF5 reads while every
+rank decoded the one-record terminal artifact after all 24 intervals. The
+staged solver configuration now uses the 24 two-record files that cover those
+same intervals and preserves the terminal file in conversion provenance.
+
+## Scheduled protocol and result locations
+
+The [CPU submission record](cpu-submission-angle-repaired.json) and
+[continuation record](protocol-continuation.json) describe the excluded
+diagnostic suite:
+
+`examples/webinar-native-usecase/data/webinar-q250000-angle-repaired-001/`
+
+Jobs 7015--7058 were cancelled after the transport failure was isolated; they
+must not be resumed or mixed with replacement timings. In the replacement
+suite, the post-CPU continuation independently validates the evidence and
+selects the fastest GPU-compatible CPU tuple. Only then does it submit the
+1-, 2-, 3- and 4-device runs, with warm-ups and three rotated replicate blocks.
+Final collection depends on successful completion of the GPU jobs. Tool checksum
+changes or failed comparisons stop progression. See the
+[scheduled workflow](performance-evaluation.md#scheduled-continuation-for-the-repaired-forcing).
+
+The replacement suite is
+`examples/webinar-native-usecase/data/webinar-q250000-tcp-001/`. CPU jobs
+7068--7115 and checksum-guarded validation/continuation job 7116 were submitted
+on 2026-09-18. Job 7073 subsequently completed all physical intervals but hung
+in HCOLL's independent UCX teardown path. Jobs 7073--7116 were cancelled and
+this suite is excluded. A second fresh suite disables HCOLL in addition to
+selecting OB1/TCP; no timings are combined across these runtime environments.
+That active suite is
+`examples/webinar-native-usecase/data/webinar-q250000-tcp-nohcoll-001/`:
+CPU jobs 7126--7173 and checksum-guarded validation/continuation job 7174 were
+submitted on 2026-09-18.
+
+First-block jobs through `32/1/0` have completed with zero warm-up and measured
+exit codes. Each measured sample contains all 24 solver intervals; the
+four-node `32/1/0` sample exited normally with the recorded OB1/TCP and
+HCOLL-disabled environment. The heterogeneous H100 node remains excluded, and
+no placement was changed merely to reduce scheduler delay.
+
+Job 7132 started on 2026-09-20 but lost the OpenMPI daemon on `wn01` before the
+first solver interval. The TCP BTL reported an unexpected process identifier;
+Slurm terminated the stalled warm-up at its 24-hour limit. This failed attempt
+is retained and excluded. Because the identical runtime completed the
+four-node sample, no scientific or runtime setting was changed for the first
+retry. Jobs 8202--8243 resume every incomplete CPU sample, and checksum-guarded
+validation/continuation job 8244 follows the chain.
+
+By 2026-09-25 job 8202 still required simultaneous access to every homogeneous
+node, with Slurm projecting another multi-day delay. The completed one-node
+`16/1/0` sample establishes that 16 ranks fit the node memory, whereas the
+original OOM evidence applies to 32 ranks on one node. Jobs 8202--8244 are
+therefore superseded without contributing results. A fresh suite uses a
+uniform 16-ranks-per-node cap for the high-rank points: two nodes for `32/1/0`
+and four for `64/1/0`. This placement change is isolated in the new suite; no
+timings are combined with the eight-ranks-per-node attempts.
+
+The active replacement suite is
+`examples/webinar-native-usecase/data/webinar-q250000-tcp-nohcoll-rpn16-001/`.
+CPU jobs 8301--8348 and checksum-guarded validation/continuation job 8349 were
+submitted on 2026-09-25.
+
+Job 8306 (`32/1/0`) started on two nodes but reproduced the TCP BTL unexpected
+process-identifier error between `gn02` and `gn03` before completing its first
+interval. It stalled until the 24-hour limit; jobs 8306--8349 are retained and
+excluded. The node inventory shows both `eth0` and IP-over-InfiniBand `ib0` on
+common subnets. The next fresh suite pins both MPI TCP payload traffic and ORTE
+daemon-control traffic to `eth0`; no timings cross that interface-policy
+boundary.
+
+The active interface-pinned suite is
+`examples/webinar-native-usecase/data/webinar-q250000-tcp-nohcoll-rpn16-eth0-001/`.
+CPU jobs 8391--8438 and checksum-guarded validation/continuation job 8439 were
+submitted on 2026-09-27.
+
+Inspect `collect-cpu.out`, `collect-cpu.err`, `collect-final.out`,
+`collect-final.err`, and per-tuple `codex-performance-review.md` files in that
+suite. A successful final export creates `publication/`, containing compact
+results and checksummed charts. The final collector job ID is recorded in
+`provenance/final-collector-job.txt` after GPU submission.
+
+No final speedup, CPU optimum or GPU recommendation has been accepted. The
+1,000, 10,000, 100,000 and 1,000,000 particles/hour problem-size suites remain
+separate experiments, each requiring its own baseline and complete matrix.
+
+## Implementation verification
+
+The [rotation verification record](rotation-validation.json) archives 17
+portable-core, 28 serial-application and 32 MPI/OpenMP-application passes, plus
+eight GPU-node passes in job 6696 with no skips. Coverage includes analytic
+rotations, metadata rejection, native round trips, and deterministic/seeded
+forward/backward restart checks. The subsequent angle-repair application test
+also passed; its evidence is in the repair record. The webinar protocol test
+checks the 25-file window and all 24 solver intervals, including rejection of
+incorrect time units and incomplete coverage. These tests support implementation
+verification, not ocean-model observational skill.
+
+## Historical failures and reproducibility
+
+Earlier conversion attempts timed out before producing usable forcing, and the
+launcher correctly rejected the missing preparation gate. Those failures are
+preserved in the [historical conversion record](../../webinar-roms-usecase-download/docs/performance-results.md)
+and its linked attempt files. They no longer describe current forcing readiness.
+
+Keep immutable suite names and preserve every failed attempt with its raw logs
+and review note. Archive configurations, forcing/source/restart/output hashes,
+seed, executable, build options, working changes, dependencies, topology,
+bindings, scheduler records and comparison tolerances. Follow the
+[configuration guide](webinar-native-usecase.md#reproducibility). Do not change
+physics, source geometry, time window or output cadence to improve timings.
+
+## References
+
+See the peer-reviewed [protocol references](performance-evaluation.md#references)
+and the [repair references](../../webinar-roms-usecase-download/docs/rectilinear-angle-repair.md#references).

@@ -7,8 +7,11 @@
 
 #include <string>
 #include <fstream>
+#include <cstdint>
+#include <vector>
 
 #include "Utils.hpp"
+#include "DriftModel.hpp"
 
 using namespace std;
 
@@ -16,6 +19,19 @@ using namespace std;
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
+
+static constexpr std::size_t MAX_OBSERVATIONAL_CALIBRATION_REGIONS=16;
+
+struct observational_calibration_region {
+    double west;
+    double south;
+    double east;
+    double north;
+    double windErrorStdDev;
+    double windErrorComponentCorrelation;
+    double windErrorSpatialScale;
+    double windErrorTemporalScale;
+};
 
 struct config_data {
     bool random;
@@ -31,12 +47,34 @@ struct config_data {
     int upperClosure;
     int lowerClosure;
     int horizontalClosure;
+    std::uint64_t randomSeed;
+    int trackingDirection;
+    int backwardDiffusion;
+    int integrator;
+    double restartCheckpoint;
+    int driftModel;
+    bool leewayCoefficientEnsemble;
+    double leewayResidualCorrelation;
+    bool leewayRandomSide;
+    double leewayRightSideProbability;
+    double leewayJibeProbabilityHourly;
+    double windErrorStdDev;
+    double windErrorComponentCorrelation;
+    double windErrorSpatialScale;
+    double windErrorTemporalScale;
+    std::uint32_t observationalCalibrationRegionCount;
+    observational_calibration_region observationalCalibrationRegions[MAX_OBSERVATIONAL_CALIBRATION_REGIONS];
+    std::uint16_t driftObjectType;
+    std::int8_t driftSide;
+    bool hasWind;
+    double windU10;
+    double windV10;
 };
 
 class Config {
 public:
     Config();
-    explicit Config(string &fileName);
+    explicit Config(const string &fileName);
     ~Config();
 
     config_data *dataptr();
@@ -73,6 +111,25 @@ public:
     double Deltat() const;
     double ShoreLimit() const;
     double SedimentationVelocity() const;
+    std::uint64_t RandomSeed() const;
+    bool Backward() const;
+    bool BackwardDiffusion() const;
+    int Integrator() const;
+    bool Leeway() const;
+    bool LeewayCoefficientEnsemble() const;
+    double LeewayResidualCorrelation() const;
+    bool LeewayRandomSide() const;
+    double LeewayRightSideProbability() const;
+    double LeewayJibeProbabilityHourly() const;
+    double WindErrorStdDev() const;
+    double WindErrorComponentCorrelation() const;
+    double WindErrorSpatialScale() const;
+    double WindErrorTemporalScale() const;
+    std::size_t ObservationalCalibrationRegionCount() const;
+    DriftObjectType DriftObject() const;
+    DriftSide DefaultDriftSide() const;
+    void RestartCheckpoint(double value);
+    double RestartCheckpoint() const;
 
     void SaveHistory(string value);
     string SaveHistory() const;
@@ -102,6 +159,18 @@ public:
     bool MaskOutput() const;
     void MaskOutput(bool value);
 
+    // Output publication (docs/io.md)
+    bool AsyncIO() const;
+    void AsyncIO(bool value);
+    int AsyncMaxPending() const;
+    string Filesystem() const;
+    bool Fsync() const;
+    string StagingDir() const;
+    int LustreStripeCount() const;
+    long long LustreStripeSize() const;
+    string ParallelWrite() const;
+    const std::map<string,string>& MpiioHints() const;
+
     bool UseSources() const;
     void UseSources(bool value);
     string SourcesFile() const;
@@ -115,16 +184,39 @@ public:
 
     string OceanModel() const;
     void OceanModel(string value);
+    string WeatherModel() const;
+    vector<string>& WeatherInputs();
+    string WeatherRegridding() const;
+    string WeatherSourceCrs() const;
+    string WaveModel() const;
+    vector<string>& WaveInputs();
+    string WaveRegridding() const;
+    string WaveSourceCrs() const;
 
     void saveAsJson(const string &fileName);
+    string asJson() const;
     void loadFromJson(const string &fileName);
     void loadFromNamelist(const string &fileName);
 
     static const int CLOSURE_MODE_CONSTRAINT=1;
     static const int CLOSURE_MODE_KILL=2;
     static const int CLOSURE_MODE_REFLECTION=3;
+    static const int TRACKING_FORWARD=1;
+    static const int TRACKING_BACKWARD=-1;
+    static const int INTEGRATOR_EULER=1;
+    static const int INTEGRATOR_MIDPOINT=2;
 
 private:
+    struct ObservationalCalibrationMetadata {
+        string id;
+        string estimator;
+        string dataset;
+        string datasetChecksum;
+        string doi;
+        string validFrom;
+        string validUntil;
+        std::uint64_t sampleSize;
+    };
     log4cplus::Logger logger;
 
     std::map<std::string, int> dictionary;
@@ -144,6 +236,15 @@ private:
     double julianRef;
 
     string oceanModel;
+    string weatherModel;
+    vector<string> weatherInputs;
+    string weatherRegridding;
+    string weatherSourceCrs;
+    string waveModel;
+    vector<string> waveInputs;
+    string waveRegridding;
+    string waveSourceCrs;
+    vector<ObservationalCalibrationMetadata> observationalCalibrationMetadata;
     string ncBasePath;
     vector<string> ncInputs;
     string ncOutputRoot;
@@ -166,6 +267,16 @@ private:
     string historyRoot;
 
     bool embeddedHistory;
+
+    bool asyncIO;
+    int asyncMaxPending;
+    string filesystem;
+    bool fsync;
+    string stagingDir;
+    int lustreStripeCount;
+    long long lustreStripeSize;
+    string parallelWrite;
+    std::map<string,string> mpiioHints;
 
     void setDefault();
 

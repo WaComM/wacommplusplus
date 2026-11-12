@@ -17,6 +17,9 @@
 #include "Particles.hpp"
 #include "Array.h"
 #include "OceanModelAdapter.hpp"
+#include "WeatherModelAdapter.hpp"
+#include "WaveModelAdapter.hpp"
+#include "OutputWriter.hpp"
 
 using namespace std;
 using namespace Array;
@@ -28,7 +31,10 @@ class Wacomm {
         Wacomm(std::shared_ptr<Config> config,
                std::shared_ptr<OceanModelAdapter> oceanModelAdapter,
                std::shared_ptr<Sources> sources,
-               std::shared_ptr<Particles> particles);
+               std::shared_ptr<Particles> particles,
+               std::shared_ptr<WeatherModelAdapter> weatherModelAdapter=nullptr,
+               std::shared_ptr<WaveModelAdapter> waveModelAdapter=nullptr,
+               std::shared_ptr<OutputWriter> outputWriter=nullptr);
         ~Wacomm();
 
         int run(double &time, double&part, double&cuda, int &nParticles, int &idx);
@@ -40,11 +46,19 @@ class Wacomm {
 
         std::shared_ptr<Config> config;
         std::shared_ptr<OceanModelAdapter> oceanModelAdapter;
+        std::shared_ptr<WeatherModelAdapter> weatherModelAdapter;
+        std::shared_ptr<WaveModelAdapter> waveModelAdapter;
 
         std::shared_ptr<Sources> sources;
         std::shared_ptr<Particles> particles;
 
-        void save(const string &fileName, Array4<float> &conc/*, bool add = false*/);
+        // Publishes histories and gridded outputs, synchronously or in background (docs/io.md)
+        std::shared_ptr<OutputWriter> outputWriter;
+
+        // Static: an asynchronous write may outlive this object
+        static void save(const string &fileName, Array4<float> &conc,
+                         std::shared_ptr<OceanModelAdapter> oceanModelAdapter, std::shared_ptr<Config> config,
+                         bool writeConcentration=true/*, bool add = false*/);
         //void save(const string &filename);
 
 };

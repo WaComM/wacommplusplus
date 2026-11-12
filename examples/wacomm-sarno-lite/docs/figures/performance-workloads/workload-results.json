@@ -1,0 +1,469 @@
+{
+  "schema": "wacomm-performance-workload-scaling-v1",
+  "common_provenance": {
+    "configuration_sha256": "17df9ec6c8e360d2b6bdc3df00a6da545a57bfd4e2440f9208e2aba58b5c722d",
+    "forcing_sha256": "fde61fd3f5969052cd25987369ad6ea762c62f7026ffc51c3bcc5855879c9456",
+    "binary_sha256": "16d9fae6a7e2dd14f493bb34b3b2df5de996084d43a9f72f0491acf81c429b0c",
+    "hardware_id": "Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz|2|16|Tesla V100-SXM2-32GB",
+    "timing_scope": "solver"
+  },
+  "problem_size_unit": "particles/hour",
+  "cases": [
+    {
+      "problem_size": 1000,
+      "problem_size_unit": "particles/hour",
+      "run_root": "data/wacomm-sarno-lite/sarno-protocol-q1000-20260914",
+      "revision": "a92646173324af59866a30983ab35d638fc5fd63",
+      "source_sha256": "8dd5a7f4dfe9a99087e395088205035f9c6c2363e416546608ce4ad787aba1de",
+      "selected_cpu": [
+        1,
+        32,
+        0
+      ],
+      "gpu_reference_cpu": [
+        1,
+        32,
+        0
+      ],
+      "serial_median_seconds": 1.522249427,
+      "selected_cpu_median_seconds": 0.080231752,
+      "selected_cpu_speedup": 18.973154506210957,
+      "selected_cpu_efficiency": 0.5929110783190924,
+      "best_measured_configuration": [
+        1,
+        32,
+        0
+      ],
+      "best_measured_median_seconds": 0.080231752,
+      "gpu_sweep": [
+        {
+          "gpu_devices": 0,
+          "solver_seconds": [
+            0.079817885,
+            0.080231752,
+            0.083916195
+          ],
+          "median_seconds": 0.080231752,
+          "application_seconds": [
+            10.27,
+            11.22,
+            10.23
+          ],
+          "incremental_speedup": 1.0,
+          "gpu_device_speedup": null,
+          "gpu_device_efficiency": null
+        },
+        {
+          "gpu_devices": 1,
+          "solver_seconds": [
+            2.171034618,
+            2.17290516,
+            2.15316677
+          ],
+          "median_seconds": 2.171034618,
+          "application_seconds": [
+            12.26,
+            12.75,
+            12.22
+          ],
+          "incremental_speedup": 0.036955537850387236,
+          "gpu_device_speedup": 1.0,
+          "gpu_device_efficiency": 1.0
+        },
+        {
+          "gpu_devices": 2,
+          "solver_seconds": [
+            4.115246422,
+            4.089244417,
+            4.097616904
+          ],
+          "median_seconds": 4.097616904,
+          "application_seconds": [
+            14.36,
+            14.32,
+            14.15
+          ],
+          "incremental_speedup": 0.019580100795093754,
+          "gpu_device_speedup": 0.529828597661408,
+          "gpu_device_efficiency": 0.264914298830704
+        },
+        {
+          "gpu_devices": 3,
+          "solver_seconds": [
+            6.052970652,
+            6.02831546,
+            6.040275112
+          ],
+          "median_seconds": 6.040275112,
+          "application_seconds": [
+            16.5,
+            16.37,
+            16.3
+          ],
+          "incremental_speedup": 0.013282797639565528,
+          "gpu_device_speedup": 0.3594264462701182,
+          "gpu_device_efficiency": 0.11980881542337274
+        },
+        {
+          "gpu_devices": 4,
+          "solver_seconds": [
+            7.95392097,
+            7.940892947,
+            7.975841294
+          ],
+          "median_seconds": 7.95392097,
+          "application_seconds": [
+            18.35,
+            18.4,
+            18.33
+          ],
+          "incremental_speedup": 0.010087069296088316,
+          "gpu_device_speedup": 0.27295149476447467,
+          "gpu_device_efficiency": 0.06823787369111867
+        }
+      ]
+    },
+    {
+      "problem_size": 10000,
+      "problem_size_unit": "particles/hour",
+      "run_root": "data/wacomm-sarno-lite/sarno-protocol-rotated-20260913",
+      "revision": "a92646173324af59866a30983ab35d638fc5fd63",
+      "source_sha256": "f7c04c9f3b7397a3334100886eda74b311b0daf07c63530a8d2c1076e5fe9687",
+      "selected_cpu": [
+        1,
+        32,
+        0
+      ],
+      "gpu_reference_cpu": [
+        1,
+        32,
+        0
+      ],
+      "serial_median_seconds": 10.438386469,
+      "selected_cpu_median_seconds": 0.5194776249999999,
+      "selected_cpu_speedup": 20.094005914114202,
+      "selected_cpu_efficiency": 0.6279376848160688,
+      "best_measured_configuration": [
+        1,
+        32,
+        0
+      ],
+      "best_measured_median_seconds": 0.5194776249999999,
+      "gpu_sweep": [
+        {
+          "gpu_devices": 0,
+          "solver_seconds": [
+            0.519734077,
+            0.516711088,
+            0.5194776249999999
+          ],
+          "median_seconds": 0.5194776249999999,
+          "application_seconds": [
+            10.7,
+            10.81,
+            12.24
+          ],
+          "incremental_speedup": 1.0,
+          "gpu_device_speedup": null,
+          "gpu_device_efficiency": null
+        },
+        {
+          "gpu_devices": 1,
+          "solver_seconds": [
+            2.223739691,
+            2.23019438,
+            2.213461109
+          ],
+          "median_seconds": 2.223739691,
+          "application_seconds": [
+            12.56,
+            12.49,
+            12.48
+          ],
+          "incremental_speedup": 0.23360541123695755,
+          "gpu_device_speedup": 1.0,
+          "gpu_device_efficiency": 1.0
+        },
+        {
+          "gpu_devices": 2,
+          "solver_seconds": [
+            4.168407031,
+            4.166706817,
+            4.179174426
+          ],
+          "median_seconds": 4.168407031,
+          "application_seconds": [
+            14.64,
+            14.53,
+            14.61
+          ],
+          "incremental_speedup": 0.12462257671496571,
+          "gpu_device_speedup": 0.5334747001581861,
+          "gpu_device_efficiency": 0.26673735007909305
+        },
+        {
+          "gpu_devices": 3,
+          "solver_seconds": [
+            6.099646916,
+            6.111924645,
+            6.103719049
+          ],
+          "median_seconds": 6.103719049,
+          "application_seconds": [
+            16.65,
+            16.59,
+            16.48
+          ],
+          "incremental_speedup": 0.08510837750389384,
+          "gpu_device_speedup": 0.3643253683775509,
+          "gpu_device_efficiency": 0.12144178945918364
+        },
+        {
+          "gpu_devices": 4,
+          "solver_seconds": [
+            8.005258164,
+            8.013993661,
+            8.046880941
+          ],
+          "median_seconds": 8.013993661,
+          "application_seconds": [
+            18.54,
+            18.51,
+            18.47
+          ],
+          "incremental_speedup": 0.06482131718272142,
+          "gpu_device_speedup": 0.2774820875915839,
+          "gpu_device_efficiency": 0.06937052189789597
+        }
+      ]
+    },
+    {
+      "problem_size": 100000,
+      "problem_size_unit": "particles/hour",
+      "run_root": "data/wacomm-sarno-lite/sarno-protocol-q100000-20260914",
+      "revision": "a92646173324af59866a30983ab35d638fc5fd63",
+      "source_sha256": "645cdb9ad2bf98c41f31caeb4f32e1c54d6425fa61b1de025d081785916a13e8",
+      "selected_cpu": [
+        64,
+        1,
+        0
+      ],
+      "gpu_reference_cpu": [
+        2,
+        16,
+        0
+      ],
+      "serial_median_seconds": 101.139158834,
+      "selected_cpu_median_seconds": 3.614552622,
+      "selected_cpu_speedup": 27.981100127970414,
+      "selected_cpu_efficiency": 0.4372046894995377,
+      "best_measured_configuration": [
+        2,
+        16,
+        1
+      ],
+      "best_measured_median_seconds": 2.521815715,
+      "gpu_sweep": [
+        {
+          "gpu_devices": 0,
+          "solver_seconds": [
+            4.833235215,
+            4.832199258,
+            4.838787087
+          ],
+          "median_seconds": 4.833235215,
+          "application_seconds": [
+            17.48,
+            17.77,
+            17.36
+          ],
+          "incremental_speedup": 1.0,
+          "gpu_device_speedup": null,
+          "gpu_device_efficiency": null
+        },
+        {
+          "gpu_devices": 1,
+          "solver_seconds": [
+            2.513022969,
+            2.535632733,
+            2.521815715
+          ],
+          "median_seconds": 2.521815715,
+          "application_seconds": [
+            13.12,
+            13.41,
+            13.23
+          ],
+          "incremental_speedup": 1.916569551950786,
+          "gpu_device_speedup": 1.0,
+          "gpu_device_efficiency": 1.0
+        },
+        {
+          "gpu_devices": 2,
+          "solver_seconds": [
+            4.572648666,
+            4.5624631650000005,
+            4.5437880669999995
+          ],
+          "median_seconds": 4.5624631650000005,
+          "application_seconds": [
+            15.45,
+            15.42,
+            15.47
+          ],
+          "incremental_speedup": 1.0593477777699494,
+          "gpu_device_speedup": 0.552731194488449,
+          "gpu_device_efficiency": 0.2763655972442245
+        },
+        {
+          "gpu_devices": 3,
+          "solver_seconds": [
+            6.588704078,
+            6.562438451,
+            6.542119457
+          ],
+          "median_seconds": 6.562438451,
+          "application_seconds": [
+            17.58,
+            17.58,
+            17.48
+          ],
+          "incremental_speedup": 0.7364998926981936,
+          "gpu_device_speedup": 0.3842802845054828,
+          "gpu_device_efficiency": 0.12809342816849426
+        },
+        {
+          "gpu_devices": 4,
+          "solver_seconds": [
+            8.556737952999999,
+            8.583327514,
+            8.544596214
+          ],
+          "median_seconds": 8.556737952999999,
+          "application_seconds": [
+            19.78,
+            19.68,
+            20.41
+          ],
+          "incremental_speedup": 0.564845533607286,
+          "gpu_device_speedup": 0.2947169504140125,
+          "gpu_device_efficiency": 0.07367923760350313
+        }
+      ]
+    },
+    {
+      "problem_size": 1000000,
+      "problem_size_unit": "particles/hour",
+      "run_root": "data/wacomm-sarno-lite/sarno-protocol-q1000000-20260914",
+      "revision": "79b42434454f4e911253c6a1b701b661c1417427",
+      "source_sha256": "38b4355438760ecd25a4176841937f24b662140fbc30be9b5c615713e7c860c9",
+      "selected_cpu": [
+        64,
+        1,
+        0
+      ],
+      "gpu_reference_cpu": [
+        2,
+        16,
+        0
+      ],
+      "serial_median_seconds": 997.166032361,
+      "selected_cpu_median_seconds": 26.951342063,
+      "selected_cpu_speedup": 36.99875241945573,
+      "selected_cpu_efficiency": 0.5781055065539957,
+      "best_measured_configuration": [
+        2,
+        16,
+        1
+      ],
+      "best_measured_median_seconds": 6.291729534,
+      "gpu_sweep": [
+        {
+          "gpu_devices": 0,
+          "solver_seconds": [
+            47.439400303,
+            47.991844384,
+            47.444992692
+          ],
+          "median_seconds": 47.444992692,
+          "application_seconds": [
+            59.93,
+            60.44,
+            60.2
+          ],
+          "incremental_speedup": 1.0,
+          "gpu_device_speedup": null,
+          "gpu_device_efficiency": null
+        },
+        {
+          "gpu_devices": 1,
+          "solver_seconds": [
+            6.083827794,
+            6.307042321,
+            6.291729534
+          ],
+          "median_seconds": 6.291729534,
+          "application_seconds": [
+            18.95,
+            20.2,
+            21.05
+          ],
+          "incremental_speedup": 7.540850641403303,
+          "gpu_device_speedup": 1.0,
+          "gpu_device_efficiency": 1.0
+        },
+        {
+          "gpu_devices": 2,
+          "solver_seconds": [
+            7.934760928999999,
+            8.006060956,
+            7.739585144
+          ],
+          "median_seconds": 7.934760928999999,
+          "application_seconds": [
+            20.99,
+            22.21,
+            22.59
+          ],
+          "incremental_speedup": 5.979385279094903,
+          "gpu_device_speedup": 0.7929324639139358,
+          "gpu_device_efficiency": 0.3964662319569679
+        },
+        {
+          "gpu_devices": 3,
+          "solver_seconds": [
+            9.751539509,
+            9.656928056,
+            9.844591789999999
+          ],
+          "median_seconds": 9.751539509,
+          "application_seconds": [
+            22.62,
+            23.51,
+            24.85
+          ],
+          "incremental_speedup": 4.86538486033016,
+          "gpu_device_speedup": 0.6452037166227103,
+          "gpu_device_efficiency": 0.2150679055409034
+        },
+        {
+          "gpu_devices": 4,
+          "solver_seconds": [
+            11.44675665,
+            11.610059662,
+            11.593607256
+          ],
+          "median_seconds": 11.593607256,
+          "application_seconds": [
+            25.23,
+            26.46,
+            26.99
+          ],
+          "incremental_speedup": 4.092340860300055,
+          "gpu_device_speedup": 0.542689552532829,
+          "gpu_device_efficiency": 0.13567238813320726
+        }
+      ]
+    }
+  ]
+}

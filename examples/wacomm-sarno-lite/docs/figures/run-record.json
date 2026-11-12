@@ -1,0 +1,267 @@
+{
+  "application_exit_code": 0,
+  "build_dependencies": {
+    "HDF5": "1.12.0",
+    "OpenSSL": "3.5.8 static",
+    "cmake": "4.4.3",
+    "compiler": "GNU 12.2.1",
+    "curl": "8.7.1",
+    "libaec": "1.1.3",
+    "log4cplus": "2.1.1",
+    "netCDF-C": "4.8.1",
+    "netCDF-C++4": "4.3.1",
+    "nlohmann_json": "3.11.3",
+    "zlib": "1.3.1"
+  },
+  "configuration": {
+    "io": {
+      "base_path": "roms/",
+      "history_root": "snapshots-6h/WACOMM_rst_",
+      "mask_output": true,
+      "nc_input_root": "processed-6h/ocm3_d03_",
+      "nc_inputs": [
+        "rms3_d03_20210701Z0900.nc",
+        "rms3_d03_20210701Z1000.nc",
+        "rms3_d03_20210701Z1100.nc",
+        "rms3_d03_20210701Z1300.nc",
+        "rms3_d03_20210701Z1400.nc",
+        "rms3_d03_20210701Z1500.nc"
+      ],
+      "nc_output_root": "output-6h/wacomm_his_",
+      "ocean_model": "ROMS",
+      "save_history": "nc",
+      "save_input": true,
+      "timestep": 3600
+    },
+    "physics": {
+      "horizontal_closure": "kill",
+      "lower_closure": "constraint",
+      "random": true,
+      "random_seed": 5489,
+      "random_sources": false,
+      "shore_limit": 0.5,
+      "sigma": 3.46,
+      "survprob": 0.0001,
+      "sv": 0,
+      "tau0": 86400,
+      "upper_closure": "reflection"
+    },
+    "restart": {
+      "active": false,
+      "interval": 3600,
+      "restart_file": ""
+    },
+    "simulation": {
+      "dry": false,
+      "end": "20210701Z15",
+      "institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
+      "name": "Sarno lite emission",
+      "start": "20210701Z09",
+      "url": "https://meteo.uniparthenope.it"
+    },
+    "sources": {
+      "active": true,
+      "sources_file": "examples/sources-sarno_river.json"
+    },
+    "tracking": {
+      "direction": "forward"
+    }
+  },
+  "configuration_sha256": "7e365604b824e5359730c7cc8c82bd4e110e5dc088cb61f0efbfcd71ba23963c",
+  "cpus": 1,
+  "download_urls": [
+    "https://data.meteo.uniparthenope.it/files/rms3/d03/history/2021/07/01/rms3_d03_20210701Z0900.nc",
+    "https://data.meteo.uniparthenope.it/files/rms3/d03/history/2021/07/01/rms3_d03_20210701Z1000.nc",
+    "https://data.meteo.uniparthenope.it/files/rms3/d03/history/2021/07/01/rms3_d03_20210701Z1100.nc",
+    "https://data.meteo.uniparthenope.it/files/rms3/d03/history/2021/07/01/rms3_d03_20210701Z1300.nc",
+    "https://data.meteo.uniparthenope.it/files/rms3/d03/history/2021/07/01/rms3_d03_20210701Z1400.nc",
+    "https://data.meteo.uniparthenope.it/files/rms3/d03/history/2021/07/01/rms3_d03_20210701Z1500.nc"
+  ],
+  "duration_seconds": 21600,
+  "emitted_particles": 50000,
+  "end_utc": "2021-07-01T15:00:00Z",
+  "final_selected_particles": 40109,
+  "git_base_revision": "8c5285c7f7a1befee63475d7a383aebdbb243f99",
+  "inputs": [
+    {
+      "path": "wacommplusplus",
+      "sha256": "4ca2f2afea7eb70ba01d437365099cd1456791f0747a0e4812aeae59b9268dc0"
+    },
+    {
+      "path": "wacomm-sarno-lite-6h.json",
+      "sha256": "7e365604b824e5359730c7cc8c82bd4e110e5dc088cb61f0efbfcd71ba23963c"
+    },
+    {
+      "path": "examples/sources-sarno_river.json",
+      "sha256": "f7c04c9f3b7397a3334100886eda74b311b0daf07c63530a8d2c1076e5fe9687"
+    },
+    {
+      "path": "roms/rms3_d03_20210701Z0900.nc",
+      "sha256": "7fd6f78b1717156077ac850bbc4572f2122a190e9fed29c23505319160186c79"
+    },
+    {
+      "path": "roms/rms3_d03_20210701Z1000.nc",
+      "sha256": "ee91aee5dc7f5b29f37aecc6a7e2813a27a7a0140a5875e7c568869036c997fb"
+    },
+    {
+      "path": "roms/rms3_d03_20210701Z1100.nc",
+      "sha256": "77e2fa50d1b7cfb1b23edf2f5daf9e322a4cd92028bbed3adf0d86d2c1544a1b"
+    },
+    {
+      "path": "roms/rms3_d03_20210701Z1300.nc",
+      "sha256": "d55687b41d0212825641876dc8c4c28035b39211877ead73186d8d9c891d7085"
+    },
+    {
+      "path": "roms/rms3_d03_20210701Z1400.nc",
+      "sha256": "35e5c2d217902c3660f87c64beac00b4cf379ee07e062aabe23d88b4cda91cd9"
+    },
+    {
+      "path": "roms/rms3_d03_20210701Z1500.nc",
+      "sha256": "c9dd9e1642625d86473ca56b6d24272582be9b5d7f54cfb8b738178e1b8739dc"
+    }
+  ],
+  "job_id": 6210,
+  "memory_gib": 32,
+  "missing_record": "20210701Z1200; not present in provider listing, 404 on request. Interpolation spans 11:00\u201313:00; no 12:00 source emission.",
+  "module_list": "Currently Loaded Modulefiles:\n 1) nvidia/cuda-12.8.0       7) openssl/openssl-4.0.2          \n 2) gcc-8.5.0/hwloc-2.10.0   8) cmake/cmake-4.4.3              \n 3) gcc-8.5.0/pmix-5.0.1     9) gcc-12.1.1/gcc                 \n 4) gcc-8.5.0/ucx-1.15.0    10) gcc-8.5.0/ucc-2023.01.18_nccl  \n 5) slurm                   11) gcc-8.5.0/slurm-23.11.3        \n 6) node/node-24            12) gcc-12.2.1/ompi-4.1.4_nccl     \n",
+  "outputs": [
+    {
+      "path": "output-6h/wacomm_his_20210701Z09.nc",
+      "sha256": "d2d3c05d77c22397153171b3db1c5743e27fd0daeba89ac18439e3b7201d1870"
+    },
+    {
+      "path": "output-6h/wacomm_his_20210701Z10.nc",
+      "sha256": "7ffaa56fa16455f704b9d656167d9189daaa704f34dab676cef83a5c96e3d4f6"
+    },
+    {
+      "path": "output-6h/wacomm_his_20210701Z11.nc",
+      "sha256": "6ab1909616cf46f8be8fb57b0c8413b623b3e028955ad3ffaa7e3593d178a0d0"
+    },
+    {
+      "path": "output-6h/wacomm_his_20210701Z13.nc",
+      "sha256": "f8af50c35a164f498a476fe0956089e45f36e692154da0b8f3e336a4c5cb55ce"
+    },
+    {
+      "path": "output-6h/wacomm_his_20210701Z14.nc",
+      "sha256": "3459156830f88fb8e5d3101a32c9f5711fb12b72ed6a98e007bad86844585b4c"
+    },
+    {
+      "path": "snapshots-6h/WACOMM_rst_20210701Z10.nc",
+      "sha256": "48a9d9e35a4ae833a26853ff781571abcc830c13cfee91a6e73756914ab211fc"
+    },
+    {
+      "path": "snapshots-6h/WACOMM_rst_20210701Z11.nc",
+      "sha256": "b3be68c9ca624b2ae9a43211f34784614066aa155cc4ea0ec90ef8e4a71fd4fc"
+    },
+    {
+      "path": "snapshots-6h/WACOMM_rst_20210701Z13.nc",
+      "sha256": "29247db3e5de3c5f36759aefa3b546854beaea749a49c459c52fedcf743e0fbf"
+    },
+    {
+      "path": "snapshots-6h/WACOMM_rst_20210701Z14.nc",
+      "sha256": "e711ccc3bd892a531d63ceea5466fa8cbfeb34d3d75333bfadd088015a012871"
+    },
+    {
+      "path": "snapshots-6h/WACOMM_rst_20210701Z15.nc",
+      "sha256": "122e954d7e763f4821940e894e46ffe411a9c95008fe1c23db1cd0776d16c243"
+    },
+    {
+      "path": "processed-6h/ocm3_d03_20210701Z09.nc",
+      "sha256": "9694d10993b32888adfe1a15ae4ef1ae5e9ec414a8694343fbdb23be7d9e7430"
+    },
+    {
+      "path": "processed-6h/ocm3_d03_20210701Z10.nc",
+      "sha256": "cdd7e137ace1126f163c61b4a85fb30fc11fa50b1b5b05fd95d67a17561fb2de"
+    },
+    {
+      "path": "processed-6h/ocm3_d03_20210701Z11.nc",
+      "sha256": "45adc8b355074adc928a1bb69bef008296ecb75dc9f78c9dad52f70592961965"
+    },
+    {
+      "path": "processed-6h/ocm3_d03_20210701Z13.nc",
+      "sha256": "a48b4f0a70dec08fcc580e05c24cd64e81aa59166f7c44340d53ccc2620ed0f0"
+    },
+    {
+      "path": "processed-6h/ocm3_d03_20210701Z14.nc",
+      "sha256": "d0143e1b44e5b937456ee090618697c09389cb97545623d2953eb1682ece4d7c"
+    },
+    {
+      "path": "processed-6h/ocm3_d03_20210701Z15.nc",
+      "sha256": "017e294da9d31c2c373698700a3652d25722c98aea58101437f4f72518458347"
+    }
+  ],
+  "partition": "high-wn",
+  "platform": "Linux wn01.e4.cluster 4.18.0-553.104.1.el8_10.x86_64 #1 SMP Fri Feb 13 15:51:56 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux\n",
+  "reproduction_script": "bash tools/run_sarno_lite.sh",
+  "schema": "wacomm-example-run-v1",
+  "source_cpp_sha256": {
+    "Array.h": "3041e785eb7d85ecf9bf3aac4e033adb796fbdc6cc5de67cbf0ca46994cc1f40",
+    "Concentration.hpp": "980b1610fa6775b63b624076f5f4c3d97b1dafc31db311574ecd475247d5e7cc",
+    "Config.cpp": "b71a2d86a4f0beb1815768d2e35f62755b7e509bf0cf7638b05616427972708b",
+    "Config.hpp": "a60584aaa71d48863dce3127151781cc276551d1c1f598fd9c81a73b2d0a144c",
+    "DriftModel.cpp": "dabfb8c2c04e2c8a9826878fd1c67eb76a36cd87db8bd1f6dab96c892739685a",
+    "DriftModel.hpp": "8bd42565599d8f7b16a5e81a14084d07322069fc6ca9f3ea93c9cf8d35122955",
+    "EnvironmentalDataAccess.cpp": "b4ae794fd1edeb3b0a365c27b4b0697380906c053de157c3736fe9c84b2eeddc",
+    "EnvironmentalDataAccess.hpp": "91ee236a92ad6144bb85553c6cecfdbaae2ce54a68080fe0112e2ae40893e35d",
+    "EnvironmentalMetadata.cpp": "3f4d22d1553ae768d22886fee7d350f102871f7438bda1989c19c9a2cf15da7c",
+    "EnvironmentalMetadata.hpp": "9f828a1fbccfe04a2cd56cc98d2b2f4d5c5d8a7b6c6c71f4b92351c1f8845eb3",
+    "EnvironmentalRegridder.cpp": "1362df9350951c3d07549158d637d8d57d80c914a9355bd5bf3f78738dc3b325",
+    "EnvironmentalRegridder.hpp": "00740e2bf91cae4820bb2569fefa4e291c70f4fb382229bd08c03d3bf7fa6d83",
+    "JulianDate.cpp": "aa8ed2ef72c01fa42e954e144eb28ccdd135bf3cb3920f37f7b1d00c6f8d56ec",
+    "JulianDate.hpp": "1cc7fc912302749edcb1ff6ac217bd738c9a89fefdd0d96b05805e92f7b86372",
+    "MpiHelpers.hpp": "2c346e99d565ac0c750d1183ba59ded0a0fc1ed22528526950006a69f14cef0d",
+    "NumericalHelpers.hpp": "674ab0eb6f9cee3394d696c635301d2e91b53f640e407a2a7a621f48a0357633",
+    "OceanModelAdapter.cpp": "8f93dc12871895b0482592bd593b2be30ffcf1fd896f93f6eb9fead2783db2cb",
+    "OceanModelAdapter.hpp": "245500f39f49aed83c141106d8d297c4719fbffef42b8d1a65b6961a8818f104",
+    "OceanModelAdapterFactory.cpp": "62404408e36847b0a094eb1f818262bb48264ac961f20156ba0a91cbc15d93d3",
+    "OceanModelAdapterFactory.hpp": "cb73255c6af9633ecde0c9556e07797759215c3570b3bcd2d1c5d4a253a86c41",
+    "OceanModelAdapters/HYCOMAdapter.hpp": "70fed08eb22ad8ff4b44f200ff480bc5249d463bdf10c5b3cb05a1659389857e",
+    "OceanModelAdapters/NEMOAdapter.hpp": "502db3fad7c30897d4a885cdb61c6c7a8f3f93dc178e401a3ffbaeb6411c39fd",
+    "OceanModelAdapters/ROMSAdapter.cpp": "8e435687d3c7b1462463daa7327338855874eba8764a07e08b8515ed7c5365f8",
+    "OceanModelAdapters/ROMSAdapter.hpp": "566396209b94fbbd8b3d2526c5241654f3eff62ad7ef76e0d6378e57c619eebb",
+    "OceanModelAdapters/StructuredGridAdapter.cpp": "971b9dcc9b37cd74c708a6605f146fecc26ac7693de3b1015a2cd408990f98de",
+    "OceanModelAdapters/StructuredGridAdapter.hpp": "1e9e59ee148ba5fa19867cefd54387a00c27f5b10ef4ddbefdb9ae14ad384fed",
+    "OceanModelAdapters/WacommAdapter.cpp": "09f267876043455d0a9b7b42b19e22894bd0f1646b2bfed9a4cecae749e2d0f9",
+    "OceanModelAdapters/WacommAdapter.hpp": "93045eb2fe7432af1a3e96ded3548919d9c9ad70aa576d8f46fa7c6930b13137",
+    "Particle.cpp": "3ebb501af91942b09452cf00cca818319bea4fa954f8477e48e9160aeb6c67d0",
+    "Particle.hpp": "c363edc445e0cc523c48580908f40d1163c5ea62f2964f30d7fb0b6c48c05a4d",
+    "Particles.cpp": "1e587ec8a1276e7ed9bef07c9bdd9ed5363e4984040ad3db3f11b42ce668d7d2",
+    "Particles.hpp": "1dbd5f84afec72da05b94b6908321f008bbdad099e80901c6f11fcf989d9c6ee",
+    "Provenance.hpp": "cc0dd90d99bbfba86d40485da5480fd2932104c38b7c235dfa8d6d94b9203604",
+    "Source.cpp": "9dbd107c4681b59b765726b6ef5bacc1366d588468b3766923126967066be2e1",
+    "Source.hpp": "f7b96252ab0ae808d23b5aa792b2752c0160e5d90ddd273ef490de378fd7c4bb",
+    "Sources.cpp": "58b88b190e26abf47c6d9279bf496f97f71af6064044e65292f5c7eb0d0dd759",
+    "Sources.hpp": "f09b8875c23f8cf77a9850bf8f2d5445bbb5c3b2f036c6227444d84882bf1330",
+    "Utils.cpp": "221b63f5ec1b9752a7048851c5097e401aa0828b4d7230a9a3d55d3faa9c5165",
+    "Utils.hpp": "e30a3454a9b0a5747d10e4c064dca752e018bd06a54a9669b28a4ee1882f2095",
+    "Wacomm.cpp": "1cfbd7287c810d591e5f1fa6108640ab2c09b949137781d91450c52f50460076",
+    "Wacomm.hpp": "7cfdfbf0267f917797fcd6d7e13245a81b18aa491a931387111dfc2c5b37c489",
+    "WacommPlusPlus.cpp": "ba72d0e8daed2a5893da6aed3f85613da5418dcc71b11fc6cfdf50f7ed6039bc",
+    "WacommPlusPlus.hpp": "72adbe6ec01492de9c9fc979edd3411d3c3b2792cc73f2adf9400bea3e6c63ca",
+    "WaveModelAdapter.cpp": "864f7d8af87368a43a9c4b91bb8819715badae6eb3ae460cca2c69ec66ca826d",
+    "WaveModelAdapter.hpp": "19474c2adbd1d9d5069e26cf0ecab20f697fd6dbf0748780fc609c6be3afd22e",
+    "WaveModelAdapterFactory.cpp": "d9d44ce9f443299a5da1648ddeaf416e2da4cfcd9adae0df22df005a41fce6c2",
+    "WaveModelAdapterFactory.hpp": "9da1788ba5e2c09d6cbf344727136441d01e89932dae7d6ad1501458a3b7761d",
+    "WaveModelAdapters/WW3Adapter.cpp": "c8abb426ffac9a778238540e9091a0c7739c6a6e3eb736c3439b9efd62f45b31",
+    "WaveModelAdapters/WW3Adapter.hpp": "0e59aed3e9d9faf1e1ec4b6dad3432fa40c7b9d98d90f03f5df83628e150153e",
+    "WeatherModelAdapter.cpp": "ab988eaef4df5237d0314a1582fb381b3d413bdee6e95628bc9d2bbb8d1c7d0f",
+    "WeatherModelAdapter.hpp": "ffe1b3ba302a3629e81689f47734057da329ca5d0212f555c1ed46b779ea20fa",
+    "WeatherModelAdapterFactory.cpp": "d19a722bbb247d1efca3c8cf05aec0ea5b2afc988e13ea6cd81fae0f8a3e6154",
+    "WeatherModelAdapterFactory.hpp": "5bf77a52fdaf09cb66559d64c91f2c2bb443212eaff94aec3de488074886caf0",
+    "WeatherModelAdapters/WRFAdapter.cpp": "be3ea818bd396e51a70c0a1639dbd1569677874503a9dd36d0d9e9318f4451e4",
+    "WeatherModelAdapters/WRFAdapter.hpp": "237ac242cb1917b12659673cc6a8a817e76990cba0a18fb1a066d4a38ef3eb41",
+    "cuda/kernel.h": "0c6430d2c19506988c900779c6fad21ea99acfed05c7730cce36da4bf451cde7",
+    "main.cpp": "07a053226649920437c12f3f5e2cba9d4e298f826e53e806461140a4ad31fc18"
+  },
+  "start_utc": "2021-07-01T09:00:00Z",
+  "submitted_script": "#!/bin/bash -l\n#SBATCH --job-name=wacomm-sarno-lite\n#SBATCH --partition=high-wn\n#SBATCH --nodes=1\n#SBATCH --ntasks=1\n#SBATCH --cpus-per-task=1\n#SBATCH --time=01:00:00\n#SBATCH --mem=32G\n#SBATCH --chdir=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite\n#SBATCH --output=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/six-hour-%j.out\n#SBATCH --error=/home/montella/devel/wacommplusplus/data/wacomm-sarno-lite/six-hour-%j.err\n\nset -euo pipefail\nmodule load openssl/openssl-4.0.2\nmodule load cmake/cmake-4.4.3\nmodule load gcc-12.2.1/ompi-4.1.4_nccl\nmodule load nvidia/cuda-12.8.0\nmodule list\nfor forcing in roms/rms3_d03_20210701Z0900.nc roms/rms3_d03_20210701Z1000.nc roms/rms3_d03_20210701Z1100.nc roms/rms3_d03_20210701Z1300.nc roms/rms3_d03_20210701Z1400.nc roms/rms3_d03_20210701Z1500.nc; do\n    test -r \"$forcing\"\ndone\nsha256sum wacommplusplus wacomm-sarno-lite-6h.json examples/sources-sarno_river.json roms/rms3_d03_20210701Z*.nc > \"inputs-${SLURM_JOB_ID}.sha256\"\nmodule list > \"provenance/modules-${SLURM_JOB_ID}.txt\" 2>&1\nuname -a > \"provenance/platform-${SLURM_JOB_ID}.txt\"\nset +e\n./wacommplusplus wacomm-sarno-lite-6h.json\nrun_status=$?\nprintf \"%s\\n\" \"$run_status\" > \"provenance/exit-${SLURM_JOB_ID}.txt\"\nset -e\nif [ \"$run_status\" -ne 0 ]; then exit \"$run_status\"; fi\nfind output-6h snapshots-6h processed-6h -type f -exec sha256sum {} + > \"provenance/outputs-${SLURM_JOB_ID}.sha256\"\n",
+  "validation": "Numerical regression tolerances are test-specific; see tests/ParticleMoveTest.cpp. This run is not observational validation. Native replay equivalence has not been measured.",
+  "validation_results": {
+    "core_log_sha256": "f6510ed038fe78c53ae3c589a02d2f85d4ac9eeab5246fcefb4410d1aec7c495",
+    "portable_core": "10/10 passed; no skipped tests",
+    "serial": "20/20 passed; no skipped tests",
+    "serial_log_sha256": "79dfa47960124ff4bce353f9c12b541f7c56816b6905a2962f1d578ddf08a750"
+  },
+  "walltime_limit": "01:00:00",
+  "working_tree_changes": "Session build/dependency changes; numerical C++ source unchanged. Per-file source hashes recorded below. Plot script hashes are in sarno-figure-manifest.json."
+}

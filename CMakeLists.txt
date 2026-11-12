@@ -1,264 +1,499 @@
-cmake_minimum_required(VERSION 3.18)
-project(wacommplusplus)
-
-enable_language(Fortran)
+cmake_minimum_required(VERSION 3.20)
+project(wacommplusplus VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CUDA_STANDARD 14)
-set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL PGI)
-  message(STATUS "Using PGI compilers.")
-  add_compile_options(-std=c++17)
-endif()
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(DEBUG "Compile logging information in performance-critical classes." OFF)
-if(DEBUG)
-    add_definitions(-DDEBUG)
-endif()
-
+option(BUILD_APPLICATION "Build the WaComM++ application." ON)
+option(BUILD_TESTING "Build the test suite." ON)
 option(USE_MPI "Use MPI for distributed memory parallelism." OFF)
-option(USE_OMP "Use OMP for shared memory parallelism." OFF)
+option(USE_EMPI "Use FlexMPI/EMPI for malleable distributed memory parallelism." OFF)
+option(USE_OMP "Use OpenMP for shared memory parallelism." OFF)
 option(USE_OPENACC "Use OpenACC acceleration." OFF)
 option(USE_CUDA "Use CUDA acceleration." OFF)
-
-if (USE_MPI AND USE_EMPI)
-    message(FATAL_ERROR "You can not use both MPI and EMPI..")
+option(USE_PROJ "Use PROJ for explicit environmental coordinate transformations." OFF)
+option(BUILD_REMOTE_INTEGRATION_TESTS "Run network-dependent OPeNDAP integration tests." OFF)
+set(WACOMM_BOOTSTRAP_DEPENDENCIES "AUTO" CACHE STRING
+        "Dependency policy: AUTO prefers installed packages, ON forces private builds, and OFF requires installed packages.")
+set_property(CACHE WACOMM_BOOTSTRAP_DEPENDENCIES PROPERTY STRINGS AUTO ON OFF)
+string(TOUPPER "${WACOMM_BOOTSTRAP_DEPENDENCIES}" WACOMM_BOOTSTRAP_DEPENDENCIES)
+set(WACOMM_BOOTSTRAP_DEPENDENCIES "${WACOMM_BOOTSTRAP_DEPENDENCIES}" CACHE STRING
+        "Dependency policy: AUTO, ON, or OFF." FORCE)
+if(NOT WACOMM_BOOTSTRAP_DEPENDENCIES MATCHES "^(AUTO|ON|OFF)$")
+    message(FATAL_ERROR "WACOMM_BOOTSTRAP_DEPENDENCIES must be AUTO, ON, or OFF (received '${WACOMM_BOOTSTRAP_DEPENDENCIES}').")
+endif()
+set(WACOMM_DEPENDENCY_DOWNLOAD_DIR "" CACHE PATH
+        "Optional directory of hash-verified dependency archives shared by several build trees.")
+option(WACOMM_BOOTSTRAP_PARALLEL_IO
+        "Build bootstrapped HDF5 and NetCDF-C with MPI parallel I/O support." OFF)
+set(WACOMM_OPENSSL_VERSION "3.5.8")
+if(WACOMM_BOOTSTRAP_PARALLEL_IO AND WACOMM_BOOTSTRAP_DEPENDENCIES STREQUAL "OFF")
+    message(FATAL_ERROR "WACOMM_BOOTSTRAP_PARALLEL_IO=ON requires a private HDF5/NetCDF stack; WACOMM_BOOTSTRAP_DEPENDENCIES=OFF forbids it.")
 endif()
 
-set(LIBMPI "")
-set(LIBEMPI "")
-set(LIBPAPI "")
-set(LIBGLPK "")
-set(LIBICC "")
+set(WACOMM_GIT_REVISION "unknown")
+find_package(Git QUIET)
+if(Git_FOUND)
+    execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+            RESULT_VARIABLE WACOMM_GIT_RESULT
+            OUTPUT_VARIABLE WACOMM_GIT_OUTPUT
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            ERROR_QUIET)
+    if(WACOMM_GIT_RESULT EQUAL 0)
+        set(WACOMM_GIT_REVISION "${WACOMM_GIT_OUTPUT}")
+    endif()
+endif()
+set(WACOMM_CMAKE_OPTIONS
+        "BUILD_APPLICATION=${BUILD_APPLICATION};BUILD_TESTING=${BUILD_TESTING};BUILD_REMOTE_INTEGRATION_TESTS=${BUILD_REMOTE_INTEGRATION_TESTS};DEBUG=${DEBUG};USE_MPI=${USE_MPI};USE_EMPI=${USE_EMPI};USE_OMP=${USE_OMP};USE_OPENACC=${USE_OPENACC};USE_CUDA=${USE_CUDA};USE_PROJ=${USE_PROJ};WACOMM_BOOTSTRAP_DEPENDENCIES=${WACOMM_BOOTSTRAP_DEPENDENCIES};WACOMM_BOOTSTRAP_PARALLEL_IO=${WACOMM_BOOTSTRAP_PARALLEL_IO}")
+set(WACOMM_GENERATED_INCLUDE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+configure_file(BuildInfo.hpp.in "${WACOMM_GENERATED_INCLUDE}/BuildInfo.hpp" @ONLY)
 
-find_package(MPI)
-if(MPI_C_FOUND)
-    if (USE_MPI)
-        message(STATUS "Using MPI for distributed memory parallelism.")
-        add_definitions(-DUSE_MPI)
-        include_directories(${MPI_INCLUDE_PATH})
-        set(LIBMPI ${MPI_C_LIBRARIES})
-    elseif (USE_EMPI)
-        find_library(EMPI_LIBRARY empi)
-        find_library(PAPI_LIBRARY papi)
-        find_library(GLPK_LIBRARY glpk)
-        find_library(ICC_LIBRARY icc)
+function(wacomm_enable_test_assertions target)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE /UNDEBUG)
+    else()
+        target_compile_options(${target} PRIVATE -UNDEBUG)
+    endif()
+endfunction()
 
-        if (EMPI_LIBRARY AND PAPI_LIBRARY AND GLPK_LIBRARY AND ICC_LIBRARY)
-            message(STATUS "Using MPI for distributed memory parallelism with malleability.")
-            add_definitions(-DUSE_EMPI)
-            include_directories(${MPI_INCLUDE_PATH})
-            set(LIBMPI ${MPI_C_LIBRARIES})
+# Polygon release positions must be bitwise identical across platforms (docs/model.md#polygon-releases)
+if(MSVC)
+    set_source_files_properties(PolygonRelease.cpp PROPERTIES COMPILE_OPTIONS "/fp:precise")
+else()
+    set_source_files_properties(PolygonRelease.cpp PROPERTIES COMPILE_OPTIONS "-ffp-contract=off")
+endif()
+
+if(USE_MPI AND USE_EMPI)
+    message(FATAL_ERROR "You can not use both MPI and EMPI.")
+endif()
+
+if(DEBUG)
+    add_compile_definitions(DEBUG)
+endif()
+
+if(BUILD_APPLICATION)
+    find_package(Threads REQUIRED)
+    include(cmake/WacommDependencies.cmake)
+    wacomm_configure_dependencies(WACOMM_DEPENDENCY_LIBRARIES)
+    set(WACOMM_LIBRARIES Threads::Threads ${CMAKE_DL_LIBS}
+            nlohmann_json::nlohmann_json ${WACOMM_DEPENDENCY_LIBRARIES})
+
+    # GCC 8 (Rocky Linux 8.9) and LLVM libc++ 8 keep std::filesystem in a
+    # separate library; newer toolchains provide it in the C++ runtime.
+    include(CheckCXXSourceCompiles)
+    set(wacomm_filesystem_probe "#include <filesystem>
+        int main() { return std::filesystem::exists(std::filesystem::path(\".\")) ? 0 : 1; }")
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_CXX17_STANDARD_COMPILE_OPTION}")
+    check_cxx_source_compiles("${wacomm_filesystem_probe}" WACOMM_FILESYSTEM_IN_RUNTIME)
+    if(NOT WACOMM_FILESYSTEM_IN_RUNTIME)
+        set(CMAKE_REQUIRED_LIBRARIES stdc++fs)
+        check_cxx_source_compiles("${wacomm_filesystem_probe}" WACOMM_FILESYSTEM_IN_STDCXXFS)
+        set(CMAKE_REQUIRED_LIBRARIES c++fs)
+        check_cxx_source_compiles("${wacomm_filesystem_probe}" WACOMM_FILESYSTEM_IN_CXXFS)
+        unset(CMAKE_REQUIRED_LIBRARIES)
+        if(WACOMM_FILESYSTEM_IN_STDCXXFS)
+            list(APPEND WACOMM_LIBRARIES stdc++fs)
+        elseif(WACOMM_FILESYSTEM_IN_CXXFS)
+            list(APPEND WACOMM_LIBRARIES c++fs)
+        else()
+            message(FATAL_ERROR "The C++ toolchain cannot link std::filesystem")
+        endif()
+    endif()
+    unset(CMAKE_REQUIRED_FLAGS)
+
+    # Collective output (docs/io.md#collective-writes) needs MPI decomposition and a
+    # NetCDF-C with parallel HDF5; the sources detect netcdf_par.h, and the tests
+    # below are registered only when the selected NetCDF provides it.
+    set(WACOMM_PARALLEL_NETCDF OFF)
+    if(USE_MPI)
+        if(WACOMM_BOOTSTRAP_PARALLEL_IO)
+            set(WACOMM_PARALLEL_NETCDF ON)
+        elseif(TARGET PkgConfig::WACOMM_NETCDF)
+            get_target_property(WACOMM_NETCDF_INCLUDES PkgConfig::WACOMM_NETCDF INTERFACE_INCLUDE_DIRECTORIES)
+            foreach(dir IN LISTS WACOMM_NETCDF_INCLUDES)
+                if(EXISTS "${dir}/netcdf_par.h" AND EXISTS "${dir}/netcdf_meta.h")
+                    file(STRINGS "${dir}/netcdf_meta.h" WACOMM_NETCDF_PARALLEL4 REGEX "#define NC_HAS_PARALLEL4 1")
+                    if(WACOMM_NETCDF_PARALLEL4)
+                        set(WACOMM_PARALLEL_NETCDF ON)
+                    endif()
+                endif()
+            endforeach()
+        endif()
+    endif()
+    message(STATUS "WaComM++ collective output (io.parallel_write=collective)=${WACOMM_PARALLEL_NETCDF}")
+
+    if(USE_PROJ)
+        # Prefer the PROJ CMake package on every platform; pkg-config is only
+        # a fallback and must be loaded here because the dependency module
+        # finds it in function scope.
+        find_package(PROJ CONFIG QUIET)
+        if(TARGET PROJ::proj)
+            list(APPEND WACOMM_LIBRARIES PROJ::proj)
+        elseif(WIN32)
+            find_package(PROJ CONFIG REQUIRED)
+        else()
+            find_package(PkgConfig REQUIRED)
+            pkg_check_modules(WACOMM_PROJ REQUIRED IMPORTED_TARGET proj)
+            list(APPEND WACOMM_LIBRARIES PkgConfig::WACOMM_PROJ)
+        endif()
+        add_compile_definitions(WACOMM_USE_PROJ)
+    endif()
+
+    if(USE_OMP)
+        if(APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+            find_program(HOMEBREW_EXECUTABLE brew)
+            if(HOMEBREW_EXECUTABLE)
+                execute_process(COMMAND "${HOMEBREW_EXECUTABLE}" --prefix libomp
+                        RESULT_VARIABLE HOMEBREW_LIBOMP_RESULT
+                        OUTPUT_VARIABLE HOMEBREW_LIBOMP_PREFIX
+                        OUTPUT_STRIP_TRAILING_WHITESPACE
+                        ERROR_QUIET)
+                if(HOMEBREW_LIBOMP_RESULT EQUAL 0
+                        AND EXISTS "${HOMEBREW_LIBOMP_PREFIX}/include/omp.h"
+                        AND EXISTS "${HOMEBREW_LIBOMP_PREFIX}/lib/libomp.dylib")
+                    if(NOT OpenMP_CXX_FLAGS)
+                        set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp" CACHE STRING
+                                "C++ compiler flags for OpenMP" FORCE)
+                    endif()
+                    if(NOT OpenMP_CXX_INCLUDE_DIR)
+                        set(OpenMP_CXX_INCLUDE_DIR "${HOMEBREW_LIBOMP_PREFIX}/include" CACHE PATH
+                                "C++ include directory for OpenMP" FORCE)
+                    endif()
+                    if(NOT OpenMP_CXX_LIB_NAMES)
+                        set(OpenMP_CXX_LIB_NAMES omp CACHE STRING
+                                "C++ libraries for OpenMP" FORCE)
+                    endif()
+                    if(NOT OpenMP_omp_LIBRARY)
+                        set(OpenMP_omp_LIBRARY "${HOMEBREW_LIBOMP_PREFIX}/lib/libomp.dylib" CACHE FILEPATH
+                                "OpenMP runtime library" FORCE)
+                    endif()
+                endif()
+            endif()
+        endif()
+        find_package(OpenMP REQUIRED COMPONENTS CXX)
+        list(APPEND WACOMM_LIBRARIES OpenMP::OpenMP_CXX)
+        add_compile_definitions(USE_OMP)
+    endif()
+
+    if(USE_MPI OR USE_EMPI)
+        find_package(MPI REQUIRED COMPONENTS CXX)
+        list(APPEND WACOMM_LIBRARIES MPI::MPI_CXX)
+        if(USE_MPI)
+            add_compile_definitions(USE_MPI)
+        else()
+            find_path(EMPI_INCLUDE_DIR empi.h)
+            find_library(EMPI_LIBRARY NAMES empi)
+            if(NOT EMPI_INCLUDE_DIR OR NOT EMPI_LIBRARY)
+                message(FATAL_ERROR "FlexMPI/EMPI headers and library were not found.")
+            endif()
+            list(APPEND WACOMM_LIBRARIES "${EMPI_LIBRARY}")
+            include_directories("${EMPI_INCLUDE_DIR}")
+            add_compile_definitions(USE_EMPI)
+        endif()
+    endif()
+
+    if(USE_OPENACC)
+        find_package(OpenACC REQUIRED)
+        list(APPEND WACOMM_LIBRARIES OpenACC::OpenACC_CXX)
+        add_compile_definitions(USE_OPENACC)
+    endif()
+
+    set(WACOMM_CUDA_SOURCES)
+    if(USE_CUDA)
+        if(APPLE)
+            message(FATAL_ERROR "CUDA is not supported on modern macOS.")
+        endif()
+        enable_language(CUDA)
+        find_package(CUDAToolkit REQUIRED)
+        set(CMAKE_CUDA_STANDARD 17)
+        set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+        list(APPEND WACOMM_CUDA_SOURCES cuda/kernel.cu cuda/kernel.h)
+        list(APPEND WACOMM_LIBRARIES CUDA::cudart)
+        add_compile_definitions(USE_CUDA)
+    endif()
+
+    add_executable(wacommplusplus
+            main.cpp Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
+            Config.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp WacommPlusPlus.cpp JulianDate.cpp
+            EnvironmentalDataAccess.cpp OutputWriter.cpp ParallelOutput.cpp
+            EnvironmentalMetadata.cpp EnvironmentalRegridder.cpp
+            WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
+            WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
+            OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
+            OceanModelAdapters/StructuredGridAdapter.cpp
+            ${WACOMM_CUDA_SOURCES})
+    target_link_libraries(wacommplusplus PRIVATE ${WACOMM_LIBRARIES})
+    target_include_directories(wacommplusplus PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+    install(TARGETS wacommplusplus RUNTIME DESTINATION bin)
+
+    # Polygon release areas to a versioned NetCDF restart (docs/model.md#polygon-releases)
+    add_executable(createRestartFileFromJson utilities/createRestartFileFromJson/main.cpp
+            PolygonRelease.cpp Particle.cpp Particles.cpp Config.cpp DriftModel.cpp OceanModelAdapter.cpp
+            OceanModelAdapterFactory.cpp Utils.cpp JulianDate.cpp EnvironmentalDataAccess.cpp
+            OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
+            OceanModelAdapters/StructuredGridAdapter.cpp)
+    target_link_libraries(createRestartFileFromJson PRIVATE ${WACOMM_LIBRARIES})
+    target_include_directories(createRestartFileFromJson PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+    install(TARGETS createRestartFileFromJson RUNTIME DESTINATION bin)
+
+    if(BUILD_TESTING)
+        if(TARGET wacomm_openssl)
+            add_executable(openssl_dependency_test tests/OpenSSLDependencyTest.cpp)
+            wacomm_enable_test_assertions(openssl_dependency_test)
+            target_link_libraries(openssl_dependency_test PRIVATE ${WACOMM_LIBRARIES})
+            target_compile_definitions(openssl_dependency_test PRIVATE
+                    WACOMM_EXPECTED_OPENSSL="${WACOMM_OPENSSL_VERSION}")
+            add_test(NAME openssl_dependency COMMAND openssl_dependency_test)
+        endif()
+        add_executable(environmental_data_access_test tests/EnvironmentalDataAccessTest.cpp EnvironmentalDataAccess.cpp)
+        wacomm_enable_test_assertions(environmental_data_access_test)
+        add_test(NAME environmental_data_access COMMAND environmental_data_access_test)
+        if(BUILD_REMOTE_INTEGRATION_TESTS)
+            add_executable(remote_netcdf_integration_test tests/RemoteNetCDFIntegrationTest.cpp)
+            target_link_libraries(remote_netcdf_integration_test PRIVATE ${WACOMM_LIBRARIES})
+            add_test(NAME remote_netcdf_integration COMMAND remote_netcdf_integration_test)
+            set_tests_properties(remote_netcdf_integration PROPERTIES LABELS "integration;network" TIMEOUT 30)
+        endif()
+        add_executable(structured_grid_adapter_test tests/StructuredGridAdapterTest.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/StructuredGridAdapter.cpp)
+        wacomm_enable_test_assertions(structured_grid_adapter_test)
+        target_link_libraries(structured_grid_adapter_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME structured_grid_adapters COMMAND structured_grid_adapter_test)
+
+        add_executable(roms_adapter_test tests/ROMSAdapterTest.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/ROMSAdapter.cpp
+                OceanModelAdapters/WacommAdapter.cpp)
+        wacomm_enable_test_assertions(roms_adapter_test)
+        target_link_libraries(roms_adapter_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME roms_adapter COMMAND roms_adapter_test)
+
+        add_executable(native_adapter_test tests/NativeAdapterTest.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
+                OceanModelAdapterFactory.cpp OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/StructuredGridAdapter.cpp)
+        wacomm_enable_test_assertions(native_adapter_test)
+        target_link_libraries(native_adapter_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME native_adapter COMMAND native_adapter_test)
+
+        add_executable(vertical_coordinate_test tests/VerticalCoordinateTest.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp)
+        wacomm_enable_test_assertions(vertical_coordinate_test)
+        target_link_libraries(vertical_coordinate_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME vertical_coordinate_round_trip COMMAND vertical_coordinate_test)
+
+        add_executable(source_loading_test tests/SourceLoadingTest.cpp Sources.cpp Source.cpp Particles.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp Config.cpp EnvironmentalDataAccess.cpp
+                Utils.cpp JulianDate.cpp)
+        target_include_directories(source_loading_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+        wacomm_enable_test_assertions(source_loading_test)
+        target_link_libraries(source_loading_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME source_position_loading COMMAND source_loading_test)
+
+        add_executable(polygon_release_test tests/PolygonReleaseTest.cpp PolygonRelease.cpp Particles.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp Config.cpp EnvironmentalDataAccess.cpp
+                Utils.cpp JulianDate.cpp)
+        target_include_directories(polygon_release_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+        wacomm_enable_test_assertions(polygon_release_test)
+        target_link_libraries(polygon_release_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME polygon_release COMMAND polygon_release_test "${CMAKE_CURRENT_SOURCE_DIR}/examples")
+
+        add_executable(config_test tests/ConfigTest.cpp Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(config_test)
+        target_link_libraries(config_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME configuration_round_trip COMMAND config_test)
+
+        # Collective MPI-IO and parallel NetCDF-4 output against the serial writers (docs/io.md#collective-writes)
+        if(WACOMM_PARALLEL_NETCDF)
+            add_executable(parallel_output_test tests/ParallelOutputTest.cpp ParallelOutput.cpp OutputWriter.cpp
+                    Particles.cpp Particle.cpp DriftModel.cpp OceanModelAdapter.cpp
+                    Config.cpp EnvironmentalDataAccess.cpp Utils.cpp JulianDate.cpp)
+            target_include_directories(parallel_output_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+            wacomm_enable_test_assertions(parallel_output_test)
+            target_link_libraries(parallel_output_test PRIVATE ${WACOMM_LIBRARIES})
+            foreach(ranks 1 2 3)
+                add_test(NAME parallel_output_${ranks}_ranks COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} ${ranks}
+                        ${MPIEXEC_PREFLAGS} $<TARGET_FILE:parallel_output_test> ${MPIEXEC_POSTFLAGS}
+                        "${CMAKE_CURRENT_BINARY_DIR}/parallel-output-${ranks}")
+            endforeach()
+        endif()
+
+        # Synchronous/asynchronous publication and parallel file system policy (docs/io.md)
+        add_executable(output_writer_test tests/OutputWriterTest.cpp OutputWriter.cpp
+                Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(output_writer_test)
+        target_link_libraries(output_writer_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME output_writer COMMAND output_writer_test)
+
+        add_executable(example_config_test tests/ExampleConfigTest.cpp Config.cpp EnvironmentalDataAccess.cpp DriftModel.cpp Utils.cpp JulianDate.cpp)
+        target_link_libraries(example_config_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME example_configurations COMMAND example_config_test "${CMAKE_CURRENT_SOURCE_DIR}/examples")
+
+        add_executable(restart_test tests/RestartTest.cpp Particles.cpp Particle.cpp DriftModel.cpp OceanModelAdapter.cpp
+                Config.cpp EnvironmentalDataAccess.cpp Utils.cpp JulianDate.cpp)
+        target_include_directories(restart_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+        wacomm_enable_test_assertions(restart_test)
+        target_link_libraries(restart_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME restart_format COMMAND restart_test)
+
+        add_executable(particle_move_test tests/ParticleMoveTest.cpp Particle.cpp DriftModel.cpp)
+        wacomm_enable_test_assertions(particle_move_test)
+        target_link_libraries(particle_move_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME particle_physical_interval COMMAND particle_move_test)
+
+        add_executable(concentration_test tests/ConcentrationTest.cpp Particles.cpp Particle.cpp DriftModel.cpp
+                OceanModelAdapter.cpp Config.cpp EnvironmentalDataAccess.cpp Utils.cpp JulianDate.cpp)
+        target_include_directories(concentration_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+        wacomm_enable_test_assertions(concentration_test)
+        target_link_libraries(concentration_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME concentration_preservation COMMAND concentration_test)
+
+        # End-to-end regression of the built executable on an analytic uniform current.
+        add_executable(application_end_to_end_test tests/ApplicationEndToEndTest.cpp
+                OceanModelAdapter.cpp Particle.cpp DriftModel.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(application_end_to_end_test)
+        target_link_libraries(application_end_to_end_test PRIVATE ${WACOMM_LIBRARIES})
+        set(WACOMM_END_TO_END_LAUNCHER "")
+        if(USE_MPI)
+            set(WACOMM_END_TO_END_LAUNCHER ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS})
+        endif()
+        string(REPLACE ";" "\\;" WACOMM_END_TO_END_LAUNCHER "${WACOMM_END_TO_END_LAUNCHER}")
+        add_test(NAME application_end_to_end COMMAND ${CMAKE_COMMAND}
+                -DHELPER=$<TARGET_FILE:application_end_to_end_test>
+                -DEXECUTABLE=$<TARGET_FILE:wacommplusplus>
+                -DPOLYGON_TOOL=$<TARGET_FILE:createRestartFileFromJson>
+                -DWORK_DIR=${CMAKE_CURRENT_BINARY_DIR}/application-end-to-end
+                "-DLAUNCHER=${WACOMM_END_TO_END_LAUNCHER}"
+                -DCOLLECTIVE=${WACOMM_PARALLEL_NETCDF}
+                -DREQUIRE_CUDA_DEVICE=${USE_CUDA}
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/tests/ApplicationEndToEnd.cmake)
+        set_tests_properties(application_end_to_end PROPERTIES TIMEOUT 300
+                SKIP_REGULAR_EXPRESSION "WACOMM_END_TO_END_SKIP")
+        if(USE_OMP)
+            set_tests_properties(application_end_to_end PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OMP_DYNAMIC=FALSE")
+        endif()
+
+        if(USE_MPI)
+            add_executable(mpi_decomposition_test tests/MpiDecompositionTest.cpp Particle.cpp DriftModel.cpp)
+            wacomm_enable_test_assertions(mpi_decomposition_test)
+            target_link_libraries(mpi_decomposition_test PRIVATE ${WACOMM_LIBRARIES})
+            add_test(NAME mpi_decomposition_parity COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                    ${MPIEXEC_PREFLAGS} $<TARGET_FILE:mpi_decomposition_test> ${MPIEXEC_POSTFLAGS})
+            if(USE_OMP)
+                set_tests_properties(mpi_decomposition_parity PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+            endif()
+            if(USE_OMP)
+                add_test(NAME mpi_openmp_single_worker_parity COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 1
+                        ${MPIEXEC_PREFLAGS} $<TARGET_FILE:mpi_decomposition_test> ${MPIEXEC_POSTFLAGS})
+                set_tests_properties(mpi_openmp_single_worker_parity PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=1;OMP_DYNAMIC=FALSE")
+                add_test(NAME mpi_openmp_multi_worker_parity COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+                        ${MPIEXEC_PREFLAGS} $<TARGET_FILE:mpi_decomposition_test> ${MPIEXEC_POSTFLAGS})
+                set_tests_properties(mpi_openmp_multi_worker_parity PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=2;OMP_DYNAMIC=FALSE")
+            endif()
+        endif()
+
+        if(USE_CUDA)
+            add_executable(cuda_particle_parity_test tests/CudaParticleParityTest.cu Particle.cpp DriftModel.cpp cuda/kernel.cu)
+            wacomm_enable_test_assertions(cuda_particle_parity_test)
+            target_link_libraries(cuda_particle_parity_test PRIVATE ${WACOMM_LIBRARIES})
+            add_test(NAME cuda_particle_parity COMMAND cuda_particle_parity_test)
+            set_tests_properties(cuda_particle_parity PROPERTIES SKIP_RETURN_CODE 77)
         endif()
     endif()
 endif()
 
-set(LIBOMP "")
-find_package(OpenMP)
-if(OpenMP_CXX_FOUND AND USE_OMP)
-    add_definitions(-DUSE_OMP)
-    message(STATUS "Using OMP for shared memory parallelism.")
-    set(LIBOMP OpenMP::OpenMP_CXX)
+if(BUILD_TESTING)
+    include(CTest)
+    add_executable(drift_model_test tests/DriftModelTest.cpp DriftModel.cpp)
+    wacomm_enable_test_assertions(drift_model_test)
+    target_include_directories(drift_model_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME drift_model COMMAND drift_model_test)
+    if(BUILD_APPLICATION)
+        add_executable(environment_adapter_test tests/EnvironmentAdapterTest.cpp
+                WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
+                WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
+                EnvironmentalMetadata.cpp EnvironmentalRegridder.cpp JulianDate.cpp)
+        wacomm_enable_test_assertions(environment_adapter_test)
+        target_link_libraries(environment_adapter_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME environment_adapters COMMAND environment_adapter_test)
+    endif()
+    add_executable(numerical_helpers_test tests/NumericalHelpersTest.cpp)
+    wacomm_enable_test_assertions(numerical_helpers_test)
+    target_include_directories(numerical_helpers_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME numerical_helpers COMMAND numerical_helpers_test)
+    add_executable(source_emission_test tests/SourceEmissionTest.cpp)
+    wacomm_enable_test_assertions(source_emission_test)
+    target_include_directories(source_emission_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME source_emission COMMAND source_emission_test)
+    add_executable(array_storage_test tests/ArrayStorageTest.cpp)
+    wacomm_enable_test_assertions(array_storage_test)
+    target_include_directories(array_storage_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME array_storage COMMAND array_storage_test)
+    add_executable(environmental_regridder_test tests/EnvironmentalRegridderTest.cpp EnvironmentalRegridder.cpp)
+    wacomm_enable_test_assertions(environmental_regridder_test)
+    target_include_directories(environmental_regridder_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    if(USE_PROJ)
+        target_link_libraries(environmental_regridder_test PRIVATE ${WACOMM_LIBRARIES})
+    endif()
+    add_test(NAME environmental_regridding COMMAND environmental_regridder_test)
+    find_package(Python3 QUIET COMPONENTS Interpreter)
+    if(Python3_Interpreter_FOUND)
+        if(BUILD_APPLICATION AND UNIX)
+            add_test(NAME webinar_roms_workflow COMMAND "${Python3_EXECUTABLE}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/webinar-roms-usecase-download/tools/WorkflowTest.py"
+                    "$<TARGET_FILE:wacommplusplus>")
+            set_tests_properties(webinar_roms_workflow PROPERTIES SKIP_RETURN_CODE 77)
+            add_test(NAME webinar_roms_angle_repair COMMAND "${Python3_EXECUTABLE}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/examples/webinar-roms-usecase-download/tools/AngleRepairTest.py"
+                    "$<TARGET_FILE:wacommplusplus>")
+            set_tests_properties(webinar_roms_angle_repair PROPERTIES SKIP_RETURN_CODE 77)
+        endif()
+        add_test(NAME reproducibility_manifest COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/ReproducibilityManifestTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/reproducibility_manifest.py")
+        add_test(NAME performance_protocol COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/PerformanceProtocolTest.py")
+        add_test(NAME performance_workload_scaling COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/PerformanceWorkloadScalingTest.py")
+        add_test(NAME sarno_protocol_collect COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/SarnoProtocolCollectTest.py")
+        set_tests_properties(sarno_protocol_collect PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME sarno_core_sweep COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/SarnoCoreSweepTest.py")
+        add_test(NAME sarno_backend_matrix COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/SarnoBackendMatrixTest.py")
+        add_test(NAME webinar_native_protocol COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/webinar-native-usecase/tools/WebinarProtocolTest.py")
+        set_tests_properties(webinar_native_protocol PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME example_documentation COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/ExampleDocumentationTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples")
+        add_test(NAME documentation_visuals COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/DocumentationVisualTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/docs")
+        add_test(NAME native_hardware_validation_contract COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/NativeHardwareValidationTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}")
+        add_test(NAME trajectory_diagnostics COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/TrajectoryDiagnosticsTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/trajectory_diagnostics.py")
+        set_tests_properties(trajectory_diagnostics PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME publication_figures COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/PublicationFiguresTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/publication_figures.py")
+        set_tests_properties(publication_figures PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME particle_snapshot_comparison COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/ParticleSnapshotComparisonTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/compare_particle_snapshots.py")
+        set_tests_properties(particle_snapshot_comparison PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME scaling_figures COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/ScalingFiguresTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/scaling_figures.py")
+        set_tests_properties(scaling_figures PROPERTIES SKIP_RETURN_CODE 77)
+        add_test(NAME openmp_scaling_figures COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/OpenMPScalingFiguresTest.py"
+                "${CMAKE_CURRENT_SOURCE_DIR}/examples/wacomm-sarno-lite/tools/openmp_scaling_figures.py")
+        set_tests_properties(openmp_scaling_figures PROPERTIES SKIP_RETURN_CODE 77)
+    endif()
 endif()
-
-find_package(OpenACC)
-if(OpenACC_FOUND AND USE_OPENACC)
-    add_definitions(-DUSE_OPENACC)
-    message(STATUS "Use OpenACC acceleration.")
-endif()
-
-set(CUDART_LIBRARY "")
-set(gpu_h_files "")
-set(gpu_cu_files "")
-find_package(CUDA)
-if(CUDA_FOUND AND USE_CUDA)
-	message(STATUS "Use CUDA acceleration.")
-	message(STATUS "CUDA Version: ${CUDA_VERSION_STRING}")
-	enable_language("CUDA")
-	if(${CUDA_VERSION_STRING} VERSION_GREATER_EQUAL "11.1")
-      		execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --list-gpu-code RESULT_VARIABLE EXIT_CODE OUTPUT_VARIABLE OUTPUT_VAL)
-      		if(EXIT_CODE EQUAL 0)
-        		#Remove sm_
-        		string(REPLACE "sm_" "" OUTPUT_VAL ${OUTPUT_VAL})
-        		#Convert to list
-        		string(REPLACE "\n" ";" __CUDA_ARCH_BIN ${OUTPUT_VAL})
-        		#Remove last empty entry
-        		list(REMOVE_AT __CUDA_ARCH_BIN -1)
-      		else()
-        		message(FATAL_ERROR "Failed to run NVCC to get list of GPU codes: ${EXIT_CODE}")
-      		endif()
-    	elseif(${CUDA_VERSION_STRING} VERSION_GREATER_EQUAL "11.0")
-      		set(__CUDA_ARCH_BIN "35;37;50;52;53;60;61;62;70;72;75;80")
-    	elseif(${CUDA_VERSION_STRING} VERSION_GREATER_EQUAL "10.0")
-      		set(__CUDA_ARCH_BIN "30;32;35;37;50;52;53;60;61;62;70;72;75")
-    	elseif(${CUDA_VERSION_STRING} VERSION_GREATER_EQUAL "9.1")
-      		set(__CUDA_ARCH_BIN "30;32;35;37;50;52;53;60;61;62;70;72")
-    	else()
-      		set(__CUDA_ARCH_BIN "30;32;35;37;50;52;53;60;61;62;70")
-    	endif()
-	add_definitions(-DUSE_CUDA)
-    
-	set(CUDA_ARCH_BIN ${__CUDA_ARCH_BIN} CACHE STRING "Specify 'real' GPU architectures to build binaries for")
-    	
-    	if(POLICY CMP0104)
-		set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH_BIN})
-    		message(STATUS "CUDA Architectures: ${CMAKE_CUDA_ARCHITECTURES}")
-	else()
-		# Generate SASS
-    		set(CMAKE_CUDA_ARCHITECTURES ${CUDA_ARCH_BIN})
-    		# Generate PTX for last architecture
-    		list(GET CUDA_ARCH_BIN -1 ver)
-    		set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode arch=compute_${ver},code=compute_${ver}")
-    		message(STATUS "CMAKE_CUDA_FLAGS: ${CMAKE_CUDA_FLAGS}")
-    
-    		add_library(pcl_cuda INTERFACE)
-    		target_include_directories(pcl_cuda INTERFACE ${CUDA_TOOLKIT_INCLUDE})
-	endif()
-	#set(CUDA_NVCC_FLAGS "-gencode arch=sm_30")
-    	
-	file(GLOB gpu_h_files "${CMAKE_SOURCE_DIR}/cuda/*.h")
-    	file(GLOB gpu_cu_files "${CMAKE_SOURCE_DIR}/cuda/*.cu")
-    	
-	include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-    	find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
-endif()
-
-# Include the support to external projects
-include(ExternalProject)
-
-# OpenSSL is needed for building dependences
-find_package(OpenSSL REQUIRED)
-
-# Set the external install location
-set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
-
-set(NETCDFCXXLIBS_PARAMS "")
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(NETCDFCXXLIBS_PARAMS "-lnetcdf -lhdf5_hl -lhdf5 -lm -lz -lcurl")
-endif()
-
-
-# Add to the includes
-include_directories(SYSTEM ${EXTERNAL_INSTALL_LOCATION}/include)
-
-# Add to the libraries
-link_directories(${EXTERNAL_INSTALL_LOCATION}/lib)
-
-
-include(FetchContent)
-
-FetchContent_Declare(json
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.7.3)
-
-FetchContent_GetProperties(json)
-if(NOT json_POPULATED)
-    FetchContent_Populate(json)
-    add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-
-ExternalProject_Add(szlib
-        URL https://support.hdfgroup.org/ftp/lib-external/szip/2.1.1/src/szip-2.1.1.tar.gz
-        TIMEOUT 360
-        BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}
-        BUILD_COMMAND make
-        INSTALL_COMMAND make install
-        )
-set(LIBSZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libsz.a)
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIBSZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libsz.dylib)
-endif()
-
-ExternalProject_Add(zlib
-        URL https://zlib.net/zlib-1.3.1.tar.gz
-        TIMEOUT 360
-        BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND CFLAGS=-fPIC ./configure --prefix=${EXTERNAL_INSTALL_LOCATION}
-        BUILD_COMMAND make
-        INSTALL_COMMAND make install
-        )
-set(LIBZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libz.a)
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIBZLIB ${EXTERNAL_INSTALL_LOCATION}/lib/libz.dylib)
-endif()
-
-ExternalProject_Add(curl
-        URL https://curl.se/download/curl-8.7.1.tar.gz
-        TIMEOUT 360
-        BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --disable-ldap --without-brotli --without-ssl
-        BUILD_COMMAND make
-        INSTALL_COMMAND make install
-        )
-set(LIBCURL ${EXTERNAL_INSTALL_LOCATION}/lib/libcurl.a)
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIBCURL ${EXTERNAL_INSTALL_LOCATION}/lib/libcurl.dylib)
-endif()
-
-ExternalProject_Add(hdf5
-        URL https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.0/src/hdf5-1.12.0.tar.gz
-        TIMEOUT 360
-        BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --enable-hl --enable-shared --enable-build-mode=production --enable-unsupported --enable-cxx --with-zlib=${EXTERNAL_INSTALL_LOCATION} --with-szlib=${EXTERNAL_INSTALL_LOCATION} --enable-threadsafe --with-pthread
-        BUILD_COMMAND make
-        INSTALL_COMMAND make install
-        )
-set(LIBHDF5 ${EXTERNAL_INSTALL_LOCATION}/lib/libhdf5_hl.a;${EXTERNAL_INSTALL_LOCATION}/lib/libhdf5.a)
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIBHDF5 ${EXTERNAL_INSTALL_LOCATION}/lib/libhdf5.dylib)
-endif()
-
-ExternalProject_Add(netcdf
-        URL https://downloads.unidata.ucar.edu/netcdf-c/4.8.1/netcdf-c-4.8.1.tar.gz
-        TIMEOUT 360
-        BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}  --enable-shared --enable-netcdf-4 --enable-dap --enable-byterange --enable-erange-fill
-        INSTALL_COMMAND make install
-        )
-set(LIBNETCDF ${EXTERNAL_INSTALL_LOCATION}/lib/libnetcdf.a)
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIBNETCDF ${EXTERNAL_INSTALL_LOCATION}/lib/libnetcdf.dylib)
-endif()
-
-ExternalProject_Add(netcdfcxx
-        URL https://downloads.unidata.ucar.edu/netcdf-cxx/4.3.1/netcdf-cxx4-4.3.1.tar.gz
-        TIMEOUT 360
-        BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure LIBS=${NETCDFCXXLIBS_PARAMS} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/ --prefix=${EXTERNAL_INSTALL_LOCATION}   --enable-shared
-        INSTALL_COMMAND make install
-        )
-set(LIBNETCDFCXX ${EXTERNAL_INSTALL_LOCATION}/lib/libnetcdf_c++4.a)
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIBNETCDFCXX ${EXTERNAL_INSTALL_LOCATION}/lib/libnetcdf_c++4.dylib)
-endif()
-
-
-ExternalProject_Add(log4cplus
-        #URL https://kumisystems.dl.sourceforge.net/project/log4cplus/log4cplus-stable/2.0.5/log4cplus-2.0.5.tar.gz
-        URL https://github.com/log4cplus/log4cplus/releases/download/REL_2_1_1/log4cplus-2.1.1.tar.gz
-        TIMEOUT 360
-        BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ./configure --prefix=${EXTERNAL_INSTALL_LOCATION} CFLAGS=-fPIC CPPFLAGS=-I${EXTERNAL_INSTALL_LOCATION}/include/ LDFLAGS=-L${EXTERNAL_INSTALL_LOCATION}/lib/
-        BUILD_COMMAND make
-        INSTALL_COMMAND make install
-        )
-set(LIBLOG4CPLUS ${EXTERNAL_INSTALL_LOCATION}/lib/liblog4cplus.so)
-if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIBLOG4CPLUS ${EXTERNAL_INSTALL_LOCATION}/lib/liblog4cplus.dylib)
-endif()
-
-add_executable(wacommplusplus main.cpp Particle.cpp Particle.hpp Particles.cpp Particles.hpp Wacomm.cpp Wacomm.hpp Array.h Source.cpp Source.hpp Sources.cpp Sources.hpp OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/ROMSAdapter.hpp Config.cpp Config.hpp OceanModelAdapter.cpp OceanModelAdapter.hpp Utils.cpp Utils.hpp WacommPlusPlus.cpp WacommPlusPlus.hpp JulianDate.cpp JulianDate.hpp OceanModelAdapters/WacommAdapter.cpp OceanModelAdapters/WacommAdapter.hpp ${gpu_cu_files} ${gpu_h_files})
-
-# Expicit the dependencies
-add_dependencies(zlib szlib)
-add_dependencies(curl zlib)
-add_dependencies(hdf5 curl)
-add_dependencies(netcdf hdf5 )
-add_dependencies(netcdfcxx netcdf )
-add_dependencies(${PROJECT_NAME} netcdfcxx)
-add_dependencies(${PROJECT_NAME} log4cplus)
-
-target_link_libraries(${PROJECT_NAME} ${EMPI_LIBRARY} ${PAPI_LIBRARY} ${GLPK_LIBRARY} ${ICC_LIBRARY} ${LIBOMP} pthread dl nlohmann_json::nlohmann_json ${LIBMPI} ${LIBNETCDFCXX} ${LIBNETCDF} ${LIBCURL} ${LIBHDF5} ${LIBZLIB} ${LIBSZLIB} ${LIBLOG4CPLUS} ${CUDART_LIBRARY} OpenSSL::SSL dl)

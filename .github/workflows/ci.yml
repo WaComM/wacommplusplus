@@ -1,0 +1,262 @@
+name: CI
+
+# Tags are validated by release.yml, which calls this workflow before publishing.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+# A bare --parallel is an unlimited make -j; the bound also applies to the
+# private dependency sub-builds (cmake/WacommDependencies.cmake).
+env:
+  CMAKE_BUILD_PARALLEL_LEVEL: 4
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflow-lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check workflow syntax and expressions
+        uses: docker://rhysd/actionlint:1.7.12
+        with:
+          args: -color
+
+  portable-core:
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-15-intel, macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: cmake -S . -B build -DBUILD_APPLICATION=OFF
+      - run: cmake --build build --config Release
+      - run: ctest --test-dir build -C Release --output-on-failure
+
+  ubuntu-application:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: serial
+            cmake_options: ''
+          - name: openmp
+            cmake_options: -DUSE_OMP=ON
+          - name: mpi
+            cmake_options: -DUSE_MPI=ON
+          - name: mpi-openmp
+            cmake_options: -DUSE_MPI=ON -DUSE_OMP=ON
+          - name: proj
+            cmake_options: -DUSE_PROJ=ON
+          # Private parallel HDF5/NetCDF-4: collective MPI-IO and parallel NetCDF output
+          - name: mpi-parallel-io
+            cmake_options: -DUSE_MPI=ON -DWACOMM_BOOTSTRAP_PARALLEL_IO=ON
+    name: Ubuntu application (${{ matrix.name }})
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo apt-get update
+      - name: Install application dependencies
+        run: >-
+          sudo apt-get install -y libnetcdf-dev libnetcdf-c++4-dev netcdf-bin
+          liblog4cplus-dev nlohmann-json3-dev pkg-config
+          libopenmpi-dev openmpi-bin libproj-dev proj-data
+      - uses: actions/setup-python@v6
+        id: python
+        with:
+          python-version: '3.11'
+      - name: Install pinned diagnostic Python packages
+        run: python -m pip install -r tools/requirements-figures.txt
+      - run: >-
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_options }}
+          -DPython3_EXECUTABLE="${{ steps.python.outputs.python-path }}"
+      - run: cmake --build build
+      - name: Run CTest and reject skipped tests
+        shell: bash
+        env:
+          OMPI_MCA_rmaps_base_oversubscribe: 'true'
+          PRTE_MCA_rmaps_default_mapping_policy: ':oversubscribe'
+        run: |
+          if [ "${{ matrix.name }}" = mpi-parallel-io ]; then
+            ctest --test-dir build -N | grep -q parallel_output_3_ranks
+          fi
+          ctest --test-dir build --output-on-failure --timeout 600 | tee ctest.log
+          ! grep -E '\*\*\*Skipped|Not Run' ctest.log
+      - name: End-to-end executable regression
+        run: ctest --test-dir build -R '^application_end_to_end$' --verbose
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-ubuntu-${{ matrix.name }}
+          path: |
+            build/Testing/Temporary/LastTest*.log
+            build/application-end-to-end/
+          if-no-files-found: ignore
+      - run: cmake --install build --prefix install
+      - name: Installed executable smoke check
+        run: test -x install/bin/wacommplusplus && ldd install/bin/wacommplusplus
+
+  macos-application:
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15-intel
+            name: serial
+            brew_extra: ''
+            cmake_options: ''
+          - os: macos-15
+            name: serial
+            brew_extra: ''
+            cmake_options: ''
+          - os: macos-15
+            name: openmp-mpi-proj
+            brew_extra: libomp open-mpi proj
+            cmake_options: -DUSE_OMP=ON -DUSE_MPI=ON -DUSE_PROJ=ON
+          - os: macos-15
+            name: mpi-parallel-io
+            brew_extra: open-mpi
+            cmake_options: -DUSE_MPI=ON -DWACOMM_BOOTSTRAP_PARALLEL_IO=ON
+    name: macOS application (${{ matrix.os }}, ${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - run: brew install netcdf netcdf-cxx log4cplus nlohmann-json pkg-config ${{ matrix.brew_extra }}
+      - uses: actions/setup-python@v6
+        id: python
+        with:
+          python-version: '3.11'
+      - name: Install pinned diagnostic Python packages
+        run: python -m pip install -r tools/requirements-figures.txt
+      - run: >-
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release ${{ matrix.cmake_options }}
+          -DPython3_EXECUTABLE="${{ steps.python.outputs.python-path }}"
+      - run: cmake --build build
+      - name: Run CTest and reject skipped tests
+        shell: bash
+        env:
+          OMPI_MCA_rmaps_base_oversubscribe: 'true'
+          PRTE_MCA_rmaps_default_mapping_policy: ':oversubscribe'
+        run: |
+          if [ "${{ matrix.name }}" = mpi-parallel-io ]; then
+            ctest --test-dir build -N | grep -q parallel_output_3_ranks
+          fi
+          ctest --test-dir build --output-on-failure --timeout 600 | tee ctest.log
+          ! grep -E '\*\*\*Skipped|Not Run' ctest.log
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-${{ matrix.os }}-${{ matrix.name }}
+          path: |
+            build/Testing/Temporary/LastTest*.log
+            build/application-end-to-end/
+          if-no-files-found: ignore
+      - run: cmake --install build --prefix install
+      - run: test -x install/bin/wacommplusplus && otool -L install/bin/wacommplusplus
+
+  windows-application:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - run: vcpkg install --triplet x64-windows
+      - run: >-
+          cmake -S . -B build -A x64
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+      - run: cmake --build build --config Release
+      - run: ctest --test-dir build -C Release --output-on-failure
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-windows-application
+          path: |
+            build/Testing/Temporary/LastTest*.log
+            build/external/build/*/CMakeFiles/CMakeConfigureLog.yaml
+          if-no-files-found: ignore
+      - run: cmake --install build --config Release --prefix install
+      - shell: pwsh
+        run: if (-not (Test-Path install/bin/wacommplusplus.exe)) { exit 1 }
+
+  rocky-8-9:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container: rockylinux:8.9
+    steps:
+      - name: Pin Rocky Linux 8.9 vault repositories
+        run: |
+          sed -i 's|^mirrorlist=|#mirrorlist=|' /etc/yum.repos.d/Rocky-*.repo
+          # shellcheck disable=SC2016 # $contentdir and $releasever are dnf variables
+          sed -i 's|^#baseurl=http://dl.rockylinux.org/\$contentdir/\$releasever|baseurl=https://dl.rockylinux.org/vault/rocky/8.9|' /etc/yum.repos.d/Rocky-*.repo
+      - name: Enable archived EPEL and PowerTools repositories
+        run: |
+          dnf install -y dnf-plugins-core epel-release
+          dnf config-manager --set-enabled powertools
+          sed -i 's|^mirrorlist=|#mirrorlist=|' /etc/yum.repos.d/epel*.repo
+          sed -i 's|^#baseurl=https://download.example/pub/epel|baseurl=https://archives.fedoraproject.org/pub/archive/epel|' /etc/yum.repos.d/epel*.repo
+      - name: Install application dependencies
+        run: >-
+          dnf install -y ca-certificates git gcc-c++ cmake pkgconf-pkg-config
+          netcdf-devel netcdf-cxx4-devel log4cplus-devel
+      - name: Install pinned nlohmann JSON headers
+        run: |
+          git clone --branch v3.11.3 --depth 1 https://github.com/nlohmann/json.git /tmp/json
+          test "$(git -C /tmp/json rev-parse HEAD)" = 9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03
+          cmake -S /tmp/json -B /tmp/json-build -DJSON_BuildTests=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --install /tmp/json-build
+      - uses: actions/checkout@v5
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build
+      - run: ctest --test-dir build --output-on-failure
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ctest-rocky-8-9
+          path: build/Testing/Temporary/LastTest*.log
+          if-no-files-found: ignore
+      - run: cmake --install build --prefix install
+      - name: Installed executable smoke check
+        run: |
+          test -x install/bin/wacommplusplus
+          ldd install/bin/wacommplusplus
+          ! ldd install/bin/wacommplusplus | grep 'not found'
+
+  raspberry-pi-os-proxy:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    container: debian:bookworm
+    steps:
+      - run: >-
+          apt-get update && apt-get install -y ca-certificates git cmake g++ pkg-config
+          libnetcdf-dev libnetcdf-c++4-dev liblog4cplus-dev nlohmann-json3-dev
+      - uses: actions/checkout@v5
+      - run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build
+      - run: ctest --test-dir build --output-on-failure
+      - run: cmake --install build --prefix install
+      - run: test -x install/bin/wacommplusplus && ldd install/bin/wacommplusplus
+
+  riscv64-cross-compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - run: sudo apt-get update
+      - run: sudo apt-get install -y g++-riscv64-linux-gnu
+      - run: >-
+          cmake -S . -B build-riscv64 -DBUILD_APPLICATION=OFF
+          -DCMAKE_SYSTEM_NAME=Linux
+          -DCMAKE_SYSTEM_PROCESSOR=riscv64
+          -DCMAKE_CXX_COMPILER=riscv64-linux-gnu-g++
+      - run: cmake --build build-riscv64

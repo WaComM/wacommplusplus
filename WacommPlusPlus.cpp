@@ -4,8 +4,12 @@
 
 #include "WacommPlusPlus.hpp"
 #include "JulianDate.hpp"
-#include "OceanModelAdapters/WacommAdapter.hpp"
-#include "OceanModelAdapters/ROMSAdapter.hpp"
+#include "OceanModelAdapterFactory.hpp"
+#include "WeatherModelAdapterFactory.hpp"
+#include "WaveModelAdapterFactory.hpp"
+#include <algorithm>
+#include <stdexcept>
+#include <unordered_map>
 
 #if defined(USE_MPI) || defined(USE_EMPI)
 #define OMPI_SKIP_MPICXX
@@ -40,7 +44,7 @@ void WacommPlusPlus::run() {
     int len, nParticles = 0;
 
     char bin[1024];
-    sprintf(bin,"%s","wacomm");
+    snprintf(bin,sizeof(bin),"%s","wacomm");
 
     int idx = 0;
     double p = 17000, t = 0.0;
@@ -83,20 +87,90 @@ void WacommPlusPlus::run() {
     ADM_MonitoringService (ADM_SERVICE_START);
 #endif
 
-    for (auto &ncInput : config->NcInputs()) {
+    int inputDirection=config->Backward() ? -1 : 1;
+    int inputFirst=config->Backward() ? (int)config->NcInputs().size()-1 : 0;
+    // Output publication, synchronous or asynchronous (docs/io.md); only rank 0 writes
+    std::shared_ptr<OutputWriter> outputWriter;
+    if (world_rank == 0) {
+        outputWriter = std::make_shared<OutputWriter>(*config);
+    }
+
+    std::unordered_map<int,std::shared_ptr<OceanModelAdapter>> oceanWindows;
+    std::unordered_map<int,std::shared_ptr<WeatherModelAdapter>> weatherWindows;
+    std::unordered_map<int,std::shared_ptr<WaveModelAdapter>> waveWindows;
+    auto oceanWindow=[&](int index) {
+        auto found=oceanWindows.find(index);
+        if (found!=oceanWindows.end()) return found->second;
+        string& input=config->NcInputs()[index];
+        // NetCDF is not thread safe: exclude the asynchronous output writer
+        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        auto adapter=OceanModelAdapterFactory::create(config->OceanModel(),input);
+        adapter->process(); oceanWindows[index]=adapter; return adapter;
+    };
+    auto weatherWindow=[&](int index) {
+        auto found=weatherWindows.find(index);
+        if (found!=weatherWindows.end()) return found->second;
+        string& input=config->WeatherInputs()[index];
+        // NetCDF is not thread safe: exclude the asynchronous output writer
+        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        auto adapter=WeatherModelAdapterFactory::create(config->WeatherModel(),input,config->WeatherSourceCrs());
+        adapter->process(); weatherWindows[index]=adapter; return adapter;
+    };
+    auto waveWindow=[&](int index) {
+        auto found=waveWindows.find(index);
+        if (found!=waveWindows.end()) return found->second;
+        string& input=config->WaveInputs()[index];
+        // NetCDF is not thread safe: exclude the asynchronous output writer
+        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        auto adapter=WaveModelAdapterFactory::create(config->WaveModel(),input,config->WaveSourceCrs());
+        adapter->process(); waveWindows[index]=adapter; return adapter;
+    };
+    for (int inputIdx=inputFirst;inputIdx>=0 && inputIdx<config->NcInputs().size();inputIdx+=inputDirection) {
+        string &ncInput=config->NcInputs()[inputIdx];
 
         if (world_rank == 0) {
             LOG4CPLUS_INFO(logger, world_rank << ": Input from Ocean Model: " << ncInput);
         }
 
-        shared_ptr<OceanModelAdapter> oceanModelAdapter;
-        if (config->OceanModel() == "ROMS") {
-            oceanModelAdapter = make_shared<ROMSAdapter>(ncInput);
+        shared_ptr<OceanModelAdapter> oceanModelAdapter=oceanWindow(inputIdx);
 
-        } else {
-            oceanModelAdapter = make_shared<WacommAdapter>(ncInput);
+        shared_ptr<WeatherModelAdapter> weatherModelAdapter;
+        if (config->WeatherModel()=="WRF") {
+            weatherModelAdapter=weatherWindow(inputIdx);
         }
-        oceanModelAdapter->process();
+        shared_ptr<WaveModelAdapter> waveModelAdapter;
+        if (config->WaveModel()=="WW3") {
+            waveModelAdapter=waveWindow(inputIdx);
+        }
+
+        int adjacentIdx=inputIdx+inputDirection;
+        if (adjacentIdx>=0 && adjacentIdx<config->NcInputs().size()) {
+            shared_ptr<OceanModelAdapter> adjacentAdapter=oceanWindow(adjacentIdx);
+            int boundaryRecord=config->Backward() ? (int)adjacentAdapter->OceanTime().Nx()-1 : 0;
+            oceanModelAdapter->appendBoundaryRecord(*adjacentAdapter,boundaryRecord,config->Backward());
+            if (weatherModelAdapter) {
+                auto adjacentWeather=weatherWindow(adjacentIdx);
+                int weatherRecord=config->Backward() ? (int)adjacentWeather->Time().Nx()-1 : 0;
+                weatherModelAdapter->appendBoundaryRecord(*adjacentWeather,weatherRecord,config->Backward());
+            }
+            if (waveModelAdapter) {
+                auto adjacentWave=waveWindow(adjacentIdx);
+                int waveRecord=config->Backward() ? (int)adjacentWave->Time().Nx()-1 : 0;
+                waveModelAdapter->appendBoundaryRecord(*adjacentWave,waveRecord,config->Backward());
+            }
+        }
+        if (weatherModelAdapter && config->WeatherRegridding()=="bilinear_geographic")
+            weatherModelAdapter->regridBilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
+        else if (weatherModelAdapter && config->WeatherRegridding()=="bilinear_curvilinear_geographic")
+            weatherModelAdapter->regridBilinearCurvilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
+        else if (weatherModelAdapter && config->WeatherRegridding()=="bilinear_projected")
+            weatherModelAdapter->regridBilinearProjected(oceanModelAdapter->Lon(),oceanModelAdapter->Lat(),config->WeatherSourceCrs());
+        if (waveModelAdapter && config->WaveRegridding()=="bilinear_geographic")
+            waveModelAdapter->regridBilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
+        else if (waveModelAdapter && config->WaveRegridding()=="bilinear_curvilinear_geographic")
+            waveModelAdapter->regridBilinearCurvilinearGeographic(oceanModelAdapter->Lon(),oceanModelAdapter->Lat());
+        else if (waveModelAdapter && config->WaveRegridding()=="bilinear_projected")
+            waveModelAdapter->regridBilinearProjected(oceanModelAdapter->Lon(),oceanModelAdapter->Lat(),config->WaveSourceCrs());
 
         Calendar cal;
 
@@ -137,6 +211,7 @@ void WacommPlusPlus::run() {
                 LOG4CPLUS_INFO(logger,  "Saving processed output: " << inputFilename);
 
                 // Save the processed input
+                std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
                 oceanModelAdapter->saveAsNetCDF(inputFilename);
             }
 
@@ -150,7 +225,8 @@ void WacommPlusPlus::run() {
                 if (fileName.substr(fileName.find_last_of('.') + 1) == "nc") {
 
                     // The restart is a NetCDF
-                    particles->loadFromNetCDF(fileName);
+                    std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+                    particles->loadFromNetCDF(fileName,config);
 
                     // Check if the restart is a geojson
                 } else if (fileName.substr(fileName.find_last_of('.') + 1) == "json") {
@@ -169,7 +245,7 @@ void WacommPlusPlus::run() {
         // Check if it is a dry run
         if (!config->Dry()) {
             // Create a new Wacomm object
-            Wacomm wacomm(config, oceanModelAdapter, sources, particles);
+            Wacomm wacomm(config, oceanModelAdapter, sources, particles,weatherModelAdapter,waveModelAdapter,outputWriter);
 
             // Run the model
             double cuda=0;
@@ -196,6 +272,14 @@ void WacommPlusPlus::run() {
         }
         // Go to the next input file
         idx++;
+        oceanWindows.erase(inputIdx);
+        weatherWindows.erase(inputIdx);
+        waveWindows.erase(inputIdx);
+    }
+
+    // Wait for the queued outputs and report a failed write
+    if (outputWriter) {
+        outputWriter->flush();
     }
 
 #ifdef USE_EMPI

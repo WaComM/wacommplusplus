@@ -1,0 +1,72 @@
+{
+	"simulation": {
+		"name": "Drift",
+		"institution": "meteo@uniparthenope - Department of Science and Technologies, University of Naples Parthenope",
+		"url": "https://meteo.uniparthenope.it",
+		"start": "20260915Z0000",
+		"end": "20260916Z0000"
+	},
+	"io": {
+		"base_path": "processed/",
+		"nc_inputs": [
+			"ocm3_d03_20260915Z00.nc",
+			"ocm3_d03_20260915Z01.nc",
+			"ocm3_d03_20260915Z02.nc",
+			"ocm3_d03_20260915Z03.nc",
+			"ocm3_d03_20260915Z04.nc",
+			"ocm3_d03_20260915Z05.nc",
+			"ocm3_d03_20260915Z06.nc",
+			"ocm3_d03_20260915Z07.nc",
+			"ocm3_d03_20260915Z08.nc",
+			"ocm3_d03_20260915Z09.nc",
+			"ocm3_d03_20260915Z10.nc",
+			"ocm3_d03_20260915Z11.nc",
+			"ocm3_d03_20260915Z12.nc",
+			"ocm3_d03_20260915Z13.nc",
+			"ocm3_d03_20260915Z14.nc",
+			"ocm3_d03_20260915Z15.nc",
+			"ocm3_d03_20260915Z16.nc",
+			"ocm3_d03_20260915Z17.nc",
+			"ocm3_d03_20260915Z18.nc",
+			"ocm3_d03_20260915Z19.nc",
+			"ocm3_d03_20260915Z20.nc",
+			"ocm3_d03_20260915Z21.nc",
+			"ocm3_d03_20260915Z22.nc",
+			"ocm3_d03_20260915Z23.nc"
+		],
+		"ocean_model":"WaComM",
+		"nc_output_root": "output/wacomm_his_",
+		"mask_output": true,
+		"timestep": 3600,
+		"save_input": false,
+		"save_history": "nc",
+		"history_root": "restart/WACOMM_rst_",
+		"nc_input_root":"processed/ocm3_d03_"
+	},
+	"restart": {
+		"active": false,
+		"restart_file": "",
+		"interval": 7200
+	},
+	"sources": {
+		"active": true,
+		"sources_file": "examples/sources-webinar/sources-webinar.json"
+	},
+	"physics": {
+		"integrator": "euler",
+		"random": true,
+		"random_sources": true,
+		"random_seed": 5489,
+		"tau0": 86400.0,
+		"survprob": 1.0e-4,
+		"sigma": 3.46,
+		"shore_limit": 0.5,
+		"sv": 0,
+		"upper_closure": "reflection",
+		"lower_closure": "kill",
+		"horizontal_closure": "kill"
+	},
+	"tracking": {
+		"direction": "forward"
+	}
+}

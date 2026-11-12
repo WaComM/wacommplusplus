@@ -37,6 +37,7 @@ class OceanModelAdapter {
 
 public:
     OceanModelAdapter();
+    virtual ~OceanModelAdapter() = default;
 
     void saveAsNetCDF(std::string &fileName);
 
@@ -47,6 +48,8 @@ public:
     void deplatlon2kji(double dep, double lat, double lon, double &k, double &j, double &i);
 
     oceanmodel_data *dataptr();
+
+    void appendBoundaryRecord(OceanModelAdapter &adapter, int record, bool prepend);
 
     Array1<double> &OceanTime();
     Array1<double> &SRho();

@@ -3,7 +3,10 @@
 //
 
 #include "OceanModelAdapter.hpp"
+#include "NumericalHelpers.hpp"
 #include <math.h>
+#include <cmath>
+#include <stdexcept>
 
 OceanModelAdapter::OceanModelAdapter() {
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
@@ -48,7 +51,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     NcDim sRhoDim = dataFile.addDim("s_rho", s_rho);
     NcDim sWDim = dataFile.addDim("s_w", s_w);
     NcDim etaRhoDim = dataFile.addDim("eta_rho", eta_rho);
-    NcDim xiRhoDim = dataFile.addDim("eta_xi", xi_rho);
+    NcDim xiRhoDim = dataFile.addDim("xi_rho", xi_rho);
 
     NcVar oceanTimeVar = dataFile.addVar("ocean_time", ncDouble, oceanTimeDim);
     oceanTimeVar.putAtt("long_name","time since initialization");
@@ -139,6 +142,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     NcVar uVar = dataFile.addVar("u", ncFloat, oceanTimeSRhoEtaRhoXiRhoDims);
     uVar.putAtt("long_name","u-momentum component at RHO-points");
     uVar.putAtt("units","meter second-1");
+    uVar.putAtt("standard_name","eastward_sea_water_velocity");
     uVar.putAtt("grid","grid");
     uVar.putAtt("loction","face");
     uVar.putAtt("coordinates","lon_rho lat_rho s_rho ocean_time");
@@ -150,6 +154,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     NcVar vVar = dataFile.addVar("v", ncFloat, oceanTimeSRhoEtaRhoXiRhoDims);
     vVar.putAtt("long_name","v-momentum component at RHO-points");
     vVar.putAtt("units","meter second-1");
+    vVar.putAtt("standard_name","northward_sea_water_velocity");
     vVar.putAtt("grid","grid");
     vVar.putAtt("loction","face");
     vVar.putAtt("coordinates","lon_rho lat_rho s_rho ocean_time");
@@ -179,7 +184,7 @@ void OceanModelAdapter::saveAsNetCDF(std::string &fileName) {
     aktVar.putAtt("long_name","temperature vertical diffusion coefficient");
     aktVar.putAtt("units","meter2 second-1");
     aktVar.putAtt("grid","grid");
-    aktVar.putAtt("loction","face");
+    aktVar.putAtt("location","face");
     aktVar.putAtt("coordinates","lon_rho lat_rho s_w ocean_time");
     aktVar.putAtt("field","AKt, scalar, series");
     aktVar.putAtt("time","ocean_time");
@@ -191,18 +196,92 @@ oceanmodel_data *OceanModelAdapter::dataptr() {
     return &_data;
 }
 
+void OceanModelAdapter::appendBoundaryRecord(OceanModelAdapter &adapter, int record, bool prepend) {
+    if (record<0 || record>=adapter.OceanTime().Nx())
+        throw std::runtime_error("Adjacent forcing boundary record is out of range");
+    if (_data.sRho.Nx()!=adapter.SRho().Nx() || _data.sW.Nx()!=adapter.SW().Nx() ||
+        _data.mask.Nx()!=adapter.Mask().Nx() || _data.mask.Ny()!=adapter.Mask().Ny())
+        throw std::runtime_error("Adjacent forcing files have incompatible grid dimensions");
+    for (int k=-(int)_data.sRho.Nx()+1;k<=0;k++)
+        if (std::abs(_data.sRho(k)-adapter.SRho()(k))>1e-12)
+            throw std::runtime_error("Adjacent forcing files have incompatible vertical coordinates");
+    for (int k=-(int)_data.sW.Nx()+1;k<=0;k++)
+        if (std::abs(_data.sW(k)-adapter.SW()(k))>1e-12)
+            throw std::runtime_error("Adjacent forcing files have incompatible vertical coordinates");
+    for (int j=0;j<_data.mask.Nx();j++) for (int i=0;i<_data.mask.Ny();i++)
+        if (std::abs(_data.lon(j,i)-adapter.Lon()(j,i))>1e-10 ||
+            std::abs(_data.lat(j,i)-adapter.Lat()(j,i))>1e-10 ||
+            std::abs(_data.h(j,i)-adapter.H()(j,i))>1e-8 || _data.mask(j,i)!=adapter.Mask()(j,i))
+            throw std::runtime_error("Adjacent forcing files have incompatible horizontal grids");
+
+    // Saved native windows can already contain the adjacent boundary record.
+    int endpoint=prepend ? 0 : (int)_data.oceanTime.Nx()-1;
+    if (endpoint>=0 && _data.oceanTime(endpoint)==adapter.OceanTime()(record)) {
+        for (int j=0;j<_data.mask.Nx();j++) for (int i=0;i<_data.mask.Ny();i++) {
+            if (_data.zeta(endpoint,j,i)!=adapter.Zeta()(record,j,i))
+                throw std::runtime_error("Duplicate forcing boundary has conflicting surface elevation");
+            for (int k=-(int)_data.sRho.Nx()+1;k<=0;k++) {
+                if (_data.u(endpoint,k,j,i)!=adapter.U()(record,k,j,i) ||
+                    _data.v(endpoint,k,j,i)!=adapter.V()(record,k,j,i))
+                    throw std::runtime_error("Duplicate forcing boundary has conflicting horizontal velocity");
+            }
+            for (int k=-(int)_data.sW.Nx()+1;k<=0;k++) {
+                if (_data.w(endpoint,k,j,i)!=adapter.W()(record,k,j,i) ||
+                    _data.akt(endpoint,k,j,i)!=adapter.AKT()(record,k,j,i))
+                    throw std::runtime_error("Duplicate forcing boundary has conflicting vertical fields");
+            }
+        }
+        return;
+    }
+
+    size_t oldTime=_data.oceanTime.Nx(),newTime=oldTime+1,sRho=_data.sRho.Nx(),sW=_data.sW.Nx();
+    size_t eta=_data.mask.Nx(),xi=_data.mask.Ny();
+    Array1<double> oceanTime(newTime);
+    Array3<float> zeta(newTime,eta,xi);
+    Array4<float> u(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0);
+    Array4<float> v(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0);
+    Array4<float> w(newTime,sW,eta,xi,0,-(int)sW+1,0,0);
+    Array4<float> akt(newTime,sW,eta,xi,0,-(int)sW+1,0,0);
+    for (int t=0;t<newTime;t++) {
+        bool boundary=prepend ? t==0 : t==(int)oldTime;
+        int source=prepend ? t-1 : t;
+        oceanTime(t)=boundary ? adapter.OceanTime()(record) : _data.oceanTime(source);
+        for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) {
+            zeta(t,j,i)=boundary ? adapter.Zeta()(record,j,i) : _data.zeta(source,j,i);
+            for (int k=-(int)sRho+1;k<=0;k++) {
+                u(t,k,j,i)=boundary ? adapter.U()(record,k,j,i) : _data.u(source,k,j,i);
+                v(t,k,j,i)=boundary ? adapter.V()(record,k,j,i) : _data.v(source,k,j,i);
+            }
+            for (int k=-(int)sW+1;k<=0;k++) {
+                w(t,k,j,i)=boundary ? adapter.W()(record,k,j,i) : _data.w(source,k,j,i);
+                akt(t,k,j,i)=boundary ? adapter.AKT()(record,k,j,i) : _data.akt(source,k,j,i);
+            }
+        }
+    }
+    for (int t=1;t<newTime;t++) if (oceanTime(t)<=oceanTime(t-1))
+        throw std::runtime_error("Adjacent forcing files do not form a strictly chronological time axis");
+    _data.oceanTime.Reallocate(newTime); _data.oceanTime.Load(oceanTime());
+    _data.zeta.Deallocate(); _data.zeta.Allocate(newTime,eta,xi); _data.zeta.Load(zeta());
+    _data.u.Deallocate(); _data.u.Allocate(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0); _data.u.Load(u());
+    _data.v.Deallocate(); _data.v.Allocate(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0); _data.v.Load(v());
+    _data.w.Deallocate(); _data.w.Allocate(newTime,sW,eta,xi,0,-(int)sW+1,0,0); _data.w.Load(w());
+    _data.akt.Deallocate(); _data.akt.Allocate(newTime,sW,eta,xi,0,-(int)sW+1,0,0); _data.akt.Load(akt());
+}
+
 void OceanModelAdapter::kji2deplatlon(double k, double j, double i, double &dep, double &lat, double &lon) {
     // Get the integer part and the fraction part of particle k
-    auto kI=(int)k; double kF=k-kI;
+    auto kI=NumericalHelpers::upperVerticalLevel(k);
+    double kF=NumericalHelpers::lowerVerticalWeight(k);
 
     // Get the integer part and the fraction part of particle j
-    auto jI=(int)j; double jF=j-jI;
+    auto jI=NumericalHelpers::horizontalCell(j); double jF=j-jI;
 
     // Get the integer part and the fraction part of particle i
-    auto iI=(int)i; double iF=i-iI;
+    auto iI=NumericalHelpers::horizontalCell(i); double iF=i-iI;
 
     // Check if the source must be skipped
-    if (jI < 0 || iI < 0 || jI>=_data.mask.Nx() || iI>=_data.mask.Ny()) {
+    if (!NumericalHelpers::validInterpolationCell(jI,iI,_data.mask.Nx(),_data.mask.Ny()) ||
+        kI>0 || kI<=-(int)_data.sW.Nx()+1) {
         lon = 1e37;
         lat = 1e37;
         dep = 1e37;
@@ -248,67 +327,79 @@ void OceanModelAdapter::kji2deplatlon(double k, double j, double i, double &dep,
 }
 
 void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double &k, double &j, double &i) {
-    int minK, minJ, minI;
-    double d, d1, d2, dd, minD=1e37;
-
-    double latRad=0.0174533*lat;
-    double lonRad=0.0174533*lon;
-
     size_t eta_rho = _data.mask.Nx();
     size_t xi_rho = _data.mask.Ny();
     size_t s_w = _data.w.Ny();
 
-    for (int j=0; j<eta_rho; j++) {
-        for (int i=0; i<xi_rho; i++) {
-            // Calculate the distance in radiants of latitude between the grid cell where is
-            // currently located the particle and the next one.
-            d1=(latRad-_data.latRad(j,i));
+    // Reject positions that cannot be placed on the grid
+    if (!std::isfinite(lat) || !std::isfinite(lon)) {
+        throw std::invalid_argument("Source latitude and longitude must be finite");
+    }
 
-            // Calculate the distance in radiants of longitude between the grid cell where is
-            // currently located the particle and the next one.
-            d2=(lonRad-_data.lonRad(j,i));
+    // Invert the bilinear lon/lat interpolation of kji2deplatlon cell by cell, in
+    // source order (j, then i), accepting the first cell that contains the point.
+    // The bounding box only discards cells that cannot contain it.
+    const double fractionTolerance=1e-9;
+    bool found=false;
+    for (int jC=0; jC+1<(int)eta_rho && !found; jC++) {
+        for (int iC=0; iC+1<(int)xi_rho && !found; iC++) {
+            double lon00=_data.lon(jC,iC),   lon10=_data.lon(jC+1,iC);
+            double lon11=_data.lon(jC+1,iC+1), lon01=_data.lon(jC,iC+1);
+            double lat00=_data.lat(jC,iC),   lat10=_data.lat(jC+1,iC);
+            double lat11=_data.lat(jC+1,iC+1), lat01=_data.lat(jC,iC+1);
 
-            // Calculate the grid cell diagonal horizontal size using the Haversine method
-            // https://www.movable-type.co.uk/scripts/latlong.html
-            dd=pow(sin(0.5*d1),2) +
-               pow(sin(0.5*d2),2)*
-               cos(latRad)*
-               cos(_data.latRad(j,i));
-            d=2.0*atan2(pow(dd,.5),pow(1.0-dd,.5))*6371.0;
+            double lonMin=min(min(lon00,lon10),min(lon11,lon01)), lonMax=max(max(lon00,lon10),max(lon11,lon01));
+            double latMin=min(min(lat00,lat10),min(lat11,lat01)), latMax=max(max(lat00,lat10),max(lat11,lat01));
+            double lonPad=fractionTolerance*(lonMax-lonMin), latPad=fractionTolerance*(latMax-latMin);
+            if (lon<lonMin-lonPad || lon>lonMax+lonPad || lat<latMin-latPad || lat>latMax+latPad) continue;
 
-            if (d<minD) {
-                minD=d;
-                minJ=j;
-                minI=i;
+            // Newton iteration on the bilinear map (iF, jF) -> (lon, lat)
+            double iF=0.5, jF=0.5;
+            bool converged=false;
+            for (int iteration=0; iteration<50; iteration++) {
+                double rLon=lon00*(1.0-iF)*(1.0-jF)+lon10*(1.0-iF)*jF+lon11*iF*jF+lon01*iF*(1.0-jF)-lon;
+                double rLat=lat00*(1.0-iF)*(1.0-jF)+lat10*(1.0-iF)*jF+lat11*iF*jF+lat01*iF*(1.0-jF)-lat;
+                double dLonDi=(lon01-lon00)*(1.0-jF)+(lon11-lon10)*jF;
+                double dLonDj=(lon10-lon00)*(1.0-iF)+(lon11-lon01)*iF;
+                double dLatDi=(lat01-lat00)*(1.0-jF)+(lat11-lat10)*jF;
+                double dLatDj=(lat10-lat00)*(1.0-iF)+(lat11-lat01)*iF;
+                double det=dLonDi*dLatDj-dLonDj*dLatDi;
+                if (!std::isfinite(det) || det==0) break;
+                double stepI=( dLatDj*rLon-dLonDj*rLat)/det;
+                double stepJ=(-dLatDi*rLon+dLonDi*rLat)/det;
+                iF-=stepI; jF-=stepJ;
+                if (!std::isfinite(iF) || !std::isfinite(jF)) break;
+                if (abs(stepI)<1e-11 && abs(stepJ)<1e-11) { converged=true; break; }
             }
+            if (!converged ||
+                iF<-fractionTolerance || iF>1.0+fractionTolerance ||
+                jF<-fractionTolerance || jF>1.0+fractionTolerance) continue;
+
+            // Snap fractions within the tolerance onto the cell edges, so that membership of
+            // a node line does not depend on round-off
+            if (abs(iF)<=fractionTolerance) iF=0.0; else if (abs(iF-1.0)<=fractionTolerance) iF=1.0;
+            if (abs(jF)<=fractionTolerance) jF=0.0; else if (abs(jF-1.0)<=fractionTolerance) jF=1.0;
+
+            // The outermost north and east node lines are outside the interpolation domain
+            if (!NumericalHelpers::validInterpolationCell(NumericalHelpers::horizontalCell(jC+jF),
+                                                         NumericalHelpers::horizontalCell(iC+iF),
+                                                         eta_rho,xi_rho)) continue;
+            j=jC+jF;
+            i=iC+iF;
+            found=true;
         }
     }
 
-    double dLat=latRad-_data.latRad(minJ, minI);
-    double dLon=lonRad-_data.lonRad(minJ, minI);
-    int otherJ=minJ+sgn(dLat);
-    int otherI=minI+sgn(dLon);
-    if (dLat!=0) {
-        double aLat = abs(_data.latRad(minJ, minI)-_data.latRad(otherJ, otherI));
-        double jF=abs(dLat)/aLat;
-        j=min(minJ,otherJ)+jF;
-    } else {
-        j=minJ;
-    }
-
-    if (dLon!=0) {
-        double aLon = abs(_data.lonRad(minJ, minI)-_data.lonRad(otherJ, otherI));
-        double iF=abs(dLon)/aLon;
-        i=min(minI,otherI)+iF;
-    } else {
-        i=minI;
+    if (!found) {
+        throw std::out_of_range("Position lat="+std::to_string(lat)+" lon="+std::to_string(lon)+
+                                " is outside the ocean model interpolation domain");
     }
 
     // Get the integer part and the fraction part of particle j
-    auto jI=(int)j; double jF=j-jI;
+    auto jI=NumericalHelpers::horizontalCell(j); double jF=j-jI;
 
     // Get the integer part and the fraction part of particle i
-    auto iI=(int)i; double iF=i-iI;
+    auto iI=NumericalHelpers::horizontalCell(i); double iF=i-iI;
 
     // Convert dep to positive down
     dep = abs(dep);
@@ -323,44 +414,32 @@ void OceanModelAdapter::deplatlon2kji(double dep, double lat, double lon, double
     // The current h (depth) at the particle position
     double h=h1+h2+h3+h4;
 
-    // Check if the depth is deeper than h
-    if (dep>h) {
-        // The position is about at the bottom
-        k=-(int) s_w + 1;
-    } else
-        // CHeck if it is on the surface
-        if (dep==0) {
-            k=-1;
-    } else {
-            minD = 1e37;
-            double hs;
-            for (int k = (-(int) s_w + 1); k <= 0; k++) {
-                hs = h * abs(_data.sW(k));
-                d = abs(hs - dep);
-                if (d < minD) {
-                    minD = d;
-                    minK = k;
-                }
-            }
-            double dDep = dep - h * abs(_data.sW(minK));
-            if (dDep != 0) {
-                int otherK = minK + sgn(dDep);
-                double aDep = abs(
-                        abs(h * _data.sW(minK)) -
-                        abs(h * _data.sW(otherK))
-                );
-                double kF = abs(dDep) / aDep;
-                k = min(minK, otherK) + kF;
-            } else {
-                k = minK;
-            }
-        }
+    // Reject depths that cannot be placed on the vertical coordinate
+    if (!std::isfinite(dep) || !std::isfinite(h)) {
+        throw std::invalid_argument("Source depth and local bathymetry must be finite");
+    }
 
+    // The lowest valid particle level, the same limit used by the solver
+    int kBottom=-(int) s_w + 2;
+
+    // Invert the kji2deplatlon mapping:
+    // dep = h|sW(kI)| + kF (h|sW(kI-1)| - h|sW(kI)|), with k = kI - kF and 0 <= kF < 1
+    if (dep <= h * abs(_data.sW(0))) {
+        // The position is on the surface
+        k=0;
+    } else if (dep >= h * abs(_data.sW(kBottom))) {
+        // The position is about at the bottom
+        k=kBottom;
+    } else {
+        // Walk downward from the surface until the W interval containing dep is found
+        int kI=0;
+        while (kI-1 > kBottom && dep >= h * abs(_data.sW(kI-1))) kI--;
+        double upper = h * abs(_data.sW(kI));
+        double aDep = abs(h * abs(_data.sW(kI-1)) - upper);
+        double kF = (dep - upper) / aDep;
+        k = kI - kF;
+    }
 }
 
 // Returns -1 if a < 0 and 1 if a > 0
 double OceanModelAdapter::sgn(double a) { return (a > 0) - (a < 0); }
-
-
-
-

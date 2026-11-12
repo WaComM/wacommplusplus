@@ -6,10 +6,9 @@
 #include <utility>
 #include "Particle.hpp"
 #include "Config.hpp"
-#include <random>
-#include <chrono>
+#include "NumericalHelpers.hpp"
 
-Particle::Particle(unsigned long id, double k, double j, double i,
+Particle::Particle(std::uint64_t id, double k, double j, double i,
                    double health, double age, double time)
 {
 #ifdef DEBUG
@@ -23,10 +22,12 @@ Particle::Particle(unsigned long id, double k, double j, double i,
     _data.health=health;
     _data.age=age;
     _data.time=time;
+    _data.driftObjectType=static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
+    _data.driftSide=static_cast<std::int8_t>(DriftSide::UNDEFINED);
 
 }
 
-Particle::Particle(unsigned long id, double k, double j, double i, double time) {
+Particle::Particle(std::uint64_t id, double k, double j, double i, double time) {
 
 #ifdef DEBUG
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
@@ -38,6 +39,8 @@ Particle::Particle(unsigned long id, double k, double j, double i, double time) 
     _data.health=health0;
     _data.age=0;
     _data.time=time;
+    _data.driftObjectType=static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
+    _data.driftSide=static_cast<std::int8_t>(DriftSide::UNDEFINED);
 }
 
 Particle::Particle(particle_data data) {
@@ -68,7 +71,8 @@ bool Particle::isAlive() const {
 void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> &oceanTime, Array2<double> &mask,
                     Array2<double> &lonRad, Array2<double> &latRad, Array1<double> &sW, Array1<double> &depthIntervals,
                     Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
-                    Array4<float> &akt) {
+                    Array4<float> &akt, Array3<float> *windU10, Array3<float> *windV10,
+                    Array3<float> *stokesU, Array3<float> *stokesV) {
 
     particle_data localParticleData;
     memcpy(&localParticleData, &_data, sizeof(particle_data));
@@ -102,8 +106,18 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
 
 
-    // Number of integration intervals
-    double iint=deltat/dti;
+    // Physical forcing interval
+    int intervalDirection=configData->trackingDirection;
+    int intervalNextIdx=ocean_time_idx+intervalDirection;
+    double intervalStart=oceanTime(ocean_time_idx);
+    double intervalEnd=intervalNextIdx >= 0 && intervalNextIdx < oceanTime.Nx()
+                       ? oceanTime(intervalNextIdx) : intervalStart+intervalDirection*deltat;
+    double intervalLength=std::abs(intervalEnd-intervalStart);
+    double elapsed=0;
+    if (!std::isnan(configData->restartCheckpoint)) {
+        elapsed=NumericalHelpers::restartElapsed(intervalStart,intervalEnd,configData->restartCheckpoint);
+        if (std::isnan(elapsed)) return;
+    }
 
     // Get the number of the sigma levels
     size_t s_w = w.Ny();
@@ -115,13 +129,6 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
     // Get the domain size in west-east number of columns
     size_t xi_rho = mask.Ny();
-
-    // Create a random number generator
-    std::default_random_engine generator;
-
-    // Initialize seed of number generator
-    if (random)
-        generator.seed(std::chrono::system_clock::now().time_since_epoch().count());
 
     // Check if the particle jumped outside the water :-)
     if (localParticleData.k>0) {
@@ -168,18 +175,43 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
     }
     // For each integration interval
-    for (int t=0;t<iint;t++) {
+    while (elapsed < intervalLength) {
+
+        double stepDt=std::min(dti,intervalLength-elapsed);
+        double physicalTime=intervalStart + configData->trackingDirection * elapsed;
+        double alpha=intervalLength == 0 ? 0 : (elapsed+0.5*stepDt)/intervalLength;
+        int nextOceanTimeIdx=intervalNextIdx;
+        if (nextOceanTimeIdx < 0 || nextOceanTimeIdx >= oceanTime.Nx()) nextOceanTimeIdx=ocean_time_idx;
+
+        auto zetaAt=[&](int j, int i) {
+            return (float)NumericalHelpers::interpolateTime(zeta(ocean_time_idx,j,i),zeta(nextOceanTimeIdx,j,i),alpha);
+        };
+        // Forcing-time weight at the start of the substep (first midpoint stage)
+        double alphaStart=intervalLength == 0 ? 0 : elapsed/intervalLength;
+        auto uAt=[&](int k, int j, int i, double stageAlpha) {
+            return (float)NumericalHelpers::interpolateTime(u(ocean_time_idx,k,j,i),u(nextOceanTimeIdx,k,j,i),stageAlpha);
+        };
+        auto vAt=[&](int k, int j, int i, double stageAlpha) {
+            return (float)NumericalHelpers::interpolateTime(v(ocean_time_idx,k,j,i),v(nextOceanTimeIdx,k,j,i),stageAlpha);
+        };
+        auto wAt=[&](int k, int j, int i, double stageAlpha) {
+            return (float)NumericalHelpers::interpolateTime(w(ocean_time_idx,k,j,i),w(nextOceanTimeIdx,k,j,i),stageAlpha);
+        };
+        auto aktAt=[&](int k, int j, int i) {
+            return (float)NumericalHelpers::interpolateTime(akt(ocean_time_idx,k,j,i),akt(nextOceanTimeIdx,k,j,i),alpha);
+        };
 
 #ifdef DEBUG
-        LOG4CPLUS_DEBUG(logger,"t:" << t);
+        LOG4CPLUS_DEBUG(logger,"time:" << physicalTime);
         LOG4CPLUS_DEBUG(logger, "k:" << localParticleData.k << " j:" << localParticleData.j << " i:" << localParticleData.i );
         LOG4CPLUS_DEBUG(logger, "age:" << localParticleData.age << " health:" << localParticleData.health << " time:" << localParticleData.time );
 #endif
 
         // Check if the particle is not yet active
-        if (localParticleData.time>(oceanTime(ocean_time_idx)+(t*dti))) {
+        if (configData->trackingDirection > 0 && localParticleData.time>physicalTime) {
             // The particle is not already active (already emitted, but not active)
-            break;
+            elapsed=std::min(intervalLength,localParticleData.time-intervalStart);
+            continue;
         }
 
         // Check of the particle health is less than its probability to survive
@@ -196,16 +228,17 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
          */
 
         // Get the integer part and the fraction part of particle k
-        auto kI=(int)localParticleData.k; double kF=localParticleData.k-kI;
+        auto kI=NumericalHelpers::upperVerticalLevel(localParticleData.k);
+        double kF=NumericalHelpers::lowerVerticalWeight(localParticleData.k);
 
         // Get the integer part and the fraction part of particle j
-        auto jI=(int)localParticleData.j; double jF=localParticleData.j-jI;
+        auto jI=NumericalHelpers::horizontalCell(localParticleData.j); double jF=localParticleData.j-jI;
 
         // Get the integer part and the fraction part of particle i
-        auto iI=(int)localParticleData.i; double iF=localParticleData.i-iI;
+        auto iI=NumericalHelpers::horizontalCell(localParticleData.i); double iF=localParticleData.i-iI;
 
         // Check if the particle is out of the domain
-        if (jI<0 || iI<0 || jI>=eta_rho|| iI>=xi_rho) {
+        if (!NumericalHelpers::validInterpolationCell(jI, iI, eta_rho, xi_rho)) {
 
             // Set the particle health
             localParticleData.health=-1;
@@ -235,10 +268,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
         // Perform the bilinear interpolation (2D) in order to get
         // the zeta at the particle position.
-        float z1 = zeta(ocean_time_idx, jI, iI) * (1.0 - iF) * (1.0 - jF);
-        float z2 = zeta(ocean_time_idx, jI + 1, iI) * (1.0 - iF) * jF;
-        float z3 = zeta(ocean_time_idx, jI + 1, iI + 1) * iF * jF;
-        float z4 = zeta(ocean_time_idx, jI, iI + 1) * iF * (1.0 - jF);
+        float z1 = zetaAt(jI, iI) * (1.0 - iF) * (1.0 - jF);
+        float z2 = zetaAt(jI + 1, iI) * (1.0 - iF) * jF;
+        float z3 = zetaAt(jI + 1, iI + 1) * iF * jF;
+        float z4 = zetaAt(jI, iI + 1) * iF * (1.0 - jF);
 
         // The current zeta at the particle position
         float zz = z1 + z2 + z3 + z4;
@@ -313,50 +346,139 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             LOG4CPLUS_DEBUG(logger, "Floating: kI:" << kI << " jI:" << jI << " iI:" << iI);
 #endif
 
-            // Perform the bilinear interpolation (2D) in order to get
-            // the u component of the current field in the particle position.
-            float u1 = u(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
-            float u2 = u(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF;
-            float u3 = u(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF;
-            float u4 = u(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF);
+            // Deterministic velocity [m s-1] at a fractional grid position and forcing-time
+            // weight: ocean current plus optional leeway and Stokes drift (horizontal) and
+            // ocean w (vertical). The solver applies trackingDirection to the displacement.
+            auto advectiveVelocity=[&](int kI, double kF, int jI, double jF, int iI, double iF,
+                                       double stageAlpha, float &uu, float &vv, float &ww) {
+                // Perform the bilinear interpolation (2D) in order to get
+                // the u component of the current field in the particle position.
+                float u1 = uAt(kI, jI, iI, stageAlpha) * (1.0 - iF) * (1.0 - jF);
+                float u2 = uAt(kI, jI + 1, iI, stageAlpha) * (1.0 - iF) * jF;
+                float u3 = uAt(kI, jI + 1, iI + 1, stageAlpha) * iF * jF;
+                float u4 = uAt(kI, jI, iI + 1, stageAlpha) * iF * (1.0 - jF);
 
-            // The current u component in the particle position
-            float uu = u1 + u2 + u3 + u4;
+                // The current u component in the particle position
+                uu = u1 + u2 + u3 + u4;
 
-
-#ifdef DEBUG
-            LOG4CPLUS_DEBUG(logger, "uu:" << uu);
-#endif
-
-            // Perform the bilinear interpolation (2D) in order to get
-            // the v component of the current field in the particle position.
-            float v1 = v(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF);
-            float v2 = v(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF;
-            float v3 = v(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF;
-            float v4 = v(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF);
-
-            // The current v component in the particle position
-            float vv = v1 + v2 + v3 + v4;
 
 #ifdef DEBUG
-            LOG4CPLUS_DEBUG(logger, "vv:" << vv );
+                LOG4CPLUS_DEBUG(logger, "uu:" << uu);
 #endif
 
-            // 0,0,690,533
+                // Perform the bilinear interpolation (2D) in order to get
+                // the v component of the current field in the particle position.
+                float v1 = vAt(kI, jI, iI, stageAlpha) * (1.0 - iF) * (1.0 - jF);
+                float v2 = vAt(kI, jI + 1, iI, stageAlpha) * (1.0 - iF) * jF;
+                float v3 = vAt(kI, jI + 1, iI + 1, stageAlpha) * iF * jF;
+                float v4 = vAt(kI, jI, iI + 1, stageAlpha) * iF * (1.0 - jF);
 
-            // Perform the bilinear interpolation (3D) in order to get
-            // the w component of the current field in the particle position.
-            float w1 = w(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
-            float w2 = w(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
-            float w3 = w(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
-            float w4 = w(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
-            float w5 = w(ocean_time_idx, kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
-            float w6 = w(ocean_time_idx, kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
-            float w7 = w(ocean_time_idx, kI - 1, jI + 1, iI + 1) * iF * jF * kF;
-            float w8 = w(ocean_time_idx, kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
+                // The current v component in the particle position
+                vv = v1 + v2 + v3 + v4;
 
-            // The current w component in the particle position
-            float ww = w1 + w2 + w3 + w4 + w5 + w6 + w7 + w8;
+                // Object drift is direction-neutral. The solver applies trackingDirection below.
+                if (configData->driftModel==1 &&
+                    localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE)) {
+                    const auto& object=DriftObjectCatalog::definition(
+                            static_cast<DriftObjectType>(localParticleData.driftObjectType));
+                    auto environmentAt=[&](Array3<float> *field) {
+                        if (!field) return 0.0;
+                        float f1=(*field)(ocean_time_idx,jI,iI)*(1-iF)*(1-jF);
+                        float f2=(*field)(ocean_time_idx,jI+1,iI)*(1-iF)*jF;
+                        float f3=(*field)(ocean_time_idx,jI+1,iI+1)*iF*jF;
+                        float f4=(*field)(ocean_time_idx,jI,iI+1)*iF*(1-jF);
+                        float n1=(*field)(nextOceanTimeIdx,jI,iI)*(1-iF)*(1-jF);
+                        float n2=(*field)(nextOceanTimeIdx,jI+1,iI)*(1-iF)*jF;
+                        float n3=(*field)(nextOceanTimeIdx,jI+1,iI+1)*iF*jF;
+                        float n4=(*field)(nextOceanTimeIdx,jI,iI+1)*iF*(1-jF);
+                        return NumericalHelpers::interpolateTime(f1+f2+f3+f4,n1+n2+n3+n4,stageAlpha);
+                    };
+                    double windU=windU10 ? environmentAt(windU10) : configData->windU10;
+                    double windV=windV10 ? environmentAt(windV10) : configData->windV10;
+                    std::int64_t uncertaintyInterval=static_cast<std::int64_t>(std::llround(std::min(intervalStart,intervalEnd)));
+                    std::uint64_t uncertaintySubstep=static_cast<std::uint64_t>(std::floor(elapsed/dti));
+                    double longitude=lonRad(jI,iI)*(1-iF)*(1-jF)+lonRad(jI+1,iI)*(1-iF)*jF+
+                              lonRad(jI+1,iI+1)*iF*jF+lonRad(jI,iI+1)*iF*(1-jF);
+                    double latitude=latRad(jI,iI)*(1-iF)*(1-jF)+latRad(jI+1,iI)*(1-iF)*jF+
+                             latRad(jI+1,iI+1)*iF*jF+latRad(jI,iI+1)*iF*(1-jF);
+                    double windErrorStdDev=configData->windErrorStdDev;
+                    double windErrorCorrelation=configData->windErrorComponentCorrelation;
+                    double windErrorSpatialScale=configData->windErrorSpatialScale;
+                    double windErrorTemporalScale=configData->windErrorTemporalScale;
+                    int calibration=observationalCalibrationRegion(configData->observationalCalibrationRegions,
+                            configData->observationalCalibrationRegionCount,longitude,latitude);
+                    if (calibration>=0) {
+                        const auto& region=configData->observationalCalibrationRegions[calibration];
+                        windErrorStdDev=region.windErrorStdDev;
+                        windErrorCorrelation=region.windErrorComponentCorrelation;
+                        windErrorSpatialScale=region.windErrorSpatialScale;
+                        windErrorTemporalScale=region.windErrorTemporalScale;
+                    }
+                    if (windErrorStdDev>0) {
+                        double first=forcingErrorNormal(configData->randomSeed,localParticleData.id,
+                                uncertaintyInterval,uncertaintySubstep,LEEWAY_WIND_ERROR_U_COMPONENT,
+                                longitude,latitude,physicalTime+.5*configData->trackingDirection*stepDt,windErrorSpatialScale,
+                                windErrorTemporalScale);
+                        double second=forcingErrorNormal(configData->randomSeed,localParticleData.id,
+                                uncertaintyInterval,uncertaintySubstep,LEEWAY_WIND_ERROR_V_COMPONENT,
+                                longitude,latitude,physicalTime+.5*configData->trackingDirection*stepDt,windErrorSpatialScale,
+                                windErrorTemporalScale);
+                        windU+=windErrorStdDev*first;
+                        windV+=windErrorStdDev*correlatedNormal(first,second,windErrorCorrelation);
+                    }
+                    double downwindNormal=0,crosswindNormal=0;
+                    if (configData->leewayCoefficientEnsemble) {
+                        downwindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,0);
+                        crosswindNormal=NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                LEEWAY_ENSEMBLE_RANDOM_INTERVAL,0,1);
+                        crosswindNormal=correlatedNormal(downwindNormal,crosswindNormal,
+                                                         configData->leewayResidualCorrelation);
+                    }
+                    DriftVelocity leeway=computeLeeway(object.leeway,windU,windV,
+                            static_cast<DriftSide>(localParticleData.driftSide),downwindNormal,crosswindNormal);
+                    uu+=static_cast<float>(leeway.u);
+                    vv+=static_cast<float>(leeway.v);
+                }
+                if (configData->driftModel==1 &&
+                    localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE) &&
+                    stokesU && stokesV) {
+                    auto waveAt=[&](Array3<float> *field) {
+                        double first=(*field)(ocean_time_idx,jI,iI)*(1-iF)*(1-jF)+(*field)(ocean_time_idx,jI+1,iI)*(1-iF)*jF+
+                                     (*field)(ocean_time_idx,jI+1,iI+1)*iF*jF+(*field)(ocean_time_idx,jI,iI+1)*iF*(1-jF);
+                        double next=(*field)(nextOceanTimeIdx,jI,iI)*(1-iF)*(1-jF)+(*field)(nextOceanTimeIdx,jI+1,iI)*(1-iF)*jF+
+                                    (*field)(nextOceanTimeIdx,jI+1,iI+1)*iF*jF+(*field)(nextOceanTimeIdx,jI,iI+1)*iF*(1-jF);
+                        return NumericalHelpers::interpolateTime(first,next,stageAlpha);
+                    };
+                    uu+=static_cast<float>(waveAt(stokesU)); vv+=static_cast<float>(waveAt(stokesV));
+                }
+
+#ifdef DEBUG
+                LOG4CPLUS_DEBUG(logger, "vv:" << vv );
+#endif
+
+                // 0,0,690,533
+
+                // Perform the bilinear interpolation (3D) in order to get
+                // the w component of the current field in the particle position.
+                float w1 = wAt(kI, jI, iI, stageAlpha) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
+                float w2 = wAt(kI, jI + 1, iI, stageAlpha) * (1.0 - iF) * jF * (1.0 - kF);
+                float w3 = wAt(kI, jI + 1, iI + 1, stageAlpha) * iF * jF * (1.0 - kF);
+                float w4 = wAt(kI, jI, iI + 1, stageAlpha) * iF * (1.0 - jF) * (1.0 - kF);
+                float w5 = wAt(kI - 1, jI, iI, stageAlpha) * (1.0 - iF) * (1.0 - jF) * kF;
+                float w6 = wAt(kI - 1, jI + 1, iI, stageAlpha) * (1.0 - iF) * jF * kF;
+                float w7 = wAt(kI - 1, jI + 1, iI + 1, stageAlpha) * iF * jF * kF;
+                float w8 = wAt(kI - 1, jI, iI + 1, stageAlpha) * iF * (1.0 - jF) * kF;
+
+                // The current w component in the particle position
+                ww = w1 + w2 + w3 + w4 + w5 + w6 + w7 + w8;
+            };
+
+            // Explicit midpoint (default) starts from the start-of-substep velocity; the
+            // legacy forward Euler step uses the mid-substep velocity at the start position.
+            bool midpoint=configData->integrator==Config::INTEGRATOR_MIDPOINT;
+            float uu, vv, ww;
+            advectiveVelocity(kI, kF, jI, jF, iI, iF, midpoint ? alphaStart : alpha, uu, vv, ww);
 
 #ifdef DEBUG
             LOG4CPLUS_DEBUG(logger, "ww:" << ww);
@@ -365,14 +487,14 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
             // Perform the bilinear interpolation (3D) in order to get
             // the akt in the particle position.
-            float a1 = akt(ocean_time_idx, kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
-            float a2 = akt(ocean_time_idx, kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
-            float a3 = akt(ocean_time_idx, kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
-            float a4 = akt(ocean_time_idx, kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
-            float a5 = akt(ocean_time_idx, kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
-            float a6 = akt(ocean_time_idx, kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
-            float a7 = akt(ocean_time_idx, kI - 1, jI + 1, iI + 1) * iF * jF * kF;;
-            float a8 = akt(ocean_time_idx, kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
+            float a1 = aktAt(kI, jI, iI) * (1.0 - iF) * (1.0 - jF) * (1.0 - kF);
+            float a2 = aktAt(kI, jI + 1, iI) * (1.0 - iF) * jF * (1.0 - kF);
+            float a3 = aktAt(kI, jI + 1, iI + 1) * iF * jF * (1.0 - kF);
+            float a4 = aktAt(kI, jI, iI + 1) * iF * (1.0 - jF) * (1.0 - kF);
+            float a5 = aktAt(kI - 1, jI, iI) * (1.0 - iF) * (1.0 - jF) * kF;
+            float a6 = aktAt(kI - 1, jI + 1, iI) * (1.0 - iF) * jF * kF;
+            float a7 = aktAt(kI - 1, jI + 1, iI + 1) * iF * jF * kF;;
+            float a8 = aktAt(kI - 1, jI, iI + 1) * iF * (1.0 - jF) * kF;
 
             // The AKT at the particle position.
             float aa = a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8;
@@ -382,9 +504,10 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 #endif
 
             // Evaluate the particle leap (in meters along x,y,z) due to the current field (deterministic leap).
-            double dxleap = uu * dti;
-            double dyleap = vv * dti;
-            double dzleap = (sv + ww) * dti;
+            double direction=configData->trackingDirection;
+            double dxleap = direction * uu * stepDt;
+            double dyleap = direction * vv * stepDt;
+            double dzleap = direction * (sv + ww) * stepDt;
 
 
             double rxleap=0;
@@ -392,15 +515,20 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             double rzleap=0;
 
 
-            if (random) {
+            if (random && (direction > 0 || configData->backwardDiffusion)) {
                 // Calculation of sigma for the particle depth
                 double sigmaDepth = sigma * (1 - localParticleData.k / kLowerLimit);
 
-                // Generate a distribution probability with mean=0 and stdev=sigmaDepth
-                std::normal_distribution<double> distribution(0,sigmaDepth);
-                rxleap= distribution(generator);
-                ryleap = distribution(generator);
-                rzleap  = distribution(generator) * aa * crid;
+                // Generate the random leap from the physical interval and absolute substep
+                std::int64_t intervalKey=static_cast<std::int64_t>(std::llround(std::min(intervalStart,intervalEnd)));
+                std::uint64_t substep=static_cast<std::uint64_t>(std::floor(elapsed/dti));
+                double stochasticScale=std::sqrt(stepDt/dti);
+                rxleap= sigmaDepth * NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                                               intervalKey,substep,0) * stochasticScale;
+                ryleap= sigmaDepth * NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                                               intervalKey,substep,1) * stochasticScale;
+                rzleap= sigmaDepth * NumericalHelpers::normal(configData->randomSeed,localParticleData.id,
+                                                               intervalKey,substep,2) * aa * crid * stochasticScale;
 
             }
 
@@ -439,7 +567,7 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             // https://www.movable-type.co.uk/scripts/latlong.html
             dLatLon = pow(sin(0.5 * dLat), 2) +
                  pow(sin(0.5 * dLon), 2) *
-                 cos(latRad(jI + 1, iI)) *
+                 cos(latRad(jI, iI + 1)) *
                  cos(latRad(jI, iI));
 
             // Size of a grid cell along latitude in meters
@@ -453,6 +581,64 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 #ifdef DEBUG
             LOG4CPLUS_DEBUG(logger, "hc:" << hc << " depthIntervals(" << kI <<"):" << depthIntervals(kI) << " zdist:" << zdist << " ydist:" << ydist << " xdist:" << xdist );
 #endif
+
+            if (midpoint) {
+                // Explicit midpoint step for the deterministic displacement:
+                //   X* = X + s F(X, t) dt/2,   X' = X + s F(X*, t + s dt/2) dt
+                // in grid-index coordinates, F being the velocity divided by the local cell size.
+                // Half-step position with the start-cell metric (vertical half leap capped at one cell)
+                double kHalfLeap = direction * (sv + ww) * 0.5 * stepDt;
+                if (abs(kHalfLeap) > zdist) kHalfLeap = sign(zdist, kHalfLeap);
+                double iMid = localParticleData.i + direction * uu * 0.5 * stepDt / xdist;
+                double jMid = localParticleData.j + direction * vv * 0.5 * stepDt / ydist;
+                double kMid = std::min(0.0, std::max(kLowerLimit, localParticleData.k + kHalfLeap / zdist));
+                int iMI = NumericalHelpers::horizontalCell(iMid);
+                int jMI = NumericalHelpers::horizontalCell(jMid);
+                bool midValid = NumericalHelpers::validInterpolationCell(jMI, iMI, eta_rho, xi_rho);
+                double hcMid = 0;
+                if (midValid) {
+                    double iMF = iMid - iMI, jMF = jMid - jMI;
+                    hcMid = h(jMI, iMI) * (1.0 - iMF) * (1.0 - jMF) + h(jMI + 1, iMI) * (1.0 - iMF) * jMF +
+                            h(jMI + 1, iMI + 1) * iMF * jMF + h(jMI, iMI + 1) * iMF * (1.0 - jMF) +
+                            zetaAt(jMI, iMI) * (1.0 - iMF) * (1.0 - jMF) + zetaAt(jMI + 1, iMI) * (1.0 - iMF) * jMF +
+                            zetaAt(jMI + 1, iMI + 1) * iMF * jMF + zetaAt(jMI, iMI + 1) * iMF * (1.0 - jMF);
+                    midValid = hcMid > shoreLimit && hcMid > 0;
+                }
+                if (midValid) {
+                    // Second stage: velocity and cell size at the midpoint and mid-substep time
+                    double iMF = iMid - iMI, jMF = jMid - jMI;
+                    int kMI = NumericalHelpers::upperVerticalLevel(kMid);
+                    double kMF = NumericalHelpers::lowerVerticalWeight(kMid);
+                    float um, vm, wm;
+                    advectiveVelocity(kMI, kMF, jMI, jMF, iMI, iMF, alpha, um, vm, wm);
+
+                    // Cell sizes at the midpoint (same Haversine formulas as above)
+                    double mLat = latRad(jMI + 1, iMI) - latRad(jMI, iMI);
+                    double mLatLon = pow(sin(0.5 * mLat), 2);
+                    double ydistMid = 2.0 * atan2(pow(mLatLon, .5), pow(1.0 - mLatLon, .5)) * 6371000.0;
+                    double mLon = lonRad(jMI, iMI + 1) - lonRad(jMI, iMI);
+                    mLatLon = pow(sin(0.5 * mLon), 2) * cos(latRad(jMI, iMI + 1)) * cos(latRad(jMI, iMI));
+                    double xdistMid = 2.0 * atan2(pow(mLatLon, .5), pow(1.0 - mLatLon, .5)) * 6371000.0;
+                    double zdistMid = hcMid * depthIntervals(kMI);
+
+                    // Express the midpoint displacement in metres of the start cell, so that the
+                    // index update, vertical cap and closures below apply unchanged:
+                    // (s u* dt / dx*) dx = s u* dt dx / dx*
+                    dxleap = direction * um * stepDt * xdist / xdistMid;
+                    dyleap = direction * vm * stepDt * ydist / ydistMid;
+                    dzleap = direction * (sv + wm) * stepDt * zdist / zdistMid;
+                } else {
+                    // Midpoint outside the interpolation domain or on land: legacy Euler step
+                    float ue, ve, we;
+                    advectiveVelocity(kI, kF, jI, jF, iI, iF, alpha, ue, ve, we);
+                    dxleap = direction * ue * stepDt;
+                    dyleap = direction * ve * stepDt;
+                    dzleap = direction * (sv + we) * stepDt;
+                }
+                xleap = dxleap + rxleap;
+                yleap = dyleap + ryleap;
+                zleap = dzleap + rzleap;
+            }
 
             // Check if the vertical leap is greather than the vertical dimension of the cell in meters
             if (abs(zleap) > zdist) {
@@ -520,24 +706,21 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
             // Reflect if crossed the coastline
 
             // Calculate the integer part of the j, i, k candidates
-            int jdetI = (int) (jdet);
-            int idetI = (int) (idet);
-            int kdetI = (int) (kdet);
+            int jdetI = NumericalHelpers::horizontalCell(jdet);
+            int idetI = NumericalHelpers::horizontalCell(idet);
 
 		    // Check if the candidate position is within the domain
-            if (jdetI >= 0 && idetI >= 0 && jdetI < eta_rho && idetI < xi_rho) {
+            if (NumericalHelpers::validInterpolationCell(jdetI, idetI, eta_rho, xi_rho)) {
 		
                 // Check if the candidate new particle position is on land (cfr. shoreLimit)
                 double idetF = idet-idetI;
                 double jdetF = jdet-jdetI;
-                double kdetF = kdet - kdetI;
-
                 // Perform the bilinear interpolation (2D) in order to get
                 // the zeta at the new particle position.
-                z1 = zeta(ocean_time_idx, jdetI, idetI) * (1.0 - idetF) * (1.0 - jdetF);
-                z2 = zeta(ocean_time_idx, jdetI + 1, idetI) * (1.0 - idetF) * jdetF;
-                z3 = zeta(ocean_time_idx, jdetI + 1, idetI + 1) * idetF * jdetF;
-                z4 = zeta(ocean_time_idx, jdetI, idetI + 1) * idetF * (1.0 - jdetF);
+                z1 = zetaAt(jdetI, idetI) * (1.0 - idetF) * (1.0 - jdetF);
+                z2 = zetaAt(jdetI + 1, idetI) * (1.0 - idetF) * jdetF;
+                z3 = zetaAt(jdetI + 1, idetI + 1) * idetF * jdetF;
+                z4 = zetaAt(jdetI, idetI + 1) * idetF * (1.0 - jdetF);
 
                 // The new zeta at the particle position
                 float zzdet = z1 + z2 + z3 + z4;
@@ -571,6 +754,8 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                     switch (configData->horizontalClosure) {
 
                                 case Config::CLOSURE_MODE_CONSTRAINT:
+                                    idet=localParticleData.i;
+                                    jdet=localParticleData.j;
                                     break;
 
                                 case Config::CLOSURE_MODE_KILL:
@@ -579,16 +764,8 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
 
                                 case Config::CLOSURE_MODE_REFLECTION:
                                     // Reflect the particle
-                                    if (idetI < iI) {
-                                        idet = (double) iI + abs(localParticleData.i - idet);
-                                    } else if (idetI > iI) {
-                                        idet = (double) idetI - mod(idet, 1.0);
-                                    }
-                                    if (jdetI < jdet) {
-                                        jdet = (double) jdetI + abs(localParticleData.j - jdet);
-                                    } else if (jdetI > jI) {
-                                        jdet = (double) jdetI - mod(jdet, 1.0);
-                                    }
+                                    NumericalHelpers::reflectCell(localParticleData.i, iI, idet, idetI);
+                                    NumericalHelpers::reflectCell(localParticleData.j, jI, jdet, jdetI);
                                     break;
                             }
                        }
@@ -597,6 +774,20 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
                 localParticleData.i = idet;
                 localParticleData.j = jdet;
                 localParticleData.k = kdet;
+           } else {
+                switch (configData->horizontalClosure) {
+                    case Config::CLOSURE_MODE_CONSTRAINT:
+                        localParticleData.k=kdet;
+                        break;
+                    case Config::CLOSURE_MODE_KILL:
+                        localParticleData.health=-1;
+                        break;
+                    case Config::CLOSURE_MODE_REFLECTION:
+                        localParticleData.i=NumericalHelpers::reflectDomain(idet,xi_rho-1);
+                        localParticleData.j=NumericalHelpers::reflectDomain(jdet,eta_rho-1);
+                        localParticleData.k=kdet;
+                        break;
+                }
            }
 
 	//}
@@ -606,17 +797,28 @@ void Particle::move(config_data *configData, int ocean_time_idx, Array1<double> 
         if (localParticleData.health>0) {
 
             // Update the particle age
-            localParticleData.age = localParticleData.age + dti;
+            localParticleData.age = localParticleData.age + stepDt;
 
             // Decay the particle
             localParticleData.health = health0 * exp(-localParticleData.age / tau0);
+
+            if (configData->leewayJibeProbabilityHourly>0 &&
+                localParticleData.driftObjectType!=static_cast<std::uint16_t>(DriftObjectType::PASSIVE)) {
+                std::int64_t intervalKey=static_cast<std::int64_t>(std::llround(std::min(intervalStart,intervalEnd)));
+                std::uint64_t substep=static_cast<std::uint64_t>(std::floor(elapsed/dti));
+                double probability=jibeStepProbability(configData->leewayJibeProbabilityHourly,stepDt);
+                if (NumericalHelpers::uniform(configData->randomSeed,localParticleData.id,intervalKey,
+                                              substep,LEEWAY_JIBE_RANDOM_COMPONENT)<probability)
+                    localParticleData.driftSide=-localParticleData.driftSide;
+            }
         }
 
 #ifdef DEBUG
         LOG4CPLUS_DEBUG(logger, "k:" << localParticleData.k << " j:" << localParticleData.j << " i:" << localParticleData.i );
         LOG4CPLUS_DEBUG(logger, "age:" << localParticleData.age << " health:" << localParticleData.health << " time:" << localParticleData.time );
-        LOG4CPLUS_DEBUG(logger,"t:" << t);
+        LOG4CPLUS_DEBUG(logger,"time:" << physicalTime);
 #endif
+        elapsed+=stepDt;
     }
     memcpy(&_data, &localParticleData, sizeof(particle_data));
 }
@@ -656,11 +858,19 @@ double Particle::Time() const {
     return _data.time;
 }
 
-unsigned long Particle::Id() const {
+std::uint64_t Particle::Id() const {
     return _data.id;
 }
 
+DriftObjectType Particle::DriftObject() const {
+    return static_cast<DriftObjectType>(_data.driftObjectType);
+}
 
+DriftSide Particle::Side() const {
+    return static_cast<DriftSide>(_data.driftSide);
+}
 
-
-
+void Particle::Drift(DriftObjectType objectType, DriftSide side) {
+    _data.driftObjectType=static_cast<std::uint16_t>(objectType);
+    _data.driftSide=static_cast<std::int8_t>(side);
+}

@@ -1,0 +1,213 @@
+# Configuration
+
+The [native webinar configuration](../examples/webinar-native-usecase/docs/webinar-native-usecase.md) and its ROMS download configuration share `simulation.start="20260915Z0000"`, `simulation.end="20260916Z0000"` and 25 explicitly ordered hourly inputs. The native protocol keeps random source placement, seed 5489, and 7200 s history cadence; rate sweeps modify only the archived source emission count.
+
+The [ROMS webinar conversion guide](../examples/webinar-roms-usecase-download/docs/webinar-roms-usecase-download.md) demonstrates `simulation.dry=true` with `io.save_input=true`, disabled sources/restart, and example-local output paths. Create the output parent directory before direct execution, or use its runner to create an isolated archive. Dry conversion processes the configured input list and writes normalized forcing, including adjacent boundary records; it produces no particle output.
+
+Configuration is JSON or the legacy namelist form. New scientific runs should set an explicit seed and direction:
+
+```json
+{"physics":{"random":false,"random_seed":5489,"dti":30,"integrator":"midpoint"},"tracking":{"direction":"forward","backward_diffusion":"none"}}
+```
+
+Calendar times in `simulation.start`, `simulation.end`, and source `start`/`end` are UTC values written as `YYYYMMDDhh`, `YYYYMMDDZhh`, or `YYYYMMDDZhhmm`. Minutes are in 00–59 and enter physical time: a time of day $h$:$m$ maps to $86400\,d+3600h+60m$ seconds since 1968-05-23 00:00 UTC, where $d$ is the day count. Conversion back to a calendar rounds the time of day to the nearest whole second before splitting it into hours, minutes, and seconds, carrying a value that rounds to 24:00 into the next day; this absorbs the $O(10^{-5})$ s round-off of modified-Julian-day arithmetic. Any other length, a minute outside 00–59, or trailing characters are rejected at load time. Resolved configurations, source exports, and output-file stamps keep the historical `YYYYMMDDZhh` form for whole hours and use `YYYYMMDDZhhmm` otherwise. Earlier revisions parsed only the hour and silently discarded the rest, so `20210701Z0030` meant 00:00, and their calendar conversion rounded to the nearest hour.
+
+A source whose `start` (or, by default, a `simulation.start`) falls inside a forcing interval begins releasing at that physical time, and its particles are integrated only from their release time. A run requires `simulation.start`, the output-cadence origin; a configuration without it is valid for inspection, omits `start` and `end` when serialized, and stops with an error when the run reaches its first output decision.
+
+## Source emission
+
+Each GeoJSON source feature declares an explicit `emission` object. Continuous sources use a physical-time rate:
+
+```json
+"emission": {"mode":"uniform_rate", "rate":1000, "rate_unit":"particles/hour"}
+```
+
+For rate $R>0$ particles per hour and active-source start $t_s$, release $n=0,1,\ldots$ has physical time
+
+$$t_n=t_s+\left(n+\frac{1}{2}\right)\frac{3600\ \mathrm{s}}{R}.$$
+
+The midpoint phase prevents a release from belonging to both adjacent half-open intervals. A solver interval $[a,b)$ schedules every $t_n\in[a,b)$ that is also in the source active window $[t_s,t_e)$. Thus 1,000 particles per hour means one particle every 3.6 s, a complete hour contains exactly 1,000 releases, and a two-hour forcing interval contains 2,000. Fractional rates are supported without interval-local rounding. If `start` is the negative sentinel or omitted, `simulation.start` is $t_s$; a negative or omitted `end` leaves the source active through the simulation.
+
+`single_pulse` requires an integer `particles` count and an explicit source `start`; all members receive that release time. `forcing_interval_batch` requires integer `particles_per_interval` and releases that batch at every available forcing-interval start $a$ with $t_s\le a\le t_e$. Unlike the half-open `uniform_rate` window, this window is closed, as in the original WaComM record loop, so `start` equal to `end` releases exactly one batch at that forcing record; membership is decided after rounding times to whole seconds. Earlier development revisions excluded $t_e$ and therefore silently released nothing when `start` equalled `end`. The latter mode depends on forcing resolution and exists for explicit legacy reproduction, not as an hourly-rate interpretation. The deprecated top-level source property `particlesPerHour` remains readable and maps to `forcing_interval_batch`; new or migrated configurations must use `emission`.
+
+All interval membership is evaluated in seconds on the normalized physical-time axis. Forward execution alone emits ordinary sources; backward execution continues to suppress them. Releases for an interval are created before particle distribution, with future members inactive until their stored release time, so serial, OpenMP, MPI, and CUDA use the same schedule. A restart checkpoint stores those inactive members and suppresses rescheduling of its partially completed forcing interval; subsequent interval schedules are reconstructed from physical time.
+
+### Source position
+
+Each feature must give its position in exactly one of two ways:
+
+- **Geographic.** A GeoJSON `Point` with coordinates `[longitude, latitude]` or `[longitude, latitude, depth]`, in degrees east, degrees north, and metres. It is converted once at loading by the [horizontal](model.md#horizontal-position-mapping) and [vertical](model.md#vertical-coordinate-mapping) inverse mappings. A `k` property is not allowed with a `Point` position.
+- **Grid.** Explicit fractional indices in the `j` and `i` properties, which must be given together, with an optional `k` (default 0, the surface). These are used as given; any geometry is ignored. They must address a valid interpolation cell of the selected forcing.
+
+The depth is read from the `depth` property, which is the name `saveAsJson` writes, or from the deprecated alias `dep`. A third `Point` coordinate may also carry it. The sign is ignored and the value is read as metres below the surface: GeoJSON's elevation `-20` and a `depth` of `20` are the same request. When more than one of these is present, their magnitudes must agree exactly. With no depth, the source is at the surface. For a grid position, a depth without `k` sets `k` at $(j,i)$; a depth with `k` must match the depth of `k` within $10^{-6}$ m. A depth below the lowest valid particle level is placed on that level.
+
+Loading stops with an error naming the source in any of these cases:
+
+- the feature has no position, or its geometry is not a `Point`, including `Polygon` and `MultiPoint`;
+- the `Point` has fewer than two or more than three coordinates, or a value that is not a number;
+- only one of `j` and `i` is given, or `k` is given without them;
+- the depths disagree;
+- the position is non-finite or outside the ocean model interpolation domain.
+
+Earlier revisions handled these cases silently. They read only `dep`, so the `depth` property written by `saveAsJson` and used by the example catalogs was ignored, and the third coordinate was used only when `dep` was zero. A feature without a usable position was added at the sentinel index $10^{37}$, and its particles never entered the domain. Polygon release areas, such as the [oil-spill demonstrations](../examples/oilspill-demo-01/README.md), are not source files. They are read by `createRestartFileFromJson`, which samples particles into an initial restart ([polygon release files](#polygon-release-files)).
+
+### Polygon release files
+
+`createRestartFileFromJson` turns a GeoJSON `FeatureCollection` of `Polygon` features into the restart that a configuration names. It is built with the application (`BUILD_APPLICATION=ON`) and installed next to `wacommplusplus`:
+
+```bash
+./build/createRestartFileFromJson configuration.json polygons.geojson 20220915Z0000
+```
+
+Each feature needs `particles`, a positive integer, and `depth`, in metres below the surface (non-negative). `name` is optional and is used in error messages. Other properties, such as `description`, are ignored. Positions are `[longitude, latitude]` in degrees, in the longitude convention of the forcing grid. A third coordinate is rejected so that it cannot be confused with `depth`. Holes are supported. The release time uses the calendar format of `simulation.start` and must lie inside the first forcing window in the tracking direction.
+
+The configuration is the one that will run. It must set `restart.active:true` and a `restart.restart_file` ending in `.nc`, which the tool overwrites. The grid comes from `io.ocean_model` and the first window of `io.nc_inputs` in `tracking.direction`. The sampled positions are keyed by `physics.random_seed` and particle identity. The drift object and crosswind side come from the `drift` settings, as for sources. The restart is version 3 and records the seed, direction, ocean model, checkpoint time, and full configuration. It adds `wacomm_polygon_release_file`, `wacomm_polygon_release_sampler`, and `wacomm_polygon_release_time`. The tool reads the file back with the production loader and exits non-zero unless every particle is reproduced exactly. It also fails on invalid geometry or properties, out-of-domain positions, and samples in an interpolation cell with a land node. Sources may stay active in the same run; their identities continue after the polygon particles. The sampling density, keying, and placement are defined in [the model description](model.md#polygon-releases).
+
+With `physics.random_sources=true`, each released grid coordinate receives an independent normal offset with mean 0 and standard deviation 0.25 grid-index units. The three coordinates use disjoint stateless random components keyed by `physics.random_seed` and stable particle identity through the ordered key scheme `ordered-splitmix64-v2` defined in [model.md](model.md#stochastic-displacement). The offsets are consequently invariant under forcing-interval partition, restart, MPI rank count, thread scheduling, and accelerator scheduling. They describe computational source-position spread in fractional grid coordinates, not a distance-isotropic or observationally calibrated source footprint.
+
+`direction` is `forward` or `backward`. Backward diffusion defaults to `none`; `symmetric_stochastic` enables an ensemble and must not be interpreted as exact path reconstruction. Closure values are `constraint`, `kill`, and `reflection`. Unknown direction and backward-diffusion values are errors.
+
+`physics.dti` and `physics.deltat` are seconds and must be finite and greater than zero. `physics.sigma` is a stochastic displacement scale in meters and `physics.shore_limit` is a positive-down water-column threshold in meters; both must be finite and non-negative. Invalid numerical or closure values fail during configuration loading rather than entering the integration loop.
+
+`physics.integrator` selects the deterministic time-integration scheme. The default `midpoint` is the explicit second-order midpoint method; `euler` is the legacy first-order step that earlier revisions always used and reproduces their results bit for bit. Any other value is an error. The equations, the near-boundary fallback, and the verification evidence are in [the model description](model.md#temporal-integration). The choice changes particle trajectories and must be archived with every run: a configuration that omits it now runs with `midpoint`, so reproducing results archived before this option existed requires `"integrator":"euler"`. Every checked-in example sets the key explicitly; the [Sarno](../examples/wacomm-sarno-lite/docs/README.md) and [native webinar](../examples/webinar-native-usecase/docs/webinar-native-usecase.md) examples pin `euler` so their archived timings, figures, and stored particle comparisons stay reproducible.
+
+Surface-object drift is opt-in:
+
+```json
+{
+  "drift": {
+    "model": "leeway",
+    "object_type": "PERSON_IN_WATER",
+    "side": "right",
+    "coefficient_ensemble": false
+  },
+  "environment": {
+    "wind": {
+      "adapter": "constant",
+      "u10": 5.0,
+      "v10": 0.0
+    }
+  }
+}
+```
+
+`drift.model` is `passive` or `leeway`. Passive is the backward-compatible default and does not request atmospheric input. Leeway requires an `object_type` symbolic name from the [object catalog](catalogs.md) and `side=left|right|random`. Stable numeric identifiers 0--5 retain their original meanings, new catalog entries use subsequent identifiers, and resolved sides are persisted in restart files. Names, rather than numeric identifiers, are the public configuration interface. Some catalog entries have distinct left and right regressions; selecting a side therefore chooses the corresponding measured coefficient triplet rather than merely negating a common magnitude.
+
+`drift.coefficient_ensemble` defaults to `false`. When true, the catalog standard deviations scale Gaussian residual velocities in the downwind and crosswind regressions. `drift.residual_correlation=rho` defaults to zero, requires the ensemble, and must lie in [-1,1]. If `z1,z2` are independent standard normals, the implementation uses `z_DW=z1` and `z_CW=rho z1+sqrt(1-rho^2) z2`, giving correlation `rho` while retaining unit marginal variance. The pair is a deterministic function of `physics.random_seed` and stable particle identity and remains fixed for that trajectory. A nonzero value is a user-supplied covariance hypothesis, not a cataloged empirical result.
+
+`drift.side=random` requires an explicit `side_right_probability` in the closed interval [0,1]. For stable identity $n$, a counter-key uniform variate $U_n$ assigns right when $U_n<p_R$ and left otherwise. This samples an initial categorical modeling prior once; it is not a time-dependent jibing process. Fixed `left` or `right` configurations reject `side_right_probability` so an unused uncertainty parameter cannot be silently archived. The resolved side is stored with each particle and is invariant under direction, restart, rank, thread, and accelerator scheduling.
+
+`drift.jibe_probability_per_hour` defaults to 0 and accepts [0,1] only for leeway runs. It defines a constant exponential waiting-time hazard, not a universal catalog value. WaComM++ converts it to the probability of a resolved transition over each physical integration step. A successful keyed draw flips the side after that step; at most one transition is resolved per substep. The probability, seed, `dti`, and resolved particle state are therefore required reproducibility metadata.
+
+The first environmental provider is `environment.wind.adapter=constant`. Components `u10` and `v10` are finite eastward and northward 10 m wind velocities in m s-1. This provider is appropriate for analytical verification, controlled sensitivity studies, and spatially uniform forcing intervals. It is not a substitute for resolved atmospheric forcing in operational applications. Unknown models, object types, orientations, wind adapters, missing components, and non-finite winds fail during configuration loading.
+
+`environment.wind.uncertainty_stddev=sigma_W` defaults to zero, is measured in m s-1, and is valid only for leeway runs. `uncertainty_component_correlation=rho_W` defaults to zero and must be finite in [-1,1]; with equal component variance this validates the positive-semidefinite covariance `sigma_W^2 [[1,rho_W],[rho_W,1]]`. `uncertainty_spatial_scale=L_W` in metres and `uncertainty_temporal_scale=T_W` in seconds are finite and nonnegative. Positive scales select a shared piecewise-constant Gaussian field in Earth-relative equirectangular spatial bins and absolute physical-time bins. Samples have perfect covariance inside the same bin and zero covariance across a bin boundary; these are numerical support widths, not e-folding correlation lengths. Longitude is multiplied by cosine(latitude), so this inexpensive operator is unsuitable near the poles or across the antimeridian. Zero spatial or temporal scale retains particle-keyed or integration-substep white noise respectively, and all-zero correlation settings preserve the legacy realization exactly. Nonzero correlation settings require `uncertainty_stddev>0`. These values are sensitivity hypotheses unless their estimator and forcing-specific observational provenance are archived.
+
+`observational_calibration.regions` is an opt-in array of at most 16 non-overlapping, closed EPSG:4326 rectangles. At each substep the particle midpoint selects a region; its `wind_error` values replace the global wind-error standard deviation, component correlation, spatial scale, and temporal scale. Outside all regions the global values apply. Boundary sharing is rejected because closed domains would otherwise be ambiguous; antimeridian-spanning rectangles are unsupported. Selection changes parameters, not the stochastic key, equations, interpolation, vector basis, or direction policy.
+
+Each region requires `id`, `crs="EPSG:4326"`, `bounds` (`west`, `south`, `east`, `north` in degrees), the exact configured `object_type` and `forcing_adapter`, ISO-8601 `valid_from` and `valid_until` provenance strings, a named `estimator`, `sample_size>=2`, dataset identity, `dataset_checksum="sha256:<64 hex digits>"`, a DOI, and `wind_error` containing positive `stddev` (m s-1), PSD `component_correlation`, and nonnegative `spatial_scale` (m) and `temporal_scale` (s). The loader verifies structural consistency, ranges, covariance PSD, and spatial ambiguity; it cannot verify the scientific truth of a DOI, estimator, dataset, period, or geographic applicability. Those remain the investigator's responsibility. A declaration is not a posterior, confidence region, or universal calibration.
+
+```json
+"observational_calibration": {"regions": [{
+  "id": "study-region-object-forcing-v1", "crs": "EPSG:4326",
+  "bounds": {"west": 13.8, "south": 40.5, "east": 14.5, "north": 41.1},
+  "object_type": "PERSON_IN_WATER", "forcing_adapter": "WRF",
+  "valid_from": "2024-01-01T00:00:00Z", "valid_until": "2024-12-31T23:59:59Z",
+  "estimator": "document the residual selection and covariance estimator", "sample_size": 42,
+  "dataset": "persistent archived dataset identifier",
+  "dataset_checksum": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+  "doi": "10.xxxx/replace-with-the-study-doi",
+  "wind_error": {"stddev": 1.2, "component_correlation": 0.25,
+                 "spatial_scale": 8000.0, "temporal_scale": 1800.0}
+}]}
+```
+
+The block is a schema illustration with placeholder provenance and values, not a calibrated configuration suitable for a scientific run.
+
+Resolved WRF wind and WW3 Stokes drift use parallel forcing lists:
+
+```json
+"environment": {
+  "wind": {"adapter":"WRF", "nc_inputs":["wrf.nc"], "regrid":"bilinear_curvilinear_geographic"},
+  "wave": {"adapter":"WW3", "nc_inputs":["ww3.nc"], "regrid":"bilinear_geographic"}
+}
+```
+
+Every forcing entry may be a local path or an explicit `http`, `https`, or `dap4` NetCDF URI. Relative ocean entries are resolved against `io.base_path`; relative WRF and WW3 entries use the same base by default and may declare their own `base_path`. An absolute path or complete URI is never prefixed. Unsupported schemes, missing URI hosts, and embedded URI credentials are rejected; authentication must be configured through the NetCDF transport outside the archived configuration so secrets are not written into provenance.
+
+Access is lazy by forcing window: the application opens and normalizes the current window and the single adjacent boundary record needed for continuous temporal interpolation. The adjacent normalized dataset is retained for the following window, then released, so a chronological run does not eagerly open the full remote collection and does not download the same window twice. NetCDF controls HTTP/DAP transfer and cache behavior. A transport error is fatal and never selects a different product, cached scientific value, or fallback field.
+
+Each list must contain exactly one file for every entry in `io.nc_inputs`. Files must normalize to the same chronological timestamps and horizontal coordinates as the ocean particle grid. WRF wind is required by leeway; WW3 Stokes drift is optional and is added only for non-passive drift objects. Dynamic WRF/WW3 coupling runs on serial CPU, OpenMP, MPI, FlexMPI/EMPI, and CUDA paths. CUDA receives the already validated, rotated, and regridded common-grid arrays; it does not parse product metadata or apply an independent adapter policy.
+
+Environmental variables must carry explicit metadata. Velocity uses `m s-1` or an accepted spelling of meters per second; longitude and latitude use east/north angular units. Numeric time uses CF-style `<unit> since <UTC reference>` metadata with seconds, minutes, hours, or days and a supported Gregorian calendar. WaComM++ converts the coordinate to seconds since 1968-05-23 before matching it against ocean time. It rejects unsupported calendars and units rather than guessing.
+
+`regrid` is `none` by default. `bilinear_geographic` accepts a monotonic rectilinear environmental longitude/latitude grid, including increasing or decreasing axes and longitude axes crossing the antimeridian. `bilinear_curvilinear_geographic` uses inverse bilinear coordinates in a valid, non-folded curvilinear quadrilateral. Both require every ocean-grid point to lie inside the source domain and interpolate already Earth-relative vector components. They reject projected coordinates and extrapolation. Neither operator is conservative; configuration therefore records the scientific choice explicitly.
+
+`bilinear_projected` requires an explicit `source_crs`, for example `"EPSG:3857"`, and `USE_PROJ=ON`. The file must expose rectilinear axes or a valid curvilinear `x/y` mesh in meters. PROJ transforms ocean targets from EPSG:4326 into the declared source CRS before rectilinear or inverse-bilinear interpolation. A CRS is never inferred. Missing or misplaced CRS declarations, unavailable PROJ support, invalid transforms, non-metric coordinates, folded geometry, and extrapolation are errors.
+
+The library-level `conservativeRectilinearGeographicCellAverage` and `conservativeCurvilinearGeographicCellAverage` operators are not valid `environment.wind.regrid` or `environment.wave.regrid` values. The curvilinear API accepts explicit source/target corner bounds, source cell-average scalar data, active fractions in [0,1], and an optional limited second-order mode. This restriction prevents a conservation label from being attached to point-valued velocity components without a scientifically defined flux and vector-basis treatment.
+
+## Output cadence and history formats
+
+A particle history is written at the end of a forcing window when the elapsed physical time $\Delta t=t_\mathrm{end}-t_\mathrm{start}$ satisfies $\mathrm{round}(\Delta t)\bmod I_r=0$. Here $t_\mathrm{start}$ is the start of the UTC hour containing `simulation.start` (equal to `simulation.start` for whole-hour values, so 10:30 gives 10:00 and hourly outputs remain on whole-hour forcing records), $t_\mathrm{end}$ is the final time of the window in the tracking direction, both in seconds, and $I_r$ is `restart.interval` (default 3600 s). Gridded counts use the same test with $I_g$=`io.timestep` (default 3600 s). $\Delta t$ is negative for backward runs. Rounding to the nearest second absorbs the $O(10^{-5})$ s round-off of the modified-Julian-day conversion. Before this was fixed, truncation could silently skip an hourly output. Both intervals must be whole numbers of seconds greater than zero, and configuration loading rejects any other value.
+
+`io.save_history` selects the history format. `nc` is the versioned NetCDF restart described in [restart](restart.md). `text` writes one record per particle (`id i j k health age time object side`) at full `double` precision (`max_digits10`) and an exact 64-bit identity, so it reproduces the in-memory state. Text records carry no direction metadata, so they can seed a backward run from forward endpoints. `json` writes GeoJSON for visualization only: it leaves out inactive and out-of-domain particles and the restart metadata, so `restart.restart_file` rejects a `.json` file. Histories are stamped with the final physical time of the window. Gridded files are stamped with the start of the window's last forcing interval in the tracking direction.
+
+### Output publication
+
+Histories and gridded files are written under a temporary `.partial` name and renamed when complete, so a reader or restart never sees a truncated file. `io.async=true` writes them on a background thread while the solver continues, bounded by `io.async_max_pending` queued or running writes (default 2). `io.filesystem` (`posix`, `lustre`, or `gpfs`, default `posix`) declares the output file system; `io.fsync` (default `false` on `posix`, `true` otherwise) flushes each file and its directory entry before and after the rename; `io.staging_dir` writes through a node-local directory; and `io.lustre_stripe_count` (OSTs, `-1` for all, `0` to inherit) and `io.lustre_stripe_size` (bytes, a multiple of 65536, `0` to inherit) set the Lustre layout of the output directories with `lfs setstripe`. `io.parallel_write="collective"` (default `none`) makes every MPI rank write its block of each history and gridded file with MPI-IO (text) or parallel NetCDF-4 (NetCDF), with string-valued `io.mpiio_hints`; it requires `USE_MPI=ON` and a NetCDF-C with parallel HDF5, and is rejected with `io.async=true`, `io.staging_dir`, or GeoJSON histories. These keys change neither physics, cadence, nor file contents. Equations of the overlap, memory bounds, NetCDF thread-safety serialization, validation, and limitations are in [output publication](io.md).
+
+The complete resolved JSON configuration, including defaults, is embedded in NetCDF outputs. Reproducible experiments should nevertheless archive the original configuration, forcing and restart checksums, build metadata, parallel layout, tolerances, and output checksums.
+
+The private Unix application dependency stack (other than macOS) includes OpenSSL 3.5.8 for HTTPS transport. `WACOMM_BOOTSTRAP_DEPENDENCIES` controls dependency selection at CMake configuration time; no simulation JSON key selects TLS. See the [build guide](build.md#serial-build-with-private-openssl) for prerequisites, serial commands, and provenance checks.
+
+The six-hour [Sarno example](../examples/wacomm-sarno-lite/docs/README.md) sets `simulation.dry=false`, `simulation.end="20210701Z15"`, `io.ocean_model="ROMS"`, `io.save_input=true`, and `io.save_history="nc"`. `history_root` stores physical-time particle snapshots separately from `nc_output_root` gridded counts. The missing 12:00 forcing record produces a two-hour interpolation interval, but the physical-time source rate still schedules the releases belonging to that hour. Example runtime roots are `data/<example_name>/`. Saved native filenames use hour-only stamps.
+
+The MPI Sarno workflow uses the identical scientific configuration and a separate `data/wacomm-sarno-lite/mpi2/` run root; process count is selected by the Slurm wrapper, not a tracking or adapter option.
+
+The MPI/OpenMP scaling sweep derives a native-forcing configuration from the Sarno example, with `ocean_model="WaComM"`, `base_path="processed-6h/"`, the six `ocm3_d03_20210701ZHH.nc` inputs, and `save_input=false`. It uses the same `dry=false` six-hour scientific settings at every process count. Only Slurm and OpenMP execution settings vary; runtime roots are `data/wacomm-sarno-lite/scaling/pN/`. Particle and gridded writes remain enabled; normalized forcing is read-only and is not rewritten.
+
+Saved native windows can contain an adjacent boundary already used for interpolation. Equal-time endpoint records are reused only when all five stored dynamic fields agree exactly; conflicting overlaps fail. `save_input=false` prevents rewriting the shared forcing in the scaling workflow. See [native boundary replay](adapters.md#reusing-saved-native-boundary-records).
+
+The native adapter accepts both `WACOMM` and the historical documented spelling `WaComM`; both select the same implementation and field conventions.
+
+The OpenMP scaling sweep changes only Slurm CPUs per task and OpenMP thread settings, keeping one MPI process and the identical native-forcing scientific configuration from the MPI sweep. Its roots are `data/wacomm-sarno-lite/openmp-scaling/tN/`. No adapter, seed, tracking, restart, source, or output option is changed.
+
+The [shared performance-evaluation protocol](performance-evaluation.md) defines the required CPU/GPU sweeps, validation evidence, plots, and per-run Codex notes for every runnable example. Historical Sarno figures use their separately documented protocol.
+
+## ROMS forcing metadata
+
+No new tracking or backend option enables rotation. For `io.ocean_model="ROMS"`,
+traditional grid-relative U/V require rho-point `angle` in radians; explicitly
+Earth-relative U/V instead require the paired eastward/northward `standard_name`
+attributes. Both require `units="meter second-1"`. Missing or contradictory
+basis declarations fail; see the [complete adapter contract](adapters.md#roms-horizontal-vector-basis).
+Native `io.save_input=true` output now records the component standard names.
+Existing unrotated native files are not repaired by changing the model selector;
+regenerate them from verified ROMS input and retain their old provenance.
+
+
+The webinar [explicit ROMS metadata repair](../examples/webinar-roms-usecase-download/docs/rectilinear-angle-repair.md) validates the full
+rectilinear C-grid before correcting angle in derived inputs under a declared
+grid-axis interpretation. It preserves original forcing and does not alter
+solver equations or certify upstream ocean-model accuracy.
+
+## References
+
+- Dagestad, K.-F., Röhrs, J., Breivik, Ø., and Ådlandsvik, B. (2018). OpenDrift v1.0: a generic framework for trajectory modelling. *Geoscientific Model Development*, 11, 1405–1420. [doi:10.5194/gmd-11-1405-2018](https://doi.org/10.5194/gmd-11-1405-2018).
+- Breivik, Ø., Allen, A. A., Maisondieu, C., and Roth, J.-C. (2011). Wind-induced drift of objects at sea: the leeway field method. *Applied Ocean Research*, 33, 100–109. [doi:10.1016/j.apor.2011.01.005](https://doi.org/10.1016/j.apor.2011.01.005).
+- Breivik, Ø., and Allen, A. A. (2008). An operational search and rescue model for the Norwegian Sea and the North Sea. *Journal of Marine Systems*, 69, 99–113. [doi:10.1016/j.jmarsys.2007.02.010](https://doi.org/10.1016/j.jmarsys.2007.02.010).
+- Coppini, G., Jansen, E., Turrisi, G., Creti, S., Shchekinova, E. Y., Pinardi, N., Lecci, R., Carluccio, I., Kumkar, Y. V., D'Anca, A., Mannarini, G., Martinelli, S., Marra, P., Capodiferro, T., and Gismondi, T. (2016). A new search-and-rescue service in the Mediterranean Sea: a demonstration of the operational capability and an evaluation of its performance using real case scenarios. *Natural Hazards and Earth System Sciences*, 16, 2713–2727. [doi:10.5194/nhess-16-2713-2016](https://doi.org/10.5194/nhess-16-2713-2016).
+- Thygesen, U. H. (2011). How to reverse time in stochastic particle tracking models. *Journal of Marine Systems*, 88, 159–168. [doi:10.1016/j.jmarsys.2011.03.009](https://doi.org/10.1016/j.jmarsys.2011.03.009).
+- Hassell, D., Gregory, J., Blower, J., Lawrence, B. N., and Taylor, K. E. (2017). A data model of the Climate and Forecast metadata conventions (CF-1.6) with a software implementation (cf-python v2.1). *Geoscientific Model Development*, 10, 4619–4646. [doi:10.5194/gmd-10-4619-2017](https://doi.org/10.5194/gmd-10-4619-2017).
+- Jones, P. W. (1999). First- and second-order conservative remapping schemes for grids in spherical coordinates. *Monthly Weather Review*, 127, 2204–2210. [doi:10.1175/1520-0493(1999)127%3C2204:FASOCR%3E2.0.CO;2](https://doi.org/10.1175/1520-0493%281999%29127%3C2204%3AFASOCR%3E2.0.CO%3B2).
+- Pillai, T. S., Chidambaram, V., Alagappan, R., Al-Kiswany, S., Arpaci-Dusseau, A. C., and Arpaci-Dusseau, R. H. (2014). All file systems are not created equal: on the complexity of crafting crash-consistent applications. *11th USENIX Symposium on Operating Systems Design and Implementation (OSDI 14)*, 433–448.
+- Thakur, R., Gropp, W., and Lusk, E. (1999). Data sieving and collective I/O in ROMIO. *Proceedings of Frontiers '99, the Seventh Symposium on the Frontiers of Massively Parallel Computation*, 182–189. [doi:10.1109/FMPC.1999.750599](https://doi.org/10.1109/FMPC.1999.750599).
+- Barth, T. J., and Jespersen, D. C. (1989). The design and application of upwind schemes on unstructured meshes. *27th Aerospace Sciences Meeting*. [doi:10.2514/6.1989-366](https://doi.org/10.2514/6.1989-366).
+- Steele, G. L., Lea, D., and Flood, C. H. (2014). Fast splittable pseudorandom number generators. *ACM SIGPLAN Notices*, 49(10), 453–472 (OOPSLA 2014). [doi:10.1145/2714064.2660195](https://doi.org/10.1145/2714064.2660195).
+- Salmon, J. K., Moraes, M. A., Dror, R. O., and Shaw, D. E. (2011). Parallel random numbers: as easy as 1, 2, 3. *Proceedings of the 2011 International Conference for High Performance Computing, Networking, Storage and Analysis (SC11)*, article 16, 1–12. [doi:10.1145/2063384.2063405](https://doi.org/10.1145/2063384.2063405).
+- Runge, C. (1895). Ueber die numerische Auflösung von Differentialgleichungen. *Mathematische Annalen*, 46(2), 167–178. [doi:10.1007/BF01446807](https://doi.org/10.1007/BF01446807).
+- Nordam, T., and Duran, R. (2020). Numerical integrators for Lagrangian oceanography. *Geoscientific Model Development*, 13(12), 5935–5957. [doi:10.5194/gmd-13-5935-2020](https://doi.org/10.5194/gmd-13-5935-2020).
+- Hormann, K., and Agathos, A. (2001). The point in polygon problem for arbitrary polygons. *Computational Geometry*, 20(3), 131–144. [doi:10.1016/S0925-7721(01)00012-8](https://doi.org/10.1016/S0925-7721(01)00012-8).
+
+Interoperability (not a scientific source): Butler, H., Daly, M., Doyle, A., Gillies, S., Hagen, S., and Schaub, T. (2016). *The GeoJSON Format*. RFC 7946, IETF. [doi:10.17487/RFC7946](https://doi.org/10.17487/RFC7946).

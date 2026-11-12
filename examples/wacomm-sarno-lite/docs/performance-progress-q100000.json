@@ -1,0 +1,736 @@
+{
+  "schema": "wacomm-sarno-partial-diagnostic-v1",
+  "suite": "data/wacomm-sarno-lite/sarno-protocol-q100000-20260914",
+  "problem_size_particles_per_hour": 100000,
+  "revision": "a92646173324af59866a30983ab35d638fc5fd63",
+  "hardware_id": "Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz|2|16|Tesla V100-SXM2-32GB",
+  "status": "incomplete CPU matrix; no GPU selection or final recommendation",
+  "completed_cpu_tuples": 15,
+  "best_completed_timing_tuple": [
+    2,
+    16,
+    0
+  ],
+  "candidate": [
+    2,
+    16,
+    0
+  ],
+  "input_hashes": {
+    "binary_sha256": "16d9fae6a7e2dd14f493bb34b3b2df5de996084d43a9f72f0491acf81c429b0c",
+    "configuration_sha256": "17df9ec6c8e360d2b6bdc3df00a6da545a57bfd4e2440f9208e2aba58b5c722d",
+    "source_sha256": "645cdb9ad2bf98c41f31caeb4f32e1c54d6425fa61b1de025d081785916a13e8"
+  },
+  "records": [
+    {
+      "mpi_processes": 16,
+      "openmp_threads": 1,
+      "solver_seconds": [
+        10.283606686,
+        10.154121785,
+        10.296813315
+      ],
+      "median_seconds": 10.283606686,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 16,
+      "openmp_threads": 2,
+      "solver_seconds": [
+        5.246952838,
+        5.1934547470000005,
+        5.14109866
+      ],
+      "median_seconds": 5.1934547470000005,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 16,
+      "solver_seconds": [
+        9.57567122,
+        9.403117094,
+        9.364056038
+      ],
+      "median_seconds": 9.403117094,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 1,
+      "solver_seconds": [
+        101.139158834,
+        101.476608548,
+        100.540886495
+      ],
+      "median_seconds": 101.139158834,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 2,
+      "solver_seconds": [
+        53.244632592,
+        53.032546572,
+        53.06398045
+      ],
+      "median_seconds": 53.06398045,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 32,
+      "solver_seconds": [
+        4.972604315,
+        4.940445727,
+        4.955406677
+      ],
+      "median_seconds": 4.955406677,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 4,
+      "solver_seconds": [
+        28.150681208,
+        28.101485061,
+        28.149968617
+      ],
+      "median_seconds": 28.149968617,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 1,
+      "openmp_threads": 8,
+      "solver_seconds": [
+        15.965091892,
+        15.607083549999999,
+        15.567471843
+      ],
+      "median_seconds": 15.607083549999999,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 2,
+      "openmp_threads": 16,
+      "solver_seconds": [
+        4.833235215,
+        4.832199258,
+        4.838787087
+      ],
+      "median_seconds": 4.833235215,
+      "scientific_equivalence": "exact particle and gridded comparison passed for all three repetitions"
+    },
+    {
+      "mpi_processes": 2,
+      "openmp_threads": 1,
+      "solver_seconds": [
+        54.013172754,
+        53.57812821,
+        53.426643802
+      ],
+      "median_seconds": 53.57812821,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 32,
+      "openmp_threads": 1,
+      "solver_seconds": [
+        5.584293166,
+        5.712046085,
+        5.628809337
+      ],
+      "median_seconds": 5.628809337,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 4,
+      "openmp_threads": 1,
+      "solver_seconds": [
+        29.101991602,
+        28.756417194,
+        29.466485927
+      ],
+      "median_seconds": 29.101991602,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 4,
+      "openmp_threads": 8,
+      "solver_seconds": [
+        4.841900763,
+        4.852119896,
+        4.856031363
+      ],
+      "median_seconds": 4.852119896,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 8,
+      "openmp_threads": 1,
+      "solver_seconds": [
+        16.440608582,
+        16.327760042,
+        16.369760479
+      ],
+      "median_seconds": 16.369760479,
+      "scientific_equivalence": "not checked by this diagnostic"
+    },
+    {
+      "mpi_processes": 8,
+      "openmp_threads": 4,
+      "solver_seconds": [
+        4.974366036,
+        4.9581935559999994,
+        4.944403226
+      ],
+      "median_seconds": 4.9581935559999994,
+      "scientific_equivalence": "not checked by this diagnostic"
+    }
+  ],
+  "candidate_comparisons": [
+    {
+      "repetition": 1,
+      "particle_comparison": {
+        "schema": "wacomm-particle-equivalence-v1",
+        "equal": true,
+        "comparison": "exact numeric equality after integer-ID ordering",
+        "absolute_tolerance": 0,
+        "relative_tolerance": 0,
+        "selection": "all stored particles, including inactive; identical masks required",
+        "metadata": "variable units, sign, calendar, type and dimensions compared; global build/configuration attributes excluded",
+        "snapshots": [
+          {
+            "particle_time": 1675936800.0,
+            "particles": 99325,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "f47fd437c0f1768ea390b4c4e7b9820e737700c0bd7efed90398f7dee1565a79"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "f47fd437c0f1768ea390b4c4e7b9820e737700c0bd7efed90398f7dee1565a79"
+            }
+          },
+          {
+            "particle_time": 1675940400.0,
+            "particles": 189692,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "ca70baab1313aa8cdc07ab34b1e075146e5981d911dd97961827f6c699935c55"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "ca70baab1313aa8cdc07ab34b1e075146e5981d911dd97961827f6c699935c55"
+            }
+          },
+          {
+            "particle_time": 1675947600.0,
+            "particles": 246235,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "62cf296926078614037f581b4878bb32306b813c409b2993c96490d7e03c4847"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "62cf296926078614037f581b4878bb32306b813c409b2993c96490d7e03c4847"
+            }
+          },
+          {
+            "particle_time": 1675951200.0,
+            "particles": 324241,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "bd21a731992d43f3607bca6c7728820b827a93775b959377239299bce3e3ab94"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "bd21a731992d43f3607bca6c7728820b827a93775b959377239299bce3e3ab94"
+            }
+          },
+          {
+            "particle_time": 1675954800.0,
+            "particles": 401782,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "2dc96541a8713de770cdda7859164f71fbce8e90b9a2eac8aa9a6372f93a3224"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "2dc96541a8713de770cdda7859164f71fbce8e90b9a2eac8aa9a6372f93a3224"
+            }
+          }
+        ]
+      },
+      "gridded_comparison": [
+        {
+          "name": "wacomm_his_20210701Z09.nc",
+          "reference_sha256": "c235948a0d74c15f8fb76fecb62085aba4bec82318b65c4303a5ac14d97b49e0",
+          "candidate_sha256": "c235948a0d74c15f8fb76fecb62085aba4bec82318b65c4303a5ac14d97b49e0",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z10.nc",
+          "reference_sha256": "df0bfa8ee08603bdc456dd81f94a03dc531a3c6e615191642fbaf40fd8207130",
+          "candidate_sha256": "df0bfa8ee08603bdc456dd81f94a03dc531a3c6e615191642fbaf40fd8207130",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z11.nc",
+          "reference_sha256": "9a3096a4d333d79ba3917450abd2f2bf2cdbc23798935d3a12882fcfd53dc06f",
+          "candidate_sha256": "9a3096a4d333d79ba3917450abd2f2bf2cdbc23798935d3a12882fcfd53dc06f",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z13.nc",
+          "reference_sha256": "006bb49a48d2a17e4fec6b23084650f6d7ad59bb5221a2d774acbdace01430ee",
+          "candidate_sha256": "006bb49a48d2a17e4fec6b23084650f6d7ad59bb5221a2d774acbdace01430ee",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z14.nc",
+          "reference_sha256": "923e0d645bc3aa2f088656e0985530e1fbee51358dcc41d8d5f888ab7dae094d",
+          "candidate_sha256": "923e0d645bc3aa2f088656e0985530e1fbee51358dcc41d8d5f888ab7dae094d",
+          "variables_equal": true
+        }
+      ]
+    },
+    {
+      "repetition": 2,
+      "particle_comparison": {
+        "schema": "wacomm-particle-equivalence-v1",
+        "equal": true,
+        "comparison": "exact numeric equality after integer-ID ordering",
+        "absolute_tolerance": 0,
+        "relative_tolerance": 0,
+        "selection": "all stored particles, including inactive; identical masks required",
+        "metadata": "variable units, sign, calendar, type and dimensions compared; global build/configuration attributes excluded",
+        "snapshots": [
+          {
+            "particle_time": 1675936800.0,
+            "particles": 99325,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "f47fd437c0f1768ea390b4c4e7b9820e737700c0bd7efed90398f7dee1565a79"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "f47fd437c0f1768ea390b4c4e7b9820e737700c0bd7efed90398f7dee1565a79"
+            }
+          },
+          {
+            "particle_time": 1675940400.0,
+            "particles": 189692,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "ca70baab1313aa8cdc07ab34b1e075146e5981d911dd97961827f6c699935c55"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "ca70baab1313aa8cdc07ab34b1e075146e5981d911dd97961827f6c699935c55"
+            }
+          },
+          {
+            "particle_time": 1675947600.0,
+            "particles": 246235,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "62cf296926078614037f581b4878bb32306b813c409b2993c96490d7e03c4847"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "62cf296926078614037f581b4878bb32306b813c409b2993c96490d7e03c4847"
+            }
+          },
+          {
+            "particle_time": 1675951200.0,
+            "particles": 324241,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "bd21a731992d43f3607bca6c7728820b827a93775b959377239299bce3e3ab94"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "bd21a731992d43f3607bca6c7728820b827a93775b959377239299bce3e3ab94"
+            }
+          },
+          {
+            "particle_time": 1675954800.0,
+            "particles": 401782,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "2dc96541a8713de770cdda7859164f71fbce8e90b9a2eac8aa9a6372f93a3224"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "2dc96541a8713de770cdda7859164f71fbce8e90b9a2eac8aa9a6372f93a3224"
+            }
+          }
+        ]
+      },
+      "gridded_comparison": [
+        {
+          "name": "wacomm_his_20210701Z09.nc",
+          "reference_sha256": "c235948a0d74c15f8fb76fecb62085aba4bec82318b65c4303a5ac14d97b49e0",
+          "candidate_sha256": "c235948a0d74c15f8fb76fecb62085aba4bec82318b65c4303a5ac14d97b49e0",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z10.nc",
+          "reference_sha256": "df0bfa8ee08603bdc456dd81f94a03dc531a3c6e615191642fbaf40fd8207130",
+          "candidate_sha256": "df0bfa8ee08603bdc456dd81f94a03dc531a3c6e615191642fbaf40fd8207130",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z11.nc",
+          "reference_sha256": "9a3096a4d333d79ba3917450abd2f2bf2cdbc23798935d3a12882fcfd53dc06f",
+          "candidate_sha256": "9a3096a4d333d79ba3917450abd2f2bf2cdbc23798935d3a12882fcfd53dc06f",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z13.nc",
+          "reference_sha256": "006bb49a48d2a17e4fec6b23084650f6d7ad59bb5221a2d774acbdace01430ee",
+          "candidate_sha256": "006bb49a48d2a17e4fec6b23084650f6d7ad59bb5221a2d774acbdace01430ee",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z14.nc",
+          "reference_sha256": "923e0d645bc3aa2f088656e0985530e1fbee51358dcc41d8d5f888ab7dae094d",
+          "candidate_sha256": "923e0d645bc3aa2f088656e0985530e1fbee51358dcc41d8d5f888ab7dae094d",
+          "variables_equal": true
+        }
+      ]
+    },
+    {
+      "repetition": 3,
+      "particle_comparison": {
+        "schema": "wacomm-particle-equivalence-v1",
+        "equal": true,
+        "comparison": "exact numeric equality after integer-ID ordering",
+        "absolute_tolerance": 0,
+        "relative_tolerance": 0,
+        "selection": "all stored particles, including inactive; identical masks required",
+        "metadata": "variable units, sign, calendar, type and dimensions compared; global build/configuration attributes excluded",
+        "snapshots": [
+          {
+            "particle_time": 1675936800.0,
+            "particles": 99325,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "f47fd437c0f1768ea390b4c4e7b9820e737700c0bd7efed90398f7dee1565a79"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z10.nc",
+              "sha256": "f47fd437c0f1768ea390b4c4e7b9820e737700c0bd7efed90398f7dee1565a79"
+            }
+          },
+          {
+            "particle_time": 1675940400.0,
+            "particles": 189692,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "ca70baab1313aa8cdc07ab34b1e075146e5981d911dd97961827f6c699935c55"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z11.nc",
+              "sha256": "ca70baab1313aa8cdc07ab34b1e075146e5981d911dd97961827f6c699935c55"
+            }
+          },
+          {
+            "particle_time": 1675947600.0,
+            "particles": 246235,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "62cf296926078614037f581b4878bb32306b813c409b2993c96490d7e03c4847"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z13.nc",
+              "sha256": "62cf296926078614037f581b4878bb32306b813c409b2993c96490d7e03c4847"
+            }
+          },
+          {
+            "particle_time": 1675951200.0,
+            "particles": 324241,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "bd21a731992d43f3607bca6c7728820b827a93775b959377239299bce3e3ab94"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z14.nc",
+              "sha256": "bd21a731992d43f3607bca6c7728820b827a93775b959377239299bce3e3ab94"
+            }
+          },
+          {
+            "particle_time": 1675954800.0,
+            "particles": 401782,
+            "variables": [
+              "age",
+              "depth",
+              "drift_side",
+              "health",
+              "i",
+              "id",
+              "j",
+              "k",
+              "lat",
+              "lon",
+              "object_type",
+              "particle_time",
+              "time"
+            ],
+            "reference": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "2dc96541a8713de770cdda7859164f71fbce8e90b9a2eac8aa9a6372f93a3224"
+            },
+            "candidate": {
+              "name": "WACOMM_rst_20210701Z15.nc",
+              "sha256": "2dc96541a8713de770cdda7859164f71fbce8e90b9a2eac8aa9a6372f93a3224"
+            }
+          }
+        ]
+      },
+      "gridded_comparison": [
+        {
+          "name": "wacomm_his_20210701Z09.nc",
+          "reference_sha256": "c235948a0d74c15f8fb76fecb62085aba4bec82318b65c4303a5ac14d97b49e0",
+          "candidate_sha256": "c235948a0d74c15f8fb76fecb62085aba4bec82318b65c4303a5ac14d97b49e0",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z10.nc",
+          "reference_sha256": "df0bfa8ee08603bdc456dd81f94a03dc531a3c6e615191642fbaf40fd8207130",
+          "candidate_sha256": "df0bfa8ee08603bdc456dd81f94a03dc531a3c6e615191642fbaf40fd8207130",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z11.nc",
+          "reference_sha256": "9a3096a4d333d79ba3917450abd2f2bf2cdbc23798935d3a12882fcfd53dc06f",
+          "candidate_sha256": "9a3096a4d333d79ba3917450abd2f2bf2cdbc23798935d3a12882fcfd53dc06f",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z13.nc",
+          "reference_sha256": "006bb49a48d2a17e4fec6b23084650f6d7ad59bb5221a2d774acbdace01430ee",
+          "candidate_sha256": "006bb49a48d2a17e4fec6b23084650f6d7ad59bb5221a2d774acbdace01430ee",
+          "variables_equal": true
+        },
+        {
+          "name": "wacomm_his_20210701Z14.nc",
+          "reference_sha256": "923e0d645bc3aa2f088656e0985530e1fbee51358dcc41d8d5f888ab7dae094d",
+          "candidate_sha256": "923e0d645bc3aa2f088656e0985530e1fbee51358dcc41d8d5f888ab7dae094d",
+          "variables_equal": true
+        }
+      ]
+    }
+  ]
+}

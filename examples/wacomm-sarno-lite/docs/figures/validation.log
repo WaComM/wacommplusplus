@@ -1,0 +1,73 @@
+Serial application
+Test project /home/montella/devel/wacommplusplus/build
+      Start  1: openssl_dependency
+ 1/20 Test  #1: openssl_dependency ....................   Passed    0.01 sec
+      Start  2: environmental_data_access
+ 2/20 Test  #2: environmental_data_access .............   Passed    0.00 sec
+      Start  3: structured_grid_adapters
+ 3/20 Test  #3: structured_grid_adapters ..............   Passed    0.07 sec
+      Start  4: roms_adapter
+ 4/20 Test  #4: roms_adapter ..........................   Passed    0.02 sec
+      Start  5: native_adapter
+ 5/20 Test  #5: native_adapter ........................   Passed    0.03 sec
+      Start  6: configuration_round_trip
+ 6/20 Test  #6: configuration_round_trip ..............   Passed    0.02 sec
+      Start  7: restart_format
+ 7/20 Test  #7: restart_format ........................   Passed    0.03 sec
+      Start  8: particle_physical_interval
+ 8/20 Test  #8: particle_physical_interval ............   Passed    0.00 sec
+      Start  9: concentration_preservation
+ 9/20 Test  #9: concentration_preservation ............   Passed    0.02 sec
+      Start 10: drift_model
+10/20 Test #10: drift_model ...........................   Passed    0.00 sec
+      Start 11: environment_adapters
+11/20 Test #11: environment_adapters ..................   Passed    0.07 sec
+      Start 12: numerical_helpers
+12/20 Test #12: numerical_helpers .....................   Passed    0.00 sec
+      Start 13: array_storage
+13/20 Test #13: array_storage .........................   Passed    0.00 sec
+      Start 14: environmental_regridding
+14/20 Test #14: environmental_regridding ..............   Passed    0.00 sec
+      Start 15: reproducibility_manifest
+15/20 Test #15: reproducibility_manifest ..............   Passed    0.07 sec
+      Start 16: example_documentation
+16/20 Test #16: example_documentation .................   Passed    0.04 sec
+      Start 17: documentation_visuals
+17/20 Test #17: documentation_visuals .................   Passed    0.13 sec
+      Start 18: native_hardware_validation_contract
+18/20 Test #18: native_hardware_validation_contract ...   Passed    0.02 sec
+      Start 19: trajectory_diagnostics
+19/20 Test #19: trajectory_diagnostics ................   Passed    0.95 sec
+      Start 20: publication_figures
+20/20 Test #20: publication_figures ...................   Passed    7.22 sec
+
+100% tests passed out of 20
+
+Total Test time (real) =   8.74 sec
+
+Portable core
+Test project /home/montella/devel/wacommplusplus/build-core
+      Start  1: drift_model
+ 1/10 Test  #1: drift_model ...........................   Passed    0.00 sec
+      Start  2: numerical_helpers
+ 2/10 Test  #2: numerical_helpers .....................   Passed    0.00 sec
+      Start  3: array_storage
+ 3/10 Test  #3: array_storage .........................   Passed    0.00 sec
+      Start  4: environmental_regridding
+ 4/10 Test  #4: environmental_regridding ..............   Passed    0.00 sec
+      Start  5: reproducibility_manifest
+ 5/10 Test  #5: reproducibility_manifest ..............   Passed    0.07 sec
+      Start  6: example_documentation
+ 6/10 Test  #6: example_documentation .................   Passed    0.04 sec
+      Start  7: documentation_visuals
+ 7/10 Test  #7: documentation_visuals .................   Passed    0.05 sec
+      Start  8: native_hardware_validation_contract
+ 8/10 Test  #8: native_hardware_validation_contract ...   Passed    0.03 sec
+      Start  9: trajectory_diagnostics
+ 9/10 Test  #9: trajectory_diagnostics ................   Passed    0.54 sec
+      Start 10: publication_figures
+10/10 Test #10: publication_figures ...................   Passed    5.79 sec
+
+100% tests passed out of 10
+
+Total Test time (real) =   6.55 sec

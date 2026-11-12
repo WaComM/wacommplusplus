@@ -7,6 +7,8 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <iomanip>
+#include <cmath>
+#include <algorithm>
 
 #include "JulianDate.hpp"
 
@@ -179,6 +181,16 @@ void Sources::saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanMo
         JulianDate::fromModJulian(source.Start(),  calStart);
         JulianDate::fromModJulian(source.End(),  calEnd);
 
+        json emission = {{ "mode", emissionModeToString(source.EmissionSchedule())}};
+        if (source.EmissionSchedule()==EmissionMode::UNIFORM_RATE) {
+            emission["rate"]=source.EmissionValue();
+            emission["rate_unit"]="particles/hour";
+        } else if (source.EmissionSchedule()==EmissionMode::SINGLE_PULSE) {
+            emission["particles"]=source.EmissionValue();
+        } else {
+            emission["particles_per_interval"]=source.EmissionValue();
+        }
+
         json properties = {
                 { "id", source.Id()},
                 { "k", source.K()},
@@ -186,7 +198,7 @@ void Sources::saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanMo
                 { "i", source.I()},
                 { "start", calStart.asNCEPdate()},
                 { "end", calEnd.asNCEPdate()},
-                { "particlesPerHour", source.ParticlesPerHour()},
+                { "emission", emission},
                 { "mode", source.Mode()},
                 { "depth", dep}
         };
@@ -218,6 +230,23 @@ void Sources::saveAsJson(string &fileName, shared_ptr<OceanModelAdapter> oceanMo
 Sources::~Sources() {
 }
 
+void Sources::emit(const std::shared_ptr<Config>& config, std::shared_ptr<Particles> particles,
+                   double intervalStart, double intervalEnd) {
+    struct Emission {
+        double time;
+        std::size_t source;
+    };
+    std::vector<Emission> emissions;
+    for (std::size_t source=0;source<size();source++)
+        for (double time: at(source).emissionTimes(config,intervalStart,intervalEnd))
+            emissions.push_back({time,source});
+    std::stable_sort(emissions.begin(),emissions.end(),[](const Emission& left,const Emission& right) {
+        return left.time<right.time;
+    });
+    for (const Emission& emission: emissions)
+        at(emission.source).emit(config,particles,emission.time);
+}
+
 void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> oceanModelAdapter) {
 
     LOG4CPLUS_INFO(logger, "Reading from json:" << fileName);
@@ -235,7 +264,10 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
                 double k = 0, j = 1e37, i = 1e37;
                 double startOceanTime = -1, endOceanTime = -1;
                 double dep = 0;
-                int mode = 1, particlesPerHour = 100;
+                bool hasDepth = false, hasK = false;
+                int mode = 1;
+                double emissionValue = 100;
+                EmissionMode emissionMode=EmissionMode::FORCING_INTERVAL_BATCH;
                 string id = "source_" + to_string(count);
                 if (feature.contains("properties")) {
                     auto properties = feature["properties"];
@@ -259,40 +291,108 @@ void Sources::loadFromJson(string &fileName, shared_ptr<OceanModelAdapter> ocean
                             endOceanTime = JulianDate::toModJulian(cal);
                         }
                     }
-                    if (properties.contains("k")) { k = atof(to_string(properties["k"]).c_str()); }
+                    if (properties.contains("k")) { k = atof(to_string(properties["k"]).c_str()); hasK = true; }
                     if (properties.contains("j")) { j = atof(to_string(properties["j"]).c_str()); }
                     if (properties.contains("i")) { i = atof(to_string(properties["i"]).c_str()); }
+                    if (properties.contains("mode")) { mode = properties["mode"].get<int>(); }
 
-                    if (properties.contains("dep")) { dep = atof(to_string(properties["dep"]).c_str()); }
-                    if (properties.contains("particlesPerHour")) {
-                        particlesPerHour = stoi(to_string(properties["particlesPerHour"]));
+                    // The depth in meters: "depth" as written by saveAsJson, "dep" as deprecated alias
+                    for (const string key: {"depth", "dep"}) {
+                        if (!properties.contains(key)) continue;
+                        if (!properties[key].is_number())
+                            throw std::runtime_error("source " + id + ": " + key + " must be a number");
+                        double value = properties[key].get<double>();
+                        if (hasDepth && abs(value) != abs(dep))
+                            throw std::runtime_error("source " + id + ": depth and dep disagree");
+                        dep = value; hasDepth = true;
                     }
+                    if (properties.contains("particlesPerHour")) {
+                        emissionValue = properties["particlesPerHour"].get<double>();
+                        emissionMode=EmissionMode::FORCING_INTERVAL_BATCH;
+                    }
+                    if (properties.contains("emission")) {
+                        if (properties.contains("particlesPerHour"))
+                            throw std::runtime_error("source cannot contain both emission and particlesPerHour");
+                        auto emission=properties["emission"];
+                        if (!emission.is_object() || !emission.contains("mode"))
+                            throw std::runtime_error("source emission must contain mode");
+                        emissionMode=emissionModeFromString(emission["mode"].get<string>());
+                        if (emissionMode==EmissionMode::UNIFORM_RATE) {
+                            if (!emission.contains("rate") || emission.value("rate_unit","")!="particles/hour")
+                                throw std::runtime_error("uniform_rate requires rate and rate_unit=particles/hour");
+                            emissionValue=emission["rate"].get<double>();
+                        } else if (emissionMode==EmissionMode::FORCING_INTERVAL_BATCH) {
+                            if (!emission.contains("particles_per_interval"))
+                                throw std::runtime_error("forcing_interval_batch requires particles_per_interval");
+                            emissionValue=emission["particles_per_interval"].get<double>();
+                        } else {
+                            if (!emission.contains("particles"))
+                                throw std::runtime_error("single_pulse requires particles");
+                            emissionValue=emission["particles"].get<double>();
+                        }
+                    }
+                    if (!std::isfinite(emissionValue) || emissionValue<0)
+                        throw std::runtime_error("source emission value must be finite and nonnegative");
+                    if (emissionMode==EmissionMode::SINGLE_PULSE && startOceanTime<0)
+                        throw std::runtime_error("single_pulse requires an explicit source start");
                 }
 
                 // convert lat/lon and depth in k,j,i
-                if (j == 1e37 || i == 1e37) {
-                    double lat = 1e37, lon = 1e37;
-                    if (feature.contains("geometry")) {
-                        auto geometry = feature["geometry"];
-                        if (geometry.contains("type") && geometry["type"] == "Point") {
-                            if (geometry.contains("coordinates") && geometry["coordinates"].is_array()) {
-                                auto coordinates = geometry["coordinates"];
-                                if (coordinates.size() >= 2) {
-                                    lon = coordinates[0];
-                                    lat = coordinates[1];
-                                    if (coordinates.size() == 3 && dep == 0) {
-                                        dep = coordinates[2];
-                                    }
-                                    oceanModelAdapter->deplatlon2kji(dep, lat, lon, k, j, i);
+                bool hasJ = j != 1e37, hasI = i != 1e37;
+                if (hasJ != hasI)
+                    throw std::runtime_error("source " + id + ": j and i must be given together");
+                if (!hasJ) {
+                    // The position must be a GeoJSON Point [lon, lat] or [lon, lat, depth]
+                    if (hasK)
+                        throw std::runtime_error("source " + id + ": k requires j and i; use depth with a Point");
+                    if (!feature.contains("geometry") || !feature["geometry"].is_object() ||
+                        feature["geometry"].value("type", "") != "Point" ||
+                        !feature["geometry"].contains("coordinates") ||
+                        !feature["geometry"]["coordinates"].is_array())
+                        throw std::runtime_error("source " + id + ": a position needs j and i properties or a Point geometry");
+                    auto coordinates = feature["geometry"]["coordinates"];
+                    if (coordinates.size() < 2 || coordinates.size() > 3)
+                        throw std::runtime_error("source " + id + ": Point coordinates must be [lon, lat] or [lon, lat, depth]");
+                    for (auto& coordinate: coordinates)
+                        if (!coordinate.is_number())
+                            throw std::runtime_error("source " + id + ": Point coordinates must be numbers");
+                    double lon = coordinates[0].get<double>();
+                    double lat = coordinates[1].get<double>();
+                    if (coordinates.size() == 3) {
+                        double value = coordinates[2].get<double>();
+                        if (hasDepth && abs(value) != abs(dep))
+                            throw std::runtime_error("source " + id + ": depth property and third Point coordinate disagree");
+                        dep = value;
+                    }
+                    try {
+                        oceanModelAdapter->deplatlon2kji(dep, lat, lon, k, j, i);
+                    } catch (const std::exception& e) {
+                        throw std::runtime_error("Source " + id + ": " + e.what());
+                    }
+                } else {
+                    // Explicit j and i must address a valid interpolation cell
+                    double sourceDep, lat, lon;
+                    oceanModelAdapter->kji2deplatlon(hasK ? k : 0, j, i, sourceDep, lat, lon);
+                    if (sourceDep == 1e37)
+                        throw std::runtime_error("source " + id + ": k, j, i are outside the ocean model interpolation domain");
 
-                                    //cout << "k:" << k << " j:" << j << " i:" << i;
-                                }
-                            }
+                    // A depth sets k, or must agree with the explicit k
+                    if (hasDepth && hasK) {
+                        if (abs(abs(sourceDep) - abs(dep)) > 1e-6)
+                            throw std::runtime_error("source " + id + ": depth disagrees with k at j, i");
+                    } else if (hasDepth) {
+                        double kDepth, jDepth, iDepth;
+                        try {
+                            oceanModelAdapter->deplatlon2kji(dep, lat, lon, kDepth, jDepth, iDepth);
+                        } catch (const std::exception& e) {
+                            throw std::runtime_error("Source " + id + ": " + e.what());
                         }
+                        k = kDepth;
                     }
                 }
 
-                this->push_back(Source(id, k, j, i, startOceanTime, endOceanTime, particlesPerHour, mode));
+                this->push_back(Source(id, k, j, i, startOceanTime, endOceanTime,
+                                       emissionValue,emissionMode,mode));
                 count++;
             }
         }

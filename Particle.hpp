@@ -13,6 +13,7 @@
 #include <stdlib.h> /* getenv */
 #include <sstream>
 #include <string>
+#include <cstdint>
 
 
 
@@ -28,20 +29,22 @@
 using namespace std;
 
 struct particle_data {
-    unsigned long id;
+    std::uint64_t id;
     double k;
     double j;
     double i;
     double health;
     double age;
     double time;
+    std::uint16_t driftObjectType;
+    std::int8_t driftSide;
 };
 
 class Particle {
     public:
         Particle() = default;
-        Particle(unsigned long id, double k, double j, double i, double health, double age, double time);
-        Particle(unsigned long id, double k, double j, double i, double time);
+        Particle(std::uint64_t id, double k, double j, double i, double health, double age, double time);
+        Particle(std::uint64_t id, double k, double j, double i, double time);
         Particle(particle_data data);
 
         ~Particle();
@@ -51,7 +54,8 @@ class Particle {
         void move(config_data *configData, int ocean_time_idx, Array1<double> &oceanTime, Array2<double> &mask,
                   Array2<double> &lonRad, Array2<double> &latRad,  Array1<double> &sW, Array1<double> &depthIntervals,
                   Array2<double> &h, Array3<float> &zeta, Array4<float> &u, Array4<float> &v, Array4<float> &w,
-                  Array4<float> &akt);
+                  Array4<float> &akt, Array3<float> *windU10=nullptr, Array3<float> *windV10=nullptr,
+                  Array3<float> *stokesU=nullptr, Array3<float> *stokesV=nullptr);
 
         particle_data data();
         void data(particle_data data);
@@ -64,7 +68,10 @@ class Particle {
         double Age() const;
 
         double Time() const;
-        unsigned long Id() const;
+        std::uint64_t Id() const;
+        DriftObjectType DriftObject() const;
+        DriftSide Side() const;
+        void Drift(DriftObjectType objectType, DriftSide side);
 
         std::string to_string() const;
 

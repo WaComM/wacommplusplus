@@ -3,8 +3,14 @@
 //
 
 #include "Config.hpp"
+#include "EnvironmentalDataAccess.hpp"
 #include "JulianDate.hpp"
+#include "ParallelIOSupport.hpp"
 #include <nlohmann/json.hpp>
+#include <cmath>
+#include <cctype>
+#include <regex>
+#include <limits>
 
 // for convenience
 using json = nlohmann::json;
@@ -13,7 +19,7 @@ Config::Config() {
     setDefault();
 }
 
-Config::Config(string &fileName): configFile(fileName) {
+Config::Config(const string &fileName): configFile(fileName) {
     setDefault();
 
     log4cplus::BasicConfigurator basicConfig;
@@ -40,6 +46,10 @@ Config::~Config() {
 void Config::setDefault() {
     // Is the model dry mode?
     dry = false;
+
+    // Simulation start and end are unset (NaN) until configured
+    julianStart = std::numeric_limits<double>::quiet_NaN();
+    julianEnd = std::numeric_limits<double>::quiet_NaN();
 
     // Input time step in s
     _data.deltat=3600;
@@ -97,6 +107,31 @@ void Config::setDefault() {
     // Embedded history data into output (default false)
     embeddedHistory = false;
 
+    // Write outputs on the solver thread (default synchronous)
+    asyncIO = false;
+
+    // Queued or running asynchronous writes before the solver waits
+    asyncMaxPending = 2;
+
+    // Output file system (posix, lustre, gpfs)
+    filesystem = "posix";
+
+    // Flush outputs to stable storage before publication (default: true on parallel file systems)
+    fsync = false;
+
+    // Node-local staging directory (default none)
+    stagingDir = "";
+
+    // Lustre default layout of the output directories (0: inherit)
+    lustreStripeCount = 0;
+    lustreStripeSize = 0;
+
+    // Outputs are written by rank 0 (none) or by all MPI ranks (collective)
+    parallelWrite = "none";
+
+    // MPI-IO hints of collective writes (default none)
+    mpiioHints.clear();
+
     // Use sources (default true)
     useSources = true;
 
@@ -108,6 +143,48 @@ void Config::setDefault() {
 
     // Generate random sources (default true. use false for model testing versus other imlementations
     _data.randomSources = true;
+
+    // Random seed (default MT19937 seed)
+    _data.randomSeed = 5489;
+
+    // Tracking direction (default forward)
+    _data.trackingDirection = Config::TRACKING_FORWARD;
+
+    // Backward diffusion is disabled by default
+    _data.backwardDiffusion = false;
+
+    // Deterministic advection uses the explicit midpoint (second-order) step by default
+    _data.integrator = Config::INTEGRATOR_MIDPOINT;
+
+    // Physical restart checkpoint (not set by default)
+    _data.restartCheckpoint = std::numeric_limits<double>::quiet_NaN();
+
+    // Passive particles do not request atmospheric forcing.
+    _data.driftModel = 0;
+    _data.leewayCoefficientEnsemble = false;
+    _data.leewayResidualCorrelation = 0;
+    _data.leewayRandomSide = false;
+    _data.leewayRightSideProbability = 0.5;
+    _data.leewayJibeProbabilityHourly = 0;
+    _data.windErrorStdDev = 0;
+    _data.windErrorComponentCorrelation = 0;
+    _data.windErrorSpatialScale = 0;
+    _data.windErrorTemporalScale = 0;
+    _data.observationalCalibrationRegionCount = 0;
+    observationalCalibrationMetadata.clear();
+    _data.driftObjectType = static_cast<std::uint16_t>(DriftObjectType::PASSIVE);
+    _data.driftSide = static_cast<std::int8_t>(DriftSide::UNDEFINED);
+    _data.hasWind = false;
+    _data.windU10 = 0;
+    _data.windV10 = 0;
+    weatherModel="none";
+    weatherInputs.clear();
+    weatherRegridding="none";
+    weatherSourceCrs="";
+    waveModel="none";
+    waveInputs.clear();
+    waveRegridding="none";
+    waveSourceCrs="";
 
     // Save processed input files (default false)
     saveInput = false;
@@ -312,6 +389,35 @@ double Config::SedimentationVelocity() const {
     return _data.sv;
 }
 
+std::uint64_t Config::RandomSeed() const { return _data.randomSeed; }
+
+bool Config::Backward() const { return _data.trackingDirection == Config::TRACKING_BACKWARD; }
+
+bool Config::BackwardDiffusion() const { return _data.backwardDiffusion; }
+int Config::Integrator() const { return _data.integrator; }
+
+bool Config::Leeway() const { return _data.driftModel==1; }
+bool Config::LeewayCoefficientEnsemble() const { return _data.leewayCoefficientEnsemble; }
+double Config::LeewayResidualCorrelation() const { return _data.leewayResidualCorrelation; }
+bool Config::LeewayRandomSide() const { return _data.leewayRandomSide; }
+double Config::LeewayRightSideProbability() const { return _data.leewayRightSideProbability; }
+double Config::LeewayJibeProbabilityHourly() const { return _data.leewayJibeProbabilityHourly; }
+double Config::WindErrorStdDev() const { return _data.windErrorStdDev; }
+double Config::WindErrorComponentCorrelation() const { return _data.windErrorComponentCorrelation; }
+double Config::WindErrorSpatialScale() const { return _data.windErrorSpatialScale; }
+double Config::WindErrorTemporalScale() const { return _data.windErrorTemporalScale; }
+std::size_t Config::ObservationalCalibrationRegionCount() const {
+    return _data.observationalCalibrationRegionCount;
+}
+
+DriftObjectType Config::DriftObject() const { return static_cast<DriftObjectType>(_data.driftObjectType); }
+
+DriftSide Config::DefaultDriftSide() const { return static_cast<DriftSide>(_data.driftSide); }
+
+void Config::RestartCheckpoint(double value) { _data.restartCheckpoint=value; }
+
+double Config::RestartCheckpoint() const { return _data.restartCheckpoint; }
+
 bool Config::Dry() const {
     return dry;
 }
@@ -498,24 +604,38 @@ string Config::OceanModel() const {
     return oceanModel;
 }
 
+string Config::WeatherModel() const { return weatherModel; }
+vector<string>& Config::WeatherInputs() { return weatherInputs; }
+string Config::WeatherRegridding() const { return weatherRegridding; }
+string Config::WeatherSourceCrs() const { return weatherSourceCrs; }
+string Config::WaveModel() const { return waveModel; }
+vector<string>& Config::WaveInputs() { return waveInputs; }
+string Config::WaveRegridding() const { return waveRegridding; }
+string Config::WaveSourceCrs() const { return waveSourceCrs; }
+
 void Config::OceanModel(string value) {
     oceanModel = value;
 }
 
-void Config::saveAsJson(const string &fileName) {
-
-    Calendar calStart, calEnd;
-
-    JulianDate::fromModJulian(julianStart, calStart);
-    JulianDate::fromModJulian(julianEnd, calEnd);
+string Config::asJson() const {
 
     json simulation = {
             { "name", name },
             { "institution", institution },
-            { "url", url},
-            { "start", calStart.asNCEPdate()},
-            { "end", calEnd.asNCEPdate() }
+            { "url", url}
     };
+
+    // Unset simulation times are omitted rather than serialized from an undefined value
+    if (std::isfinite(julianStart)) {
+        Calendar calStart;
+        JulianDate::fromModJulian(julianStart, calStart);
+        simulation["start"]=calStart.asNCEPdate();
+    }
+    if (std::isfinite(julianEnd)) {
+        Calendar calEnd;
+        JulianDate::fromModJulian(julianEnd, calEnd);
+        simulation["end"]=calEnd.asNCEPdate();
+    }
 
     json io = {
             { "ocean_model", oceanModel},
@@ -524,12 +644,22 @@ void Config::saveAsJson(const string &fileName) {
             { "nc_output_root", ncOutputRoot },
             { "save_history", saveHistory },
             { "save_input", saveInput},
-            { "nc_input_root", ncInputRoot}
+            { "nc_input_root", ncInputRoot},
+            { "async", asyncIO },
+            { "async_max_pending", asyncMaxPending },
+            { "filesystem", filesystem },
+            { "fsync", fsync },
+            { "staging_dir", stagingDir },
+            { "lustre_stripe_count", lustreStripeCount },
+            { "lustre_stripe_size", lustreStripeSize },
+            { "parallel_write", parallelWrite },
+            { "mpiio_hints", mpiioHints }
     };
 
     json restart = {
             { "active", useRestart },
-            { "restart_file", restartFile }
+            { "restart_file", restartFile },
+            { "interval", restartInterval }
     };
 
     json sources = {
@@ -546,7 +676,63 @@ void Config::saveAsJson(const string &fileName) {
             { "dti", _data.dti },
             { "deltat", _data.deltat },
             { "crid", _data.crid },
+            { "sigma", _data.sigma },
+            { "shore_limit", _data.shoreLimit },
+            { "upper_closure", _data.upperClosure == Config::CLOSURE_MODE_CONSTRAINT ? "constraint" :
+                                 _data.upperClosure == Config::CLOSURE_MODE_KILL ? "kill" : "reflection" },
+            { "lower_closure", _data.lowerClosure == Config::CLOSURE_MODE_CONSTRAINT ? "constraint" :
+                                 _data.lowerClosure == Config::CLOSURE_MODE_KILL ? "kill" : "reflection" },
+            { "horizontal_closure", _data.horizontalClosure == Config::CLOSURE_MODE_CONSTRAINT ? "constraint" :
+                                      _data.horizontalClosure == Config::CLOSURE_MODE_KILL ? "kill" : "reflection" },
+            { "random_seed", _data.randomSeed },
+            { "integrator", _data.integrator == Config::INTEGRATOR_EULER ? "euler" : "midpoint" },
     };
+
+    json tracking = {
+            { "direction", Backward() ? "backward" : "forward" },
+            { "backward_diffusion", BackwardDiffusion() ? "symmetric_stochastic" : "none" }
+    };
+
+    json drift = {
+            { "model", Leeway() ? "leeway" : "passive" },
+            { "coefficient_ensemble", LeewayCoefficientEnsemble() },
+            { "residual_correlation", LeewayResidualCorrelation() },
+            { "jibe_probability_per_hour", LeewayJibeProbabilityHourly() },
+            { "object_type", DriftObjectCatalog::name(DriftObject()) },
+            { "side", LeewayRandomSide() ? "random" : (DefaultDriftSide()==DriftSide::LEFT ? "left" :
+                      DefaultDriftSide()==DriftSide::RIGHT ? "right" : "undefined") }
+    };
+    if (LeewayRandomSide()) drift["side_right_probability"]=LeewayRightSideProbability();
+
+    json environment = {
+            { "wind", {{"adapter",weatherModel=="WRF" ? "WRF" : (_data.hasWind ? "constant" : "none")},
+                        {"u10",_data.windU10},{"v10",_data.windV10},
+                        {"uncertainty_stddev",_data.windErrorStdDev},
+                        {"uncertainty_component_correlation",_data.windErrorComponentCorrelation},
+                        {"uncertainty_spatial_scale",_data.windErrorSpatialScale},
+                        {"uncertainty_temporal_scale",_data.windErrorTemporalScale},
+                        {"nc_inputs",weatherInputs},{"regrid",weatherRegridding},{"source_crs",weatherSourceCrs}} },
+            { "wave", {{"adapter",waveModel},{"nc_inputs",waveInputs},{"regrid",waveRegridding},{"source_crs",waveSourceCrs}} }
+    };
+
+    json calibrationRegions=json::array();
+    for (std::uint32_t index=0;index<_data.observationalCalibrationRegionCount;++index) {
+        const auto& region=_data.observationalCalibrationRegions[index];
+        const auto& metadata=observationalCalibrationMetadata[index];
+        calibrationRegions.push_back({
+            {"id",metadata.id}, {"crs","EPSG:4326"},
+            {"bounds",{{"west",region.west},{"south",region.south},{"east",region.east},{"north",region.north}}},
+            {"object_type",DriftObjectCatalog::name(DriftObject())},
+            {"forcing_adapter",weatherModel=="WRF" ? "WRF" : "constant"},
+            {"valid_from",metadata.validFrom},{"valid_until",metadata.validUntil},
+            {"estimator",metadata.estimator},{"sample_size",metadata.sampleSize},
+            {"dataset",metadata.dataset},{"dataset_checksum",metadata.datasetChecksum},{"doi",metadata.doi},
+            {"wind_error",{{"stddev",region.windErrorStdDev},
+                           {"component_correlation",region.windErrorComponentCorrelation},
+                           {"spatial_scale",region.windErrorSpatialScale},
+                           {"temporal_scale",region.windErrorTemporalScale}}}
+        });
+    }
 
     json config = {
             { "simulation", simulation},
@@ -554,11 +740,19 @@ void Config::saveAsJson(const string &fileName) {
             { "restart", restart},
             { "sources", sources},
             { "physics", physics},
+            { "tracking", tracking},
+            { "drift", drift},
+            { "environment", environment},
+            { "observational_calibration", {{"regions",calibrationRegions}}},
     };
 
+    return config.dump(4);
+}
+
+void Config::saveAsJson(const string &fileName) {
     // write prettified JSON to another file
     std::ofstream o(fileName);
-    o << std::setw(4) << config << std::endl;
+    o << asJson() << std::endl;
 }
 
 void Config::loadFromJson(const string &fileName) {
@@ -593,10 +787,41 @@ void Config::loadFromJson(const string &fileName) {
         if (io.contains("ocean_model")) { oceanModel = io["ocean_model"]; }
         if (io.contains("nc_output_root")) { ncOutputRoot = io["nc_output_root"]; }
         if (io.contains("timestep")) { timeStep = io["timestep"]; }
+        if (io.contains("async")) { asyncIO = io["async"]; }
+        if (io.contains("async_max_pending")) {
+            if (!io["async_max_pending"].is_number_integer())
+                throw std::runtime_error("io.async_max_pending must be an integer");
+            asyncMaxPending = io["async_max_pending"];
+        }
+        if (io.contains("filesystem")) { filesystem = io["filesystem"]; }
+        // Parallel file systems flush before publication unless explicitly disabled
+        fsync = filesystem!="posix";
+        if (io.contains("fsync")) { fsync = io["fsync"]; }
+        if (io.contains("staging_dir")) { stagingDir = io["staging_dir"]; }
+        if (io.contains("lustre_stripe_count")) {
+            if (!io["lustre_stripe_count"].is_number_integer())
+                throw std::runtime_error("io.lustre_stripe_count must be an integer");
+            lustreStripeCount = io["lustre_stripe_count"];
+        }
+        if (io.contains("parallel_write")) { parallelWrite = io["parallel_write"]; }
+        if (io.contains("mpiio_hints")) {
+            if (!io["mpiio_hints"].is_object())
+                throw std::runtime_error("io.mpiio_hints must be an object of string values");
+            for (auto& hint: io["mpiio_hints"].items()) {
+                if (hint.key().empty() || !hint.value().is_string())
+                    throw std::runtime_error("io.mpiio_hints must map non-empty names to string values");
+                mpiioHints[hint.key()] = hint.value();
+            }
+        }
+        if (io.contains("lustre_stripe_size")) {
+            if (!io["lustre_stripe_size"].is_number_integer())
+                throw std::runtime_error("io.lustre_stripe_size must be an integer number of bytes");
+            lustreStripeSize = io["lustre_stripe_size"];
+        }
         if (io.contains("nc_inputs") && io["nc_inputs"].is_array()) {
             for (auto ncInput:io["nc_inputs"]) {
                 string file=ncInput;
-                this->ncInputs.push_back(ncBasePath+"/"+file);
+                this->ncInputs.push_back(EnvironmentalDataAccess::resolve(ncBasePath,file));
             }
         }
     }
@@ -613,6 +838,12 @@ void Config::loadFromJson(const string &fileName) {
     }
     if (config.contains("physics")) {
         json physics=config["physics"];
+        auto closureMode=[this](const json &value) {
+            string name=value;
+            auto item=dictionary.find(name);
+            if (item==dictionary.end()) throw std::runtime_error("Unknown closure mode: " + name);
+            return item->second;
+        };
         if (physics.contains("tau0")) { _data.tau0 = physics["tau0"]; }
         if (physics.contains("crid")) { _data.crid = physics["crid"]; }
         if (physics.contains("deltat")) { _data.deltat = physics["deltat"]; }
@@ -621,17 +852,327 @@ void Config::loadFromJson(const string &fileName) {
         if (physics.contains("sigma")) { _data.sigma = physics["sigma"]; }
         if (physics.contains("random")) { _data.random = physics["random"]; }
         if (physics.contains("random_sources")) { _data.randomSources = physics["random_sources"]; }
+        if (physics.contains("random_seed")) { _data.randomSeed = physics["random_seed"]; }
         if (physics.contains("survprob")) { _data.survprob = physics["survprob"]; }
         if (physics.contains("shore_limit")) { _data.shoreLimit = physics["shore_limit"]; }
-        if (physics.contains("upper_closure")) { _data.upperClosure = dictionary[physics["upper_closure"]]; }
-        if (physics.contains("lower_closure")) { _data.lowerClosure = dictionary[physics["lower_closure"]]; }
-        if (physics.contains("horizontal_closure")) { _data.horizontalClosure = dictionary[physics["horizontal_closure"]]; }
+        if (physics.contains("upper_closure")) { _data.upperClosure = closureMode(physics["upper_closure"]); }
+        if (physics.contains("lower_closure")) { _data.lowerClosure = closureMode(physics["lower_closure"]); }
+        if (physics.contains("horizontal_closure")) { _data.horizontalClosure = closureMode(physics["horizontal_closure"]); }
+        if (physics.contains("integrator")) {
+            string integrator=physics["integrator"];
+            if (integrator == "midpoint") _data.integrator=Config::INTEGRATOR_MIDPOINT;
+            else if (integrator == "euler") _data.integrator=Config::INTEGRATOR_EULER;
+            else throw std::runtime_error("Unknown integrator: " + integrator);
+        }
+    }
+    if (config.contains("tracking")) {
+        json tracking=config["tracking"];
+        if (tracking.contains("direction")) {
+            string direction=tracking["direction"];
+            if (direction == "forward") _data.trackingDirection=Config::TRACKING_FORWARD;
+            else if (direction == "backward") _data.trackingDirection=Config::TRACKING_BACKWARD;
+            else throw std::runtime_error("Unknown tracking direction: " + direction);
+        }
+        if (tracking.contains("backward_diffusion")) {
+            string diffusion=tracking["backward_diffusion"];
+            if (diffusion == "none") _data.backwardDiffusion=false;
+            else if (diffusion == "symmetric_stochastic") _data.backwardDiffusion=true;
+            else throw std::runtime_error("Unknown backward diffusion mode: " + diffusion);
+        }
+    }
+    if (config.contains("drift")) {
+        json drift=config["drift"];
+        string model=drift.value("model","passive");
+        if (model=="passive") _data.driftModel=0;
+        else if (model=="leeway") _data.driftModel=1;
+        else throw std::runtime_error("Unknown drift.model: " + model);
+        if (drift.contains("coefficient_ensemble"))
+            _data.leewayCoefficientEnsemble=drift["coefficient_ensemble"];
+        if (drift.contains("residual_correlation"))
+            _data.leewayResidualCorrelation=drift["residual_correlation"];
+        if (drift.contains("side_right_probability"))
+            _data.leewayRightSideProbability=drift["side_right_probability"];
+        if (drift.contains("jibe_probability_per_hour"))
+            _data.leewayJibeProbabilityHourly=drift["jibe_probability_per_hour"];
+        if (drift.contains("object_type")) {
+            string objectType=drift["object_type"];
+            _data.driftObjectType=static_cast<std::uint16_t>(DriftObjectCatalog::type(objectType.c_str()));
+        }
+        if (drift.contains("side")) {
+            string side=drift["side"];
+            _data.leewayRandomSide=false;
+            if (side=="left") _data.driftSide=static_cast<std::int8_t>(DriftSide::LEFT);
+            else if (side=="right") _data.driftSide=static_cast<std::int8_t>(DriftSide::RIGHT);
+            else if (side=="undefined") _data.driftSide=static_cast<std::int8_t>(DriftSide::UNDEFINED);
+            else if (side=="random") {
+                if (!drift.contains("side_right_probability"))
+                    throw std::runtime_error("drift.side=random requires explicit side_right_probability");
+                _data.driftSide=static_cast<std::int8_t>(DriftSide::UNDEFINED);
+                _data.leewayRandomSide=true;
+            }
+            else throw std::runtime_error("Unknown drift.side: " + side);
+        }
+        if (drift.contains("side_right_probability") && !_data.leewayRandomSide)
+            throw std::runtime_error("drift.side_right_probability is valid only with drift.side=random");
+    }
+    if (config.contains("environment")) {
+        json environment=config["environment"];
+        if (environment.contains("wind")) {
+            json wind=environment["wind"];
+            string adapter=wind.value("adapter","none");
+            if (wind.contains("uncertainty_stddev"))
+                _data.windErrorStdDev=wind["uncertainty_stddev"];
+            if (wind.contains("uncertainty_component_correlation"))
+                _data.windErrorComponentCorrelation=wind["uncertainty_component_correlation"];
+            if (wind.contains("uncertainty_spatial_scale"))
+                _data.windErrorSpatialScale=wind["uncertainty_spatial_scale"];
+            if (wind.contains("uncertainty_temporal_scale"))
+                _data.windErrorTemporalScale=wind["uncertainty_temporal_scale"];
+            if (adapter=="constant") {
+                if (!wind.contains("u10") || !wind.contains("v10"))
+                    throw std::runtime_error("The constant wind adapter requires environment.wind.u10 and environment.wind.v10");
+                _data.windU10=wind["u10"];
+                _data.windV10=wind["v10"];
+                _data.hasWind=true;
+            } else if (adapter=="WRF") {
+                weatherModel=adapter; _data.hasWind=true;
+                weatherRegridding=wind.value("regrid","none");
+                weatherSourceCrs=wind.value("source_crs","");
+                if (weatherRegridding!="none" && weatherRegridding!="bilinear_geographic" &&
+                    weatherRegridding!="bilinear_curvilinear_geographic" && weatherRegridding!="bilinear_projected")
+                    throw std::runtime_error("Unknown environment.wind.regrid: " + weatherRegridding);
+                if (!wind.contains("nc_inputs") || !wind["nc_inputs"].is_array())
+                    throw std::runtime_error("WRF wind requires environment.wind.nc_inputs");
+                string basePath=wind.value("base_path",ncBasePath);
+                for (auto input:wind["nc_inputs"])
+                    weatherInputs.push_back(EnvironmentalDataAccess::resolve(basePath,input));
+            } else if (adapter!="none") throw std::runtime_error("Unknown environment.wind.adapter: " + adapter);
+        }
+        if (environment.contains("wave")) {
+            json wave=environment["wave"]; waveModel=wave.value("adapter","none");
+            if (waveModel!="none" && waveModel!="WW3") throw std::runtime_error("Unknown environment.wave.adapter: " + waveModel);
+            if (waveModel=="WW3") {
+                waveRegridding=wave.value("regrid","none");
+                waveSourceCrs=wave.value("source_crs","");
+                if (waveRegridding!="none" && waveRegridding!="bilinear_geographic" &&
+                    waveRegridding!="bilinear_curvilinear_geographic" && waveRegridding!="bilinear_projected")
+                    throw std::runtime_error("Unknown environment.wave.regrid: " + waveRegridding);
+                if (!wave.contains("nc_inputs") || !wave["nc_inputs"].is_array())
+                    throw std::runtime_error("WW3 wave input requires environment.wave.nc_inputs");
+                string basePath=wave.value("base_path",ncBasePath);
+                for (auto input:wave["nc_inputs"])
+                    waveInputs.push_back(EnvironmentalDataAccess::resolve(basePath,input));
+            }
+        }
+    }
+    if (config.contains("observational_calibration")) {
+        const json& calibration=config["observational_calibration"];
+        if (!calibration.is_object() || !calibration.contains("regions") || !calibration["regions"].is_array())
+            throw std::runtime_error("observational_calibration.regions must be an array");
+        if (calibration["regions"].size()>MAX_OBSERVATIONAL_CALIBRATION_REGIONS)
+            throw std::runtime_error("observational_calibration supports at most 16 regions");
+        for (const auto& item:calibration["regions"]) {
+            auto requiredString=[&item](const char *key) {
+                if (!item.contains(key) || !item[key].is_string() || item[key].get<string>().empty())
+                    throw std::runtime_error(string("observational calibration requires non-empty ")+key);
+                return item[key].get<string>();
+            };
+            if (requiredString("crs")!="EPSG:4326")
+                throw std::runtime_error("observational calibration crs must be EPSG:4326");
+            if (requiredString("object_type")!=DriftObjectCatalog::name(DriftObject()))
+                throw std::runtime_error("observational calibration object_type must match drift.object_type");
+            string configuredAdapter=weatherModel=="WRF" ? "WRF" : (_data.hasWind ? "constant" : "none");
+            if (requiredString("forcing_adapter")!=configuredAdapter)
+                throw std::runtime_error("observational calibration forcing_adapter must match environment.wind.adapter");
+            if (!item.contains("bounds") || !item["bounds"].is_object() ||
+                !item.contains("wind_error") || !item["wind_error"].is_object())
+                throw std::runtime_error("observational calibration requires bounds and wind_error objects");
+            const auto& bounds=item["bounds"];
+            const auto& wind=item["wind_error"];
+            observational_calibration_region region{
+                bounds.at("west"),bounds.at("south"),bounds.at("east"),bounds.at("north"),
+                wind.at("stddev"),wind.at("component_correlation"),wind.at("spatial_scale"),wind.at("temporal_scale")};
+            ObservationalCalibrationMetadata metadata{requiredString("id"),requiredString("estimator"),
+                requiredString("dataset"),requiredString("dataset_checksum"),requiredString("doi"),
+                requiredString("valid_from"),requiredString("valid_until"),item.at("sample_size")};
+            _data.observationalCalibrationRegions[_data.observationalCalibrationRegionCount++]=region;
+            observationalCalibrationMetadata.push_back(metadata);
+        }
+    }
+    if (_data.driftModel==1 && static_cast<DriftObjectType>(_data.driftObjectType)==DriftObjectType::PASSIVE)
+        throw std::runtime_error("drift.model=leeway requires a non-passive drift.object_type");
+    if (_data.driftModel==1 && _data.driftSide==static_cast<std::int8_t>(DriftSide::UNDEFINED) && !_data.leewayRandomSide)
+        throw std::runtime_error("drift.model=leeway requires drift.side=left, right, or random");
+    if (_data.driftModel==1 && !_data.hasWind)
+        throw std::runtime_error("Leeway drift requires 10 m wind. Configure environment.wind.adapter=constant or WRF");
+    if (_data.driftModel!=1 && _data.leewayCoefficientEnsemble)
+        throw std::runtime_error("drift.coefficient_ensemble requires drift.model=leeway");
+    if (!_data.leewayCoefficientEnsemble && _data.leewayResidualCorrelation!=0)
+        throw std::runtime_error("drift.residual_correlation requires drift.coefficient_ensemble=true");
+    if (!std::isfinite(_data.leewayResidualCorrelation) || _data.leewayResidualCorrelation < -1 ||
+        _data.leewayResidualCorrelation > 1)
+        throw std::runtime_error("drift.residual_correlation must be finite and in [-1,1]");
+    if (_data.leewayRandomSide && (_data.driftModel!=1 || !std::isfinite(_data.leewayRightSideProbability) ||
+                                  _data.leewayRightSideProbability<0 || _data.leewayRightSideProbability>1))
+        throw std::runtime_error("drift.side=random requires leeway and side_right_probability in [0,1]");
+    if (!std::isfinite(_data.leewayJibeProbabilityHourly) || _data.leewayJibeProbabilityHourly<0 ||
+        _data.leewayJibeProbabilityHourly>1 || (_data.driftModel!=1 && _data.leewayJibeProbabilityHourly!=0))
+        throw std::runtime_error("drift.jibe_probability_per_hour must be in [0,1] and requires drift.model=leeway");
+    if (_data.hasWind && (!std::isfinite(_data.windU10) || !std::isfinite(_data.windV10)))
+        throw std::runtime_error("environment.wind.u10 and environment.wind.v10 must be finite values in m/s");
+    if (!std::isfinite(_data.windErrorStdDev) || _data.windErrorStdDev<0 ||
+        (_data.windErrorStdDev>0 && _data.driftModel!=1))
+        throw std::runtime_error("environment.wind.uncertainty_stddev must be nonnegative and requires drift.model=leeway");
+    if (!std::isfinite(_data.windErrorComponentCorrelation) || _data.windErrorComponentCorrelation < -1 ||
+        _data.windErrorComponentCorrelation > 1)
+        throw std::runtime_error("environment.wind.uncertainty_component_correlation must be finite and in [-1,1]");
+    if (!std::isfinite(_data.windErrorSpatialScale) || _data.windErrorSpatialScale<0)
+        throw std::runtime_error("environment.wind.uncertainty_spatial_scale must be finite and nonnegative in metres");
+    if (!std::isfinite(_data.windErrorTemporalScale) || _data.windErrorTemporalScale<0)
+        throw std::runtime_error("environment.wind.uncertainty_temporal_scale must be finite and nonnegative in seconds");
+    if (_data.windErrorStdDev==0 && (_data.windErrorComponentCorrelation!=0 ||
+        _data.windErrorSpatialScale!=0 || _data.windErrorTemporalScale!=0))
+        throw std::runtime_error("wind-error correlation parameters require environment.wind.uncertainty_stddev > 0");
+    for (std::uint32_t index=0;index<_data.observationalCalibrationRegionCount;++index) {
+        const auto& region=_data.observationalCalibrationRegions[index];
+        const auto& metadata=observationalCalibrationMetadata[index];
+        if (_data.driftModel!=1 || !_data.hasWind)
+            throw std::runtime_error("observational calibration requires leeway and a wind adapter");
+        if (!std::isfinite(region.west) || !std::isfinite(region.east) ||
+            !std::isfinite(region.south) || !std::isfinite(region.north) ||
+            region.west < -180 || region.east > 180 || region.south < -90 || region.north > 90 ||
+            region.west>=region.east || region.south>=region.north)
+            throw std::runtime_error("observational calibration bounds must be finite, ordered EPSG:4326 bounds");
+        if (!std::isfinite(region.windErrorStdDev) || region.windErrorStdDev<=0 ||
+            !std::isfinite(region.windErrorComponentCorrelation) ||
+            region.windErrorComponentCorrelation < -1 || region.windErrorComponentCorrelation > 1 ||
+            !std::isfinite(region.windErrorSpatialScale) || region.windErrorSpatialScale<0 ||
+            !std::isfinite(region.windErrorTemporalScale) || region.windErrorTemporalScale<0)
+            throw std::runtime_error("observational calibration wind_error must define positive stddev, PSD correlation, and nonnegative scales");
+        if (metadata.sampleSize<2)
+            throw std::runtime_error("observational calibration sample_size must be at least 2");
+        if (metadata.datasetChecksum.rfind("sha256:",0)!=0 || metadata.datasetChecksum.size()!=71)
+            throw std::runtime_error("observational calibration dataset_checksum must be sha256:<64 hexadecimal digits>");
+        for (std::size_t digit=7;digit<metadata.datasetChecksum.size();++digit)
+            if (!std::isxdigit(static_cast<unsigned char>(metadata.datasetChecksum[digit])))
+                throw std::runtime_error("observational calibration dataset_checksum must contain hexadecimal digits");
+        if (metadata.doi.rfind("10.",0)!=0)
+            throw std::runtime_error("observational calibration doi must be a DOI beginning with 10.");
+        static const std::regex iso8601("^[0-9]{4}-(0[1-9]|1[0-2])-([0-2][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$");
+        if (!std::regex_match(metadata.validFrom,iso8601) || !std::regex_match(metadata.validUntil,iso8601) ||
+            metadata.validFrom>=metadata.validUntil)
+            throw std::runtime_error("observational calibration validity must be an ordered UTC ISO-8601 interval");
+        for (std::uint32_t previous=0;previous<index;++previous) {
+            const auto& other=_data.observationalCalibrationRegions[previous];
+            if (metadata.id==observationalCalibrationMetadata[previous].id)
+                throw std::runtime_error("observational calibration region ids must be unique");
+            bool separated=region.east<other.west || region.west>other.east ||
+                           region.north<other.south || region.south>other.north;
+            if (!separated)
+                throw std::runtime_error("observational calibration regions must not overlap or share a boundary");
+        }
+    }
+    if (weatherModel=="WRF" && weatherInputs.size()!=ncInputs.size())
+        throw std::runtime_error("WRF and ocean nc_inputs must contain one matching file per forcing window");
+    if (waveModel=="WW3" && waveInputs.size()!=ncInputs.size())
+        throw std::runtime_error("WW3 and ocean nc_inputs must contain one matching file per forcing window");
+    if ((weatherRegridding=="bilinear_projected" && weatherSourceCrs.empty()) ||
+        (waveRegridding=="bilinear_projected" && waveSourceCrs.empty()))
+        throw std::runtime_error("bilinear_projected regridding requires an explicit source_crs");
+    if ((!weatherSourceCrs.empty() && weatherRegridding!="bilinear_projected") ||
+        (!waveSourceCrs.empty() && waveRegridding!="bilinear_projected"))
+        throw std::runtime_error("environment source_crs is valid only with regrid=bilinear_projected");
+#ifndef WACOMM_USE_PROJ
+    if (weatherRegridding=="bilinear_projected" || waveRegridding=="bilinear_projected")
+        throw std::runtime_error("bilinear_projected regridding requires a build configured with USE_PROJ=ON");
+#endif
+    if (!std::isfinite(_data.dti) || _data.dti<=0) {
+        throw std::runtime_error("physics.dti must be a finite value greater than zero");
+    }
+    if (!std::isfinite(restartInterval) || restartInterval<1 || restartInterval!=std::floor(restartInterval)) {
+        throw std::runtime_error("restart.interval must be a whole number of seconds greater than zero");
+    }
+    if (!std::isfinite(timeStep) || timeStep<1 || timeStep!=std::floor(timeStep)) {
+        throw std::runtime_error("io.timestep must be a whole number of seconds greater than zero");
+    }
+    if (asyncMaxPending<1) {
+        throw std::runtime_error("io.async_max_pending must be at least 1");
+    }
+    if (filesystem!="posix" && filesystem!="lustre" && filesystem!="gpfs") {
+        throw std::runtime_error("io.filesystem must be posix, lustre, or gpfs");
+    }
+    if ((lustreStripeCount!=0 || lustreStripeSize!=0) && filesystem!="lustre") {
+        throw std::runtime_error("io.lustre_stripe_count and io.lustre_stripe_size require io.filesystem=lustre");
+    }
+    if (lustreStripeCount<-1) {
+        throw std::runtime_error("io.lustre_stripe_count must be -1 (all OSTs), 0 (inherit), or positive");
+    }
+    if (lustreStripeSize<0 || lustreStripeSize%65536!=0) {
+        throw std::runtime_error("io.lustre_stripe_size must be 0 (inherit) or a positive multiple of 65536 bytes");
+    }
+    if (parallelWrite!="none" && parallelWrite!="collective") {
+        throw std::runtime_error("io.parallel_write must be none or collective");
+    }
+    if (!mpiioHints.empty() && parallelWrite!="collective") {
+        throw std::runtime_error("io.mpiio_hints requires io.parallel_write=collective");
+    }
+    if (parallelWrite=="collective") {
+#ifdef USE_EMPI
+        throw std::runtime_error("io.parallel_write=collective is not available with USE_EMPI");
+#endif
+        if (!ParallelIOSupport::collectiveWrites) {
+            throw std::runtime_error("io.parallel_write=collective requires USE_MPI=ON and NetCDF-C with parallel HDF5 "
+                                     "(for example WACOMM_BOOTSTRAP_PARALLEL_IO=ON)");
+        }
+        if (asyncIO) {
+            throw std::runtime_error("io.parallel_write=collective requires io.async=false: every rank takes part in each write");
+        }
+        if (!stagingDir.empty()) {
+            throw std::runtime_error("io.parallel_write=collective writes the shared file directly; io.staging_dir must be empty");
+        }
+        if (saveHistory=="json") {
+            throw std::runtime_error("io.parallel_write=collective supports text and nc histories, not json");
+        }
+    }
+#ifdef _WIN32
+    if (lustreStripeCount!=0 || lustreStripeSize!=0) {
+        throw std::runtime_error("Lustre striping is not available on Windows");
+    }
+#endif
+    if (!std::isfinite(_data.deltat) || _data.deltat<=0) {
+        throw std::runtime_error("physics.deltat must be a finite value greater than zero");
+    }
+    if (!std::isfinite(_data.sigma) || _data.sigma<0) {
+        throw std::runtime_error("physics.sigma must be a finite value greater than or equal to zero");
+    }
+    if (!std::isfinite(_data.shoreLimit) || _data.shoreLimit<0) {
+        throw std::runtime_error("physics.shore_limit must be a finite value greater than or equal to zero");
     }
 }
 
 bool Config::MaskOutput() const {
     return maskOutput;
 }
+
+bool Config::AsyncIO() const { return asyncIO; }
+
+void Config::AsyncIO(bool value) { asyncIO = value; }
+
+int Config::AsyncMaxPending() const { return asyncMaxPending; }
+
+string Config::Filesystem() const { return filesystem; }
+
+bool Config::Fsync() const { return fsync; }
+
+string Config::StagingDir() const { return stagingDir; }
+
+int Config::LustreStripeCount() const { return lustreStripeCount; }
+
+long long Config::LustreStripeSize() const { return lustreStripeSize; }
+
+string Config::ParallelWrite() const { return parallelWrite; }
+
+const std::map<string,string>& Config::MpiioHints() const { return mpiioHints; }
 
 void Config::MaskOutput(bool value) {
     maskOutput = value;
@@ -640,6 +1181,3 @@ void Config::MaskOutput(bool value) {
 double Config::Sigma() const {
     return _data.sigma;
 }
-
-
-

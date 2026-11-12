@@ -1,0 +1,446 @@
+{
+  "status": "submitted; first job running on gn02 at verification",
+  "archive": "examples/webinar-native-usecase/data/webinar-q250000-angle-repaired-001",
+  "partition": "low-gn",
+  "particles_per_hour": 250000,
+  "jobs": [
+    {
+      "tuple": [
+        1,
+        1,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6712
+    },
+    {
+      "tuple": [
+        2,
+        1,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6713
+    },
+    {
+      "tuple": [
+        4,
+        1,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6714
+    },
+    {
+      "tuple": [
+        8,
+        1,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6715
+    },
+    {
+      "tuple": [
+        16,
+        1,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6716
+    },
+    {
+      "tuple": [
+        32,
+        1,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6717
+    },
+    {
+      "tuple": [
+        64,
+        1,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6718
+    },
+    {
+      "tuple": [
+        1,
+        2,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6719
+    },
+    {
+      "tuple": [
+        1,
+        4,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6720
+    },
+    {
+      "tuple": [
+        1,
+        8,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6721
+    },
+    {
+      "tuple": [
+        1,
+        16,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6722
+    },
+    {
+      "tuple": [
+        1,
+        32,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6723
+    },
+    {
+      "tuple": [
+        2,
+        16,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6724
+    },
+    {
+      "tuple": [
+        4,
+        8,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6725
+    },
+    {
+      "tuple": [
+        8,
+        4,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6726
+    },
+    {
+      "tuple": [
+        16,
+        2,
+        0
+      ],
+      "replicate": 1,
+      "job_id": 6727
+    },
+    {
+      "tuple": [
+        32,
+        1,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6728
+    },
+    {
+      "tuple": [
+        64,
+        1,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6729
+    },
+    {
+      "tuple": [
+        1,
+        2,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6730
+    },
+    {
+      "tuple": [
+        1,
+        4,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6731
+    },
+    {
+      "tuple": [
+        1,
+        8,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6732
+    },
+    {
+      "tuple": [
+        1,
+        16,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6733
+    },
+    {
+      "tuple": [
+        1,
+        32,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6734
+    },
+    {
+      "tuple": [
+        2,
+        16,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6735
+    },
+    {
+      "tuple": [
+        4,
+        8,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6736
+    },
+    {
+      "tuple": [
+        8,
+        4,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6737
+    },
+    {
+      "tuple": [
+        16,
+        2,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6738
+    },
+    {
+      "tuple": [
+        1,
+        1,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6739
+    },
+    {
+      "tuple": [
+        2,
+        1,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6740
+    },
+    {
+      "tuple": [
+        4,
+        1,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6741
+    },
+    {
+      "tuple": [
+        8,
+        1,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6742
+    },
+    {
+      "tuple": [
+        16,
+        1,
+        0
+      ],
+      "replicate": 2,
+      "job_id": 6743
+    },
+    {
+      "tuple": [
+        1,
+        16,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6744
+    },
+    {
+      "tuple": [
+        1,
+        32,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6745
+    },
+    {
+      "tuple": [
+        2,
+        16,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6746
+    },
+    {
+      "tuple": [
+        4,
+        8,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6747
+    },
+    {
+      "tuple": [
+        8,
+        4,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6748
+    },
+    {
+      "tuple": [
+        16,
+        2,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6749
+    },
+    {
+      "tuple": [
+        1,
+        1,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6750
+    },
+    {
+      "tuple": [
+        2,
+        1,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6751
+    },
+    {
+      "tuple": [
+        4,
+        1,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6752
+    },
+    {
+      "tuple": [
+        8,
+        1,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6753
+    },
+    {
+      "tuple": [
+        16,
+        1,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6754
+    },
+    {
+      "tuple": [
+        32,
+        1,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6755
+    },
+    {
+      "tuple": [
+        64,
+        1,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6756
+    },
+    {
+      "tuple": [
+        1,
+        2,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6757
+    },
+    {
+      "tuple": [
+        1,
+        4,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6758
+    },
+    {
+      "tuple": [
+        1,
+        8,
+        0
+      ],
+      "replicate": 3,
+      "job_id": 6759
+    }
+  ],
+  "cpu_configurations": 16,
+  "measured_replicates": 3,
+  "warmup": "one per configuration before replicate 1",
+  "completed_performance_points": 0,
+  "gpu_status": "requires completed CPU matrix and independently validated CPU selection",
+  "additional_rate_suites": "not submitted in this repair continuation"
+}
