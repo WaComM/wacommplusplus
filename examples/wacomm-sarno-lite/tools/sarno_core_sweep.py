@@ -25,6 +25,12 @@ COMPONENTS = {"host_to_device_seconds": r"CUDA HOST2DEV sec: ([0-9.eE+-]+)",
               # Rank-0 run phases (forcing preparation with the slowest rank's, setup, output, flush, whole run); zero before they were logged
               "forcing_seconds": r"FORCING sec: ([0-9.eE+-]+) max:",
               "forcing_max_seconds": r"FORCING sec: [0-9.eE+-]+ max: ([0-9.eE+-]+)",
+              # Rank-0 parts of forcing preparation (NetCDF lock wait, ocean reads, ocean normalization,
+              # boundary records), from the revision after 7242206; zero before
+              "forcing_wait_seconds": r"FORCING sec: .* wait: ([0-9.eE+-]+)",
+              "forcing_read_seconds": r"FORCING sec: .* read: ([0-9.eE+-]+)",
+              "forcing_normalize_seconds": r"FORCING sec: .* normalize: ([0-9.eE+-]+)",
+              "forcing_boundary_seconds": r"FORCING sec: .* boundary: ([0-9.eE+-]+)",
               "setup_seconds": r"SETUP sec: ([0-9.eE+-]+)",
               "output_seconds": r"OUTPUT sec: ([0-9.eE+-]+)",
               "flush_seconds": r"FLUSH sec: ([0-9.eE+-]+)",

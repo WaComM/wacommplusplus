@@ -179,21 +179,37 @@ void WacommPlusPlus::run() {
     std::unordered_map<int,std::shared_ptr<OceanModelAdapter>> oceanWindows;
     std::unordered_map<int,std::shared_ptr<WeatherModelAdapter>> weatherWindows;
     std::unordered_map<int,std::shared_ptr<WaveModelAdapter>> waveWindows;
+    // Rank-0 parts of the forcing preparation of one window: waiting for the NetCDF lock, ocean reads,
+    // the rest of the ocean processing (normalization), and the appended boundary records; the remainder
+    // is weather and wave processing and regridding
+    double forcingWait=0, forcingRead=0, forcingNormalize=0, forcingBoundary=0;
+    auto secondsSince=[](std::chrono::steady_clock::time_point start) {
+        std::chrono::duration<double> elapsed=std::chrono::steady_clock::now()-start;
+        return elapsed.count();
+    };
     auto oceanWindow=[&](int index) {
         auto found=oceanWindows.find(index);
         if (found!=oceanWindows.end()) return found->second;
         string& input=config->NcInputs()[index];
         // NetCDF is not thread safe: exclude the asynchronous output writer
+        auto waitStart=std::chrono::steady_clock::now();
         std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        forcingWait+=secondsSince(waitStart);
+        auto processStart=std::chrono::steady_clock::now();
         auto adapter=OceanModelAdapterFactory::create(config->OceanModel(),input);
-        adapter->process(); oceanWindows[index]=adapter; return adapter;
+        adapter->process(); oceanWindows[index]=adapter;
+        double processSeconds=secondsSince(processStart);
+        forcingRead+=adapter->ReadSeconds(); forcingNormalize+=processSeconds-adapter->ReadSeconds();
+        return adapter;
     };
     auto weatherWindow=[&](int index) {
         auto found=weatherWindows.find(index);
         if (found!=weatherWindows.end()) return found->second;
         string& input=config->WeatherInputs()[index];
         // NetCDF is not thread safe: exclude the asynchronous output writer
+        auto waitStart=std::chrono::steady_clock::now();
         std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        forcingWait+=secondsSince(waitStart);
         auto adapter=WeatherModelAdapterFactory::create(config->WeatherModel(),input,config->WeatherSourceCrs());
         adapter->process(); weatherWindows[index]=adapter; return adapter;
     };
@@ -202,7 +218,9 @@ void WacommPlusPlus::run() {
         if (found!=waveWindows.end()) return found->second;
         string& input=config->WaveInputs()[index];
         // NetCDF is not thread safe: exclude the asynchronous output writer
+        auto waitStart=std::chrono::steady_clock::now();
         std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        forcingWait+=secondsSince(waitStart);
         auto adapter=WaveModelAdapterFactory::create(config->WaveModel(),input,config->WaveSourceCrs());
         adapter->process(); waveWindows[index]=adapter; return adapter;
     };
@@ -215,6 +233,7 @@ void WacommPlusPlus::run() {
 
         // Forcing preparation: reading, normalization, boundary record, and regridding
         auto forcingStart=std::chrono::steady_clock::now();
+        forcingWait=0; forcingRead=0; forcingNormalize=0; forcingBoundary=0;
 
         shared_ptr<OceanModelAdapter> oceanModelAdapter=oceanWindow(inputIdx);
 
@@ -231,16 +250,22 @@ void WacommPlusPlus::run() {
         if (adjacentIdx>=0 && adjacentIdx<config->NcInputs().size()) {
             shared_ptr<OceanModelAdapter> adjacentAdapter=oceanWindow(adjacentIdx);
             int boundaryRecord=config->Backward() ? (int)adjacentAdapter->OceanTime().Nx()-1 : 0;
+            auto boundaryStart=std::chrono::steady_clock::now();
             oceanModelAdapter->appendBoundaryRecord(*adjacentAdapter,boundaryRecord,config->Backward());
+            forcingBoundary+=secondsSince(boundaryStart);
             if (weatherModelAdapter) {
                 auto adjacentWeather=weatherWindow(adjacentIdx);
                 int weatherRecord=config->Backward() ? (int)adjacentWeather->Time().Nx()-1 : 0;
+                auto boundaryStart=std::chrono::steady_clock::now();
                 weatherModelAdapter->appendBoundaryRecord(*adjacentWeather,weatherRecord,config->Backward());
+                forcingBoundary+=secondsSince(boundaryStart);
             }
             if (waveModelAdapter) {
                 auto adjacentWave=waveWindow(adjacentIdx);
                 int waveRecord=config->Backward() ? (int)adjacentWave->Time().Nx()-1 : 0;
+                auto boundaryStart=std::chrono::steady_clock::now();
                 waveModelAdapter->appendBoundaryRecord(*adjacentWave,waveRecord,config->Backward());
+                forcingBoundary+=secondsSince(boundaryStart);
             }
         }
         if (weatherModelAdapter && config->WeatherRegridding()=="bilinear_geographic")
@@ -266,7 +291,9 @@ void WacommPlusPlus::run() {
         MPI_Reduce(&forcingSeconds, &forcingMax, 1, MPI_DOUBLE, MPI_MAX, 0, ADM_COMM_WORLD);
 #endif
         if (world_rank == 0) {
-            LOG4CPLUS_INFO(logger, "FORCING sec: " << forcingSeconds << " max: " << forcingMax);
+            LOG4CPLUS_INFO(logger, "FORCING sec: " << forcingSeconds << " max: " << forcingMax
+                                   << " wait: " << forcingWait << " read: " << forcingRead
+                                   << " normalize: " << forcingNormalize << " boundary: " << forcingBoundary);
         }
 
         // Rank-0 setup: sources, saved input, and restart

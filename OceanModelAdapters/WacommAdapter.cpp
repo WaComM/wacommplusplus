@@ -70,7 +70,7 @@ void WacommAdapter::process()  {
     this->AKT().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
 
     NcVar oceanTimeVar = dataFile.getVar("ocean_time");
-    oceanTimeVar.getVar(this->OceanTime()());
+    readVar(oceanTimeVar,this->OceanTime()());
     for (int t=1;t<ocean_time;t++) {
         if (this->OceanTime()(t)<=this->OceanTime()(t-1)) {
             throw std::runtime_error("Native WACOMM ocean time must be strictly chronological");
@@ -81,39 +81,39 @@ void WacommAdapter::process()  {
 
 
     NcVar sRhoVar = dataFile.getVar("s_rho");
-    sRhoVar.getVar(this->SRho()());
+    readVar(sRhoVar,this->SRho()());
 
     NcVar sWVar = dataFile.getVar("s_w");
-    sWVar.getVar(this->SW()());
+    readVar(sWVar,this->SW()());
 
     NcVar latRhoVar = dataFile.getVar("lat_rho");
-    latRhoVar.getVar(this->Lat()());
+    readVar(latRhoVar,this->Lat()());
 
     NcVar lonRhoVar = dataFile.getVar("lon_rho");
-    lonRhoVar.getVar(this->Lon()());
+    readVar(lonRhoVar,this->Lon()());
 
     NcVar maskRhoVar = dataFile.getVar("mask_rho");
-    maskRhoVar.getVar(this->Mask()());
+    readVar(maskRhoVar,this->Mask()());
 
     NcVar hVar = dataFile.getVar("h");
-    hVar.getVar(this->H()());
+    readVar(hVar,this->H()());
 
     //cout << "OceanModelAdapter::loadFromNetCDF _data.h(650,550):" << _data.h(650,550) << endl;
 
     NcVar varZeta = dataFile.getVar("zeta");
-    varZeta.getVar(this->Zeta()());
+    readVar(varZeta,this->Zeta()());
 
     NcVar uVar = dataFile.getVar("u");
-    uVar.getVar(this->U()());
+    readVar(uVar,this->U()());
 
     NcVar vVar = dataFile.getVar("v");
-    vVar.getVar(this->V()());
+    readVar(vVar,this->V()());
 
     NcVar wVar = dataFile.getVar("w");
-    wVar.getVar(this->W()());
+    readVar(wVar,this->W()());
 
     NcVar aktVar = dataFile.getVar("akt");
-    aktVar.getVar(this->AKT()());
+    readVar(aktVar,this->AKT()());
 
     for(int k=-(int)s_w+2; k<=0;k++) {
         this->DepthIntervals().operator()(k)=this->SW()(k)-this->SW()(k-1);

@@ -19,7 +19,11 @@ def sample(root, build, p, n, g, label, seconds, application=None, reference=Non
     lines.append("EVALUATE sec: 0.02")
     if "mpi" in build:
         lines += ["DISTRIBUTE sec: 0.03", "COLLECT sec: 0.04"] * 5
-    lines += ["FORCING sec: 0.5 max: 0.75", "SETUP sec: 0.01", "OUTPUT sec: 0.25"] * 6
+    # The serial build logs the forcing line of a0ea55d, without its parts
+    forcing = "FORCING sec: 0.5 max: 0.75"
+    if build != "serial":
+        forcing += " wait: 0.0625 read: 0.25 normalize: 0.125 boundary: 0.03125"
+    lines += [forcing, "SETUP sec: 0.01", "OUTPUT sec: 0.25"] * 6
     lines += ["FLUSH sec: 0.125", f"RUN sec: {seconds + 2}"]
     (directory / "stdout.txt").write_text("\n".join(lines) + "\n")
     (directory / "time.txt").write_text(f"elapsed_seconds={application or seconds + 3} maxrss_kb=1048576\n")
@@ -62,6 +66,10 @@ def main():
         assert abs(phases["forcing_seconds"] - 3) < 1e-12 and abs(phases["forcing_max_seconds"] - 4.5) < 1e-12
         assert abs(phases["setup_seconds"] - 0.06) < 1e-12 and abs(phases["output_seconds"] - 1.5) < 1e-12
         assert phases["flush_seconds"] == 0.125 and abs(phases["run_seconds"] - 4.5) < 1e-12
+        assert abs(phases["forcing_wait_seconds"] - 0.375) < 1e-12 and abs(phases["forcing_read_seconds"] - 1.5) < 1e-12
+        assert abs(phases["forcing_normalize_seconds"] - 0.75) < 1e-12 and abs(phases["forcing_boundary_seconds"] - 0.1875) < 1e-12
+        serial = rows["serial", 1, 1, 0]["components_median"]
+        assert abs(serial["forcing_seconds"] - 3) < 1e-12 and serial["forcing_read_seconds"] == 0
         gpu = rows["omp-cuda", 1, 4, 1]
         assert gpu["cpu_efficiency"] is None and abs(gpu["speedup"] - 8) < 1e-12
         # The GPU tuple has the fastest solver but the hybrid CPU tuple has the fastest application.

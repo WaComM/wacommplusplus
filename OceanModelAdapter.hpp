@@ -14,6 +14,9 @@
 #include "ResourceLimits.hpp"
 #include "netcdf"
 
+#include <chrono>
+#include <utility>
+
 using namespace Array;
 using namespace std;
 using namespace netCDF;
@@ -78,9 +81,22 @@ public:
     Array1<double> &Longitude();
     Array1<double> &Depth();
 
+    // Seconds spent in NetCDF reads by the last process(); the rest of process() is normalization
+    double ReadSeconds() const { return readSeconds; }
+
+protected:
+    // Read a NetCDF variable, adding the elapsed time to the read seconds
+    template<typename... Args> void readVar(const NcVar &var, Args&&... args) {
+        auto start=std::chrono::steady_clock::now();
+        var.getVar(std::forward<Args>(args)...);
+        std::chrono::duration<double> elapsed=std::chrono::steady_clock::now()-start;
+        readSeconds+=elapsed.count();
+    }
+
 private:
     log4cplus::Logger logger;
     oceanmodel_data _data;
+    double readSeconds=0.0;
 
     Array1<double> latitude;
     Array1<double> longitude;

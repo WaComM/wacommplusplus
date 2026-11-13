@@ -79,7 +79,7 @@ C5 first: it is small and protects every later experiment. Then C1 and C2; both 
 - **Invariant.** Results are bit-identical, forward and backward, continuous and restarted.
 - **Tests.** Forward and backward `application_end_to_end`, `restart_format`, and a test forcing a slow reader (an injected delay) to prove the solver waits for the record.
 - **Acceptance.** For OpenMP 1×56 at 10⁵ particles/hour, non-solver time falls by at least 40%.
-- **Measured.** At `a0ea55d`, `io.async=true` was tried as this task's first step. For OpenMP 1×56 at $10^5$ particles/hour, forcing preparation takes 4.83 s and output 2.97 s of the 9.75 s run. Asynchronous output cuts the output section to 0.03 s plus a 0.56 s final flush, but adds 1.1 s to forcing preparation through the process-wide NetCDF lock: 8.47 s in all. Next, split the forcing timer into reading and normalization.
+- **Measured.** At `a0ea55d`, `io.async=true` was tried as this task's first step. For OpenMP 1×56 at $10^5$ particles/hour, forcing preparation takes 4.83 s and output 2.97 s of the 9.75 s run. Asynchronous output cuts the output section to 0.03 s plus a 0.56 s final flush, but adds 1.1 s to forcing preparation through the process-wide NetCDF lock: 8.47 s in all. The forcing timer now also reports the lock wait, ocean reads, ocean normalization, and boundary-record appends; their measurement decides between parallel normalization and a prefetch thread.
 
 ### C5. Fail fast on resource limits
 

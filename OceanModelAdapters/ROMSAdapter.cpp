@@ -78,7 +78,7 @@ void ROMSAdapter::process()
     size_t eta_rho = varMaskRho.getDim(0).getSize();
     size_t xi_rho = varMaskRho.getDim(1).getSize();
     Array2<double>mask_rho(eta_rho,xi_rho);
-    varMaskRho.getVar(mask_rho());
+    readVar(varMaskRho,mask_rho());
 
     // Retrieve the variable named "mask_u"
     NcVar varMaskU=dataFile.getVar("mask_u");
@@ -86,7 +86,7 @@ void ROMSAdapter::process()
     size_t eta_u = varMaskU.getDim(0).getSize();
     size_t xi_u = varMaskU.getDim(1).getSize();
     Array2<double> mask_u(eta_u,xi_u);
-    varMaskU.getVar(mask_u());
+    readVar(varMaskU,mask_u());
 
     // Retrieve the variable named "mask_v"
     NcVar varMaskV=dataFile.getVar("mask_v");
@@ -94,32 +94,32 @@ void ROMSAdapter::process()
     size_t eta_v = varMaskV.getDim(0).getSize();
     size_t xi_v = varMaskV.getDim(1).getSize();
     Array2<double> mask_v(eta_v,xi_v);
-    varMaskV.getVar(mask_v());
+    readVar(varMaskV,mask_v());
 
     // Retrieve the variable named "lat_rho"
     NcVar varLatRho=dataFile.getVar("lat_rho");
     Array2<double> lat_rho(eta_rho,xi_rho);
-    varLatRho.getVar(lat_rho());
+    readVar(varLatRho,lat_rho());
 
     // Retrieve the variable named "lon_rho"
     NcVar varLonRho=dataFile.getVar("lon_rho");
     Array2<double> lon_rho(eta_rho,xi_rho);
-    varLonRho.getVar(lon_rho());
+    readVar(varLonRho,lon_rho());
 
     // Retrieve the variable named "lat_v"
     NcVar varLatV=dataFile.getVar("lat_v");
     Array2<double> lat_v(eta_v,xi_v);
-    varLatV.getVar(lat_v());
+    readVar(varLatV,lat_v());
 
     // Retrieve the variable named "lon_u"
     NcVar varLonU=dataFile.getVar("lon_u");
     Array2<double> lon_u(eta_u,xi_u);
-    varLonU.getVar(lon_u());
+    readVar(varLonU,lon_u());
 
     // Retrieve the variable named "h"
     NcVar varH=dataFile.getVar("h");
     Array2<double> h(eta_rho,xi_rho);
-    varH.getVar(h());
+    readVar(varH,h());
 
     // Retrieve the variable named "u"
     NcVar varU=dataFile.getVar("u");
@@ -128,14 +128,14 @@ void ROMSAdapter::process()
     size_t ocean_time = varU.getDim(0).getSize();
     size_t s_rho = varU.getDim(1).getSize();
     Array4<float> u(ocean_time, s_rho, eta_u, xi_u,0,-(int)s_rho+1,0,0);
-    varU.getVar(u());
+    readVar(varU,u());
 
     // Retrieve the variable named "v"
     NcVar varV=dataFile.getVar("v");
     requireRomsDimensions(varV,{dataFile.getDim("ocean_time"),dataFile.getDim("s_rho"),
                                dataFile.getDim("eta_v"),dataFile.getDim("xi_v")});
     Array4<float> v(ocean_time, s_rho, eta_v, xi_v,0,-(int)s_rho+1,0,0);
-    varV.getVar(v());
+    readVar(varV,v());
 
     if (romsAttribute(varU,"units")!="meter second-1" || romsAttribute(varV,"units")!="meter second-1")
         throw std::runtime_error("ROMS u/v require units 'meter second-1'");
@@ -152,7 +152,7 @@ void ROMSAdapter::process()
         requireRomsDimensions(varAngle,{dataFile.getDim("eta_rho"),dataFile.getDim("xi_rho")});
         if (romsAttribute(varAngle,"units")!="radians")
             throw std::runtime_error("ROMS grid-relative u/v require angle(eta_rho,xi_rho) in radians");
-        varAngle.getVar(angle());
+        readVar(varAngle,angle());
         angleMissing=romsMissingValues(varAngle);
     }
     for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) {
@@ -181,31 +181,31 @@ void ROMSAdapter::process()
     NcVar varW=dataFile.getVar("w");
     size_t s_w = varW.getDim(1).getSize();
     Array4<float> w(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
-    varW.getVar(w());
+    readVar(varW,w());
 
     // Retrieve the variable named "AKt"
     NcVar varAKt=dataFile.getVar("AKt");
     Array4<float> akt(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
-    varAKt.getVar(akt());
+    readVar(varAKt,akt());
 
 
     // Retrieve the variable named "s_w"
     NcVar varSW=dataFile.getVar("s_w");
     varSW.getDim(0).getSize();
     Array1<double> sW(s_w,-(int)s_w+1);
-    varSW.getVar(sW());
+    readVar(varSW,sW());
 
     // Retrieve the variable named "s_rho"
     NcVar varSRho=dataFile.getVar("s_rho");
     varSRho.getDim(0).getSize();
     Array1<double> sRho(s_rho, -(int)s_rho+1);
-    varSRho.getVar(sRho());
+    readVar(varSRho,sRho());
 
     // Retrieve the variable named "ocean_time"
     NcVar varOceanTime=dataFile.getVar("ocean_time");
     varOceanTime.getDim(0).getSize();
     Array1<double> oceanTime(ocean_time);
-    varOceanTime.getVar(oceanTime());
+    readVar(varOceanTime,oceanTime());
     for (int t=1;t<ocean_time;t++) {
         if (oceanTime(t)<=oceanTime(t-1)) {
             throw std::runtime_error("ROMS ocean time must be strictly chronological");
@@ -215,7 +215,7 @@ void ROMSAdapter::process()
     // Retrieve the variable named "zeta"
     NcVar varZeta=dataFile.getVar("zeta");
     Array3<float> zeta(ocean_time,eta_rho,xi_rho);
-    varZeta.getVar(zeta());
+    readVar(varZeta,zeta());
 
     LOG4CPLUS_DEBUG(logger,"Loaded!");
 

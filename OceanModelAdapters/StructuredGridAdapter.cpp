@@ -71,12 +71,12 @@ void StructuredGridAdapter::process() {
     this->V().Allocate(ocean_time,s_rho,eta_rho,xi_rho,0,-(int)s_rho+1,0,0);
     this->W().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
     this->AKT().Allocate(ocean_time,s_w,eta_rho,xi_rho,0,-(int)s_w+1,0,0);
-    timeVar.getVar(this->OceanTime()());
+    readVar(timeVar,this->OceanTime()());
     for (size_t t=1;t<ocean_time;t++)
         if (this->OceanTime()(t)<=this->OceanTime()(t-1))
             throw std::runtime_error(model + " ocean time must be strictly chronological");
 
-    vector<double> depth(s_rho); depthVar.getVar(depth.data());
+    vector<double> depth(s_rho); readVar(depthVar,depth.data());
     bool increasingDepth=depth.size()<2 || depth.front()<depth.back();
     for (size_t k=1;k<depth.size();k++) {
         if ((increasingDepth && depth[k]<=depth[k-1]) || (!increasingDepth && depth[k]>=depth[k-1]))
@@ -84,7 +84,7 @@ void StructuredGridAdapter::process() {
     }
     double maximumDepth=*std::max_element(depth.begin(),depth.end());
     vector<float> uValues(ocean_time*s_rho*eta_rho*xi_rho),vValues(uValues.size());
-    uVar.getVar(uValues.data()); vVar.getVar(vValues.data());
+    readVar(uVar,uValues.data()); readVar(vVar,vValues.data());
     for (int k=-(int)s_rho+1;k<=0;k++) {
         size_t storage=NumericalHelpers::storageLevel(k,s_rho);
         size_t source=increasingDepth ? s_rho-1-storage : storage;
@@ -98,9 +98,9 @@ void StructuredGridAdapter::process() {
     for (int k=-(int)s_w+2;k<=0;k++) this->DepthIntervals()(k)=this->SW()(k)-this->SW()(k-1);
 
     vector<NcDim> lonDims=lonVar.getDims(),latDims=latVar.getDims();
-    if (lonDims.size()==2 && latDims.size()==2) { lonVar.getVar(this->Lon()()); latVar.getVar(this->Lat()()); }
+    if (lonDims.size()==2 && latDims.size()==2) { readVar(lonVar,this->Lon()()); readVar(latVar,this->Lat()()); }
     else if (lonDims.size()==1 && latDims.size()==1 && lonDims[0].getSize()==xi_rho && latDims[0].getSize()==eta_rho) {
-        vector<double> longitude(xi_rho),latitude(eta_rho); lonVar.getVar(longitude.data()); latVar.getVar(latitude.data());
+        vector<double> longitude(xi_rho),latitude(eta_rho); readVar(lonVar,longitude.data()); readVar(latVar,latitude.data());
         for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) { this->Lon()(j,i)=longitude[i]; this->Lat()(j,i)=latitude[j]; }
     } else throw std::runtime_error(model + " longitude/latitude dimensions are incompatible with velocity fields");
 
@@ -110,22 +110,22 @@ void StructuredGridAdapter::process() {
     NcVar wVar=variable(dataFile,model == "NEMO" ? vector<string>{"wo","vovecrtz","w"} : vector<string>{"water_w","w"},true);
     NcVar aktVar=variable(dataFile,model == "NEMO" ? vector<string>{"avt","votkeavt","akt"} : vector<string>{"diffusivity","akt"},true);
 
-    if (!maskVar.isNull() && maskVar.getDimCount()==2) maskVar.getVar(this->Mask()());
+    if (!maskVar.isNull() && maskVar.getDimCount()==2) readVar(maskVar,this->Mask()());
     else if (!maskVar.isNull() && maskVar.getDimCount()==3)
-        maskVar.getVar({0,0,0},{1,eta_rho,xi_rho},this->Mask()());
+        readVar(maskVar,vector<size_t>{0,0,0},vector<size_t>{1,eta_rho,xi_rho},this->Mask()());
     else if (!maskVar.isNull() && maskVar.getDimCount()==4)
-        maskVar.getVar({0,0,0,0},{1,1,eta_rho,xi_rho},this->Mask()());
+        readVar(maskVar,vector<size_t>{0,0,0,0},vector<size_t>{1,1,eta_rho,xi_rho},this->Mask()());
     else for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) this->Mask()(j,i)=1;
-    if (!hVar.isNull() && hVar.getDimCount()==2 && hVar.getDim(0).getSize()==eta_rho && hVar.getDim(1).getSize()==xi_rho) hVar.getVar(this->H()());
+    if (!hVar.isNull() && hVar.getDimCount()==2 && hVar.getDim(0).getSize()==eta_rho && hVar.getDim(1).getSize()==xi_rho) readVar(hVar,this->H()());
     else if (!hVar.isNull()) throw std::runtime_error(model + " bathymetry dimensions are incompatible with velocity fields");
     else for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) this->H()(j,i)=maximumDepth;
     if (!zetaVar.isNull() && zetaVar.getDimCount()==3 && zetaVar.getDim(0).getSize()==ocean_time &&
-        zetaVar.getDim(1).getSize()==eta_rho && zetaVar.getDim(2).getSize()==xi_rho) zetaVar.getVar(this->Zeta()());
+        zetaVar.getDim(1).getSize()==eta_rho && zetaVar.getDim(2).getSize()==xi_rho) readVar(zetaVar,this->Zeta()());
     else if (!zetaVar.isNull()) throw std::runtime_error(model + " sea-surface height dimensions are incompatible with velocity fields");
     else for (int t=0;t<ocean_time;t++) for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) this->Zeta()(t,j,i)=0;
     if (!wVar.isNull() && wVar.getDimCount()==4 && wVar.getDim(0).getSize()==ocean_time &&
         wVar.getDim(1).getSize()==s_w && wVar.getDim(2).getSize()==eta_rho && wVar.getDim(3).getSize()==xi_rho) {
-        vector<float> values(ocean_time*s_w*eta_rho*xi_rho); wVar.getVar(values.data());
+        vector<float> values(ocean_time*s_w*eta_rho*xi_rho); readVar(wVar,values.data());
         for (int k=-(int)s_w+1;k<=0;k++) {
             size_t storage=NumericalHelpers::storageLevel(k,s_w),source=increasingDepth ? s_w-1-storage : storage;
             for (int t=0;t<ocean_time;t++) for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++)
@@ -136,7 +136,7 @@ void StructuredGridAdapter::process() {
     else { LOG4CPLUS_WARN(logger,model << " vertical velocity is missing; using W=0"); for (int t=0;t<ocean_time;t++) for (int k=-(int)s_w+1;k<=0;k++) for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++) this->W()(t,k,j,i)=0; }
     if (!aktVar.isNull() && aktVar.getDimCount()==4 && aktVar.getDim(0).getSize()==ocean_time &&
         aktVar.getDim(1).getSize()==s_w && aktVar.getDim(2).getSize()==eta_rho && aktVar.getDim(3).getSize()==xi_rho) {
-        vector<float> values(ocean_time*s_w*eta_rho*xi_rho); aktVar.getVar(values.data());
+        vector<float> values(ocean_time*s_w*eta_rho*xi_rho); readVar(aktVar,values.data());
         for (int k=-(int)s_w+1;k<=0;k++) {
             size_t storage=NumericalHelpers::storageLevel(k,s_w),source=increasingDepth ? s_w-1-storage : storage;
             for (int t=0;t<ocean_time;t++) for (int j=0;j<eta_rho;j++) for (int i=0;i<xi_rho;i++)
