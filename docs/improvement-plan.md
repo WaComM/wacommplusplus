@@ -37,7 +37,7 @@ Other facts the tasks rely on:
 
 ## Execution order
 
-C5 first: it is small and protects every later experiment. Then C1 and C2; both are now measured ([reruns](backend-matrix-evaluation.md#reruns-after-the-first-improvements)). C2 step 2 is deferred, because the hourly Sarno output gathers particle states every interval and the step could save at most part of the 0.37 s distribution time. Most of the remaining time is outside the solver (70% of the four-node 16×14 application time), and in the full-socket OpenMP efficiency loss (96% at 14 threads, 72% at 56). The next step is to measure both. Rank-0 timers separate start-up, forcing input, and output, with `io.async` off and on, and a `numactl --interleave=all` run tests C6 without code changes. Those measurements decide the order of C6, C4, and C3. Overlap (C4) can hide input only behind solver time: at most 1.8 s for OpenMP 1×56 at $10^5$ particles/hour and 5.6 s for four-node 16×14. C3 matters most with many ranks per node. C7 and C8 are independent. N1–N4 and P1–P4 are independent of the computational tasks and of each other, except that P1 and P2 share the stochastic-operator configuration design: do P1 first.
+C5 first: it is small and protects every later experiment. Then C1 and C2; both are now measured ([reruns](backend-matrix-evaluation.md#reruns-after-the-first-improvements)). C2 step 2 is deferred, because the hourly Sarno output gathers particle states every interval and the step could save at most part of the 0.37 s distribution time. Most of the remaining time is outside the solver (70% of the four-node 16×14 application time), and in the full-socket OpenMP efficiency loss (96% at 14 threads, 72% at 56). The measurement at `a0ea55d` ([time outside the solver](backend-matrix-evaluation.md#time-outside-the-solver)) found that forcing preparation takes about 4.8 s and output 3.0 s. `io.async=true` hides most of the output, and four ranks per node read as fast as one process, while `numactl --interleave=all` left the OpenMP efficiency unchanged. So C4 comes next, starting with a forcing timer that separates reading from normalization. C3 helps pure-MPI placements only, and C6 needs hardware counters first. Overlap (C4) can hide input only behind solver time: at most 1.8 s for OpenMP 1×56 at $10^5$ particles/hour and 5.6 s for four-node 16×14. C7 and C8 are independent. N1–N4 and P1–P4 are independent of the computational tasks and of each other, except that P1 and P2 share the stochastic-operator configuration design: do P1 first.
 
 ## Computational tasks
 
@@ -69,6 +69,7 @@ C5 first: it is small and protects every later experiment. Then C1 and C2; both 
 - **Invariant.** Forcing values on every rank are byte-identical to the single-reader result.
 - **Tests.** A two-rank test that compares checksums of every forcing array against a serial read. `application_end_to_end` on two ranks.
 - **Acceptance.** Peak node memory for 28 ranks is under 1.3× that of one rank. Non-solver time for 28 ranks is within 20% of one process.
+- **Measured.** At `a0ea55d`, four ranks per node prepare forcing as fast as one process (slowest rank 4.86 s against 4.83 s); 28 ranks per node take 10.49 s. C3 therefore mainly helps pure-MPI placements and memory per node.
 - **Documentation.** [parallelism.md](parallelism.md), [build.md](build.md) (MPI-3 requirement), the backend matrix evaluation, and the README.
 
 ### C4. Overlap forcing input with solving
@@ -78,6 +79,7 @@ C5 first: it is small and protects every later experiment. Then C1 and C2; both 
 - **Invariant.** Results are bit-identical, forward and backward, continuous and restarted.
 - **Tests.** Forward and backward `application_end_to_end`, `restart_format`, and a test forcing a slow reader (an injected delay) to prove the solver waits for the record.
 - **Acceptance.** For OpenMP 1×56 at 10⁵ particles/hour, non-solver time falls by at least 40%.
+- **Measured.** At `a0ea55d`, `io.async=true` was tried as this task's first step. For OpenMP 1×56 at $10^5$ particles/hour, forcing preparation takes 4.83 s and output 2.97 s of the 9.75 s run. Asynchronous output cuts the output section to 0.03 s plus a 0.56 s final flush, but adds 1.1 s to forcing preparation through the process-wide NetCDF lock: 8.47 s in all. Next, split the forcing timer into reading and normalization.
 
 ### C5. Fail fast on resource limits
 
@@ -94,6 +96,7 @@ C5 first: it is small and protects every later experiment. Then C1 and C2; both 
 - **Approach.** First measure: run `perf stat` (or LIKWID) on OpenMP 1×14, 1×28, and 1×56 to record memory bandwidth, LLC misses, and clock. Then test parallel first-touch initialization of the adapter arrays and `numactl --interleave=all`, and keep the variant only if it is faster.
 - **Invariant.** Results are bit-identical.
 - **Acceptance.** Either a documented 10% gain at 56 threads, or a documented counter-based explanation in the backend matrix evaluation of why there is none.
+- **Measured.** `numactl --interleave=all` left OpenMP efficiency at 71.2% (56 threads) and 73.1% (28), against 71.4% and 73.2% without, and slowed forcing preparation by 0.6 s. Page placement is not the cause; hardware counters are needed before any code change.
 
 ### C7. Persistent CUDA device state
 
