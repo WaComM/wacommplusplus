@@ -57,6 +57,8 @@ int main() {
     }
     assert(ResourceLimits::residentForcingBytes(dims, false)==allocatedWindowBytes(dims, 2));
     assert(ResourceLimits::residentForcingBytes(dims, true)==allocatedWindowBytes(dims, 3)+allocatedWindowBytes(dims, 2));
+    // io.prefetch holds one more window of the file's records
+    assert(ResourceLimits::residentForcingBytes(dims, true, true)==allocatedWindowBytes(dims, 3)+2*allocatedWindowBytes(dims, 2));
 
     // Sarno native window (2 x 30 x 1135 x 1528): 4.13 GiB per rank, measured 3.8-5.1 GiB
     ResourceLimits::ForcingDimensions sarno;

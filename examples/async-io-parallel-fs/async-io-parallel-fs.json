@@ -5,7 +5,7 @@
                        "wacomm-20210701Z03.nc", "wacomm-20210701Z04.nc", "wacomm-20210701Z05.nc"],
          "nc_output_root": "output/conc-", "save_history": "nc", "history_root": "output/history-",
          "timestep": 3600,
-         "async": true, "async_max_pending": 2,
+         "async": true, "async_max_pending": 2, "prefetch": true,
          "filesystem": "gpfs", "fsync": true, "staging_dir": "staging"},
   "sources": {"active": true, "sources_file": "sources.json"},
   "restart": {"active": false, "interval": 3600},

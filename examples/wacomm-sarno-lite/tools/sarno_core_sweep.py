@@ -31,6 +31,10 @@ COMPONENTS = {"host_to_device_seconds": r"CUDA HOST2DEV sec: ([0-9.eE+-]+)",
               "forcing_read_seconds": r"FORCING sec: .* read: ([0-9.eE+-]+)",
               "forcing_normalize_seconds": r"FORCING sec: .* normalize: ([0-9.eE+-]+)",
               "forcing_boundary_seconds": r"FORCING sec: .* boundary: ([0-9.eE+-]+)",
+              # Rank-0 wait for a window read ahead by io.prefetch, and the prefetch thread's preparation
+              # time of the windows taken, from the revision after 70fa7a3; zero before and without io.prefetch
+              "forcing_prefetch_wait_seconds": r"FORCING sec: .* prefetch: ([0-9.eE+-]+)",
+              "forcing_background_seconds": r"FORCING sec: .* background: ([0-9.eE+-]+)",
               "setup_seconds": r"SETUP sec: ([0-9.eE+-]+)",
               "output_seconds": r"OUTPUT sec: ([0-9.eE+-]+)",
               "flush_seconds": r"FLUSH sec: ([0-9.eE+-]+)",

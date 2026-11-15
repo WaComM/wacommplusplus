@@ -2,7 +2,7 @@
 
 ## Scientific question
 
-Does publishing particle histories and gridded counts asynchronously, through node-local staging and with durable flushes, leave every scientific output unchanged while removing NetCDF write time from the solver's critical path? The configuration is a passive, deterministic forward run; it selects no drift model, and the historical physics are those of the [native forward example](../forward-wacomm/README.md). Only publication changes. See [output publication](../../docs/io.md).
+Does publishing particle histories and gridded counts asynchronously, through node-local staging and with durable flushes, and reading the forcing ahead on a separate thread, leave every scientific output unchanged while removing NetCDF write and read time from the solver's critical path? The configuration is a passive, deterministic forward run; it selects no drift model, and the historical physics are those of the [native forward example](../forward-wacomm/README.md). Only publication changes. See [output publication](../../docs/io.md).
 
 ## Prerequisites
 
@@ -18,6 +18,7 @@ Each native file carries `ocean_time` (s since 1968-05-23 00:00:00 UTC), `s_rho`
 
 - `io.async=true`: rank 0 hands each output to a background writer thread and continues with the next forcing window;
 - `io.async_max_pending=2`: at most two outputs queued or running, which bounds rank-0 memory to two snapshots;
+- `io.prefetch=true`: every forcing file after the first two is read on a separate thread while an earlier window integrates and is written, at the cost of one more resident window ([forcing prefetch](../../docs/parallelism.md#forcing-prefetch));
 - `io.filesystem="gpfs"` with `io.fsync=true`: every file is flushed to stable storage before its atomic rename to the final name;
 - `io.staging_dir="staging"`: files are written locally, then copied to `output/` by the writer thread.
 
@@ -30,15 +31,15 @@ mkdir -p examples/async-io-parallel-fs/output
 cd examples/async-io-parallel-fs && ../../build/wacommplusplus async-io-parallel-fs.json
 ```
 
-For the synchronous reference, write a copy with `io.async=false`, no staging, and separate output roots, then run it the same way:
+For the synchronous reference, write a copy with `io.async=false`, `io.prefetch=false`, no staging, and separate output roots, then run it the same way:
 
 ```bash
-cd examples/async-io-parallel-fs && python3 -c "import json; c=json.load(open('async-io-parallel-fs.json')); c['io'].update(async=False, staging_dir='', nc_output_root='output/sync-conc-', history_root='output/sync-history-'); json.dump(c, open('sync-reference.json','w'), indent=2)" && ../../build/wacommplusplus sync-reference.json
+cd examples/async-io-parallel-fs && python3 -c "import json; c=json.load(open('async-io-parallel-fs.json')); c['io'].update(async=False, prefetch=False, staging_dir='', nc_output_root='output/sync-conc-', history_root='output/sync-history-'); json.dump(c, open('sync-reference.json','w'), indent=2)" && ../../build/wacommplusplus sync-reference.json
 ```
 
 ## Expected outputs
 
-`output/history-20210701Z01.nc` to `output/history-20210701Z06.nc` and `output/conc-20210701Z00.nc` to `output/conc-20210701Z05.nc`, the same names as a synchronous run. The log reports `Output writer: mode=async max_pending=2 filesystem=gpfs fsync=true staging_dir=staging`, one `Published <file> in <s> seconds` line per output, and `Solver waited <s> seconds for the output queue` whenever the queue was full. After the run, `output/` holds no `.partial` file and `staging/` is empty.
+`output/history-20210701Z01.nc` to `output/history-20210701Z06.nc` and `output/conc-20210701Z00.nc` to `output/conc-20210701Z05.nc`, the same names as a synchronous run. The log reports `Output writer: mode=async max_pending=2 filesystem=gpfs fsync=true staging_dir=staging`, one `Published <file> in <s> seconds` line per output, and `Solver waited <s> seconds for the output queue` whenever the queue was full. From the second window to the fifth, each `FORCING sec:` line reports a nonzero `background:` time for the file read ahead. After the run, `output/` holds no `.partial` file and `staging/` is empty.
 
 ## Verification
 
@@ -59,11 +60,11 @@ File checksums differ between the two runs because the global attribute `wacomm_
 
 ## Limitations
 
-Outputs are still gathered and written by rank 0; there is no collective MPI-IO write. NetCDF writes overlap particle integration and concentration evaluation but not the reading of the next forcing window, because NetCDF-C and HDF5 are serialized process-wide. Each pending history copies the particle set on rank 0. `io.fsync` relies on storage honoring flush requests. Lustre striping changes the directory layout persistently. This example has not been timed on a parallel file system; it demonstrates equivalence, not a speedup.
+Outputs are still gathered and written by rank 0; there is no collective MPI-IO write. NetCDF writes overlap particle integration and concentration evaluation, and so does the reading of the window after next, but writes and reads do not overlap each other, because NetCDF-C and HDF5 are serialized process-wide. The prefetch keeps one more forcing window in memory on every process. Each pending history copies the particle set on rank 0. `io.fsync` relies on storage honoring flush requests. Lustre striping changes the directory layout persistently. This example has not been timed on a parallel file system; it demonstrates equivalence, not a speedup.
 
 ## Interpretation
 
-Equality of the outputs shows that asynchronous publication is transparent to the model for this configuration; it is numerical verification, not observational validation, and it says nothing about the accuracy of the forcing. Any wall-time difference between the two runs is an I/O scheduling effect and must be measured with the [shared performance-evaluation protocol](../../docs/performance-evaluation.md), which applies to this configuration like any other: archive a Codex performance-review note for each measured resource tuple, with scientific equivalence as the prerequisite for interpreting timing.
+Equality of the outputs shows that asynchronous publication and the forcing prefetch are transparent to the model for this configuration; it is numerical verification, not observational validation, and it says nothing about the accuracy of the forcing. Any wall-time difference between the two runs is an I/O scheduling effect and must be measured with the [shared performance-evaluation protocol](../../docs/performance-evaluation.md), which applies to this configuration like any other: archive a Codex performance-review note for each measured resource tuple, with scientific equivalence as the prerequisite for interpreting timing.
 
 `physics.integrator` selects the explicit second-order midpoint step, which is the default. Results produced before this option existed used the first-order `euler` step and can be reproduced by setting `"integrator": "euler"`. See [temporal integration](../../docs/model.md#temporal-integration).
 

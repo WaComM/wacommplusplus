@@ -43,11 +43,12 @@ inline std::uint64_t oceanWindowBytes(const ForcingDimensions &d, std::size_t re
 }
 
 // Resident ocean forcing of one rank: the active window with its appended boundary record,
-// plus the adjacent window held for that record
-inline std::uint64_t residentForcingBytes(const ForcingDimensions &d, bool adjacent) {
+// plus the adjacent window held for that record, plus the window read ahead by io.prefetch
+inline std::uint64_t residentForcingBytes(const ForcingDimensions &d, bool adjacent, bool prefetch=false) {
     if (!d.known()) return 0;
     std::uint64_t bytes=oceanWindowBytes(d, d.oceanTime+(adjacent ? 1 : 0));
     if (adjacent) bytes+=oceanWindowBytes(d, d.oceanTime);
+    if (prefetch) bytes+=oceanWindowBytes(d, d.oceanTime);
     return bytes;
 }
 

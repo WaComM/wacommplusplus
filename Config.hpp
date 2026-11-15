@@ -167,6 +167,9 @@ public:
     bool AsyncIO() const;
     void AsyncIO(bool value);
     int AsyncMaxPending() const;
+    // Read the next forcing window on a separate thread (io.prefetch)
+    bool PrefetchForcing() const;
+    void PrefetchForcing(bool value);
     string Filesystem() const;
     bool Fsync() const;
     string StagingDir() const;
@@ -275,6 +278,7 @@ private:
 
     bool asyncIO;
     int asyncMaxPending;
+    bool prefetchForcing;
     string filesystem;
     bool fsync;
     string stagingDir;

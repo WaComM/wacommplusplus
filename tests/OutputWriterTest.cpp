@@ -278,14 +278,16 @@ void configuration(const fs::path &root) {
     assert(!defaults.AsyncIO() && defaults.AsyncMaxPending()==2 && defaults.Filesystem()=="posix");
     assert(!defaults.Fsync() && defaults.StagingDir().empty());
     assert(defaults.LustreStripeCount()==0 && defaults.LustreStripeSize()==0);
+    assert(!defaults.PrefetchForcing());
 
     // Parallel file systems flush before publication unless disabled
     assert(load(R"({"filesystem":"gpfs"})").Fsync());
     assert(!load(R"({"filesystem":"gpfs","fsync":false})").Fsync());
 
-    Config parallel=load(R"({"async":true,"async_max_pending":3,"filesystem":"lustre",
+    Config parallel=load(R"({"async":true,"async_max_pending":3,"prefetch":true,"filesystem":"lustre",
                              "staging_dir":"/tmp/stage","lustre_stripe_count":-1,"lustre_stripe_size":4194304})");
     assert(parallel.AsyncIO() && parallel.AsyncMaxPending()==3 && parallel.Filesystem()=="lustre");
+    assert(parallel.PrefetchForcing());
     assert(parallel.Fsync() && parallel.StagingDir()=="/tmp/stage");
     assert(parallel.LustreStripeCount()==-1 && parallel.LustreStripeSize()==4194304);
 
@@ -293,9 +295,10 @@ void configuration(const fs::path &root) {
     parallel.saveAsJson((root/"saved.json").string());
     Config saved((root/"saved.json").string());
     assert(saved.AsyncIO() && saved.AsyncMaxPending()==3 && saved.Filesystem()=="lustre" && saved.Fsync());
+    assert(saved.PrefetchForcing());
     assert(saved.StagingDir()=="/tmp/stage" && saved.LustreStripeCount()==-1 && saved.LustreStripeSize()==4194304);
 
-    for (const char *invalid: {R"({"async_max_pending":0})", R"({"async_max_pending":1.5})",
+    for (const char *invalid: {R"({"async_max_pending":0})", R"({"async_max_pending":1.5})", R"({"prefetch":1})",
                                R"({"filesystem":"nfs"})", R"({"lustre_stripe_count":2})",
                                R"({"filesystem":"lustre","lustre_stripe_count":-2})",
                                R"({"filesystem":"lustre","lustre_stripe_size":1000})",

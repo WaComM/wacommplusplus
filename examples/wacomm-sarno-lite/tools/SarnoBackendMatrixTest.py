@@ -22,7 +22,7 @@ def sample(root, build, p, n, g, label, seconds, application=None, reference=Non
     # The serial build logs the forcing line of a0ea55d, without its parts
     forcing = "FORCING sec: 0.5 max: 0.75"
     if build != "serial":
-        forcing += " wait: 0.0625 read: 0.25 normalize: 0.125 boundary: 0.03125"
+        forcing += " wait: 0.0625 read: 0.25 normalize: 0.125 boundary: 0.03125 prefetch: 0.015625 background: 0.5"
     lines += [forcing, "SETUP sec: 0.01", "OUTPUT sec: 0.25"] * 6
     lines += ["FLUSH sec: 0.125", f"RUN sec: {seconds + 2}"]
     (directory / "stdout.txt").write_text("\n".join(lines) + "\n")
@@ -68,6 +68,7 @@ def main():
         assert phases["flush_seconds"] == 0.125 and abs(phases["run_seconds"] - 4.5) < 1e-12
         assert abs(phases["forcing_wait_seconds"] - 0.375) < 1e-12 and abs(phases["forcing_read_seconds"] - 1.5) < 1e-12
         assert abs(phases["forcing_normalize_seconds"] - 0.75) < 1e-12 and abs(phases["forcing_boundary_seconds"] - 0.1875) < 1e-12
+        assert abs(phases["forcing_prefetch_wait_seconds"] - 0.09375) < 1e-12 and abs(phases["forcing_background_seconds"] - 3) < 1e-12
         serial = rows["serial", 1, 1, 0]["components_median"]
         assert abs(serial["forcing_seconds"] - 3) < 1e-12 and serial["forcing_read_seconds"] == 0
         gpu = rows["omp-cuda", 1, 4, 1]
@@ -86,11 +87,12 @@ def main():
         numa = ["numactl", "--interleave=all"]
         assert launch_command("omp", 1, 4, "w", True, prefix=numa) == numa + ["w", "wacomm-sarno-lite-6h.json"]
         assert launch_command("mpi", 2, 1, "w", False, prefix=numa)[-4:] == numa + ["w", "wacomm-sarno-lite-6h.json"]
-        assert result["io_async"] is False and result["launch_prefix"] == []
+        assert result["io_async"] is False and result["launch_prefix"] == [] and result["io_prefetch"] is False
         # A prepared suite refuses to resume with other output or launch options
         (root / "provenance/config.json").write_text("{}")
         prepare(root, 100000, root, {})
         assert rejected(lambda: prepare(root, 100000, root, {}, io_async=True))
+        assert rejected(lambda: prepare(root, 100000, root, {}, io_prefetch=True))
         assert rejected(lambda: prepare(root, 100000, root, {}, launch_prefix=numa))
         bound = launch_command("mpi-omp", 2, 6, "w", True)
         assert bound[:7] == ["mpirun", "-np", "2", "--map-by", "slot:PE=6", "--bind-to", "core"], bound

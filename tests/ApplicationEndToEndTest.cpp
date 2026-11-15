@@ -3,9 +3,9 @@
 // The helper has two modes:
 //
 //   application_end_to_end_test generate <directory>
-//       writes two consecutive native WACOMM forcing windows with a spatially
-//       uniform, time-independent horizontal current (u,v), a point source and
-//       forward/backward JSON configurations;
+//       writes four consecutive native WACOMM forcing windows (most runs use the
+//       first two) with a spatially uniform, time-independent horizontal current
+//       (u,v), a point source and forward/backward JSON configurations;
 //
 //   application_end_to_end_test demo <directory>
 //       writes a six-hour forward documentation case with NetCDF snapshots;
@@ -21,7 +21,10 @@
 //       the forward/backward runs with asynchronous, staged, fsync publication
 //       (docs/io.md) to reproduce the synchronous histories byte for byte and
 //       the gridded counts exactly; with "collective", it requires the same of
-//       the runs written collectively with MPI-IO and parallel NetCDF-4.
+//       the runs written collectively with MPI-IO and parallel NetCDF-4. Over
+//       four windows, it requires runs that read the forcing ahead on a separate
+//       thread (io.prefetch, docs/parallelism.md#forcing-prefetch) to reproduce
+//       the forward, backward, and restarted forward outputs exactly.
 //
 // The uniform current makes the exact Lagrangian displacement independent of
 // the interpolation operator, so the comparison verifies the executable path
@@ -61,6 +64,7 @@ constexpr double V=0.05;            // northward current [m s-1]
 constexpr double WINDOW=3600.0;     // forcing record interval [s]
 constexpr int WINDOWS=2;            // number of forcing files (verification case)
 constexpr int DEMO_WINDOWS=6;       // number of forcing files (documentation case)
+constexpr int LONG_WINDOWS=4;       // number of forcing files (forcing prefetch case)
 constexpr double LON0=14.0, LAT0=40.7, DLON=0.01, DLAT=0.01;
 constexpr int NI=21, NJ=21;
 constexpr double SOURCE_LON=14.05, SOURCE_LAT=40.75;
@@ -132,7 +136,7 @@ json pointSource(int particles) {
 }
 
 void generate(const std::string& directory) {
-    for (int w=0;w<WINDOWS;w++)
+    for (int w=0;w<LONG_WINDOWS;w++)
         writeWindow(directory+"/forcing-"+std::to_string(w)+".nc",w);
     std::ofstream(directory+"/sources.json") << pointSource(PARTICLES).dump(2) << "\n";
     for (const std::string direction: {"forward","backward"})
@@ -164,6 +168,28 @@ void generate(const std::string& directory) {
         if (direction=="backward") config["restart"]["restart_file"]="forward-collective-history-20210701Z02.txt";
         std::ofstream(directory+"/"+direction+"-collective.json") << config.dump(2) << "\n";
     }
+
+    // Four windows, so that the window after the adjacent one is read ahead while the first integrates:
+    // the outputs with io.prefetch must equal those without, forward, backward, and restarted.
+    for (const std::string variant: {"long","long-prefetch"}) {
+        for (const std::string direction: {"forward","backward"}) {
+            json config=configuration(direction,LONG_WINDOWS);
+            config["io"]["nc_output_root"]=direction+"-"+variant+"-conc-";
+            config["io"]["history_root"]=direction+"-"+variant+"-history-";
+            config["io"]["prefetch"]=variant=="long-prefetch";
+            if (direction=="backward") config["restart"]["restart_file"]="forward-"+variant+"-history-20210701Z04.txt";
+            std::ofstream(directory+"/"+direction+"-"+variant+".json") << config.dump(2) << "\n";
+        }
+    }
+    json restarted=configuration("forward",LONG_WINDOWS);
+    restarted["simulation"]["start"]="20210701Z0100";
+    restarted["io"]["nc_inputs"]=json::array({"forcing-1.nc","forcing-2.nc","forcing-3.nc"});
+    restarted["io"]["nc_output_root"]="forward-long-prefetch-restarted-conc-";
+    restarted["io"]["history_root"]="forward-long-prefetch-restarted-history-";
+    restarted["io"]["prefetch"]=true;
+    restarted["sources"]["active"]=false;
+    restarted["restart"]={{"active",true},{"restart_file","forward-long-prefetch-history-20210701Z01.txt"}};
+    std::ofstream(directory+"/forward-long-prefetch-restarted.json") << restarted.dump(2) << "\n";
 
     // Minute-resolution case: simulation and release at 00:30 inside the first window
     json source=pointSource(PARTICLES);
@@ -328,8 +354,37 @@ void verifyAsync(const std::string& directory) {
     std::cout << "asynchronous outputs equal synchronous outputs\n";
 }
 
+// Runs that read the forcing ahead equal the runs that do not, and a restarted forward run with the
+// prefetch continues the continuous one exactly.
+void verifyPrefetch(const std::string& directory) {
+    int compared=0;
+    for (const std::string direction: {"forward","backward"}) {
+        for (const std::string kind: {"history","conc"}) {
+            std::string prefix=direction+"-long-"+kind+"-";
+            for (const auto& entry: std::filesystem::directory_iterator(directory)) {
+                std::string name=entry.path().filename().string();
+                if (name.rfind(prefix,0)!=0) continue;
+                std::string other=direction+"-long-prefetch-"+kind+"-"+name.substr(prefix.size());
+                if (kind=="history") assert(fileContent(directory+"/"+other)==fileContent(directory+"/"+name));
+                else assert(concentration(directory+"/"+other)==concentration(directory+"/"+name));
+                compared++;
+            }
+        }
+    }
+    // Hourly histories 01-04 forward and 03-00 backward, and four gridded counts each way
+    assert(compared>=16);
+    for (int hour=2;hour<=LONG_WINDOWS;hour++) {
+        char suffix[32];
+        std::snprintf(suffix,sizeof(suffix),"20210701Z%02d.txt",hour);
+        assert(fileContent(directory+"/forward-long-prefetch-restarted-history-"+suffix)==
+               fileContent(directory+"/forward-long-prefetch-history-"+suffix));
+    }
+    std::cout << "prefetched forcing reproduces the forward, backward, and restarted outputs\n";
+}
+
 void verify(const std::string& directory, bool collective) {
     verifyPolygon(directory);
+    verifyPrefetch(directory);
     verifyAsync(directory);
     if (collective) verifyVariant(directory,"collective");
     auto forward=particles(directory+"/forward-history-20210701Z02.txt");

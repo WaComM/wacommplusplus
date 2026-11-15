@@ -8,10 +8,15 @@
 #include "WeatherModelAdapterFactory.hpp"
 #include "WaveModelAdapterFactory.hpp"
 #include "ResourceLimits.hpp"
+#include "ForcingPrefetch.hpp"
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
 #include <unordered_map>
+
+#ifdef USE_OMP
+#include <omp.h>
+#endif
 
 #if defined(USE_MPI) || defined(USE_EMPI)
 #define OMPI_SKIP_MPICXX
@@ -41,7 +46,9 @@ void checkForcingMemory(const std::shared_ptr<Config> &config, log4cplus::Logger
             bool adjacent=adjacentIdx>=0 && adjacentIdx<(int)config->NcInputs().size();
             std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
             auto adapter=OceanModelAdapterFactory::create(config->OceanModel(),config->NcInputs()[inputFirst]);
-            rankBytes=ResourceLimits::residentForcingBytes(adapter->dimensions(),adjacent);
+            // io.prefetch holds a third window when the run has one to read ahead
+            bool prefetch=config->PrefetchForcing() && config->NcInputs().size()>2;
+            rankBytes=ResourceLimits::residentForcingBytes(adapter->dimensions(),adjacent,prefetch);
         } catch (const std::exception &e) {
             // The adapter reports an unreadable input with its own validation message
             LOG4CPLUS_DEBUG(logger, "Forcing memory estimate unavailable: " << e.what());
@@ -187,7 +194,61 @@ void WacommPlusPlus::run() {
         std::chrono::duration<double> elapsed=std::chrono::steady_clock::now()-start;
         return elapsed.count();
     };
+
+    // A window read ahead on the prefetch thread (io.prefetch, docs/parallelism.md#forcing-prefetch)
+    struct PrefetchedWindow {
+        std::shared_ptr<OceanModelAdapter> ocean;
+        std::shared_ptr<WeatherModelAdapter> weather;
+        std::shared_ptr<WaveModelAdapter> wave;
+        double seconds=0;
+    };
+    ForcingPrefetch<PrefetchedWindow> prefetch;
+
+    // Rank-0 wait for a prefetched window, and the prefetch thread's preparation time of the windows taken
+    double forcingPrefetchWait=0, forcingBackground=0;
+
+    // Read every forcing of one window on the prefetch thread, holding the NetCDF lock as the solver thread does
+    std::shared_ptr<Config> prefetchConfig=config;
+    auto readWindow=[prefetchConfig](int index) {
+#ifdef USE_OMP
+        // The solver threads keep the cores: the adapters process on this thread only
+        omp_set_num_threads(1);
+#endif
+        PrefetchedWindow window;
+        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        auto start=std::chrono::steady_clock::now();
+        string ocean=prefetchConfig->NcInputs()[index];
+        window.ocean=OceanModelAdapterFactory::create(prefetchConfig->OceanModel(),ocean);
+        window.ocean->process();
+        if (prefetchConfig->WeatherModel()=="WRF") {
+            string weather=prefetchConfig->WeatherInputs()[index];
+            window.weather=WeatherModelAdapterFactory::create(prefetchConfig->WeatherModel(),weather,prefetchConfig->WeatherSourceCrs());
+            window.weather->process();
+        }
+        if (prefetchConfig->WaveModel()=="WW3") {
+            string wave=prefetchConfig->WaveInputs()[index];
+            window.wave=WaveModelAdapterFactory::create(prefetchConfig->WaveModel(),wave,prefetchConfig->WaveSourceCrs());
+            window.wave->process();
+        }
+        std::chrono::duration<double> elapsed=std::chrono::steady_clock::now()-start;
+        window.seconds=elapsed.count();
+        return window;
+    };
+
+    // Move a prefetched window into the window maps when the run needs it
+    auto takePrefetched=[&](int index) {
+        if (!prefetch.holds(index)) return;
+        auto waitStart=std::chrono::steady_clock::now();
+        PrefetchedWindow window=prefetch.take();
+        forcingPrefetchWait+=secondsSince(waitStart);
+        forcingBackground+=window.seconds;
+        oceanWindows[index]=window.ocean;
+        if (window.weather) weatherWindows[index]=window.weather;
+        if (window.wave) waveWindows[index]=window.wave;
+    };
+
     auto oceanWindow=[&](int index) {
+        takePrefetched(index);
         auto found=oceanWindows.find(index);
         if (found!=oceanWindows.end()) return found->second;
         string& input=config->NcInputs()[index];
@@ -203,6 +264,7 @@ void WacommPlusPlus::run() {
         return adapter;
     };
     auto weatherWindow=[&](int index) {
+        takePrefetched(index);
         auto found=weatherWindows.find(index);
         if (found!=weatherWindows.end()) return found->second;
         string& input=config->WeatherInputs()[index];
@@ -214,6 +276,7 @@ void WacommPlusPlus::run() {
         adapter->process(); weatherWindows[index]=adapter; return adapter;
     };
     auto waveWindow=[&](int index) {
+        takePrefetched(index);
         auto found=waveWindows.find(index);
         if (found!=waveWindows.end()) return found->second;
         string& input=config->WaveInputs()[index];
@@ -233,7 +296,7 @@ void WacommPlusPlus::run() {
 
         // Forcing preparation: reading, normalization, boundary record, and regridding
         auto forcingStart=std::chrono::steady_clock::now();
-        forcingWait=0; forcingRead=0; forcingNormalize=0; forcingBoundary=0;
+        forcingWait=0; forcingRead=0; forcingNormalize=0; forcingBoundary=0; forcingPrefetchWait=0; forcingBackground=0;
 
         shared_ptr<OceanModelAdapter> oceanModelAdapter=oceanWindow(inputIdx);
 
@@ -293,7 +356,8 @@ void WacommPlusPlus::run() {
         if (world_rank == 0) {
             LOG4CPLUS_INFO(logger, "FORCING sec: " << forcingSeconds << " max: " << forcingMax
                                    << " wait: " << forcingWait << " read: " << forcingRead
-                                   << " normalize: " << forcingNormalize << " boundary: " << forcingBoundary);
+                                   << " normalize: " << forcingNormalize << " boundary: " << forcingBoundary
+                                   << " prefetch: " << forcingPrefetchWait << " background: " << forcingBackground);
         }
 
         // Rank-0 setup: sources, saved input, and restart
@@ -372,6 +436,13 @@ void WacommPlusPlus::run() {
         if (world_rank == 0) {
             std::chrono::duration<double> setup=std::chrono::steady_clock::now()-setupStart;
             LOG4CPLUS_INFO(logger, "SETUP sec: " << setup.count());
+        }
+
+        // Read the window after the adjacent one while this one integrates (io.prefetch)
+        int prefetchIdx=inputIdx+2*inputDirection;
+        if (config->PrefetchForcing() && prefetchIdx>=0 && prefetchIdx<(int)config->NcInputs().size() &&
+            oceanWindows.find(prefetchIdx)==oceanWindows.end() && !prefetch.pending()) {
+            prefetch.start(prefetchIdx,[readWindow,prefetchIdx]() { return readWindow(prefetchIdx); });
         }
 
         // Check if it is a dry run

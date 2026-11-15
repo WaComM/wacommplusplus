@@ -55,15 +55,16 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def prepare(root, rate, forcing, builds, nodes=1, io_async=False, launch_prefix=()):
+def prepare(root, rate, forcing, builds, nodes=1, io_async=False, launch_prefix=(), io_prefetch=False):
     """Write the suite provenance, configuration, and source once; verify the forcing checksums."""
     provenance = root / "provenance"
     if (provenance / "config.json").exists():
         # A resumed suite keeps its options: samples of different settings must not be pooled
         record = json.loads((provenance / "suite.json").read_text())
-        if (record.get("io_async", False), record.get("launch_prefix", [])) != (io_async, list(launch_prefix)):
-            raise ValueError(f"{root} was prepared with io_async={record.get('io_async', False)} and "
-                             f"launch_prefix={record.get('launch_prefix', [])}; use a new --root")
+        options = (record.get("io_async", False), record.get("launch_prefix", []), record.get("io_prefetch", False))
+        if options != (io_async, list(launch_prefix), io_prefetch):
+            raise ValueError(f"{root} was prepared with io_async={options[0]}, launch_prefix={options[1]}, and "
+                             f"io_prefetch={options[2]}; use a new --root")
         return
     provenance.mkdir(parents=True, exist_ok=True)
     source = json.loads((REPOSITORY / "examples/sources-sarno_river/sources-sarno_river.json").read_text())
@@ -76,6 +77,8 @@ def prepare(root, rate, forcing, builds, nodes=1, io_async=False, launch_prefix=
                         nc_inputs=["ocm3_d03_20210701Z" + h + ".nc" for h in ("09", "10", "11", "13", "14", "15")])
     if io_async:
         config["io"]["async"] = True
+    if io_prefetch:
+        config["io"]["prefetch"] = True
     (provenance / "config.json").write_text(json.dumps(config, indent=2) + "\n")
     (provenance / "particles-per-hour.txt").write_text(f"{rate}\n")
     expected = {}
@@ -88,7 +91,7 @@ def prepare(root, rate, forcing, builds, nodes=1, io_async=False, launch_prefix=
     shutil.copy(Path(forcing, "prepared-forcing.sha256"), provenance / "forcing.sha256")
     record = {"date_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(), "host": platform.node(),
               "platform": platform.platform(), "machine": platform.machine(), "python": sys.version.split()[0], "nodes": nodes,
-              "io_async": io_async, "launch_prefix": list(launch_prefix),
+              "io_async": io_async, "launch_prefix": list(launch_prefix), "io_prefetch": io_prefetch,
               "revision": subprocess.run(["git", "-C", str(REPOSITORY), "rev-parse", "HEAD"], capture_output=True,
                                          text=True).stdout.strip(),
               "working_tree_patch": subprocess.run(["git", "-C", str(REPOSITORY), "diff", "HEAD"], capture_output=True,
@@ -194,7 +197,7 @@ def run(args):
     prefix = ["numactl", "--interleave=all"] if args.interleave else []
     if prefix and not shutil.which(prefix[0]):
         raise ValueError("--interleave needs numactl on the PATH")
-    prepare(root, args.rate, args.forcing, builds, args.nodes, args.io_async, prefix)
+    prepare(root, args.rate, args.forcing, builds, args.nodes, args.io_async, prefix, args.io_prefetch)
     common = (root, args.forcing, args.bind, args.python, args.prune_snapshots, args.nodes, prefix)
 
     def one(config, label):
@@ -271,6 +274,7 @@ def suite(root):
             "host": provenance["host"], "nodes": provenance.get("nodes", 1), "platform": provenance["platform"], "revision": provenance["revision"],
             "working_tree_patch_bytes": len(provenance["working_tree_patch"]),
             "io_async": provenance.get("io_async", False), "launch_prefix": provenance.get("launch_prefix", []),
+            "io_prefetch": provenance.get("io_prefetch", False),
             "baseline_solver_seconds": base["solver_median"], "baseline_application_seconds": base["application_median"],
             "rows": rows}
 
@@ -436,6 +440,7 @@ def main():
     execute.add_argument("--python", default=sys.executable)
     execute.add_argument("--prune-snapshots", action="store_true")
     execute.add_argument("--io-async", action="store_true", help="set io.async=true in the suite configuration")
+    execute.add_argument("--io-prefetch", action="store_true", help="set io.prefetch=true in the suite configuration")
     execute.add_argument("--interleave", action="store_true",
                          help="run every process under numactl --interleave=all (Linux NUMA page interleaving)")
     collect = commands.add_parser("collect", help="summarize validated suites")

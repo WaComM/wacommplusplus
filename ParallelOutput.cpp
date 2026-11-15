@@ -89,6 +89,9 @@ namespace {
         agree(comm, fileName, "create", error);
 
         try {
+            // The lock is per process: it excludes this rank's forcing prefetch and output threads,
+            // which never call MPI, so the collective calls of the ranks cannot wait for each other on it
+            std::lock_guard<std::mutex> lock(OutputWriter::netcdfMutex());
             collectiveWrite(partial);
         } catch (const std::exception &e) { error=e.what(); }
         try {

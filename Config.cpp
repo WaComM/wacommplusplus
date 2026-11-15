@@ -116,6 +116,9 @@ void Config::setDefault() {
     // Queued or running asynchronous writes before the solver waits
     asyncMaxPending = 2;
 
+    // Read each forcing window when it is needed (default, no prefetch thread)
+    prefetchForcing = false;
+
     // Output file system (posix, lustre, gpfs)
     filesystem = "posix";
 
@@ -655,6 +658,7 @@ string Config::asJson() const {
             { "nc_input_root", ncInputRoot},
             { "async", asyncIO },
             { "async_max_pending", asyncMaxPending },
+            { "prefetch", prefetchForcing },
             { "filesystem", filesystem },
             { "fsync", fsync },
             { "staging_dir", stagingDir },
@@ -805,6 +809,11 @@ void Config::loadFromJson(const string &fileName) {
             if (!io["async_max_pending"].is_number_integer())
                 throw std::runtime_error("io.async_max_pending must be an integer");
             asyncMaxPending = io["async_max_pending"];
+        }
+        if (io.contains("prefetch")) {
+            if (!io["prefetch"].is_boolean())
+                throw std::runtime_error("io.prefetch must be true or false");
+            prefetchForcing = io["prefetch"];
         }
         if (io.contains("filesystem")) { filesystem = io["filesystem"]; }
         // Parallel file systems flush before publication unless explicitly disabled
@@ -1175,6 +1184,10 @@ bool Config::AsyncIO() const { return asyncIO; }
 void Config::AsyncIO(bool value) { asyncIO = value; }
 
 int Config::AsyncMaxPending() const { return asyncMaxPending; }
+
+bool Config::PrefetchForcing() const { return prefetchForcing; }
+
+void Config::PrefetchForcing(bool value) { prefetchForcing = value; }
 
 string Config::Filesystem() const { return filesystem; }
 
