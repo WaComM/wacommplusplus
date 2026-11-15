@@ -37,7 +37,7 @@ Other facts the tasks rely on:
 
 ## Execution order
 
-C5 first: it is small and protects every later experiment. Then C1 and C2; both are now measured ([reruns](backend-matrix-evaluation.md#reruns-after-the-first-improvements)). C2 step 2 is deferred, because the hourly Sarno output gathers particle states every interval and the step could save at most part of the 0.37 s distribution time. Most of the remaining time is outside the solver (70% of the four-node 16×14 application time), and in the full-socket OpenMP efficiency loss (96% at 14 threads, 72% at 56). The measurement at `a0ea55d` ([time outside the solver](backend-matrix-evaluation.md#time-outside-the-solver)) found that forcing preparation takes about 4.8 s and output 3.0 s. `io.async=true` hides most of the output, and four ranks per node read as fast as one process, while `numactl --interleave=all` left the OpenMP efficiency unchanged. So C4 comes next, starting with a forcing timer that separates reading from normalization. C3 helps pure-MPI placements only, and C6 needs hardware counters first. Overlap (C4) can hide input only behind solver time: at most 1.8 s for OpenMP 1×56 at $10^5$ particles/hour and 5.6 s for four-node 16×14. C7 and C8 are independent. N1–N4 and P1–P4 are independent of the computational tasks and of each other, except that P1 and P2 share the stochastic-operator configuration design: do P1 first.
+C5 first: it is small and protects every later experiment. Then C1 and C2; both are now measured ([reruns](backend-matrix-evaluation.md#reruns-after-the-first-improvements)). C2 step 2 is deferred, because the hourly Sarno output gathers particle states every interval and the step could save at most part of the 0.37 s distribution time. Most of the remaining time is outside the solver (70% of the four-node 16×14 application time), and in the full-socket OpenMP efficiency loss (96% at 14 threads, 72% at 56). The measurement at `a0ea55d` ([time outside the solver](backend-matrix-evaluation.md#time-outside-the-solver)) found that forcing preparation takes about 4.8 s and output 3.0 s. `io.async=true` hides most of the output, and four ranks per node read as fast as one process, while `numactl --interleave=all` left the OpenMP efficiency unchanged. Splitting the forcing timer at `9cd10e4` ([forcing preparation split](backend-matrix-evaluation.md#forcing-preparation-split)) found that half of it is the boundary-record append, which copies the whole window twice. So C9 comes next, then C4's prefetch. C3 helps pure-MPI placements only, and C6 needs hardware counters first. Overlap (C4) can hide input only behind solver time: at most 1.8 s for OpenMP 1×56 at $10^5$ particles/hour and 5.6 s for four-node 16×14. C7 and C8 are independent. N1–N4 and P1–P4 are independent of the computational tasks and of each other, except that P1 and P2 share the stochastic-operator configuration design: do P1 first.
 
 ## Computational tasks
 
@@ -79,7 +79,7 @@ C5 first: it is small and protects every later experiment. Then C1 and C2; both 
 - **Invariant.** Results are bit-identical, forward and backward, continuous and restarted.
 - **Tests.** Forward and backward `application_end_to_end`, `restart_format`, and a test forcing a slow reader (an injected delay) to prove the solver waits for the record.
 - **Acceptance.** For OpenMP 1×56 at 10⁵ particles/hour, non-solver time falls by at least 40%.
-- **Measured.** At `a0ea55d`, `io.async=true` was tried as this task's first step. For OpenMP 1×56 at $10^5$ particles/hour, forcing preparation takes 4.83 s and output 2.97 s of the 9.75 s run. Asynchronous output cuts the output section to 0.03 s plus a 0.56 s final flush, but adds 1.1 s to forcing preparation through the process-wide NetCDF lock: 8.47 s in all. The forcing timer now also reports the lock wait, ocean reads, ocean normalization, and boundary-record appends; their measurement decides between parallel normalization and a prefetch thread.
+- **Measured.** At `a0ea55d`, `io.async=true` was tried as this task's first step. For OpenMP 1×56 at $10^5$ particles/hour, forcing preparation takes 4.83 s and output 2.97 s of the 9.75 s run. Asynchronous output cuts the output section to 0.03 s plus a 0.56 s final flush, but adds 1.1 s to forcing preparation: 8.47 s in all. At `9cd10e4` the [forcing preparation split](backend-matrix-evaluation.md#forcing-preparation-split) found that the NetCDF lock wait is zero. Reading takes 2.2–2.5 s, normalization 0.02–0.07 s, and the boundary-record append 2.3–2.4 s, growing by 1.0 s under `io.async`. C9 removes the append's copies first; prefetching then has only the reads to hide.
 
 ### C5. Fail fast on resource limits
 
@@ -108,6 +108,14 @@ C5 first: it is small and protects every later experiment. Then C1 and C2; both 
 ### C8. Heterogeneous-core awareness
 
 On hybrid-core CPUs (Apple M-series, Intel hybrid), document a performance-cores-only default thread count and report per-core-class efficiency in the benchmark collector.
+
+### C9. Append the boundary record without copying the window
+
+- **Evidence.** `OceanModelAdapter::appendBoundaryRecord` takes 2.3–2.4 s of the 4.8 s forcing preparation per run on `hhcpu` (OpenMP 1×56, $10^5$ particles/hour), and 3.4 s with `io.async=true` ([forcing preparation split](backend-matrix-evaluation.md#forcing-preparation-split)). It copies every field element by element into new arrays, with the vertical index innermost, then copies them again into freshly allocated adapter arrays.
+- **Approach.** Copy each time record of `zeta`, `u`, `v`, `w`, and `akt` as one contiguous block into arrays that hold the extra record, and adopt them without a second copy. Alternatively, let the adapters allocate one extra record when the window has an adjacent one, so that the append writes only that record.
+- **Invariant.** The appended arrays are bit-identical, so results are bit-identical, forward and backward, continuous and restarted. The duplicate-boundary check and the chronology check are unchanged.
+- **Tests.** A test that compares the appended arrays with an element-wise reference for prepend and append. Also the forward and backward `application_end_to_end` and `restart_format`.
+- **Acceptance.** The boundary-record time falls by at least 75% on `hhcpu`, synchronous and asynchronous.
 
 ## Numerical tasks
 

@@ -1,0 +1,663 @@
+{
+  "schema": "wacomm-sarno-backend-matrix-v1",
+  "estimator": "median of valid measured samples; solver = sum of five solver intervals timed on rank 0 between MPI barriers (s); application = launcher wall time (s)",
+  "suites": {
+    "sync": {
+      "root": "data/matrix-hhcpu/hh-q100000-9cd10e4",
+      "particles_per_hour": 100000,
+      "host": "wn17.e4.cluster",
+      "nodes": 1,
+      "platform": "Linux-4.18.0-553.104.1.el8_10.x86_64-x86_64-with-glibc2.28",
+      "revision": "9cd10e4119b88efcb66dc8e4eca0fd67805dc89f",
+      "working_tree_patch_bytes": 0,
+      "io_async": false,
+      "launch_prefix": [],
+      "baseline_solver_seconds": 72.818001132,
+      "baseline_application_seconds": 80.484,
+      "rows": [
+        {
+          "build": "serial",
+          "family": "Serial",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 0,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            72.84444484299999,
+            72.818001132,
+            72.811499169
+          ],
+          "application_seconds": [
+            80.484,
+            80.82,
+            80.425
+          ],
+          "solver_median": 72.818001132,
+          "solver_range": [
+            72.811499169,
+            72.84444484299999
+          ],
+          "application_median": 80.484,
+          "max_rss_kib_median": 4006404,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.1016463,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 4.643076089,
+            "forcing_max_seconds": 4.643076089,
+            "forcing_wait_seconds": 2.116e-06,
+            "forcing_read_seconds": 2.224848,
+            "forcing_normalize_seconds": 0.0690291,
+            "forcing_boundary_seconds": 2.346921,
+            "setup_seconds": 0.0034892060000000003,
+            "output_seconds": 2.6688750000000003,
+            "flush_seconds": 6.05e-07,
+            "run_seconds": 80.4751
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 1.0,
+          "application_speedup": 1.0,
+          "cpu_efficiency": 1.0
+        },
+        {
+          "build": "omp",
+          "family": "OpenMP",
+          "mpi_processes": 1,
+          "openmp_threads": 56,
+          "gpus": 0,
+          "cpu_workers": 56,
+          "solver_seconds": [
+            1.82519653,
+            1.827590306,
+            1.8239386610000001
+          ],
+          "application_seconds": [
+            10.025,
+            9.454,
+            10.041
+          ],
+          "solver_median": 1.82519653,
+          "solver_range": [
+            1.8239386610000001,
+            1.827590306
+          ],
+          "application_median": 10.025,
+          "max_rss_kib_median": 4005532,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.01762199,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 4.831709495,
+            "forcing_max_seconds": 4.831709495,
+            "forcing_wait_seconds": 2.535e-06,
+            "forcing_read_seconds": 2.462374,
+            "forcing_normalize_seconds": 0.02535291,
+            "forcing_boundary_seconds": 2.342947,
+            "setup_seconds": 0.00337783,
+            "output_seconds": 3.104522,
+            "flush_seconds": 8.5e-07,
+            "run_seconds": 9.87985
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 39.89597828788334,
+          "application_speedup": 8.028329177057357,
+          "cpu_efficiency": 0.7124281837122025
+        },
+        {
+          "build": "mpi-omp",
+          "family": "MPI+OpenMP",
+          "mpi_processes": 4,
+          "openmp_threads": 14,
+          "gpus": 0,
+          "cpu_workers": 56,
+          "solver_seconds": [
+            1.8932262,
+            1.890210975,
+            1.891192167
+          ],
+          "application_seconds": [
+            10.232,
+            10.3,
+            10.446
+          ],
+          "solver_median": 1.891192167,
+          "solver_range": [
+            1.890210975,
+            1.8932262
+          ],
+          "application_median": 10.3,
+          "max_rss_kib_median": 4169944,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.02027509,
+            "distribute_seconds": 0.04756081,
+            "collect_seconds": 0.021916960000000003,
+            "forcing_seconds": 4.852008099,
+            "forcing_max_seconds": 4.894613649,
+            "forcing_wait_seconds": 1.733e-06,
+            "forcing_read_seconds": 2.433132,
+            "forcing_normalize_seconds": 0.02502351,
+            "forcing_boundary_seconds": 2.393662,
+            "setup_seconds": 0.0042809020000000005,
+            "output_seconds": 2.661494,
+            "flush_seconds": 6.14e-07,
+            "run_seconds": 9.61327
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 38.50375567466064,
+          "application_speedup": 7.8139805825242705,
+          "cpu_efficiency": 0.68756706561894
+        }
+      ],
+      "best_solver": "OpenMP 1\u00d756",
+      "best_cpu_solver": "OpenMP 1\u00d756",
+      "best_application": "OpenMP 1\u00d756"
+    },
+    "async": {
+      "root": "data/matrix-hhcpu/hh-q100000-9cd10e4-async",
+      "particles_per_hour": 100000,
+      "host": "wn17.e4.cluster",
+      "nodes": 1,
+      "platform": "Linux-4.18.0-553.104.1.el8_10.x86_64-x86_64-with-glibc2.28",
+      "revision": "9cd10e4119b88efcb66dc8e4eca0fd67805dc89f",
+      "working_tree_patch_bytes": 0,
+      "io_async": true,
+      "launch_prefix": [],
+      "baseline_solver_seconds": 72.835632962,
+      "baseline_application_seconds": 78.32,
+      "rows": [
+        {
+          "build": "serial",
+          "family": "Serial",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 0,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            72.835632962,
+            72.823258016,
+            72.96501918
+          ],
+          "application_seconds": [
+            78.32,
+            78.314,
+            78.748
+          ],
+          "solver_median": 72.835632962,
+          "solver_range": [
+            72.823258016,
+            72.96501918
+          ],
+          "application_median": 78.32,
+          "max_rss_kib_median": 6126088,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.1019515,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 4.641805095,
+            "forcing_max_seconds": 4.641805095,
+            "forcing_wait_seconds": 1.705e-06,
+            "forcing_read_seconds": 2.172425,
+            "forcing_normalize_seconds": 0.0732713,
+            "forcing_boundary_seconds": 2.407207,
+            "setup_seconds": 0.003489942,
+            "output_seconds": 0.02179947,
+            "flush_seconds": 0.543704,
+            "run_seconds": 78.3076
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 1.0,
+          "application_speedup": 1.0,
+          "cpu_efficiency": 1.0
+        },
+        {
+          "build": "omp",
+          "family": "OpenMP",
+          "mpi_processes": 1,
+          "openmp_threads": 56,
+          "gpus": 0,
+          "cpu_workers": 56,
+          "solver_seconds": [
+            1.8252715019999999,
+            1.82370007,
+            1.8235544099999998
+          ],
+          "application_seconds": [
+            8.757,
+            8.651,
+            8.375
+          ],
+          "solver_median": 1.82370007,
+          "solver_range": [
+            1.8235544099999998,
+            1.8252715019999999
+          ],
+          "application_median": 8.651,
+          "max_rss_kib_median": 5770912,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.01667995,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 5.895604892,
+            "forcing_max_seconds": 5.895604892,
+            "forcing_wait_seconds": 1.7490000000000001e-06,
+            "forcing_read_seconds": 2.434516,
+            "forcing_normalize_seconds": 0.02745998,
+            "forcing_boundary_seconds": 3.387264,
+            "setup_seconds": 0.003642712,
+            "output_seconds": 0.02487764,
+            "flush_seconds": 0.605299,
+            "run_seconds": 8.46834
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 39.93838359725457,
+          "application_speedup": 9.053288637151773,
+          "cpu_efficiency": 0.7131854213795459
+        },
+        {
+          "build": "mpi-omp",
+          "family": "MPI+OpenMP",
+          "mpi_processes": 4,
+          "openmp_threads": 14,
+          "gpus": 0,
+          "cpu_workers": 56,
+          "solver_seconds": [
+            1.8888481990000001,
+            1.889450493,
+            1.886365233
+          ],
+          "application_seconds": [
+            9.488,
+            9.063,
+            9.264
+          ],
+          "solver_median": 1.8888481990000001,
+          "solver_range": [
+            1.886365233,
+            1.889450493
+          ],
+          "application_median": 9.264,
+          "max_rss_kib_median": 6366564,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.02042471,
+            "distribute_seconds": 0.04300485,
+            "collect_seconds": 0.02173675,
+            "forcing_seconds": 5.742309703,
+            "forcing_max_seconds": 5.742310917,
+            "forcing_wait_seconds": 1.1800000000000001e-06,
+            "forcing_read_seconds": 2.283444,
+            "forcing_normalize_seconds": 0.03035843,
+            "forcing_boundary_seconds": 3.361232,
+            "setup_seconds": 0.0044532880000000006,
+            "output_seconds": 0.02091585,
+            "flush_seconds": 0.832832,
+            "run_seconds": 8.56597
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 38.56087164683794,
+          "application_speedup": 8.454231433506045,
+          "cpu_efficiency": 0.6885869936935346
+        }
+      ],
+      "best_solver": "OpenMP 1\u00d756",
+      "best_cpu_solver": "OpenMP 1\u00d756",
+      "best_application": "OpenMP 1\u00d756"
+    },
+    "4node-sync": {
+      "root": "data/matrix-hhcpu/hh4-q100000-9cd10e4",
+      "particles_per_hour": 100000,
+      "host": "wn17.e4.cluster",
+      "nodes": 4,
+      "platform": "Linux-4.18.0-553.104.1.el8_10.x86_64-x86_64-with-glibc2.28",
+      "revision": "9cd10e4119b88efcb66dc8e4eca0fd67805dc89f",
+      "working_tree_patch_bytes": 0,
+      "io_async": false,
+      "launch_prefix": [],
+      "baseline_solver_seconds": 72.915270971,
+      "baseline_application_seconds": 80.629,
+      "rows": [
+        {
+          "build": "serial",
+          "family": "Serial",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 0,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            72.982501719,
+            72.840881879,
+            72.915270971
+          ],
+          "application_seconds": [
+            80.629,
+            80.791,
+            80.578
+          ],
+          "solver_median": 72.915270971,
+          "solver_range": [
+            72.840881879,
+            72.982501719
+          ],
+          "application_median": 80.629,
+          "max_rss_kib_median": 4005892,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.1006054,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 4.645055037,
+            "forcing_max_seconds": 4.645055037,
+            "forcing_wait_seconds": 1.839e-06,
+            "forcing_read_seconds": 2.208905,
+            "forcing_normalize_seconds": 0.06948469,
+            "forcing_boundary_seconds": 2.366651,
+            "setup_seconds": 0.003566668,
+            "output_seconds": 2.700889,
+            "flush_seconds": 6.07e-07,
+            "run_seconds": 80.6201
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 1.0,
+          "application_speedup": 1.0,
+          "cpu_efficiency": 1.0
+        },
+        {
+          "build": "mpi",
+          "family": "MPI",
+          "mpi_processes": 112,
+          "openmp_threads": 1,
+          "gpus": 0,
+          "cpu_workers": 112,
+          "solver_seconds": [
+            1.366128514,
+            1.362519569,
+            1.312907044
+          ],
+          "application_seconds": [
+            19.732,
+            21.017,
+            19.972
+          ],
+          "solver_median": 1.362519569,
+          "solver_range": [
+            1.312907044,
+            1.366128514
+          ],
+          "application_median": 19.972,
+          "max_rss_kib_median": 4223528,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.1421406,
+            "distribute_seconds": 0.1219818,
+            "collect_seconds": 0.08505807500000001,
+            "forcing_seconds": 9.395016299,
+            "forcing_max_seconds": 10.230038201500001,
+            "forcing_wait_seconds": 2.8769999999999997e-06,
+            "forcing_read_seconds": 6.2616725,
+            "forcing_normalize_seconds": 0.12849264999999999,
+            "forcing_boundary_seconds": 3.0048165,
+            "setup_seconds": 0.0038442084999999997,
+            "output_seconds": 4.494516,
+            "flush_seconds": 4.182499999999999e-06,
+            "run_seconds": 17.7021
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [
+            "sample-2: could not convert string to float: '0.025111626-11-13'"
+          ],
+          "speedup": 53.5150265948217,
+          "application_speedup": 4.037101942719808,
+          "cpu_efficiency": 0.4778127374537652
+        },
+        {
+          "build": "mpi-omp",
+          "family": "MPI+OpenMP",
+          "mpi_processes": 16,
+          "openmp_threads": 14,
+          "gpus": 0,
+          "cpu_workers": 224,
+          "solver_seconds": [
+            0.6306080430000001,
+            0.6214925130000001,
+            0.6209807980000001
+          ],
+          "application_seconds": [
+            10.003,
+            10.605,
+            10.353
+          ],
+          "solver_median": 0.6214925130000001,
+          "solver_range": [
+            0.6209807980000001,
+            0.6306080430000001
+          ],
+          "application_median": 10.353,
+          "max_rss_kib_median": 4315112,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.01988995,
+            "distribute_seconds": 0.07768976999999999,
+            "collect_seconds": 0.03093398,
+            "forcing_seconds": 4.757711031,
+            "forcing_max_seconds": 4.873957246,
+            "forcing_wait_seconds": 1.882e-06,
+            "forcing_read_seconds": 2.400764,
+            "forcing_normalize_seconds": 0.02474593,
+            "forcing_boundary_seconds": 2.332177,
+            "setup_seconds": 0.004216808,
+            "output_seconds": 2.936995,
+            "flush_seconds": 6.63e-07,
+            "run_seconds": 8.60629
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 117.32284693025737,
+          "application_speedup": 7.7879841591809145,
+          "cpu_efficiency": 0.5237627095100775
+        }
+      ],
+      "best_solver": "MPI+OpenMP 16\u00d714",
+      "best_cpu_solver": "MPI+OpenMP 16\u00d714",
+      "best_application": "MPI+OpenMP 16\u00d714"
+    },
+    "4node-async": {
+      "root": "data/matrix-hhcpu/hh4-q100000-9cd10e4-async",
+      "particles_per_hour": 100000,
+      "host": "wn17.e4.cluster",
+      "nodes": 4,
+      "platform": "Linux-4.18.0-553.104.1.el8_10.x86_64-x86_64-with-glibc2.28",
+      "revision": "9cd10e4119b88efcb66dc8e4eca0fd67805dc89f",
+      "working_tree_patch_bytes": 0,
+      "io_async": true,
+      "launch_prefix": [],
+      "baseline_solver_seconds": 72.86864760499999,
+      "baseline_application_seconds": 78.424,
+      "rows": [
+        {
+          "build": "serial",
+          "family": "Serial",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 0,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            72.859319814,
+            72.912713561,
+            72.86864760499999
+          ],
+          "application_seconds": [
+            78.278,
+            78.424,
+            78.431
+          ],
+          "solver_median": 72.86864760499999,
+          "solver_range": [
+            72.859319814,
+            72.912713561
+          ],
+          "application_median": 78.424,
+          "max_rss_kib_median": 6126700,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.101655,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 4.6446452,
+            "forcing_max_seconds": 4.6446452,
+            "forcing_wait_seconds": 1.5380000000000001e-06,
+            "forcing_read_seconds": 2.169144,
+            "forcing_normalize_seconds": 0.0746234,
+            "forcing_boundary_seconds": 2.400847,
+            "setup_seconds": 0.003551449,
+            "output_seconds": 0.02193985,
+            "flush_seconds": 0.557127,
+            "run_seconds": 78.411
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 1.0,
+          "application_speedup": 1.0,
+          "cpu_efficiency": 1.0
+        },
+        {
+          "build": "mpi-omp",
+          "family": "MPI+OpenMP",
+          "mpi_processes": 16,
+          "openmp_threads": 14,
+          "gpus": 0,
+          "cpu_workers": 224,
+          "solver_seconds": [
+            0.620970283,
+            0.626092078,
+            0.619049385
+          ],
+          "application_seconds": [
+            9.516,
+            9.212,
+            8.928
+          ],
+          "solver_median": 0.620970283,
+          "solver_range": [
+            0.619049385,
+            0.626092078
+          ],
+          "application_median": 9.212,
+          "max_rss_kib_median": 6277352,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.02015134,
+            "distribute_seconds": 0.07925172999999999,
+            "collect_seconds": 0.03055185,
+            "forcing_seconds": 5.677063535,
+            "forcing_max_seconds": 5.754337886,
+            "forcing_wait_seconds": 1.641e-06,
+            "forcing_read_seconds": 2.256817,
+            "forcing_normalize_seconds": 0.03007241,
+            "forcing_boundary_seconds": 3.356052,
+            "setup_seconds": 0.004651049,
+            "output_seconds": 0.02612526,
+            "flush_seconds": 0.861168,
+            "run_seconds": 7.45827
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 117.34643283243877,
+          "application_speedup": 8.513243595310465,
+          "cpu_efficiency": 0.5238680037162445
+        }
+      ],
+      "best_solver": "MPI+OpenMP 16\u00d714",
+      "best_cpu_solver": "MPI+OpenMP 16\u00d714",
+      "best_application": "MPI+OpenMP 16\u00d714"
+    }
+  }
+}
