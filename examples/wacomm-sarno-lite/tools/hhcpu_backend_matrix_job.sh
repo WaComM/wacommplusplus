@@ -15,7 +15,7 @@
 # CONFIG is BUILD:P:N:G as in sarno_backend_matrix.py. Every rank holds the full forcing
 # (4-7 GiB), so at most 28 MPI ranks are placed on one node. With --nodes=N, MPI ranks are
 # spread evenly (ppr placement); the serial and OpenMP tuples run on the first node.
-# WACOMM_MATRIX_OPTIONS adds run options, for example "--io-async", "--io-prefetch", or "--interleave"
+# WACOMM_MATRIX_OPTIONS adds run options, for example "--io-async", "--io-prefetch", "--spare-cores=1", or "--interleave"
 # (numactl --interleave=all); give each setting its own SUITE.
 set -euo pipefail
 
@@ -33,7 +33,7 @@ for config in "$@"; do
 done
 for option in ${WACOMM_MATRIX_OPTIONS:-}; do
     case "$option" in
-        --io-async|--io-prefetch|--interleave) arguments+=("$option") ;;
+        --io-async|--io-prefetch|--interleave|--spare-cores=[0-9]*) arguments+=("$option") ;;
         *) echo "unsupported WACOMM_MATRIX_OPTIONS entry: $option" >&2; exit 2 ;;
     esac
 done

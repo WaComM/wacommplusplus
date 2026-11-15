@@ -14,9 +14,14 @@
 #include <chrono>
 #include <stdexcept>
 #include <unordered_map>
+#include <vector>
 
 #ifdef USE_OMP
 #include <omp.h>
+#ifdef __linux__
+#include <pthread.h>
+#include <sched.h>
+#endif
 #endif
 
 #if defined(USE_MPI) || defined(USE_EMPI)
@@ -33,6 +38,24 @@ extern "C" {
 WacommPlusPlus::~WacommPlusPlus() = default;
 
 namespace {
+#if defined(USE_OMP) && defined(__linux__)
+// With OMP_PROC_BIND, a thread started by the solver's master thread inherits its single core.
+// Allow the calling thread every processor of the OpenMP places instead, so that the scheduler
+// can move it to a core no solver thread uses. Without places, the affinity is left unchanged.
+void allowOpenMPPlaces() {
+    int places=omp_get_num_places();
+    if (places<=0) return;
+    cpu_set_t cpus;
+    CPU_ZERO(&cpus);
+    for (int place=0; place<places; place++) {
+        std::vector<int> ids(omp_get_place_num_procs(place));
+        omp_get_place_proc_ids(place, ids.data());
+        for (int id: ids) if (id>=0 && id<CPU_SETSIZE) CPU_SET(id, &cpus);
+    }
+    if (CPU_COUNT(&cpus)>0) pthread_setaffinity_np(pthread_self(), sizeof(cpus), &cpus);
+}
+#endif
+
 // Compare the estimated forcing of the ranks on each node with the node memory limit before
 // any field is read (docs/parallelism.md#resource-limits)
 void checkForcingMemory(const std::shared_ptr<Config> &config, log4cplus::Logger &logger, int world_rank,
@@ -214,6 +237,9 @@ void WacommPlusPlus::run() {
 #ifdef USE_OMP
         // The solver threads keep the cores: the adapters process on this thread only
         omp_set_num_threads(1);
+#ifdef __linux__
+        allowOpenMPPlaces();
+#endif
 #endif
         PrefetchedWindow window;
         // Give the lock up between ocean variable reads to the solver thread and the output writer

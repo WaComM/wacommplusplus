@@ -87,18 +87,23 @@ def main():
         numa = ["numactl", "--interleave=all"]
         assert launch_command("omp", 1, 4, "w", True, prefix=numa) == numa + ["w", "wacomm-sarno-lite-6h.json"]
         assert launch_command("mpi", 2, 1, "w", False, prefix=numa)[-4:] == numa + ["w", "wacomm-sarno-lite-6h.json"]
-        assert result["io_async"] is False and result["launch_prefix"] == [] and result["io_prefetch"] is False
+        assert result["io_async"] is False and result["launch_prefix"] == [] and result["io_prefetch"] is False and result["spare_cores"] == 0
         # A prepared suite refuses to resume with other output or launch options
         (root / "provenance/config.json").write_text("{}")
         prepare(root, 100000, root, {})
         assert rejected(lambda: prepare(root, 100000, root, {}, io_async=True))
         assert rejected(lambda: prepare(root, 100000, root, {}, io_prefetch=True))
+        assert rejected(lambda: prepare(root, 100000, root, {}, spare_cores=1))
         assert rejected(lambda: prepare(root, 100000, root, {}, launch_prefix=numa))
         bound = launch_command("mpi-omp", 2, 6, "w", True)
         assert bound[:7] == ["mpirun", "-np", "2", "--map-by", "slot:PE=6", "--bind-to", "core"], bound
         assert launch_command("mpi", 2, 1, "w", False)[3:5] == ["--bind-to", "none"]
         spread = launch_command("mpi-omp", 8, 28, "w", True, nodes=4)
         assert spread[3:7] == ["--map-by", "ppr:2:node:PE=28", "--bind-to", "core"], spread
+        # A spare core per rank widens the binding, not the thread count
+        assert launch_command("mpi-omp", 2, 6, "w", True, spare=1)[3:5] == ["--map-by", "slot:PE=7"]
+        assert launch_command("mpi-omp", 8, 13, "w", True, nodes=4, spare=1)[3:5] == ["--map-by", "ppr:2:node:PE=14"]
+        assert launch_command("mpi", 2, 1, "w", False, spare=1)[3:5] == ["--bind-to", "none"]
         assert launch_command("mpi", 4, 1, "w", False, nodes=2)[3:7] == ["--map-by", "ppr:2:node", "--bind-to", "none"]
         try:
             launch_command("mpi", 3, 1, "w", True, nodes=2)

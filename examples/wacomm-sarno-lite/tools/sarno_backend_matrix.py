@@ -55,16 +55,17 @@ def sha256(path):
     return digest.hexdigest()
 
 
-def prepare(root, rate, forcing, builds, nodes=1, io_async=False, launch_prefix=(), io_prefetch=False):
+def prepare(root, rate, forcing, builds, nodes=1, io_async=False, launch_prefix=(), io_prefetch=False, spare_cores=0):
     """Write the suite provenance, configuration, and source once; verify the forcing checksums."""
     provenance = root / "provenance"
     if (provenance / "config.json").exists():
         # A resumed suite keeps its options: samples of different settings must not be pooled
         record = json.loads((provenance / "suite.json").read_text())
-        options = (record.get("io_async", False), record.get("launch_prefix", []), record.get("io_prefetch", False))
-        if options != (io_async, list(launch_prefix), io_prefetch):
-            raise ValueError(f"{root} was prepared with io_async={options[0]}, launch_prefix={options[1]}, and "
-                             f"io_prefetch={options[2]}; use a new --root")
+        options = (record.get("io_async", False), record.get("launch_prefix", []), record.get("io_prefetch", False),
+                   record.get("spare_cores", 0))
+        if options != (io_async, list(launch_prefix), io_prefetch, spare_cores):
+            raise ValueError(f"{root} was prepared with io_async={options[0]}, launch_prefix={options[1]}, "
+                             f"io_prefetch={options[2]}, and spare_cores={options[3]}; use a new --root")
         return
     provenance.mkdir(parents=True, exist_ok=True)
     source = json.loads((REPOSITORY / "examples/sources-sarno_river/sources-sarno_river.json").read_text())
@@ -92,7 +93,7 @@ def prepare(root, rate, forcing, builds, nodes=1, io_async=False, launch_prefix=
     record = {"date_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(), "host": platform.node(),
               "platform": platform.platform(), "machine": platform.machine(), "python": sys.version.split()[0], "nodes": nodes,
               "io_async": io_async, "launch_prefix": list(launch_prefix), "io_prefetch": io_prefetch,
-              "revision": subprocess.run(["git", "-C", str(REPOSITORY), "rev-parse", "HEAD"], capture_output=True,
+              "spare_cores": spare_cores, "revision": subprocess.run(["git", "-C", str(REPOSITORY), "rev-parse", "HEAD"], capture_output=True,
                                          text=True).stdout.strip(),
               "working_tree_patch": subprocess.run(["git", "-C", str(REPOSITORY), "diff", "HEAD"], capture_output=True,
                                                    text=True).stdout, "builds": {}}
@@ -109,9 +110,10 @@ def prepare(root, rate, forcing, builds, nodes=1, io_async=False, launch_prefix=
     (provenance / "suite.json").write_text(json.dumps(record, indent=2) + "\n")
 
 
-def launch_command(build, p, n, binary, bind, environment=None, nodes=1, prefix=()):
+def launch_command(build, p, n, binary, bind, environment=None, nodes=1, prefix=(), spare=0):
     """Return the command line; MPI builds always go through mpirun so p=1 includes MPI start-up.
-    prefix (for example numactl --interleave=all) runs each process, inside mpirun for MPI builds."""
+    prefix (for example numactl --interleave=all) runs each process, inside mpirun for MPI builds.
+    spare binds each bound rank to that many cores beyond its n threads, for example for a reading thread."""
     if "mpi" not in build:
         return [*prefix, str(binary), "wacomm-sarno-lite-6h.json"]
     command = ["mpirun", "-np", str(p)]
@@ -121,11 +123,11 @@ def launch_command(build, p, n, binary, bind, environment=None, nodes=1, prefix=
         if p % nodes:
             raise ValueError(f"{p} MPI processes do not divide evenly over {nodes} nodes")
         mapping = f"ppr:{p // nodes}:node"
-        command += (["--map-by", f"{mapping}:PE={n}", "--bind-to", "core"] if bind
+        command += (["--map-by", f"{mapping}:PE={n + spare}", "--bind-to", "core"] if bind
                     else ["--map-by", mapping, "--bind-to", "none"])
     elif bind:
         # One rank per n consecutive physical cores; OMP_PLACES=cores keeps its threads one per core.
-        command += ["--map-by", f"slot:PE={n}", "--bind-to", "core"]
+        command += ["--map-by", f"slot:PE={n + spare}", "--bind-to", "core"]
     else:
         command += ["--bind-to", "none"]
     for variable in ("OMP_NUM_THREADS", "OMP_PLACES", "OMP_PROC_BIND", "OMP_DYNAMIC", "CUDA_VISIBLE_DEVICES"):
@@ -134,7 +136,7 @@ def launch_command(build, p, n, binary, bind, environment=None, nodes=1, prefix=
     return command + [*prefix, str(binary), "wacomm-sarno-lite-6h.json"]
 
 
-def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune, nodes=1, prefix=()):
+def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune, nodes=1, prefix=(), spare=0):
     sample = root / tuple_name(build, p, n, g) / f"sample-{label}"
     reference = root / tuple_name(*REFERENCE) / "sample-warmup"
     verdict = sample / "verdict.txt"
@@ -150,7 +152,7 @@ def run_one(root, forcing, build, p, n, g, label, binary, bind, python, prune, n
                        CUDA_VISIBLE_DEVICES=",".join(str(i) for i in range(g)) if g else "-1")
     if bind:
         environment.update(OMP_PLACES="cores", OMP_PROC_BIND="close")
-    command = launch_command(build, p, n, binary, bind, environment, nodes, prefix)
+    command = launch_command(build, p, n, binary, bind, environment, nodes, prefix, spare)
     (sample / "command.txt").write_text(" ".join(command) + "\n")
     start = time.monotonic()
     with open(sample / "stdout.txt", "w") as out, open(sample / "stderr.txt", "w") as err:
@@ -197,8 +199,10 @@ def run(args):
     prefix = ["numactl", "--interleave=all"] if args.interleave else []
     if prefix and not shutil.which(prefix[0]):
         raise ValueError("--interleave needs numactl on the PATH")
-    prepare(root, args.rate, args.forcing, builds, args.nodes, args.io_async, prefix, args.io_prefetch)
-    common = (root, args.forcing, args.bind, args.python, args.prune_snapshots, args.nodes, prefix)
+    if args.spare_cores < 0:
+        raise ValueError("--spare-cores must not be negative")
+    prepare(root, args.rate, args.forcing, builds, args.nodes, args.io_async, prefix, args.io_prefetch, args.spare_cores)
+    common = (root, args.forcing, args.bind, args.python, args.prune_snapshots, args.nodes, prefix, args.spare_cores)
 
     def one(config, label):
         build, p, n, g = config
@@ -274,7 +278,7 @@ def suite(root):
             "host": provenance["host"], "nodes": provenance.get("nodes", 1), "platform": provenance["platform"], "revision": provenance["revision"],
             "working_tree_patch_bytes": len(provenance["working_tree_patch"]),
             "io_async": provenance.get("io_async", False), "launch_prefix": provenance.get("launch_prefix", []),
-            "io_prefetch": provenance.get("io_prefetch", False),
+            "io_prefetch": provenance.get("io_prefetch", False), "spare_cores": provenance.get("spare_cores", 0),
             "baseline_solver_seconds": base["solver_median"], "baseline_application_seconds": base["application_median"],
             "rows": rows}
 
@@ -441,6 +445,8 @@ def main():
     execute.add_argument("--prune-snapshots", action="store_true")
     execute.add_argument("--io-async", action="store_true", help="set io.async=true in the suite configuration")
     execute.add_argument("--io-prefetch", action="store_true", help="set io.prefetch=true in the suite configuration")
+    execute.add_argument("--spare-cores", type=int, default=0,
+                         help="with --bind, bind each MPI rank to this many cores beyond its OpenMP threads")
     execute.add_argument("--interleave", action="store_true",
                          help="run every process under numactl --interleave=all (Linux NUMA page interleaving)")
     collect = commands.add_parser("collect", help="summarize validated suites")
