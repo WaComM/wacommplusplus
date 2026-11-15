@@ -53,20 +53,27 @@ Wacomm::Wacomm(std::shared_ptr<Config> config,
                std::shared_ptr<Particles> particles,
                std::shared_ptr<WeatherModelAdapter> weatherModelAdapter,
                std::shared_ptr<WaveModelAdapter> waveModelAdapter,
-               std::shared_ptr<OutputWriter> outputWriter) :
+               std::shared_ptr<OutputWriter> outputWriter,
+               std::shared_ptr<DeviceForcing> deviceForcing) :
                config(std::move(config)),
                oceanModelAdapter(std::move(oceanModelAdapter)),
                sources(std::move(sources)),
                particles(std::move(particles)),
                weatherModelAdapter(std::move(weatherModelAdapter)),
                waveModelAdapter(std::move(waveModelAdapter)),
-               outputWriter(std::move(outputWriter)) {
+               outputWriter(std::move(outputWriter)),
+               deviceForcing(std::move(deviceForcing)) {
 
     logger = log4cplus::Logger::getInstance(LOG4CPLUS_TEXT("WaComM"));
 
     // Without a shared writer, publish synchronously as the original implementation
     if (!this->outputWriter) {
         this->outputWriter = std::make_shared<OutputWriter>(OutputWriter::Options());
+    }
+
+    // Without a run-level device forcing, the window is still uploaded once but nothing is reused
+    if (!this->deviceForcing) {
+        this->deviceForcing = std::make_shared<DeviceForcing>();
     }
     auto validateEnvironment=[this](auto adapter,const char *name) {
         if (!adapter) return;
@@ -150,6 +157,9 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
     if (ocean_time<2) {
         LOG4CPLUS_WARN(logger,"The forcing window does not contain a physical time interval; skipping it");
+
+        // The next window does not continue the resident one
+        deviceForcing->records=0;
         return 0;
     }
 
@@ -198,6 +208,9 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 
     // Define a gregorian calendar
     Calendar cal;
+
+    // The window's forcing is uploaded to the GPUs in its first solver interval
+    bool forcingResident=false;
 
     // For each element in the time axis
     int ocean_time_direction=config->Backward() ? -1 : 1;
@@ -384,29 +397,22 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #endif
         LOG4CPLUS_INFO(logger, world_rank << ": Local particles:" << pLocalParticles->size());
 
-	    typedef struct WacommVariables{
-            double *oceanTimeDevice, *depthIntervalsDevice, *lonRadDevice, *latRadDevice, *maskDevice, *hDevice;
-            float *zetaDevice, *uDevice, *vDevice, *wDevice, *aktDevice;
-            float *windU10Device, *windV10Device, *stokesUDevice, *stokesVDevice;
-            struct config_data *configDevice;
-        } WacommVariables;
-
 	    struct particle_data *particlesHost;
-	    WacommVariables *stateVector;
 
 #ifdef USE_CUDA
         // Check if the number of GPUs is more than 0
         if (num_gpus>0) {
-            auto str = std::chrono::high_resolution_clock::now();
 
-            // A pointer to the configuration data
-            config_data *pConfigData = config->dataptr();
+            // Make the window's forcing resident once, inside the first solver interval that uses it
+            if (!forcingResident) {
+                double seconds=uploadForcing(num_gpus);
+                forcingResident=true;
+                LOG4CPLUS_INFO(logger, "CUDA HOST2DEV sec: " << seconds << " records: " << deviceForcing->records
+                                       << " reused: " << (deviceForcing->reuseBoundary ? 1 : 0));
+            }
 
             // The size of the particle_data struct in bytes
             int itemSize = sizeof(struct particle_data);
-
-            // Allocate a container of each GPU
-            stateVector = new WacommVariables[num_gpus];
 
             // Create a host copy of the particles data
             particlesHost = (struct particle_data*)malloc(pLocalParticles->size() * itemSize);
@@ -417,79 +423,6 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
             for (long i = 0; i < (long) localCount; i++) {
                 particlesHost[i] = pLocalParticles->at(i).data();
             }
-            // For each GPU...
-            for (int i=0; i<num_gpus; i++){
-                stateVector[i].windU10Device=nullptr;
-                stateVector[i].windV10Device=nullptr;
-                stateVector[i].stokesUDevice=nullptr;
-                stateVector[i].stokesVDevice=nullptr;
-
-                //set GPU Device
-                gpuErrchk(cudaSetDevice(i));
-
-                // Get the GPU id
-                int gpu_id = -1;
-                gpuErrchk(cudaGetDevice(&gpu_id));
-
-                //device memory allocation
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].oceanTimeDevice), oceanModelAdapter->OceanTime().Nx() *sizeof(double)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].depthIntervalsDevice), oceanModelAdapter->DepthIntervals().Nx() * sizeof(double)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].lonRadDevice), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].latRadDevice), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].maskDevice), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].hDevice), oceanModelAdapter->H().Nx() * oceanModelAdapter->H().Ny() * sizeof(double)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].zetaDevice), oceanModelAdapter->Zeta().Nx() * oceanModelAdapter->Zeta().Ny() * oceanModelAdapter->Zeta().Nz() * sizeof(float)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].uDevice), oceanModelAdapter->U().Nx() * oceanModelAdapter->U().Ny() * oceanModelAdapter->U().Nz() * oceanModelAdapter->U().N4() * sizeof(float)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].vDevice), oceanModelAdapter->V().Nx() * oceanModelAdapter->V().Ny() * oceanModelAdapter->V().Nz() * oceanModelAdapter->V().N4() * sizeof(float)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].wDevice), oceanModelAdapter->W().Nx() * oceanModelAdapter->W().Ny() * oceanModelAdapter->W().Nz() * oceanModelAdapter->W().N4() * sizeof(float)));
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].aktDevice), oceanModelAdapter->AKT().Nx() * oceanModelAdapter->AKT().Ny() * oceanModelAdapter->AKT().Nz() * oceanModelAdapter->AKT().N4() * sizeof(float)));
-                if (weatherModelAdapter) {
-                    gpuErrchk(cudaMalloc((void**) &(stateVector[i].windU10Device), weatherModelAdapter->WindU10().Nx() * weatherModelAdapter->WindU10().Ny() * weatherModelAdapter->WindU10().Nz() * sizeof(float)));
-                    gpuErrchk(cudaMalloc((void**) &(stateVector[i].windV10Device), weatherModelAdapter->WindV10().Nx() * weatherModelAdapter->WindV10().Ny() * weatherModelAdapter->WindV10().Nz() * sizeof(float)));
-                }
-                if (waveModelAdapter) {
-                    gpuErrchk(cudaMalloc((void**) &(stateVector[i].stokesUDevice), waveModelAdapter->StokesU().Nx() * waveModelAdapter->StokesU().Ny() * waveModelAdapter->StokesU().Nz() * sizeof(float)));
-                    gpuErrchk(cudaMalloc((void**) &(stateVector[i].stokesVDevice), waveModelAdapter->StokesV().Nx() * waveModelAdapter->StokesV().Ny() * waveModelAdapter->StokesV().Nz() * sizeof(float)));
-                }
-                gpuErrchk(cudaMalloc((void**) &(stateVector[i].configDevice), sizeof(struct config_data)));
-
-                //copy data from host to device
-                gpuErrchk(cudaMemcpy(stateVector[i].oceanTimeDevice, oceanModelAdapter->OceanTime(), oceanModelAdapter->OceanTime().Nx() * sizeof(double), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].depthIntervalsDevice, oceanModelAdapter->DepthIntervals(), oceanModelAdapter->DepthIntervals().Nx()*sizeof(double), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].lonRadDevice, oceanModelAdapter->LonRad(), oceanModelAdapter->LonRad().Nx() * oceanModelAdapter->LonRad().Ny() * sizeof(double), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].latRadDevice, oceanModelAdapter->LatRad(), oceanModelAdapter->LatRad().Nx() * oceanModelAdapter->LatRad().Ny() * sizeof(double), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].maskDevice, oceanModelAdapter->Mask(), oceanModelAdapter->Mask().Nx() * oceanModelAdapter->Mask().Ny() * sizeof(double), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].hDevice, oceanModelAdapter->H(), oceanModelAdapter->H().Nx() * oceanModelAdapter->H().Ny() * sizeof(double), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].zetaDevice, oceanModelAdapter->Zeta(), oceanModelAdapter->Zeta().Nx() * oceanModelAdapter->Zeta().Ny() * oceanModelAdapter->Zeta().Nz() * sizeof(float), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].uDevice, oceanModelAdapter->U(),
-                           oceanModelAdapter->U().Nx() * oceanModelAdapter->U().Ny() * oceanModelAdapter->U().Nz() *
-                           oceanModelAdapter->U().N4() *
-                           sizeof(float), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].vDevice, oceanModelAdapter->V(),
-                           oceanModelAdapter->V().Nx() * oceanModelAdapter->V().Ny() * oceanModelAdapter->V().Nz() *
-                           oceanModelAdapter->V().N4() *
-                           sizeof(float), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].wDevice, oceanModelAdapter->W(),
-                           oceanModelAdapter->W().Nx() * oceanModelAdapter->W().Ny() * oceanModelAdapter->W().Nz() *
-                           oceanModelAdapter->W().N4() *
-                           sizeof(float), cudaMemcpyHostToDevice));
-                gpuErrchk(cudaMemcpy(stateVector[i].aktDevice, oceanModelAdapter->AKT(),
-                           oceanModelAdapter->AKT().Nx() * oceanModelAdapter->AKT().Ny() * oceanModelAdapter->AKT().Nz() *
-                           oceanModelAdapter->AKT().N4() *
-                           sizeof(float), cudaMemcpyHostToDevice));
-                if (weatherModelAdapter) {
-                    gpuErrchk(cudaMemcpy(stateVector[i].windU10Device, weatherModelAdapter->WindU10(), weatherModelAdapter->WindU10().Nx() * weatherModelAdapter->WindU10().Ny() * weatherModelAdapter->WindU10().Nz() * sizeof(float), cudaMemcpyHostToDevice));
-                    gpuErrchk(cudaMemcpy(stateVector[i].windV10Device, weatherModelAdapter->WindV10(), weatherModelAdapter->WindV10().Nx() * weatherModelAdapter->WindV10().Ny() * weatherModelAdapter->WindV10().Nz() * sizeof(float), cudaMemcpyHostToDevice));
-                }
-                if (waveModelAdapter) {
-                    gpuErrchk(cudaMemcpy(stateVector[i].stokesUDevice, waveModelAdapter->StokesU(), waveModelAdapter->StokesU().Nx() * waveModelAdapter->StokesU().Ny() * waveModelAdapter->StokesU().Nz() * sizeof(float), cudaMemcpyHostToDevice));
-                    gpuErrchk(cudaMemcpy(stateVector[i].stokesVDevice, waveModelAdapter->StokesV(), waveModelAdapter->StokesV().Nx() * waveModelAdapter->StokesV().Ny() * waveModelAdapter->StokesV().Nz() * sizeof(float), cudaMemcpyHostToDevice));
-                }
-                gpuErrchk(cudaMemcpy(stateVector[i].configDevice, pConfigData, sizeof(struct config_data), cudaMemcpyHostToDevice));
-            }
-            auto stp = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double> elap = stp - str;
-            LOG4CPLUS_INFO(logger, "CUDA HOST2DEV sec: " << elap.count());
         }
 #endif
         // Record start time
@@ -565,7 +498,7 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                     gpuErrchk(cudaMemcpyAsync(sectionDevice[gidx], &particlesHost[offset], count * sizeof(struct particle_data),
                                               cudaMemcpyHostToDevice, streams[gidx]));
 
-                    gpuErrchk(cudaMoveParticle(stateVector[gidx].configDevice,
+                    gpuErrchk(cudaMoveParticle(deviceForcing->gpus[gidx].configDevice,
                         sectionDevice[gidx],
                         ocean_time_idx,
                         oceanModelAdapter->OceanTime().Nx(),
@@ -573,21 +506,21 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
                         oceanModelAdapter->SRho().Nx(),
                         oceanModelAdapter->Mask().Nx(),
                         oceanModelAdapter->Mask().Ny(),
-                        stateVector[gidx].oceanTimeDevice,
-                        stateVector[gidx].maskDevice,
-                        stateVector[gidx].lonRadDevice,
-                        stateVector[gidx].latRadDevice,
-                        stateVector[gidx].depthIntervalsDevice,
-                        stateVector[gidx].hDevice,
-                        stateVector[gidx].zetaDevice,
-                        stateVector[gidx].uDevice,
-                        stateVector[gidx].vDevice,
-                        stateVector[gidx].wDevice,
-                        stateVector[gidx].aktDevice,
-                        stateVector[gidx].windU10Device,
-                        stateVector[gidx].windV10Device,
-                        stateVector[gidx].stokesUDevice,
-                        stateVector[gidx].stokesVDevice,
+                        deviceForcing->gpus[gidx].oceanTimeDevice,
+                        deviceForcing->gpus[gidx].maskDevice,
+                        deviceForcing->gpus[gidx].lonRadDevice,
+                        deviceForcing->gpus[gidx].latRadDevice,
+                        deviceForcing->gpus[gidx].depthIntervalsDevice,
+                        deviceForcing->gpus[gidx].hDevice,
+                        deviceForcing->gpus[gidx].zetaDevice,
+                        deviceForcing->gpus[gidx].uDevice,
+                        deviceForcing->gpus[gidx].vDevice,
+                        deviceForcing->gpus[gidx].wDevice,
+                        deviceForcing->gpus[gidx].aktDevice,
+                        deviceForcing->gpus[gidx].windU10Device,
+                        deviceForcing->gpus[gidx].windV10Device,
+                        deviceForcing->gpus[gidx].stokesUDevice,
+                        deviceForcing->gpus[gidx].stokesVDevice,
                         (int) count, 0, gidx, streams[gidx]));
                 }
             }
@@ -653,28 +586,6 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 #ifdef USE_CUDA
         if (num_gpus>0) {
             free(particlesHost);
-
-            for(int i=0; i<num_gpus; i++){
-                gpuErrchk(cudaSetDevice(i));
-
-                gpuErrchk(cudaFree(stateVector[i].depthIntervalsDevice));
-                gpuErrchk(cudaFree(stateVector[i].oceanTimeDevice));
-                gpuErrchk(cudaFree(stateVector[i].lonRadDevice));
-                gpuErrchk(cudaFree(stateVector[i].latRadDevice));
-                gpuErrchk(cudaFree(stateVector[i].maskDevice));
-                gpuErrchk(cudaFree(stateVector[i].hDevice));
-                gpuErrchk(cudaFree(stateVector[i].zetaDevice));
-                gpuErrchk(cudaFree(stateVector[i].uDevice));
-                gpuErrchk(cudaFree(stateVector[i].vDevice));
-                gpuErrchk(cudaFree(stateVector[i].wDevice));
-                gpuErrchk(cudaFree(stateVector[i].aktDevice));
-                if (stateVector[i].windU10Device) gpuErrchk(cudaFree(stateVector[i].windU10Device));
-                if (stateVector[i].windV10Device) gpuErrchk(cudaFree(stateVector[i].windV10Device));
-                if (stateVector[i].stokesUDevice) gpuErrchk(cudaFree(stateVector[i].stokesUDevice));
-                if (stateVector[i].stokesVDevice) gpuErrchk(cudaFree(stateVector[i].stokesVDevice));
-                gpuErrchk(cudaFree(stateVector[i].configDevice));
-            }
-            delete [] stateVector;
         }
 #endif
         // Check if the current process is the world_rank==0
@@ -939,6 +850,161 @@ int Wacomm::run(double &time, double&part, double&cuda, int &nParticles, int &id
 };
 
 Wacomm::~Wacomm() = default;
+
+#ifdef USE_CUDA
+// Free every device array of one GPU; the caller selects the device
+static void releaseDevice(WacommVariables &d) {
+    for (void *p : {(void *)d.oceanTimeDevice, (void *)d.depthIntervalsDevice, (void *)d.lonRadDevice,
+                    (void *)d.latRadDevice, (void *)d.maskDevice, (void *)d.hDevice, (void *)d.zetaDevice,
+                    (void *)d.uDevice, (void *)d.vDevice, (void *)d.wDevice, (void *)d.aktDevice,
+                    (void *)d.windU10Device, (void *)d.windV10Device, (void *)d.stokesUDevice,
+                    (void *)d.stokesVDevice, (void *)d.configDevice}) {
+        if (p) gpuErrchk(cudaFree(p));
+    }
+    d = WacommVariables{};
+}
+#endif
+
+DeviceForcing::~DeviceForcing() {
+#ifdef USE_CUDA
+    for (size_t i=0; i<gpus.size(); i++) {
+        if (cudaSetDevice((int) i) == cudaSuccess) releaseDevice(gpus[i]);
+    }
+#endif
+}
+
+double Wacomm::uploadForcing(int num_gpus) {
+#ifdef USE_CUDA
+    auto str = std::chrono::high_resolution_clock::now();
+    DeviceForcing &device = *deviceForcing;
+
+    size_t records = oceanModelAdapter->OceanTime().Nx();
+    size_t eta = oceanModelAdapter->Mask().Nx(), xi = oceanModelAdapter->Mask().Ny();
+    size_t sRho = oceanModelAdapter->SRho().Nx(), sW = oceanModelAdapter->SW().Nx();
+
+    // Elements of one record of each time-dependent field; records are contiguous along the time axis
+    size_t zetaRecord = eta * xi, rhoRecord = sRho * eta * xi, wRecord = sW * eta * xi;
+
+    // Another grid or device count makes the resident arrays unusable
+    if (device.gpus.size() != (size_t) num_gpus || device.eta != eta || device.xi != xi ||
+        device.sRho != sRho || device.sW != sW) {
+        for (size_t i = 0; i < device.gpus.size(); i++) {
+            gpuErrchk(cudaSetDevice((int) i));
+            releaseDevice(device.gpus[i]);
+        }
+        device.gpus.assign(num_gpus, WacommVariables{});
+        device.capacity = 0;
+        device.records = 0;
+        device.eta = eta; device.xi = xi; device.sRho = sRho; device.sW = sW;
+    }
+
+    // This window's first record and the resident window's last record, both in the tracking direction
+    bool backward = config->Backward();
+    size_t first = backward ? records - 1 : 0;
+    size_t last = backward ? 0 : device.records - 1;
+    bool reuse = device.reuseBoundary && device.records >= 2 && records >= 2 &&
+                 device.boundaryTime == oceanModelAdapter->OceanTime()(first);
+
+    // Records uploaded from the host: all of them, or all but the reused one
+    size_t uploadFirst = reuse && !backward ? 1 : 0;
+    size_t uploadCount = reuse ? records - 1 : records;
+    size_t capacity = std::max(device.capacity, records);
+
+    for (int i = 0; i < num_gpus; i++) {
+        gpuErrchk(cudaSetDevice(i));
+        WacommVariables &d = device.gpus[i];
+
+        // Static grid arrays and the configuration are allocated once per grid
+        if (!d.lonRadDevice) {
+            gpuErrchk(cudaMalloc((void**) &(d.lonRadDevice), zetaRecord * sizeof(double)));
+            gpuErrchk(cudaMalloc((void**) &(d.latRadDevice), zetaRecord * sizeof(double)));
+            gpuErrchk(cudaMalloc((void**) &(d.maskDevice), zetaRecord * sizeof(double)));
+            gpuErrchk(cudaMalloc((void**) &(d.hDevice), zetaRecord * sizeof(double)));
+            gpuErrchk(cudaMalloc((void**) &(d.configDevice), sizeof(struct config_data)));
+        }
+
+        // The time axis and depth intervals are small: reallocate them for every window
+        if (d.oceanTimeDevice) gpuErrchk(cudaFree(d.oceanTimeDevice));
+        if (d.depthIntervalsDevice) gpuErrchk(cudaFree(d.depthIntervalsDevice));
+        gpuErrchk(cudaMalloc((void**) &(d.oceanTimeDevice), records * sizeof(double)));
+        gpuErrchk(cudaMalloc((void**) &(d.depthIntervalsDevice), oceanModelAdapter->DepthIntervals().Nx() * sizeof(double)));
+
+        float **fields[5] = {&d.zetaDevice, &d.uDevice, &d.vDevice, &d.wDevice, &d.aktDevice};
+        size_t recordSize[5] = {zetaRecord, rhoRecord, rhoRecord, wRecord, wRecord};
+        float *hostFields[5] = {oceanModelAdapter->Zeta(), oceanModelAdapter->U(), oceanModelAdapter->V(),
+                                oceanModelAdapter->W(), oceanModelAdapter->AKT()};
+
+        if (capacity > device.capacity) {
+            // Grow the time-dependent fields, carrying the boundary record into the new arrays
+            for (int f = 0; f < 5; f++) {
+                float *grown = nullptr;
+                gpuErrchk(cudaMalloc((void**) &grown, capacity * recordSize[f] * sizeof(float)));
+                if (reuse) {
+                    gpuErrchk(cudaMemcpy(grown + first * recordSize[f], *fields[f] + last * recordSize[f],
+                                         recordSize[f] * sizeof(float), cudaMemcpyDeviceToDevice));
+                }
+                if (*fields[f]) gpuErrchk(cudaFree(*fields[f]));
+                *fields[f] = grown;
+            }
+        } else if (reuse) {
+            // Move the boundary record inside the arrays; with at least two records the slots never overlap
+            for (int f = 0; f < 5; f++) {
+                gpuErrchk(cudaMemcpy(*fields[f] + first * recordSize[f], *fields[f] + last * recordSize[f],
+                                     recordSize[f] * sizeof(float), cudaMemcpyDeviceToDevice));
+            }
+        }
+
+        // Weather and wave fields are uploaded whole, and reallocated with the window
+        size_t windSize = weatherModelAdapter ? weatherModelAdapter->WindU10().Nx() * weatherModelAdapter->WindU10().Ny() * weatherModelAdapter->WindU10().Nz() : 0;
+        size_t stokesSize = waveModelAdapter ? waveModelAdapter->StokesU().Nx() * waveModelAdapter->StokesU().Ny() * waveModelAdapter->StokesU().Nz() : 0;
+        for (float **field : {&d.windU10Device, &d.windV10Device, &d.stokesUDevice, &d.stokesVDevice}) {
+            if (*field) gpuErrchk(cudaFree(*field));
+            *field = nullptr;
+        }
+        if (weatherModelAdapter) {
+            gpuErrchk(cudaMalloc((void**) &(d.windU10Device), windSize * sizeof(float)));
+            gpuErrchk(cudaMalloc((void**) &(d.windV10Device), windSize * sizeof(float)));
+        }
+        if (waveModelAdapter) {
+            gpuErrchk(cudaMalloc((void**) &(d.stokesUDevice), stokesSize * sizeof(float)));
+            gpuErrchk(cudaMalloc((void**) &(d.stokesVDevice), stokesSize * sizeof(float)));
+        }
+
+        //copy data from host to device
+        gpuErrchk(cudaMemcpy(d.oceanTimeDevice, oceanModelAdapter->OceanTime(), records * sizeof(double), cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d.depthIntervalsDevice, oceanModelAdapter->DepthIntervals(), oceanModelAdapter->DepthIntervals().Nx() * sizeof(double), cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d.lonRadDevice, oceanModelAdapter->LonRad(), zetaRecord * sizeof(double), cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d.latRadDevice, oceanModelAdapter->LatRad(), zetaRecord * sizeof(double), cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d.maskDevice, oceanModelAdapter->Mask(), zetaRecord * sizeof(double), cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d.hDevice, oceanModelAdapter->H(), zetaRecord * sizeof(double), cudaMemcpyHostToDevice));
+        gpuErrchk(cudaMemcpy(d.configDevice, config->dataptr(), sizeof(struct config_data), cudaMemcpyHostToDevice));
+        for (int f = 0; f < 5; f++) {
+            gpuErrchk(cudaMemcpy(*fields[f] + uploadFirst * recordSize[f], hostFields[f] + uploadFirst * recordSize[f],
+                                 uploadCount * recordSize[f] * sizeof(float), cudaMemcpyHostToDevice));
+        }
+        if (weatherModelAdapter) {
+            gpuErrchk(cudaMemcpy(d.windU10Device, weatherModelAdapter->WindU10(), windSize * sizeof(float), cudaMemcpyHostToDevice));
+            gpuErrchk(cudaMemcpy(d.windV10Device, weatherModelAdapter->WindV10(), windSize * sizeof(float), cudaMemcpyHostToDevice));
+        }
+        if (waveModelAdapter) {
+            gpuErrchk(cudaMemcpy(d.stokesUDevice, waveModelAdapter->StokesU(), stokesSize * sizeof(float), cudaMemcpyHostToDevice));
+            gpuErrchk(cudaMemcpy(d.stokesVDevice, waveModelAdapter->StokesV(), stokesSize * sizeof(float), cudaMemcpyHostToDevice));
+        }
+    }
+
+    // Record the resident window and its boundary record for the next window
+    device.capacity = capacity;
+    device.records = records;
+    device.boundaryTime = oceanModelAdapter->OceanTime()(backward ? 0 : records - 1);
+    device.reuseBoundary = reuse;
+
+    auto stp = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elap = stp - str;
+    return elap.count();
+#else
+    return 0;
+#endif
+}
 
 void Wacomm::save(const string &fileName, Array4<float> &conc,
                   std::shared_ptr<OceanModelAdapter> oceanModelAdapter, std::shared_ptr<Config> config,

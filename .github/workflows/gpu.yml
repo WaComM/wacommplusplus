@@ -15,4 +15,4 @@ jobs:
       - name: Configure CUDA application
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_CUDA=ON
       - run: cmake --build build --parallel
-      - run: ctest --test-dir build -R cuda_particle_parity --output-on-failure
+      - run: ctest --test-dir build -R 'cuda_(particle_parity|device_forcing)' --output-on-failure

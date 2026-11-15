@@ -315,6 +315,9 @@ void WacommPlusPlus::run() {
         auto adapter=WaveModelAdapterFactory::create(config->WaveModel(),input,config->WaveSourceCrs());
         adapter->process(); waveWindows[index]=adapter; return adapter;
     };
+    // Forcing resident on the GPUs across windows (CUDA builds only)
+    auto deviceForcing=std::make_shared<DeviceForcing>();
+
     for (int inputIdx=inputFirst;inputIdx>=0 && inputIdx<config->NcInputs().size();inputIdx+=inputDirection) {
         string &ncInput=config->NcInputs()[inputIdx];
 
@@ -337,6 +340,10 @@ void WacommPlusPlus::run() {
             waveModelAdapter=waveWindow(inputIdx);
         }
 
+        // The previous window's boundary record came from this window or was verified bit-identical to it
+        deviceForcing->reuseBoundary=deviceForcing->boundaryInput==inputIdx;
+        deviceForcing->boundaryInput=-1;
+
         int adjacentIdx=inputIdx+inputDirection;
         if (adjacentIdx>=0 && adjacentIdx<config->NcInputs().size()) {
             shared_ptr<OceanModelAdapter> adjacentAdapter=oceanWindow(adjacentIdx);
@@ -344,6 +351,7 @@ void WacommPlusPlus::run() {
             auto boundaryStart=std::chrono::steady_clock::now();
             oceanModelAdapter->appendBoundaryRecord(*adjacentAdapter,boundaryRecord,config->Backward());
             forcingBoundary+=secondsSince(boundaryStart);
+            deviceForcing->boundaryInput=adjacentIdx;
             if (weatherModelAdapter) {
                 auto adjacentWeather=weatherWindow(adjacentIdx);
                 int weatherRecord=config->Backward() ? (int)adjacentWeather->Time().Nx()-1 : 0;
@@ -476,7 +484,7 @@ void WacommPlusPlus::run() {
         // Check if it is a dry run
         if (!config->Dry()) {
             // Create a new Wacomm object
-            Wacomm wacomm(config, oceanModelAdapter, sources, particles,weatherModelAdapter,waveModelAdapter,outputWriter);
+            Wacomm wacomm(config, oceanModelAdapter, sources, particles,weatherModelAdapter,waveModelAdapter,outputWriter,deviceForcing);
 
             // Run the model
             double cuda=0;

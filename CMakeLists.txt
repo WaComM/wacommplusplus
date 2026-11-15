@@ -413,6 +413,23 @@ if(BUILD_APPLICATION)
             target_link_libraries(cuda_particle_parity_test PRIVATE ${WACOMM_LIBRARIES})
             add_test(NAME cuda_particle_parity COMMAND cuda_particle_parity_test)
             set_tests_properties(cuda_particle_parity PROPERTIES SKIP_RETURN_CODE 77)
+
+            # Forcing kept on the GPU across windows (docs/parallelism.md#cuda-device-forcing)
+            add_executable(cuda_device_forcing_test tests/CudaDeviceForcingTest.cpp
+                    Particle.cpp Particles.cpp Wacomm.cpp Source.cpp Sources.cpp
+                    Config.cpp DriftModel.cpp OceanModelAdapter.cpp OceanModelAdapterFactory.cpp Utils.cpp JulianDate.cpp
+                    EnvironmentalDataAccess.cpp OutputWriter.cpp ParallelOutput.cpp
+                    EnvironmentalMetadata.cpp EnvironmentalRegridder.cpp
+                    WeatherModelAdapter.cpp WeatherModelAdapterFactory.cpp WeatherModelAdapters/WRFAdapter.cpp
+                    WaveModelAdapter.cpp WaveModelAdapterFactory.cpp WaveModelAdapters/WW3Adapter.cpp
+                    OceanModelAdapters/ROMSAdapter.cpp OceanModelAdapters/WacommAdapter.cpp
+                    OceanModelAdapters/StructuredGridAdapter.cpp
+                    ${WACOMM_CUDA_SOURCES})
+            wacomm_enable_test_assertions(cuda_device_forcing_test)
+            target_link_libraries(cuda_device_forcing_test PRIVATE ${WACOMM_LIBRARIES})
+            target_include_directories(cuda_device_forcing_test PRIVATE "${WACOMM_GENERATED_INCLUDE}")
+            add_test(NAME cuda_device_forcing COMMAND cuda_device_forcing_test)
+            set_tests_properties(cuda_device_forcing PROPERTIES SKIP_RETURN_CODE 77)
         endif()
     endif()
 endif()

@@ -13,12 +13,15 @@
 #include "OceanModelAdapters/ROMSAdapter.hpp"
 #include "JulianDate.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <exception>
 #include <iostream>
 #include <memory>
 #include <stdlib.h> /* getenv */
 #include <string>
+#include <vector>
 
 #ifdef USE_CUDA
 #include <cuda.h>
@@ -81,7 +84,46 @@ int main(int argc, char **argv) {
 #endif
 
 #ifdef USE_CUDA
-    cudaGetDeviceCount(&num_gpus);
+    if (cudaGetDeviceCount(&num_gpus) != cudaSuccess) num_gpus = 0;
+#endif
+
+#if defined(USE_CUDA) && defined(USE_MPI)
+    /*
+     * Every rank uploads its own forcing copy to each GPU it sees, so ranks of one node that see the
+     * same device repeat that upload over one PCIe link and multiply its device memory. Identify each
+     * visible device by its PCI address and count the ranks of this node that share the busiest one.
+     */
+    int sharedGpuRanks = 0;
+    long long sharedGpu = -1;
+    {
+        MPI_Comm nodeComm;
+        MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, world_rank, MPI_INFO_NULL, &nodeComm);
+        int nodeRank = 0, nodeSize = 1;
+        MPI_Comm_rank(nodeComm, &nodeRank);
+        MPI_Comm_size(nodeComm, &nodeSize);
+
+        std::vector<long long> devices;
+        for (int i = 0; i < num_gpus; i++) {
+            cudaDeviceProp prop;
+            if (cudaGetDeviceProperties(&prop, i) == cudaSuccess) {
+                devices.push_back(((long long) prop.pciDomainID << 32) | (prop.pciBusID << 8) | prop.pciDeviceID);
+            }
+        }
+        int count = (int) devices.size();
+        std::vector<int> counts(nodeSize), displs(nodeSize);
+        MPI_Gather(&count, 1, MPI_INT, counts.data(), 1, MPI_INT, 0, nodeComm);
+        int total = 0;
+        for (int i = 0; i < nodeSize; i++) { displs[i] = total; total += counts[i]; }
+        std::vector<long long> all(std::max(total, 1));
+        MPI_Gatherv(devices.data(), count, MPI_LONG_LONG, all.data(), counts.data(), displs.data(), MPI_LONG_LONG, 0, nodeComm);
+        if (nodeRank == 0) {
+            for (int i = 0; i < total; i++) {
+                int ranks = (int) std::count(all.begin(), all.begin() + total, all[i]);
+                if (ranks > sharedGpuRanks) { sharedGpuRanks = ranks; sharedGpu = all[i]; }
+            }
+        }
+        MPI_Comm_free(&nodeComm);
+    }
 #endif
 
     // This variables can be set via the command line.
@@ -172,6 +214,17 @@ int main(int argc, char **argv) {
                                           << " threads.");
         LOG4CPLUS_INFO(logger, "Configuration: " << configFile);
     }
+
+#if defined(USE_CUDA) && defined(USE_MPI)
+    // Reported by the first rank of each node
+    if (sharedGpuRanks > 1) {
+        char busId[32];
+        std::snprintf(busId, sizeof(busId), "%04llx:%02llx:%02llx", sharedGpu >> 32, (sharedGpu >> 8) & 0xff, sharedGpu & 0xff);
+        LOG4CPLUS_WARN(logger, world_rank << ": " << sharedGpuRanks << " MPI ranks on this node share the GPU at PCI "
+                               << busId << "; each rank uploads its own forcing copy to it. Use one rank per GPU, "
+                               << "for example by setting CUDA_VISIBLE_DEVICES for each rank.");
+    }
+#endif
 
     // Record start time
     auto start_whole = std::chrono::high_resolution_clock::now();
