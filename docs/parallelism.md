@@ -22,7 +22,7 @@ The prefetch thread runs the same adapter code for the ocean input, and for the 
 
 The overlap can hide reading only while the solver thread has other work: integration, concentration, and synchronous output of the current window. With `io.async=true` the writer thread also competes for the NetCDF lock. The `FORCING sec:` line reports `prefetch:`, rank 0's wait for a prefetched window, and `background:`, the prefetch thread's preparation time for the windows taken during that window. Its `read:` and `normalize:` count only reads on the solver thread.
 
-The option costs one more resident window per process ([resource limits](#resource-limits)). It is off by default, because the Sarno windows of 1.76 GB each already make memory the limit for many ranks per node. The prefetch has not been tested with FlexMPI/EMPI malleability; a process that ends after a malleable region waits for its pending read before it exits.
+The option costs one more resident window per process ([resource limits](#resource-limits)). It is off by default, because the Sarno windows of 1.76 GB each already make memory the limit for many ranks per node. On `hhcpu` the prefetch speeds up serial and pure-MPI runs. For threaded placements, output waits for the lock the prefetch thread holds, and the reading thread slows the solver when every core runs a solver thread ([forcing prefetch measurement](backend-matrix-evaluation.md#forcing-prefetch)). The prefetch has not been tested with FlexMPI/EMPI malleability; a process that ends after a malleable region waits for its pending read before it exits.
 
 ## Resource limits
 
