@@ -191,6 +191,33 @@ Findings:
 3. **The NetCDF lock is not what slows forcing under `io.async`.** The lock wait is zero in every run. Instead, the boundary-record append grows by 1.0–1.05 s in the parallel tuples. It does not grow in the serial run, whose writes finish during its 73 s solver. This contradicts the lock explanation given in [time outside the solver](#time-outside-the-solver). The append probably competes with the writer thread for memory bandwidth or page allocation, but this pass did not measure that.
 4. **Read contention with 28 ranks per node is in reading.** For MPI 112×1, rank 0 reads for 6.26 s against 2.2–2.5 s for one process per node or four.
 
+## Contiguous boundary-record check
+
+Revision `a9345dc` compares the duplicate boundary record one contiguous time record at a time, in parallel under OpenMP (C9 in the [plan](improvement-plan.md)). Revision `7671ddd` before it had only replaced the append's copies. On Sarno it left the boundary time unchanged (2.33–2.38 s per run for OpenMP 1×56, job 1082912), because the Sarno windows never reach those copies. The suites of the [forcing preparation split](#forcing-preparation-split) were repeated at `a9345dc` (jobs 1082993–1082996, after test job 1082992 passed 40, 40, 43, and 45 tests). All 44 samples passed the exact equivalence gate. Values are medians of three samples, in seconds, summed over the run. Each cell shows `9cd10e4` → `a9345dc`.
+
+| Nodes | Setting | Tuple | Application | Forcing (slowest rank) | Boundary record | Output | Flush |
+| ---: | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| 1 | synchronous | Serial | 80.48 → 79.20 | 4.64 → 3.13 | 2.35 → 0.86 | 2.67 → 2.73 | – |
+| 1 | synchronous | OpenMP 1×56 | 10.03 → 7.90 | 4.83 → 2.69 | 2.34 → 0.15 | 3.10 → 3.28 | – |
+| 1 | synchronous | MPI+OpenMP 4×14 | 10.30 → 8.10 | 4.89 → 2.60 | 2.39 → 0.12 | 2.66 → 2.92 | – |
+| 1 | `io.async` | Serial | 78.32 → 77.02 | 4.64 → 3.14 | 2.41 → 0.89 | 0.02 → 0.02 | 0.54 → 0.56 |
+| 1 | `io.async` | OpenMP 1×56 | 8.65 → 6.71 | 5.90 → 2.76 | 3.39 → 0.22 | 0.02 → 1.10 | 0.61 → 0.91 |
+| 1 | `io.async` | MPI+OpenMP 4×14 | 9.26 → 7.07 | 5.74 → 2.68 | 3.36 → 0.21 | 0.02 → 0.58 | 0.83 → 1.06 |
+| 4 | synchronous | MPI+OpenMP 16×14 | 10.35 → 8.44 | 4.87 → 2.70 | 2.33 → 0.12 | 2.94 → 3.32 | – |
+| 4 | synchronous | MPI 112×1 | 19.97 → 20.48 | 10.23 → 9.04 | 3.00 → 1.47 | 4.49 → 5.20 | – |
+| 4 | `io.async` | MPI+OpenMP 16×14 | 9.21 → 8.17 | 5.75 → 2.80 | 3.36 → 0.20 | 0.03 → 1.87 | 0.86 → 0.90 |
+
+The companion table is [`results-a9345dc.json`](figures/backend-matrix-hhcpu-rerun/results-a9345dc.json). Solver times are unchanged within 0.1 s, except with `io.async`: OpenMP 1×56 1.82 → 1.90 s, 4×14 1.89 → 2.00 s, and four-node 16×14 0.62 → 0.73 s. This is consistent with the writer thread now overlapping the solver intervals, but that was not measured.
+
+Findings:
+
+1. **With threads, the boundary record now costs 0.12–0.22 s per run instead of 2.3–3.4 s, a 93–95% reduction, synchronous and asynchronous.** Forcing preparation falls by about 2.1 s synchronous and 2.9–3.1 s asynchronous, and reading (2.2–2.5 s) is now nearly all of it.
+2. **Single-threaded tuples gain less.** For serial runs the check falls by 63% (2.35 → 0.86 s). For MPI 112×1, whose 28 ranks per node compare on one thread each, it falls by 51% (3.00 → 1.47 s). These miss the 75% target, which the multithreaded tuples meet.
+3. **Applications are 1.0–2.2 s faster, except MPI 112×1.** OpenMP 1×56 takes 7.90 s synchronous and 6.71 s asynchronous, against 10.03 and 8.65 s. MPI 112×1 became 0.5 s slower: its 1.2 s forcing saving was offset by 0.7 s more output time and longer waits elsewhere in the run. These are medians of three samples of a contended placement, and the change is not attributed.
+4. **The asynchronous writer now limits the output section.** With faster forcing, the next window's output reaches the writer while the previous one is still being written. The output section, which includes waiting for a full queue, grows from 0.02 s to 0.58–1.87 s. Asynchronous output still saves 1.0–1.2 s against synchronous output for the parallel tuples.
+
+**Best hhcpu configurations, updated.** At `a9345dc` the shortest $10^5$ particles/hour run is OpenMP 1×56 with `io.async=true`, at 6.71 s, and four-node 16×14 with `io.async=true` takes 8.17 s. One node is faster than four at this rate, because launch and output dominate. MPI+OpenMP 16×14 remains the fastest tuple at $10^6$ particles/hour, measured at `aa8378f`; that rate has not been rerun.
+
 ## Results on rainbow (CPU and CUDA)
 
 Two suites use the Sarno benchmark method above with `--bind` (ranks on consecutive physical cores, `OMP_PLACES=cores`, `OMP_PROC_BIND=close`) on the exclusive Slurm node, with the forcing on local disk. Suite `rainbow-q1e5` covers 27 tuples of all eight builds and suite `rainbow-q1e6` covers seven (job 1754). All 136 samples, warm-ups included, passed the equivalence gate against the serial build. CPU tuples matched the particle states exactly. CUDA tuples matched identities, counts, ages, and alive/dead states exactly, with living-particle health within $1.1\times10^{-16}$ and positions within 0.26 µm horizontally and 3.5 nm in depth, inside the declared $10^{-15}$, 1 µm, and 10 nm limits. Every gridded variable matched exactly. The serial references are 35.15 s at $10^5$ and 351.1 s at $10^6$ particles/hour.
@@ -246,7 +273,7 @@ Status: computational items 5 (revision `59f9b91`) and 1 (`32679ce`), the OpenMP
 6. **NUMA placement and the full-socket drop.** OpenMP efficiency falls from 96% at 14 threads to 73% at 28 on one socket. Interleaving pages with `numactl --interleave=all` left it unchanged (71.2% against 71.4% at 56 threads), so page placement is not the cause. Measure memory bandwidth and clock with hardware counters before changing code.
 7. **Persistent CUDA device state.** Each interval currently allocates the device forcing, copies all time records, and frees them again inside the solver interval (`CUDA HOST2DEV`). On rainbow that upload is 41% of the CUDA solver time at $10^5$ particles/hour and 10% at $10^6$, and with several ranks on one GPU each rank repeats it over the shared PCIe link ([rainbow results](#results-on-rainbow-cpu-and-cuda)). Allocate once per run and upload only the new forcing record. Also log a warning when more ranks than visible devices share a GPU. Target: `CUDA HOST2DEV` time per interval falls by at least the share of unchanged records, with particle results identical to the current CUDA build.
 8. **Heterogeneous-core awareness.** On hybrid-core CPUs, document a performance-cores-only default and report per-core-class efficiency.
-9. **Contiguous boundary-record append and check.** The append takes 2.3–2.4 s per run, as long as reading, and 3.4 s with `io.async=true` ([forcing preparation split](#forcing-preparation-split)). For Sarno it is the duplicate-record check, which strides through memory. Compare and copy whole time records, which are contiguous, in storage order. Target: at least 75% less boundary-record time, with unchanged acceptance semantics and bit-identical arrays.
+9. **Contiguous boundary-record append and check (done, `7671ddd` and `a9345dc`).** For Sarno the append was the duplicate-record check, which strided through memory: 2.3–2.4 s per run, and 3.4 s with `io.async=true`. Comparing whole time records in storage order, in parallel under OpenMP, cut it to 0.12–0.22 s for multithreaded tuples, synchronous and asynchronous. Serial runs fell by 63%, and MPI 112×1 by 51%, below the 75% target ([contiguous boundary-record check](#contiguous-boundary-record-check)). The append itself now copies whole records once.
 
 ### Numerical
 
@@ -328,6 +355,8 @@ sbatch --nodes=4 examples/wacomm-sarno-lite/tools/hhcpu_backend_matrix_job.sh 10
 WACOMM_MATRIX_OPTIONS=--io-async sbatch --nodes=4 examples/wacomm-sarno-lite/tools/hhcpu_backend_matrix_job.sh 100000 hh4-q100000-9cd10e4-async serial:1:1:0 mpi-omp:16:14:0
 python3 -I examples/wacomm-sarno-lite/tools/sarno_backend_matrix.py collect --suite sync=data/matrix-hhcpu/hh-q100000-9cd10e4 --suite async=data/matrix-hhcpu/hh-q100000-9cd10e4-async --suite 4node-sync=data/matrix-hhcpu/hh4-q100000-9cd10e4 --suite 4node-async=data/matrix-hhcpu/hh4-q100000-9cd10e4-async --output data/matrix-hhcpu/collect-9cd10e4 --no-figures
 ```
+
+The [contiguous boundary-record check](#contiguous-boundary-record-check) repeated those four suites at `a9345dc`, with `9cd10e4` replaced by `a9345dc` in the suite names (jobs 1082992–1082996), and collected them into `data/matrix-hhcpu/collect-a9345dc`. The `7671ddd` suites `hh-q100000-7671ddd` and `hh-q100000-7671ddd-async` (jobs 1082912 and 1082913) were not collected; their four-node suites were cancelled.
 
 The rainbow suites ran on revision `ffa9c18` with the dependency-cache patch, archived in each suite's `provenance/suite.json` together with binary and CMake-cache SHA-256 values, `nvidia-smi` and `lscpu` output, `mpirun --version`, forcing checksums, configuration, and source definition. The eight builds used the modules `sw/cmake-3.31.6 comps/gcc-13.3.0/openmpi-4.1.8 comps/nvidia/nvhpc-byo-compiler/25.3`, `OMPI_CXX=g++-13`, `CMAKE_CUDA_ARCHITECTURES=89`, and `-DWACOMM_DEPENDENCY_DOWNLOAD_DIR` pointing at one pre-seeded archive directory. The benchmark job (`sbatch --partition=gpu --exclusive --gres=gpu:1`) ran, for each rate, with one `--build NAME=build-NAME/wacommplusplus` per build and one `--config` per tuple listed in [`results-rainbow.json`](figures/backend-matrix-rainbow/results-rainbow.json):
 
