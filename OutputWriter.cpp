@@ -4,6 +4,7 @@
 
 #include "OutputWriter.hpp"
 #include "Config.hpp"
+#include "NetcdfLock.hpp"
 
 #include <chrono>
 #include <filesystem>
@@ -225,7 +226,7 @@ void OutputWriter::publish(const Job &job) {
     fs::remove(destPartial, ec);
     try {
         if (job.usesNetCDF) {
-            std::lock_guard<std::mutex> lock(netcdfMutex());
+            NetcdfLock::Priority lock(netcdfMutex());
             job.write(writePath.string());
         } else {
             job.write(writePath.string());

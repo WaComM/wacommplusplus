@@ -9,6 +9,7 @@
 #include "WaveModelAdapterFactory.hpp"
 #include "ResourceLimits.hpp"
 #include "ForcingPrefetch.hpp"
+#include "NetcdfLock.hpp"
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
@@ -44,7 +45,7 @@ void checkForcingMemory(const std::shared_ptr<Config> &config, log4cplus::Logger
         try {
             int adjacentIdx=inputFirst+inputDirection;
             bool adjacent=adjacentIdx>=0 && adjacentIdx<(int)config->NcInputs().size();
-            std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+            NetcdfLock::Priority netcdfLock(OutputWriter::netcdfMutex());
             auto adapter=OceanModelAdapterFactory::create(config->OceanModel(),config->NcInputs()[inputFirst]);
             // io.prefetch holds a third window when the run has one to read ahead
             bool prefetch=config->PrefetchForcing() && config->NcInputs().size()>2;
@@ -215,7 +216,8 @@ void WacommPlusPlus::run() {
         omp_set_num_threads(1);
 #endif
         PrefetchedWindow window;
-        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        // Give the lock up between ocean variable reads to the solver thread and the output writer
+        NetcdfLock::Yielding netcdfLock(OutputWriter::netcdfMutex());
         auto start=std::chrono::steady_clock::now();
         string ocean=prefetchConfig->NcInputs()[index];
         window.ocean=OceanModelAdapterFactory::create(prefetchConfig->OceanModel(),ocean);
@@ -254,7 +256,7 @@ void WacommPlusPlus::run() {
         string& input=config->NcInputs()[index];
         // NetCDF is not thread safe: exclude the asynchronous output writer
         auto waitStart=std::chrono::steady_clock::now();
-        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        NetcdfLock::Priority netcdfLock(OutputWriter::netcdfMutex());
         forcingWait+=secondsSince(waitStart);
         auto processStart=std::chrono::steady_clock::now();
         auto adapter=OceanModelAdapterFactory::create(config->OceanModel(),input);
@@ -270,7 +272,7 @@ void WacommPlusPlus::run() {
         string& input=config->WeatherInputs()[index];
         // NetCDF is not thread safe: exclude the asynchronous output writer
         auto waitStart=std::chrono::steady_clock::now();
-        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        NetcdfLock::Priority netcdfLock(OutputWriter::netcdfMutex());
         forcingWait+=secondsSince(waitStart);
         auto adapter=WeatherModelAdapterFactory::create(config->WeatherModel(),input,config->WeatherSourceCrs());
         adapter->process(); weatherWindows[index]=adapter; return adapter;
@@ -282,7 +284,7 @@ void WacommPlusPlus::run() {
         string& input=config->WaveInputs()[index];
         // NetCDF is not thread safe: exclude the asynchronous output writer
         auto waitStart=std::chrono::steady_clock::now();
-        std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+        NetcdfLock::Priority netcdfLock(OutputWriter::netcdfMutex());
         forcingWait+=secondsSince(waitStart);
         auto adapter=WaveModelAdapterFactory::create(config->WaveModel(),input,config->WaveSourceCrs());
         adapter->process(); waveWindows[index]=adapter; return adapter;
@@ -402,7 +404,7 @@ void WacommPlusPlus::run() {
                 LOG4CPLUS_INFO(logger,  "Saving processed output: " << inputFilename);
 
                 // Save the processed input
-                std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+                NetcdfLock::Priority netcdfLock(OutputWriter::netcdfMutex());
                 oceanModelAdapter->saveAsNetCDF(inputFilename);
             }
 
@@ -416,7 +418,7 @@ void WacommPlusPlus::run() {
                 if (fileName.substr(fileName.find_last_of('.') + 1) == "nc") {
 
                     // The restart is a NetCDF
-                    std::lock_guard<std::mutex> netcdfLock(OutputWriter::netcdfMutex());
+                    NetcdfLock::Priority netcdfLock(OutputWriter::netcdfMutex());
                     particles->loadFromNetCDF(fileName,config);
 
                     // Check if the restart is a geojson

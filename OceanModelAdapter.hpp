@@ -11,6 +11,7 @@
 #include "log4cplus/loggingmacros.h"
 
 #include "Array.h"
+#include "NetcdfLock.hpp"
 #include "ResourceLimits.hpp"
 #include "netcdf"
 
@@ -85,8 +86,10 @@ public:
     double ReadSeconds() const { return readSeconds; }
 
 protected:
-    // Read a NetCDF variable, adding the elapsed time to the read seconds
+    // Read a NetCDF variable, adding the elapsed time to the read seconds.
+    // A forcing prefetch thread first lets the solver thread and the output writer use NetCDF.
     template<typename... Args> void readVar(const NcVar &var, Args&&... args) {
+        NetcdfLock::yieldToPriority();
         auto start=std::chrono::steady_clock::now();
         var.getVar(std::forward<Args>(args)...);
         std::chrono::duration<double> elapsed=std::chrono::steady_clock::now()-start;

@@ -7,6 +7,7 @@
 #ifdef WACOMM_PARALLEL_NETCDF
 
 #include "MpiHelpers.hpp"
+#include "NetcdfLock.hpp"
 #include "OutputWriter.hpp"
 
 #include <netcdf.h>
@@ -81,7 +82,7 @@ namespace {
                 std::error_code ec;
                 fs::remove(partial, ec);
                 if (rootCreate) {
-                    std::lock_guard<std::mutex> lock(OutputWriter::netcdfMutex());
+                    NetcdfLock::Priority lock(OutputWriter::netcdfMutex());
                     rootCreate(partial);
                 }
             } catch (const std::exception &e) { error=e.what(); }
@@ -91,7 +92,7 @@ namespace {
         try {
             // The lock is per process: it excludes this rank's forcing prefetch and output threads,
             // which never call MPI, so the collective calls of the ranks cannot wait for each other on it
-            std::lock_guard<std::mutex> lock(OutputWriter::netcdfMutex());
+            NetcdfLock::Priority lock(OutputWriter::netcdfMutex());
             collectiveWrite(partial);
         } catch (const std::exception &e) { error=e.what(); }
         try {
