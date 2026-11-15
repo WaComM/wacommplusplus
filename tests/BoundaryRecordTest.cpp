@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {
@@ -65,6 +66,26 @@ void assertExtended(OceanModelAdapter &extended, FixtureAdapter &original, Fixtu
         }
     }
 }
+
+// Copy one record of every field from a window into another, so that both hold the same boundary
+void copyRecord(OceanModelAdapter &target, int to, OceanModelAdapter &source, int from, int sRho, int sW, int eta, int xi) {
+    target.OceanTime()(to)=source.OceanTime()(from);
+    for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) {
+        target.Zeta()(to,j,i)=source.Zeta()(from,j,i);
+        for (int k=-sRho+1;k<=0;k++) { target.U()(to,k,j,i)=source.U()(from,k,j,i); target.V()(to,k,j,i)=source.V()(from,k,j,i); }
+        for (int k=-sW+1;k<=0;k++) { target.W()(to,k,j,i)=source.W()(from,k,j,i); target.AKT()(to,k,j,i)=source.AKT()(from,k,j,i); }
+    }
+}
+
+// The window still holds exactly its original records
+void assertUnchanged(OceanModelAdapter &window, FixtureAdapter &original, int sRho, int sW, int eta, int xi) {
+    assert(window.OceanTime().Nx()==original.OceanTime().Nx());
+    for (int t=0;t<(int)original.OceanTime().Nx();t++) for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) {
+        assert(window.OceanTime()(t)==original.OceanTime()(t) && same(window.Zeta()(t,j,i),original.Zeta()(t,j,i)));
+        for (int k=-sRho+1;k<=0;k++) assert(same(window.U()(t,k,j,i),original.U()(t,k,j,i)) && same(window.V()(t,k,j,i),original.V()(t,k,j,i)));
+        for (int k=-sW+1;k<=0;k++) assert(same(window.W()(t,k,j,i),original.W()(t,k,j,i)) && same(window.AKT()(t,k,j,i),original.AKT()(t,k,j,i)));
+    }
+}
 }
 
 int main() {
@@ -103,5 +124,33 @@ int main() {
         catch (const std::runtime_error &) { rejected=true; }
         assert(rejected && window.OceanTime().Nx()==3);
         assert(same(window.U()(2,0,eta-1,xi-1),original.U()(2,0,eta-1,xi-1)));
+    }
+
+    // Saved windows that already hold the adjacent boundary keep their records, forward and backward;
+    // the values are compared numerically, so a negative zero matches a positive zero
+    for (bool prepend: {false,true}) {
+        FixtureAdapter window, original, adjacent;
+        fill(window,3,3600.0,sRho,sW,eta,xi); fill(adjacent,2,prepend ? 0.0 : 3*3600.0,sRho,sW,eta,xi);
+        int endpoint=prepend ? 0 : 2, record=prepend ? 1 : 0;
+        window.U()(endpoint,0,0,0)=-0.0f;
+        copyRecord(adjacent,record,window,endpoint,sRho,sW,eta,xi);
+        adjacent.U()(record,0,0,0)=0.0f;
+        fill(original,3,3600.0,sRho,sW,eta,xi); original.U()(endpoint,0,0,0)=-0.0f;
+        window.appendBoundaryRecord(adjacent,record,prepend);
+        assertUnchanged(window,original,sRho,sW,eta,xi);
+
+        // A conflict in the last stored value of any field is rejected and leaves the window unchanged
+        float *last[]={&adjacent.Zeta()(record,eta-1,xi-1),&adjacent.U()(record,0,eta-1,xi-1),&adjacent.V()(record,0,eta-1,xi-1),
+                       &adjacent.W()(record,0,eta-1,xi-1),&adjacent.AKT()(record,0,eta-1,xi-1)};
+        const char *messages[]={"surface elevation","horizontal velocity","horizontal velocity","vertical fields","vertical fields"};
+        for (int f=0;f<5;f++) {
+            float value=*last[f]; *last[f]=value+1.0f;
+            bool rejected=false;
+            try { window.appendBoundaryRecord(adjacent,record,prepend); }
+            catch (const std::runtime_error &e) { rejected=std::string(e.what()).find(messages[f])!=std::string::npos; }
+            assert(rejected);
+            *last[f]=value;
+        }
+        assertUnchanged(window,original,sRho,sW,eta,xi);
     }
 }
