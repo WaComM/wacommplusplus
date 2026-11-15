@@ -6,6 +6,7 @@
 #include "NumericalHelpers.hpp"
 #include <math.h>
 #include <cmath>
+#include <cstring>
 #include <stdexcept>
 
 OceanModelAdapter::OceanModelAdapter() {
@@ -236,36 +237,46 @@ void OceanModelAdapter::appendBoundaryRecord(OceanModelAdapter &adapter, int rec
 
     size_t oldTime=_data.oceanTime.Nx(),newTime=oldTime+1,sRho=_data.sRho.Nx(),sW=_data.sW.Nx();
     size_t eta=_data.mask.Nx(),xi=_data.mask.Ny();
+    size_t adjacentTime=adapter.OceanTime().Nx();
+    if (adapter.Zeta().Size()!=adjacentTime*eta*xi || adapter.U().Size()!=adjacentTime*sRho*eta*xi ||
+        adapter.V().Size()!=adjacentTime*sRho*eta*xi || adapter.W().Size()!=adjacentTime*sW*eta*xi ||
+        adapter.AKT().Size()!=adjacentTime*sW*eta*xi)
+        throw std::runtime_error("Adjacent forcing fields do not match its time and grid dimensions");
+    if (_data.zeta.Size()!=oldTime*eta*xi || _data.u.Size()!=oldTime*sRho*eta*xi || _data.v.Size()!=oldTime*sRho*eta*xi ||
+        _data.w.Size()!=oldTime*sW*eta*xi || _data.akt.Size()!=oldTime*sW*eta*xi)
+        throw std::runtime_error("Forcing fields do not match the window time and grid dimensions");
+
     Array1<double> oceanTime(newTime);
+    for (int t=0;t<newTime;t++) {
+        bool boundary=prepend ? t==0 : t==(int)oldTime;
+        oceanTime(t)=boundary ? adapter.OceanTime()(record) : _data.oceanTime(prepend ? t-1 : t);
+    }
+    for (int t=1;t<newTime;t++) if (oceanTime(t)<=oceanTime(t-1))
+        throw std::runtime_error("Adjacent forcing files do not form a strictly chronological time axis");
+
+    // Each time record is contiguous: copy the window once, as one block, next to the boundary record
+    auto withRecord=[&](float *extended, const float *window, const float *adjacent, size_t recordSize) {
+        std::memcpy(extended+(prepend ? recordSize : 0),window,oldTime*recordSize*sizeof(float));
+        std::memcpy(extended+(prepend ? 0 : oldTime*recordSize),adjacent+(size_t)record*recordSize,recordSize*sizeof(float));
+    };
     Array3<float> zeta(newTime,eta,xi);
     Array4<float> u(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0);
     Array4<float> v(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0);
     Array4<float> w(newTime,sW,eta,xi,0,-(int)sW+1,0,0);
     Array4<float> akt(newTime,sW,eta,xi,0,-(int)sW+1,0,0);
-    for (int t=0;t<newTime;t++) {
-        bool boundary=prepend ? t==0 : t==(int)oldTime;
-        int source=prepend ? t-1 : t;
-        oceanTime(t)=boundary ? adapter.OceanTime()(record) : _data.oceanTime(source);
-        for (int j=0;j<eta;j++) for (int i=0;i<xi;i++) {
-            zeta(t,j,i)=boundary ? adapter.Zeta()(record,j,i) : _data.zeta(source,j,i);
-            for (int k=-(int)sRho+1;k<=0;k++) {
-                u(t,k,j,i)=boundary ? adapter.U()(record,k,j,i) : _data.u(source,k,j,i);
-                v(t,k,j,i)=boundary ? adapter.V()(record,k,j,i) : _data.v(source,k,j,i);
-            }
-            for (int k=-(int)sW+1;k<=0;k++) {
-                w(t,k,j,i)=boundary ? adapter.W()(record,k,j,i) : _data.w(source,k,j,i);
-                akt(t,k,j,i)=boundary ? adapter.AKT()(record,k,j,i) : _data.akt(source,k,j,i);
-            }
-        }
-    }
-    for (int t=1;t<newTime;t++) if (oceanTime(t)<=oceanTime(t-1))
-        throw std::runtime_error("Adjacent forcing files do not form a strictly chronological time axis");
+    withRecord(zeta(),_data.zeta(),adapter.Zeta()(),eta*xi);
+    withRecord(u(),_data.u(),adapter.U()(),sRho*eta*xi);
+    withRecord(v(),_data.v(),adapter.V()(),sRho*eta*xi);
+    withRecord(w(),_data.w(),adapter.W()(),sW*eta*xi);
+    withRecord(akt(),_data.akt(),adapter.AKT()(),sW*eta*xi);
+
+    // The window adopts the extended arrays without copying them again
     _data.oceanTime.Reallocate(newTime); _data.oceanTime.Load(oceanTime());
-    _data.zeta.Deallocate(); _data.zeta.Allocate(newTime,eta,xi); _data.zeta.Load(zeta());
-    _data.u.Deallocate(); _data.u.Allocate(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0); _data.u.Load(u());
-    _data.v.Deallocate(); _data.v.Allocate(newTime,sRho,eta,xi,0,-(int)sRho+1,0,0); _data.v.Load(v());
-    _data.w.Deallocate(); _data.w.Allocate(newTime,sW,eta,xi,0,-(int)sW+1,0,0); _data.w.Load(w());
-    _data.akt.Deallocate(); _data.akt.Allocate(newTime,sW,eta,xi,0,-(int)sW+1,0,0); _data.akt.Load(akt());
+    _data.zeta.Deallocate(); _data.zeta.Dimension(newTime,eta,xi,zeta()); _data.zeta.set(zeta.allocated); zeta.Freeze();
+    _data.u.Deallocate(); _data.u.Dimension(newTime,sRho,eta,xi,u(),0,-(int)sRho+1,0,0); _data.u.set(u.allocated); u.Freeze();
+    _data.v.Deallocate(); _data.v.Dimension(newTime,sRho,eta,xi,v(),0,-(int)sRho+1,0,0); _data.v.set(v.allocated); v.Freeze();
+    _data.w.Deallocate(); _data.w.Dimension(newTime,sW,eta,xi,w(),0,-(int)sW+1,0,0); _data.w.set(w.allocated); w.Freeze();
+    _data.akt.Deallocate(); _data.akt.Dimension(newTime,sW,eta,xi,akt(),0,-(int)sW+1,0,0); _data.akt.set(akt.allocated); akt.Freeze();
 }
 
 void OceanModelAdapter::kji2deplatlon(double k, double j, double i, double &dep, double &lat, double &lon) {

@@ -116,6 +116,7 @@ On hybrid-core CPUs (Apple M-series, Intel hybrid), document a performance-cores
 - **Invariant.** The appended arrays are bit-identical, so results are bit-identical, forward and backward, continuous and restarted. The duplicate-boundary check and the chronology check are unchanged.
 - **Tests.** A test that compares the appended arrays with an element-wise reference for prepend and append. Also the forward and backward `application_end_to_end` and `restart_format`.
 - **Acceptance.** The boundary-record time falls by at least 75% on `hhcpu`, synchronous and asynchronous.
+- **Implemented.** The append now copies the window's records as one block and the boundary record as another into arrays one record longer, which the window then owns without a second copy. The single-threaded copy keeps the pages' first touch on the same thread as before. `boundary_record` checks every stored bit. On an Apple M4 Max, appending to a 1.7 GB window took 0.03–0.12 s instead of 3.0 s. The macOS `memcpy` may defer copying large page-aligned blocks, so the `hhcpu` measurement decides acceptance.
 
 ## Numerical tasks
 

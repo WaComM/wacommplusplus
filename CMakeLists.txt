@@ -277,6 +277,12 @@ if(BUILD_APPLICATION)
         target_link_libraries(native_adapter_test PRIVATE ${WACOMM_LIBRARIES})
         add_test(NAME native_adapter COMMAND native_adapter_test)
 
+        add_executable(boundary_record_test tests/BoundaryRecordTest.cpp
+                Particle.cpp DriftModel.cpp OceanModelAdapter.cpp)
+        wacomm_enable_test_assertions(boundary_record_test)
+        target_link_libraries(boundary_record_test PRIVATE ${WACOMM_LIBRARIES})
+        add_test(NAME boundary_record COMMAND boundary_record_test)
+
         add_executable(vertical_coordinate_test tests/VerticalCoordinateTest.cpp
                 Particle.cpp DriftModel.cpp OceanModelAdapter.cpp)
         wacomm_enable_test_assertions(vertical_coordinate_test)
