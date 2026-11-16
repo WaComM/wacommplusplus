@@ -143,7 +143,8 @@ function(wacomm_configure_dependencies result)
             # OpenSSL's Configure loads these core modules; RPM systems split
             # them out of `perl`, so check here instead of failing mid-build.
             # IPC::Cmd loads ExtUtils::MM::Utils only inside can_run, so call it.
-            set(openssl_perl_modules IPC::Cmd File::Compare File::Copy FindBin Getopt::Std)
+            # The generated Makefile loads Time::Piece (perl-Time-Piece on RPM systems).
+            set(openssl_perl_modules IPC::Cmd File::Compare File::Copy FindBin Getopt::Std Time::Piece)
             set(missing_perl_modules)
             foreach(module IN LISTS openssl_perl_modules)
                 execute_process(COMMAND ${PERL_EXECUTABLE} -M${module} -e 1

@@ -7,6 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sarno_backend_matrix import INTERVALS, best, launch_command, parse_config, prepare, suite
+from backend_matrix_compare import compare, load, tuple_label
 
 
 def sample(root, build, p, n, g, label, seconds, application=None, reference=None, runtime=None):
@@ -40,8 +41,36 @@ def rejected(function):
     return False
 
 
+def machine_comparison(directory):
+    # Each machine's fastest application tuple is divided into the reference machine's serial medians per rate.
+    def results(name, rate, serial, rows):
+        path = directory / f"{name}.json"
+        rows = [{"family": f, "mpi_processes": p, "openmp_threads": n, "gpus": g, "solver_median": s,
+                 "application_median": a} for f, p, n, g, s, a in rows]
+        path.write_text(json.dumps({"suites": {f"{name}-q": {"particles_per_hour": rate, "baseline_solver_seconds":
+                                                             serial[0], "baseline_application_seconds": serial[1],
+                                                             "rows": rows}}}))
+        return path
+
+    reference = results("ref", 100, (20.0, 24.0), [("Serial", 1, 1, 0, 20.0, 24.0), ("OpenMP", 1, 8, 0, 2.5, 4.0)])
+    other = results("gpu", 100, (40.0, 44.0), [("OpenMP+CUDA", 1, 4, 1, 0.5, 6.0), ("OpenMP", 1, 8, 0, 4.0, 5.0)])
+    entries = load(f"Ref={reference}") + load(f"GPU={other}")
+    rows = {r["machine"]: r for r in compare(entries, "Ref")}
+    assert rows["Ref"]["solver_factor"] == 8.0 and rows["Ref"]["application_factor"] == 6.0, rows
+    # The GPU tuple has the shorter solver but the CPU tuple the shorter application, so the CPU tuple is chosen.
+    assert rows["GPU"]["tuple"] == "OpenMP 1×8" and rows["GPU"]["solver_factor"] == 5.0, rows
+    assert abs(rows["GPU"]["application_factor"] - 4.8) < 1e-12, rows
+    assert "OpenMP+CUDA 1×4 +1 GPU" == tuple_label({"family": "OpenMP+CUDA", "mpi_processes": 1,
+                                                     "openmp_threads": 4, "gpus": 1})
+    lone = results("lone", 1000, (1.0, 1.0), [("Serial", 1, 1, 0, 1.0, 1.0)])
+    assert rejected(lambda: compare(entries + load(f"Lone={lone}"), "Ref")), "rate without reference accepted"
+    assert rejected(lambda: compare(entries, "Missing")), "missing reference machine accepted"
+    assert rejected(lambda: load(f"Ref={reference}:absent")), "absent suite accepted"
+
+
 def main():
     with tempfile.TemporaryDirectory() as temporary:
+        machine_comparison(Path(temporary))
         root = Path(temporary) / "suite"
         (root / "provenance").mkdir(parents=True)
         (root / "provenance/particles-per-hour.txt").write_text("100000\n")

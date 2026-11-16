@@ -1,0 +1,1594 @@
+{
+  "schema": "wacomm-sarno-backend-matrix-v1",
+  "estimator": "median of valid measured samples; solver = sum of five solver intervals timed on rank 0 between MPI barriers (s); application = launcher wall time (s)",
+  "suites": {
+    "purplejeans-gn-q1e5": {
+      "root": "data/matrix-e4-gn/gn-ed8f731-q100000",
+      "particles_per_hour": 100000,
+      "host": "gn03.e4.cluster",
+      "nodes": 1,
+      "platform": "Linux-4.18.0-553.104.1.el8_10.x86_64-x86_64-with-glibc2.28",
+      "revision": "ed8f731897ef6410abb2628822bd2e0ba308d97c",
+      "working_tree_patch_bytes": 952,
+      "io_async": false,
+      "launch_prefix": [],
+      "io_prefetch": false,
+      "spare_cores": 0,
+      "baseline_solver_seconds": 101.978455541,
+      "baseline_application_seconds": 116.037,
+      "rows": [
+        {
+          "build": "serial",
+          "family": "Serial",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 0,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            101.924478002,
+            102.255158598,
+            101.978455541
+          ],
+          "application_seconds": [
+            116.037,
+            112.784,
+            119.979
+          ],
+          "solver_median": 101.978455541,
+          "solver_range": [
+            101.924478002,
+            102.255158598
+          ],
+          "application_median": 116.037,
+          "max_rss_kib_median": 4005204,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.1784535,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 5.292650779,
+            "forcing_max_seconds": 5.292650779,
+            "forcing_wait_seconds": 2.051e-06,
+            "forcing_read_seconds": 3.758717,
+            "forcing_normalize_seconds": 0.154304,
+            "forcing_boundary_seconds": 1.3982199999999998,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.004932812,
+            "output_seconds": 7.226927,
+            "flush_seconds": 8.34e-07,
+            "run_seconds": 115.98
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 1.0,
+          "application_speedup": 1.0,
+          "cpu_efficiency": 1.0
+        },
+        {
+          "build": "omp",
+          "family": "OpenMP",
+          "mpi_processes": 1,
+          "openmp_threads": 8,
+          "gpus": 0,
+          "cpu_workers": 8,
+          "solver_seconds": [
+            14.927167693,
+            15.075125563,
+            15.076018365
+          ],
+          "application_seconds": [
+            28.584,
+            23.311,
+            24.546
+          ],
+          "solver_median": 15.075125563,
+          "solver_range": [
+            14.927167693,
+            15.076018365
+          ],
+          "application_median": 24.546,
+          "max_rss_kib_median": 4005964,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.03527922,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 3.882312544,
+            "forcing_max_seconds": 3.882312544,
+            "forcing_wait_seconds": 2.316e-06,
+            "forcing_read_seconds": 3.616029,
+            "forcing_normalize_seconds": 0.05798337,
+            "forcing_boundary_seconds": 0.2120613,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.013776583,
+            "output_seconds": 5.465922,
+            "flush_seconds": 9.3e-07,
+            "run_seconds": 24.5375
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 6.764683658177501,
+          "application_speedup": 4.727328281593743,
+          "cpu_efficiency": 0.8455854572721876
+        },
+        {
+          "build": "omp",
+          "family": "OpenMP",
+          "mpi_processes": 1,
+          "openmp_threads": 16,
+          "gpus": 0,
+          "cpu_workers": 16,
+          "solver_seconds": [
+            9.002384564,
+            8.996407966,
+            8.97485082
+          ],
+          "application_seconds": [
+            22.501,
+            20.636,
+            20.769
+          ],
+          "solver_median": 8.996407966,
+          "solver_range": [
+            8.97485082,
+            9.002384564
+          ],
+          "application_median": 20.769,
+          "max_rss_kib_median": 4003408,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.02243458,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 3.7896072160000003,
+            "forcing_max_seconds": 3.7896072160000003,
+            "forcing_wait_seconds": 2.577e-06,
+            "forcing_read_seconds": 3.617689,
+            "forcing_normalize_seconds": 0.03501238,
+            "forcing_boundary_seconds": 0.1423305,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.013677011,
+            "output_seconds": 7.858997,
+            "flush_seconds": 1.282e-06,
+            "run_seconds": 20.7564
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 11.335463656873474,
+          "application_speedup": 5.587028744763831,
+          "cpu_efficiency": 0.7084664785545921
+        },
+        {
+          "build": "omp",
+          "family": "OpenMP",
+          "mpi_processes": 1,
+          "openmp_threads": 32,
+          "gpus": 0,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            4.581209484,
+            4.581220867,
+            4.561812651
+          ],
+          "application_seconds": [
+            14.8,
+            12.623,
+            12.333
+          ],
+          "solver_median": 4.581209484,
+          "solver_range": [
+            4.561812651,
+            4.581220867
+          ],
+          "application_median": 12.623,
+          "max_rss_kib_median": 4005816,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.02532148,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 3.934745835,
+            "forcing_max_seconds": 3.934745835,
+            "forcing_wait_seconds": 2.22e-06,
+            "forcing_read_seconds": 3.648422,
+            "forcing_normalize_seconds": 0.030064050000000002,
+            "forcing_boundary_seconds": 0.2562254,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.015363439,
+            "output_seconds": 3.947785,
+            "flush_seconds": 7.35e-07,
+            "run_seconds": 12.613
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 22.260159876373816,
+          "application_speedup": 9.192505743484118,
+          "cpu_efficiency": 0.6956299961366817
+        },
+        {
+          "build": "mpi",
+          "family": "MPI",
+          "mpi_processes": 4,
+          "openmp_threads": 1,
+          "gpus": 0,
+          "cpu_workers": 4,
+          "solver_seconds": [
+            28.190048478999998,
+            28.770367701999998,
+            28.77452697
+          ],
+          "application_seconds": [
+            44.591,
+            43.218,
+            43.357
+          ],
+          "solver_median": 28.770367701999998,
+          "solver_range": [
+            28.190048478999998,
+            28.77452697
+          ],
+          "application_median": 43.357,
+          "max_rss_kib_median": 4113844,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.2414048,
+            "distribute_seconds": 0.12603342,
+            "collect_seconds": 0.13843899,
+            "forcing_seconds": 7.279857923,
+            "forcing_max_seconds": 7.407812872,
+            "forcing_wait_seconds": 2.427e-06,
+            "forcing_read_seconds": 5.064686,
+            "forcing_normalize_seconds": 0.14370159999999998,
+            "forcing_boundary_seconds": 2.078488,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.003751051,
+            "output_seconds": 5.136674,
+            "flush_seconds": 9.65e-07,
+            "run_seconds": 42.8621
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 3.5445655960076894,
+          "application_speedup": 2.676315243213322,
+          "cpu_efficiency": 0.8861413990019223
+        },
+        {
+          "build": "mpi",
+          "family": "MPI",
+          "mpi_processes": 8,
+          "openmp_threads": 1,
+          "gpus": 0,
+          "cpu_workers": 8,
+          "solver_seconds": [
+            15.780494925,
+            15.871576711,
+            16.132741954
+          ],
+          "application_seconds": [
+            33.463,
+            32.631,
+            35.75
+          ],
+          "solver_median": 15.871576711,
+          "solver_range": [
+            15.780494925,
+            16.132741954
+          ],
+          "application_median": 33.463,
+          "max_rss_kib_median": 4107904,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.22405819999999999,
+            "distribute_seconds": 0.10955256,
+            "collect_seconds": 0.14294704,
+            "forcing_seconds": 7.81632214,
+            "forcing_max_seconds": 8.340213507,
+            "forcing_wait_seconds": 3.562e-06,
+            "forcing_read_seconds": 5.575907,
+            "forcing_normalize_seconds": 0.1485869,
+            "forcing_boundary_seconds": 2.17631,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.024558673,
+            "output_seconds": 7.31221,
+            "flush_seconds": 8.69e-07,
+            "run_seconds": 32.6817
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 6.425225256311336,
+          "application_speedup": 3.4676209544870455,
+          "cpu_efficiency": 0.803153157038917
+        },
+        {
+          "build": "mpi-omp",
+          "family": "MPI+OpenMP",
+          "mpi_processes": 2,
+          "openmp_threads": 16,
+          "gpus": 0,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            4.821656972,
+            4.810620063,
+            4.787538226
+          ],
+          "application_seconds": [
+            17.25,
+            14.466,
+            13.729
+          ],
+          "solver_median": 4.810620063,
+          "solver_range": [
+            4.787538226,
+            4.821656972
+          ],
+          "application_median": 14.466,
+          "max_rss_kib_median": 4131804,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.03149441,
+            "distribute_seconds": 0.12399753999999999,
+            "collect_seconds": 0.04971896,
+            "forcing_seconds": 4.260544584,
+            "forcing_max_seconds": 5.032242816,
+            "forcing_wait_seconds": 3.03e-06,
+            "forcing_read_seconds": 4.050548,
+            "forcing_normalize_seconds": 0.0379525,
+            "forcing_boundary_seconds": 0.17046820000000001,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.016953892999999998,
+            "output_seconds": 4.0343539999999996,
+            "flush_seconds": 1.054e-06,
+            "run_seconds": 13.9878
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 21.198609369579724,
+          "application_speedup": 8.021360431356284,
+          "cpu_efficiency": 0.6624565427993664
+        },
+        {
+          "build": "mpi-omp",
+          "family": "MPI+OpenMP",
+          "mpi_processes": 4,
+          "openmp_threads": 8,
+          "gpus": 0,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            4.807314119,
+            4.81506885,
+            4.812634315
+          ],
+          "application_seconds": [
+            17.445,
+            17.22,
+            19.508
+          ],
+          "solver_median": 4.812634315,
+          "solver_range": [
+            4.807314119,
+            4.81506885
+          ],
+          "application_median": 17.445,
+          "max_rss_kib_median": 4117488,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.04157049,
+            "distribute_seconds": 0.10141348,
+            "collect_seconds": 0.043205389999999996,
+            "forcing_seconds": 5.421444719,
+            "forcing_max_seconds": 5.867029723,
+            "forcing_wait_seconds": 3.167e-06,
+            "forcing_read_seconds": 5.074544,
+            "forcing_normalize_seconds": 0.05520295,
+            "forcing_boundary_seconds": 0.30506089999999997,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.011676963,
+            "output_seconds": 5.77693,
+            "flush_seconds": 9.69e-07,
+            "run_seconds": 16.935
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 21.189737026799218,
+          "application_speedup": 6.651590713671539,
+          "cpu_efficiency": 0.6621792820874756
+        },
+        {
+          "build": "cuda",
+          "family": "CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 1,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            1.654735755,
+            1.6280143900000001,
+            1.61337918
+          ],
+          "application_seconds": [
+            13.908,
+            11.565,
+            10.885
+          ],
+          "solver_median": 1.6280143900000001,
+          "solver_range": [
+            1.61337918,
+            1.654735755
+          ],
+          "application_median": 11.565,
+          "max_rss_kib_median": 4128412,
+          "components_median": {
+            "host_to_device_seconds": 1.17905,
+            "gpu_section_seconds": 0.1495025,
+            "concentration_seconds": 0.1192711,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 5.135452842,
+            "forcing_max_seconds": 5.135452842,
+            "forcing_wait_seconds": 1.882e-06,
+            "forcing_read_seconds": 3.718232,
+            "forcing_normalize_seconds": 0.1143088,
+            "forcing_boundary_seconds": 1.302878,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.014942026999999998,
+            "output_seconds": 3.511385,
+            "flush_seconds": 7.32e-07,
+            "run_seconds": 11.4688
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 62.63977527925905,
+          "application_speedup": 10.033463035019457,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "cuda",
+          "family": "CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 2,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            2.753949678,
+            2.77789004,
+            2.712868998
+          ],
+          "application_seconds": [
+            15.678,
+            13.98,
+            11.677
+          ],
+          "solver_median": 2.753949678,
+          "solver_range": [
+            2.712868998,
+            2.77789004
+          ],
+          "application_median": 13.98,
+          "max_rss_kib_median": 4233444,
+          "components_median": {
+            "host_to_device_seconds": 2.350461,
+            "gpu_section_seconds": 0.17737398,
+            "concentration_seconds": 0.1202837,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 4.920409615,
+            "forcing_max_seconds": 4.920409615,
+            "forcing_wait_seconds": 1.8740000000000002e-06,
+            "forcing_read_seconds": 3.540228,
+            "forcing_normalize_seconds": 0.1258841,
+            "forcing_boundary_seconds": 1.264904,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.020093512999999997,
+            "output_seconds": 4.673276,
+            "flush_seconds": 7.83e-07,
+            "run_seconds": 13.7497
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 37.02989068960032,
+          "application_speedup": 8.300214592274678,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "cuda",
+          "family": "CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 4,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            5.0795793410000005,
+            5.150064933,
+            5.088199008
+          ],
+          "application_seconds": [
+            18.013,
+            14.988,
+            17.515
+          ],
+          "solver_median": 5.088199008,
+          "solver_range": [
+            5.0795793410000005,
+            5.150064933
+          ],
+          "application_median": 17.515,
+          "max_rss_kib_median": 4444428,
+          "components_median": {
+            "host_to_device_seconds": 4.715374,
+            "gpu_section_seconds": 0.19233244,
+            "concentration_seconds": 0.1212793,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 5.012546007,
+            "forcing_max_seconds": 5.012546007,
+            "forcing_wait_seconds": 1.438e-06,
+            "forcing_read_seconds": 3.600649,
+            "forcing_normalize_seconds": 0.1290929,
+            "forcing_boundary_seconds": 1.299313,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.009672464,
+            "output_seconds": 5.995242,
+            "flush_seconds": 8.76e-07,
+            "run_seconds": 17.2328
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 20.042151531546384,
+          "application_speedup": 6.625007136739938,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "omp-cuda",
+          "family": "OpenMP+CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 8,
+          "gpus": 1,
+          "cpu_workers": 8,
+          "solver_seconds": [
+            1.510715284,
+            1.527375142,
+            1.520672714
+          ],
+          "application_seconds": [
+            11.519,
+            11.639,
+            11.399
+          ],
+          "solver_median": 1.520672714,
+          "solver_range": [
+            1.510715284,
+            1.527375142
+          ],
+          "application_median": 11.519,
+          "max_rss_kib_median": 4124896,
+          "components_median": {
+            "host_to_device_seconds": 1.2139820000000001,
+            "gpu_section_seconds": 0.14672453,
+            "concentration_seconds": 0.03193704,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 3.863498435,
+            "forcing_max_seconds": 3.863498435,
+            "forcing_wait_seconds": 2.078e-06,
+            "forcing_read_seconds": 3.6083179999999997,
+            "forcing_normalize_seconds": 0.0419267,
+            "forcing_boundary_seconds": 0.21350360000000002,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.010889387,
+            "output_seconds": 5.345913,
+            "flush_seconds": 8.03e-07,
+            "run_seconds": 11.3342
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 67.06140946841504,
+          "application_speedup": 10.073530688427816,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "omp-cuda",
+          "family": "OpenMP+CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 32,
+          "gpus": 1,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            1.576984793,
+            1.5763493080000002,
+            1.599379839
+          ],
+          "application_seconds": [
+            11.986,
+            9.744,
+            9.986
+          ],
+          "solver_median": 1.576984793,
+          "solver_range": [
+            1.5763493080000002,
+            1.599379839
+          ],
+          "application_median": 9.986,
+          "max_rss_kib_median": 4123684,
+          "components_median": {
+            "host_to_device_seconds": 1.283247,
+            "gpu_section_seconds": 0.14539666,
+            "concentration_seconds": 0.02595047,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 3.90218165,
+            "forcing_max_seconds": 3.90218165,
+            "forcing_wait_seconds": 1.784e-06,
+            "forcing_read_seconds": 3.619013,
+            "forcing_normalize_seconds": 0.03112038,
+            "forcing_boundary_seconds": 0.2520536,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.009544984,
+            "output_seconds": 4.013047,
+            "flush_seconds": 7.47e-07,
+            "run_seconds": 9.85165
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 64.66673362588348,
+          "application_speedup": 11.619967955137191,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "omp-cuda",
+          "family": "OpenMP+CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 32,
+          "gpus": 4,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            5.081491439,
+            5.076539724,
+            5.099941157
+          ],
+          "application_seconds": [
+            15.5,
+            15.027,
+            13.655
+          ],
+          "solver_median": 5.081491439,
+          "solver_range": [
+            5.076539724,
+            5.099941157
+          ],
+          "application_median": 15.027,
+          "max_rss_kib_median": 4443048,
+          "components_median": {
+            "host_to_device_seconds": 4.847791,
+            "gpu_section_seconds": 0.19453054,
+            "concentration_seconds": 0.037531339999999996,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 3.897692446,
+            "forcing_max_seconds": 3.897692446,
+            "forcing_wait_seconds": 1.889e-06,
+            "forcing_read_seconds": 3.6124870000000002,
+            "forcing_normalize_seconds": 0.03733203,
+            "forcing_boundary_seconds": 0.24785079999999998,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.010240197,
+            "output_seconds": 5.321623000000001,
+            "flush_seconds": 6.94e-07,
+            "run_seconds": 14.6044
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 20.068607172753325,
+          "application_speedup": 7.721900578957877,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "mpi-cuda",
+          "family": "MPI+CUDA",
+          "mpi_processes": 2,
+          "openmp_threads": 1,
+          "gpus": 1,
+          "cpu_workers": 2,
+          "solver_seconds": [
+            2.095845568,
+            2.141330317,
+            2.130926948
+          ],
+          "application_seconds": [
+            16.259,
+            14.352,
+            14.688
+          ],
+          "solver_median": 2.130926948,
+          "solver_range": [
+            2.095845568,
+            2.141330317
+          ],
+          "application_median": 14.688,
+          "max_rss_kib_median": 4285116,
+          "components_median": {
+            "host_to_device_seconds": 2.97187,
+            "gpu_section_seconds": 0.08526842,
+            "concentration_seconds": 0.1194549,
+            "distribute_seconds": 0.13916557,
+            "collect_seconds": 0.24642865,
+            "forcing_seconds": 6.389946922,
+            "forcing_max_seconds": 6.442628246,
+            "forcing_wait_seconds": 1.7499e-05,
+            "forcing_read_seconds": 4.605598,
+            "forcing_normalize_seconds": 0.1365623,
+            "forcing_boundary_seconds": 1.6664240000000001,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.022039264,
+            "output_seconds": 4.13098,
+            "flush_seconds": 1.413e-06,
+            "run_seconds": 14.1494
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 47.856382705522954,
+          "application_speedup": 7.900122549019608,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "mpi-cuda",
+          "family": "MPI+CUDA",
+          "mpi_processes": 2,
+          "openmp_threads": 1,
+          "gpus": 2,
+          "cpu_workers": 2,
+          "solver_seconds": [
+            3.22631882,
+            3.27069945,
+            3.386519095
+          ],
+          "application_seconds": [
+            17.277,
+            15.327,
+            16.188
+          ],
+          "solver_median": 3.27069945,
+          "solver_range": [
+            3.22631882,
+            3.386519095
+          ],
+          "application_median": 16.188,
+          "max_rss_kib_median": 4392288,
+          "components_median": {
+            "host_to_device_seconds": 5.33802,
+            "gpu_section_seconds": 0.1023732,
+            "concentration_seconds": 0.1245398,
+            "distribute_seconds": 0.13711468,
+            "collect_seconds": 0.14073950999999998,
+            "forcing_seconds": 6.397796979,
+            "forcing_max_seconds": 6.492469979,
+            "forcing_wait_seconds": 2.606e-06,
+            "forcing_read_seconds": 4.608236,
+            "forcing_normalize_seconds": 0.14542860000000002,
+            "forcing_boundary_seconds": 1.664072,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.010979814000000001,
+            "output_seconds": 4.272648,
+            "flush_seconds": 1.11e-06,
+            "run_seconds": 15.5694
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 31.179402785236046,
+          "application_speedup": 7.1680874722016314,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "mpi-cuda",
+          "family": "MPI+CUDA",
+          "mpi_processes": 4,
+          "openmp_threads": 1,
+          "gpus": 4,
+          "cpu_workers": 4,
+          "solver_seconds": [
+            8.815378802,
+            8.831885513,
+            8.746681882
+          ],
+          "application_seconds": [
+            24.17,
+            22.525,
+            24.791
+          ],
+          "solver_median": 8.815378802,
+          "solver_range": [
+            8.746681882,
+            8.831885513
+          ],
+          "application_median": 24.17,
+          "max_rss_kib_median": 4570340,
+          "components_median": {
+            "host_to_device_seconds": 32.633345,
+            "gpu_section_seconds": 0.062126107,
+            "concentration_seconds": 0.191334,
+            "distribute_seconds": 0.1093516,
+            "collect_seconds": 0.32888818,
+            "forcing_seconds": 7.057326377000001,
+            "forcing_max_seconds": 7.3408621855,
+            "forcing_wait_seconds": 2.5635e-06,
+            "forcing_read_seconds": 5.05216,
+            "forcing_normalize_seconds": 0.13988555,
+            "forcing_boundary_seconds": 1.865256,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.0088293905,
+            "output_seconds": 5.9222494999999995,
+            "flush_seconds": 1.679e-06,
+            "run_seconds": 23.399749999999997
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [
+            "sample-2: could not convert string to float: '0.0047390626-11-16'"
+          ],
+          "speedup": 11.5682442957373,
+          "application_speedup": 4.800868845676458,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "mpi-omp-cuda",
+          "family": "MPI+OpenMP+CUDA",
+          "mpi_processes": 2,
+          "openmp_threads": 16,
+          "gpus": 2,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            3.006728654,
+            2.8883746319999997,
+            3.004754877
+          ],
+          "application_seconds": [
+            15.335,
+            12.683,
+            13.117
+          ],
+          "solver_median": 3.004754877,
+          "solver_range": [
+            2.8883746319999997,
+            3.006728654
+          ],
+          "application_median": 13.117,
+          "max_rss_kib_median": 4392596,
+          "components_median": {
+            "host_to_device_seconds": 5.173557,
+            "gpu_section_seconds": 0.10941662,
+            "concentration_seconds": 0.03180633,
+            "distribute_seconds": 0.10760041000000001,
+            "collect_seconds": 0.17948522,
+            "forcing_seconds": 4.278872338,
+            "forcing_max_seconds": 5.0679552,
+            "forcing_wait_seconds": 2.273e-06,
+            "forcing_read_seconds": 4.056955,
+            "forcing_normalize_seconds": 0.0317635,
+            "forcing_boundary_seconds": 0.1901653,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.013654502,
+            "output_seconds": 4.320298,
+            "flush_seconds": 5.97e-07,
+            "run_seconds": 12.3641
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 33.93902654808804,
+          "application_speedup": 8.846306320042693,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "mpi-omp-cuda",
+          "family": "MPI+OpenMP+CUDA",
+          "mpi_processes": 4,
+          "openmp_threads": 8,
+          "gpus": 4,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            8.501837760999999,
+            8.548632895,
+            8.549267011
+          ],
+          "application_seconds": [
+            22.206,
+            19.489,
+            21.465
+          ],
+          "solver_median": 8.548632895,
+          "solver_range": [
+            8.501837760999999,
+            8.549267011
+          ],
+          "application_median": 21.465,
+          "max_rss_kib_median": 4572264,
+          "components_median": {
+            "host_to_device_seconds": 32.60008,
+            "gpu_section_seconds": 0.06818189,
+            "concentration_seconds": 0.03869606,
+            "distribute_seconds": 0.09236797000000001,
+            "collect_seconds": 0.10144020000000001,
+            "forcing_seconds": 5.350702227,
+            "forcing_max_seconds": 5.954879145,
+            "forcing_wait_seconds": 2.2750000000000002e-06,
+            "forcing_read_seconds": 4.949401,
+            "forcing_normalize_seconds": 0.04184343,
+            "forcing_boundary_seconds": 0.3457059,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.015519906,
+            "output_seconds": 5.744597000000001,
+            "flush_seconds": 9.33e-07,
+            "run_seconds": 20.3732
+          },
+          "particles_per_interval": [
+            100000,
+            199898,
+            395398,
+            456952,
+            528715
+          ],
+          "rejected": [],
+          "speedup": 11.929212166853727,
+          "application_speedup": 5.405870020964361,
+          "cpu_efficiency": null
+        }
+      ],
+      "best_solver": "OpenMP+CUDA 1\u00d78 +1GPU",
+      "best_cpu_solver": "OpenMP 1\u00d732",
+      "best_application": "OpenMP+CUDA 1\u00d732 +1GPU"
+    },
+    "purplejeans-gn-q1e6": {
+      "root": "data/matrix-e4-gn/gn-ed8f731-q1000000",
+      "particles_per_hour": 1000000,
+      "host": "gn04.e4.cluster",
+      "nodes": 1,
+      "platform": "Linux-4.18.0-553.el8_10.x86_64-x86_64-with-glibc2.28",
+      "revision": "ed8f731897ef6410abb2628822bd2e0ba308d97c",
+      "working_tree_patch_bytes": 952,
+      "io_async": false,
+      "launch_prefix": [],
+      "io_prefetch": false,
+      "spare_cores": 0,
+      "baseline_solver_seconds": 1017.341541751,
+      "baseline_application_seconds": 1028.453,
+      "rows": [
+        {
+          "build": "serial",
+          "family": "Serial",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 0,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            1021.617366456,
+            1017.341541751,
+            1015.2712040060001
+          ],
+          "application_seconds": [
+            1032.865,
+            1028.453,
+            1027.654
+          ],
+          "solver_median": 1017.341541751,
+          "solver_range": [
+            1015.2712040060001,
+            1021.617366456
+          ],
+          "application_median": 1028.453,
+          "max_rss_kib_median": 4789612,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.3370827,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 4.636921852,
+            "forcing_max_seconds": 4.636921852,
+            "forcing_wait_seconds": 1.582e-06,
+            "forcing_read_seconds": 3.2328550000000003,
+            "forcing_normalize_seconds": 0.1342766,
+            "forcing_boundary_seconds": 1.268182,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.00394391,
+            "output_seconds": 5.97636,
+            "flush_seconds": 6.2e-07,
+            "run_seconds": 1028.38
+          },
+          "particles_per_interval": [
+            1000000,
+            1998946,
+            3953811,
+            4570757,
+            5286783
+          ],
+          "rejected": [],
+          "speedup": 1.0,
+          "application_speedup": 1.0,
+          "cpu_efficiency": 1.0
+        },
+        {
+          "build": "omp",
+          "family": "OpenMP",
+          "mpi_processes": 1,
+          "openmp_threads": 32,
+          "gpus": 0,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            45.365297284,
+            45.326348957,
+            45.605396649
+          ],
+          "application_seconds": [
+            57.708,
+            56.492,
+            56.651
+          ],
+          "solver_median": 45.365297284,
+          "solver_range": [
+            45.326348957,
+            45.605396649
+          ],
+          "application_median": 56.651,
+          "max_rss_kib_median": 4792884,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.09146451,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 3.462033766,
+            "forcing_max_seconds": 3.462033766,
+            "forcing_wait_seconds": 1.955e-06,
+            "forcing_read_seconds": 3.081773,
+            "forcing_normalize_seconds": 0.1072578,
+            "forcing_boundary_seconds": 0.2758335,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.010639458,
+            "output_seconds": 7.51587,
+            "flush_seconds": 6.6e-07,
+            "run_seconds": 56.5562
+          },
+          "particles_per_interval": [
+            1000000,
+            1998946,
+            3953811,
+            4570757,
+            5286783
+          ],
+          "rejected": [],
+          "speedup": 22.425545574674516,
+          "application_speedup": 18.154189687737198,
+          "cpu_efficiency": 0.7007982992085786
+        },
+        {
+          "build": "mpi-omp",
+          "family": "MPI+OpenMP",
+          "mpi_processes": 4,
+          "openmp_threads": 8,
+          "gpus": 0,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            47.454734046,
+            47.038486006,
+            46.790663409
+          ],
+          "application_seconds": [
+            58.845,
+            63.609,
+            58.212
+          ],
+          "solver_median": 47.038486006,
+          "solver_range": [
+            46.790663409,
+            47.454734046
+          ],
+          "application_median": 58.845,
+          "max_rss_kib_median": 4938568,
+          "components_median": {
+            "host_to_device_seconds": 0.0,
+            "gpu_section_seconds": 0.0,
+            "concentration_seconds": 0.1652553,
+            "distribute_seconds": 0.6421703,
+            "collect_seconds": 0.4189899,
+            "forcing_seconds": 3.572041583,
+            "forcing_max_seconds": 3.835886463,
+            "forcing_wait_seconds": 2.736e-06,
+            "forcing_read_seconds": 3.309188,
+            "forcing_normalize_seconds": 0.03741407,
+            "forcing_boundary_seconds": 0.2244213,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.015471528,
+            "output_seconds": 6.743949000000001,
+            "flush_seconds": 8.46e-07,
+            "run_seconds": 58.1206
+          },
+          "particles_per_interval": [
+            1000000,
+            1998946,
+            3953811,
+            4570757,
+            5286783
+          ],
+          "rejected": [],
+          "speedup": 21.62785472349669,
+          "application_speedup": 17.477321777551193,
+          "cpu_efficiency": 0.6758704601092715
+        },
+        {
+          "build": "cuda",
+          "family": "CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 1,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            4.397023959,
+            4.389716615,
+            4.389353828
+          ],
+          "application_seconds": [
+            15.729,
+            16.644,
+            17.468
+          ],
+          "solver_median": 4.389716615,
+          "solver_range": [
+            4.389353828,
+            4.397023959
+          ],
+          "application_median": 16.644,
+          "max_rss_kib_median": 4915940,
+          "components_median": {
+            "host_to_device_seconds": 1.181339,
+            "gpu_section_seconds": 1.4401469,
+            "concentration_seconds": 0.3342579,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 4.575490242,
+            "forcing_max_seconds": 4.575490242,
+            "forcing_wait_seconds": 2.125e-06,
+            "forcing_read_seconds": 3.213464,
+            "forcing_normalize_seconds": 0.1173332,
+            "forcing_boundary_seconds": 1.242156,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.004901017000000001,
+            "output_seconds": 6.918735,
+            "flush_seconds": 5.43e-07,
+            "run_seconds": 16.3645
+          },
+          "particles_per_interval": [
+            1000000,
+            1998946,
+            3953811,
+            4570757,
+            5286783
+          ],
+          "rejected": [],
+          "speedup": 231.75563048299418,
+          "application_speedup": 61.79121605383322,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "cuda",
+          "family": "CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 1,
+          "gpus": 4,
+          "cpu_workers": 1,
+          "solver_seconds": [
+            7.138653402,
+            7.162472954,
+            7.087891578000001
+          ],
+          "application_seconds": [
+            19.671,
+            19.065,
+            18.761
+          ],
+          "solver_median": 7.138653402,
+          "solver_range": [
+            7.087891578000001,
+            7.162472954
+          ],
+          "application_median": 19.065,
+          "max_rss_kib_median": 5240296,
+          "components_median": {
+            "host_to_device_seconds": 4.735507,
+            "gpu_section_seconds": 1.7320147,
+            "concentration_seconds": 0.3329026,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 4.4093852060000005,
+            "forcing_max_seconds": 4.4093852060000005,
+            "forcing_wait_seconds": 1.908e-06,
+            "forcing_read_seconds": 3.039453,
+            "forcing_normalize_seconds": 0.1171083,
+            "forcing_boundary_seconds": 1.251376,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.014801936,
+            "output_seconds": 6.530801,
+            "flush_seconds": 4.74e-07,
+            "run_seconds": 18.6292
+          },
+          "particles_per_interval": [
+            1000000,
+            1998946,
+            3953811,
+            4570757,
+            5286783
+          ],
+          "rejected": [],
+          "speedup": 142.51168735352476,
+          "application_speedup": 53.94455809074219,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "omp-cuda",
+          "family": "OpenMP+CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 32,
+          "gpus": 1,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            3.729570761,
+            3.726261584,
+            3.7510526410000002
+          ],
+          "application_seconds": [
+            15.305,
+            15.052,
+            17.427
+          ],
+          "solver_median": 3.729570761,
+          "solver_range": [
+            3.726261584,
+            3.7510526410000002
+          ],
+          "application_median": 15.305,
+          "max_rss_kib_median": 4919432,
+          "components_median": {
+            "host_to_device_seconds": 1.2542119999999999,
+            "gpu_section_seconds": 1.3837925,
+            "concentration_seconds": 0.0924692,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 3.317453575,
+            "forcing_max_seconds": 3.317453575,
+            "forcing_wait_seconds": 1.884e-06,
+            "forcing_read_seconds": 3.068312,
+            "forcing_normalize_seconds": 0.030146120000000002,
+            "forcing_boundary_seconds": 0.1923066,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.016280065000000003,
+            "output_seconds": 7.937636,
+            "flush_seconds": 5.17e-07,
+            "run_seconds": 15.1485
+          },
+          "particles_per_interval": [
+            1000000,
+            1998946,
+            3953811,
+            4570757,
+            5286783
+          ],
+          "rejected": [],
+          "speedup": 272.7771121517005,
+          "application_speedup": 67.19719046063378,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "omp-cuda",
+          "family": "OpenMP+CUDA",
+          "mpi_processes": 1,
+          "openmp_threads": 32,
+          "gpus": 4,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            6.524632596,
+            6.64886208,
+            6.472986154
+          ],
+          "application_seconds": [
+            18.697,
+            16.357,
+            20.861
+          ],
+          "solver_median": 6.524632596,
+          "solver_range": [
+            6.472986154,
+            6.64886208
+          ],
+          "application_median": 18.697,
+          "max_rss_kib_median": 5242656,
+          "components_median": {
+            "host_to_device_seconds": 4.824669,
+            "gpu_section_seconds": 1.7110689,
+            "concentration_seconds": 0.1079724,
+            "distribute_seconds": 0.0,
+            "collect_seconds": 0.0,
+            "forcing_seconds": 3.300946536,
+            "forcing_max_seconds": 3.300946536,
+            "forcing_wait_seconds": 2.009e-06,
+            "forcing_read_seconds": 3.056308,
+            "forcing_normalize_seconds": 0.049223710000000004,
+            "forcing_boundary_seconds": 0.1940355,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.016417019999999997,
+            "output_seconds": 8.40765,
+            "flush_seconds": 5.86e-07,
+            "run_seconds": 18.3974
+          },
+          "particles_per_interval": [
+            1000000,
+            1998946,
+            3953811,
+            4570757,
+            5286783
+          ],
+          "rejected": [],
+          "speedup": 155.92319211578177,
+          "application_speedup": 55.00631117291544,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "mpi-cuda",
+          "family": "MPI+CUDA",
+          "mpi_processes": 4,
+          "openmp_threads": 1,
+          "gpus": 4,
+          "cpu_workers": 4,
+          "solver_seconds": [
+            11.201116842,
+            11.25372372,
+            11.198145218
+          ],
+          "application_seconds": [
+            24.945,
+            23.853,
+            26.596
+          ],
+          "solver_median": 11.201116842,
+          "solver_range": [
+            11.198145218,
+            11.25372372
+          ],
+          "application_median": 24.945,
+          "max_rss_kib_median": 5397092,
+          "components_median": {
+            "host_to_device_seconds": 32.07843,
+            "gpu_section_seconds": 0.81168843,
+            "concentration_seconds": 0.33403279999999996,
+            "distribute_seconds": 0.8973902,
+            "collect_seconds": 0.5507538000000001,
+            "forcing_seconds": 4.557733646,
+            "forcing_max_seconds": 4.754526434,
+            "forcing_wait_seconds": 1.561e-06,
+            "forcing_read_seconds": 3.095685,
+            "forcing_normalize_seconds": 0.1092429,
+            "forcing_boundary_seconds": 1.347512,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.023020946,
+            "output_seconds": 7.539159,
+            "flush_seconds": 6.12e-07,
+            "run_seconds": 23.8396
+          },
+          "particles_per_interval": [
+            1000000,
+            1998946,
+            3953811,
+            4570757,
+            5286783
+          ],
+          "rejected": [],
+          "speedup": 90.82500933624313,
+          "application_speedup": 41.22882341150531,
+          "cpu_efficiency": null
+        },
+        {
+          "build": "mpi-omp-cuda",
+          "family": "MPI+OpenMP+CUDA",
+          "mpi_processes": 4,
+          "openmp_threads": 8,
+          "gpus": 4,
+          "cpu_workers": 32,
+          "solver_seconds": [
+            10.345768093,
+            10.332033838000001,
+            10.347771751
+          ],
+          "application_seconds": [
+            21.21,
+            22.149,
+            20.808
+          ],
+          "solver_median": 10.345768093,
+          "solver_range": [
+            10.332033838000001,
+            10.347771751
+          ],
+          "application_median": 21.21,
+          "max_rss_kib_median": 5399552,
+          "components_median": {
+            "host_to_device_seconds": 31.78108,
+            "gpu_section_seconds": 0.78378723,
+            "concentration_seconds": 0.1570668,
+            "distribute_seconds": 0.636476,
+            "collect_seconds": 0.2990548,
+            "forcing_seconds": 3.497952074,
+            "forcing_max_seconds": 3.898164203,
+            "forcing_wait_seconds": 1.649e-06,
+            "forcing_read_seconds": 3.182537,
+            "forcing_normalize_seconds": 0.037899499999999996,
+            "forcing_boundary_seconds": 0.2774907,
+            "forcing_prefetch_wait_seconds": 0.0,
+            "forcing_background_seconds": 0.0,
+            "setup_seconds": 0.004532268,
+            "output_seconds": 5.878531,
+            "flush_seconds": 4.07e-07,
+            "run_seconds": 20.1314
+          },
+          "particles_per_interval": [
+            1000000,
+            1998946,
+            3953811,
+            4570757,
+            5286783
+          ],
+          "rejected": [],
+          "speedup": 98.3340755955412,
+          "application_speedup": 48.489061763319185,
+          "cpu_efficiency": null
+        }
+      ],
+      "best_solver": "OpenMP+CUDA 1\u00d732 +1GPU",
+      "best_cpu_solver": "OpenMP 1\u00d732",
+      "best_application": "OpenMP+CUDA 1\u00d732 +1GPU"
+    }
+  },
+  "figures": [
+    "solver-time-purplejeans-gn-q1e5.svg",
+    "solver-time-purplejeans-gn-q1e6.svg",
+    "cpu-speedup.svg",
+    "application-breakdown.svg"
+  ]
+}

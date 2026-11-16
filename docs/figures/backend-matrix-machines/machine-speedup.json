@@ -1,0 +1,160 @@
+{
+  "schema": "wacomm-sarno-machine-speedup-v1",
+  "reference": "Mac M4 Max",
+  "inputs": [
+    "Mac M4 Max=docs/figures/backend-matrix-mac-ed8f731/results-mac.json",
+    "sunbow=docs/figures/backend-matrix-sunbow/results-sunbow.json",
+    "PurpleJeans low-gn=docs/figures/backend-matrix-purplejeans-gn/results-purplejeans-gn.json",
+    "PurpleJeans low-wn=docs/figures/backend-matrix-purplejeans-wn/results-purplejeans-wn.json:purplejeans-wn-q1e5,purplejeans-wn-q1e6",
+    "PurpleJeans low-wn, 2 nodes=docs/figures/backend-matrix-purplejeans-wn/results-purplejeans-wn.json:purplejeans-wn-2node-q1e6",
+    "PurpleJeans low-wn, 4 nodes=docs/figures/backend-matrix-purplejeans-wn/results-purplejeans-wn.json:purplejeans-wn-4node-q1e6",
+    "BlueJeans hhcpu=docs/figures/backend-matrix-bluejeans-ed8f731/results-bluejeans.json:bluejeans-q1e5,bluejeans-q1e6",
+    "BlueJeans hhcpu, 4 nodes=docs/figures/backend-matrix-bluejeans-ed8f731/results-bluejeans.json:bluejeans-4node-q1e6"
+  ],
+  "estimator": "fastest median application tuple per suite; factor = reference serial median / tuple median",
+  "rows": [
+    {
+      "machine": "Mac M4 Max",
+      "suite": "mac-q1e5",
+      "rate": 100000,
+      "nodes": 1,
+      "tuple": "OpenMP 1\u00d716",
+      "solver_seconds": 1.890663042,
+      "application_seconds": 3.036,
+      "solver_factor": 12.522472393576306,
+      "application_factor": 8.161725955204217
+    },
+    {
+      "machine": "sunbow",
+      "suite": "sunbow-q1e5",
+      "rate": 100000,
+      "nodes": 1,
+      "tuple": "OpenMP+CUDA 1\u00d712 +1 GPU",
+      "solver_seconds": 0.713255304,
+      "application_seconds": 3.467,
+      "solver_factor": 33.19397082114092,
+      "application_factor": 7.147101240265359
+    },
+    {
+      "machine": "BlueJeans hhcpu",
+      "suite": "bluejeans-q1e5",
+      "rate": 100000,
+      "nodes": 1,
+      "tuple": "OpenMP 1\u00d756",
+      "solver_seconds": 1.825188623,
+      "application_seconds": 7.332,
+      "solver_factor": 12.971687118060673,
+      "application_factor": 3.3795690125477362
+    },
+    {
+      "machine": "PurpleJeans low-gn",
+      "suite": "purplejeans-gn-q1e5",
+      "rate": 100000,
+      "nodes": 1,
+      "tuple": "OpenMP+CUDA 1\u00d732 +1 GPU",
+      "solver_seconds": 1.576984793,
+      "application_seconds": 9.986,
+      "solver_factor": 15.013318995904863,
+      "application_factor": 2.4813739234928898
+    },
+    {
+      "machine": "PurpleJeans low-wn",
+      "suite": "purplejeans-wn-q1e5",
+      "rate": 100000,
+      "nodes": 1,
+      "tuple": "OpenMP 1\u00d732",
+      "solver_seconds": 4.552280876,
+      "application_seconds": 16.419,
+      "solver_factor": 5.200860051017642,
+      "application_factor": 1.5091662098787988
+    },
+    {
+      "machine": "sunbow",
+      "suite": "sunbow-q1e6",
+      "rate": 1000000,
+      "nodes": 1,
+      "tuple": "OpenMP+CUDA 1\u00d712 +1 GPU",
+      "solver_seconds": 3.822298794,
+      "application_seconds": 7.42,
+      "solver_factor": 61.79241362704415,
+      "application_factor": 32.05754716981132
+    },
+    {
+      "machine": "PurpleJeans low-gn",
+      "suite": "purplejeans-gn-q1e6",
+      "rate": 1000000,
+      "nodes": 1,
+      "tuple": "OpenMP+CUDA 1\u00d732 +1 GPU",
+      "solver_seconds": 3.729570761,
+      "application_seconds": 15.305,
+      "solver_factor": 63.32875368790998,
+      "application_factor": 15.541783730806925
+    },
+    {
+      "machine": "BlueJeans hhcpu, 4 nodes",
+      "suite": "bluejeans-4node-q1e6",
+      "rate": 1000000,
+      "nodes": 4,
+      "tuple": "MPI+OpenMP 8\u00d728",
+      "solver_seconds": 5.670766795,
+      "application_seconds": 15.957,
+      "solver_factor": 41.65028762834181,
+      "application_factor": 14.90674938898289
+    },
+    {
+      "machine": "Mac M4 Max",
+      "suite": "mac-q1e6",
+      "rate": 1000000,
+      "nodes": 1,
+      "tuple": "OpenMP 1\u00d716",
+      "solver_seconds": 19.408142291,
+      "application_seconds": 21.12,
+      "solver_factor": 12.169586586065286,
+      "application_factor": 11.262642045454545
+    },
+    {
+      "machine": "BlueJeans hhcpu",
+      "suite": "bluejeans-q1e6",
+      "rate": 1000000,
+      "nodes": 1,
+      "tuple": "OpenMP 1\u00d756",
+      "solver_seconds": 18.116875769,
+      "application_seconds": 27.181,
+      "solver_factor": 13.036964601211535,
+      "application_factor": 8.751223280968322
+    },
+    {
+      "machine": "PurpleJeans low-wn, 4 nodes",
+      "suite": "purplejeans-wn-4node-q1e6",
+      "rate": 1000000,
+      "nodes": 4,
+      "tuple": "MPI+OpenMP 16\u00d78",
+      "solver_seconds": 14.871436037,
+      "application_seconds": 28.87,
+      "solver_factor": 15.882061927130891,
+      "application_factor": 8.239244890890197
+    },
+    {
+      "machine": "PurpleJeans low-wn, 2 nodes",
+      "suite": "purplejeans-wn-2node-q1e6",
+      "rate": 1000000,
+      "nodes": 2,
+      "tuple": "MPI+OpenMP 4\u00d716",
+      "solver_seconds": 25.336941901,
+      "application_seconds": 39.679,
+      "solver_factor": 9.321924840332766,
+      "application_factor": 5.994783134655611
+    },
+    {
+      "machine": "PurpleJeans low-wn",
+      "suite": "purplejeans-wn-q1e6",
+      "rate": 1000000,
+      "nodes": 1,
+      "tuple": "OpenMP 1\u00d732",
+      "solver_seconds": 45.450369701,
+      "application_seconds": 62.419,
+      "solver_factor": 5.1966368951186634,
+      "application_factor": 3.810810810810811
+    }
+  ]
+}
