@@ -4,6 +4,7 @@
   "inputs": [
     "Mac M4 Max=docs/figures/backend-matrix-mac-ed8f731/results-mac.json",
     "sunbow=docs/figures/backend-matrix-sunbow/results-sunbow.json",
+    "rainbow=docs/figures/backend-matrix-rainbow-ed8f731/results-rainbow.json",
     "PurpleJeans low-gn=docs/figures/backend-matrix-purplejeans-gn/results-purplejeans-gn.json",
     "PurpleJeans low-wn=docs/figures/backend-matrix-purplejeans-wn/results-purplejeans-wn.json:purplejeans-wn-q1e5,purplejeans-wn-q1e6",
     "PurpleJeans low-wn, 2 nodes=docs/figures/backend-matrix-purplejeans-wn/results-purplejeans-wn.json:purplejeans-wn-2node-q1e6",
@@ -34,6 +35,17 @@
       "application_seconds": 3.467,
       "solver_factor": 33.19397082114092,
       "application_factor": 7.147101240265359
+    },
+    {
+      "machine": "rainbow",
+      "suite": "rainbow-q1e5",
+      "rate": 100000,
+      "nodes": 1,
+      "tuple": "OpenMP+CUDA 1\u00d712 +1 GPU",
+      "solver_seconds": 0.9558655620000001,
+      "application_seconds": 3.992,
+      "solver_factor": 24.768938949387525,
+      "application_factor": 6.207164328657314
     },
     {
       "machine": "BlueJeans hhcpu",

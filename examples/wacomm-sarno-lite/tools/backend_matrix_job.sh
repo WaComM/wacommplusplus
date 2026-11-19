@@ -16,7 +16,9 @@
 # (verified dependency archive directory), WACOMM_FORCING (directory with processed-6h/ and
 # prepared-forcing.sha256), WACOMM_MATRIX_OPTIONS (--io-async, --io-prefetch, --interleave,
 # --spare-cores=N), WACOMM_PERL5LIB (directories holding the Perl core modules that the private
-# OpenSSL Configure needs where the compute nodes lack perl-core, as on PurpleJeans).
+# OpenSSL Configure needs where the compute nodes lack perl-core, as on PurpleJeans), WACOMM_MATRIX_ROOT
+# (directory of the benchmark suites, default data/matrix-PROFILE; a 10^6 particles/hour suite needs about
+# 8 GiB, so point it at project storage where the home directory has a small quota, as on rainbow).
 # Slurm examples:
 #   ssh rainbow 'bash -lc "sbatch -p gpu --exclusive --gres=gpu:1 -t 6:00:00 tools/backend_matrix_job.sh rainbow test"'
 #   sbatch -p low-gn -N1 --ntasks-per-node=32 --exclusive --mem=0 --gres=gpu:tesla:4 backend_matrix_job.sh purplejeans-gn test
@@ -74,6 +76,7 @@ case $profile in
     *) echo "unknown profile $profile" >&2; exit 2 ;;
 esac
 downloads=${WACOMM_DOWNLOADS:-$HOME/devel/wacomm-downloads}
+matrix_root=${WACOMM_MATRIX_ROOT:-data/matrix-$profile}
 if [ -n "${WACOMM_PERL5LIB:-}" ]; then
     export PERL5LIB="$WACOMM_PERL5LIB${PERL5LIB:+:$PERL5LIB}"
 fi
@@ -169,8 +172,8 @@ bench() {
         esac
     done
     uptime
-    echo "suite=$suite rate=$rate options=${WACOMM_MATRIX_OPTIONS:-none} forcing=$forcing"
-    "$python" -I examples/wacomm-sarno-lite/tools/sarno_backend_matrix.py run --root "data/matrix-$profile/$suite" \
+    echo "suite=$matrix_root/$suite rate=$rate options=${WACOMM_MATRIX_OPTIONS:-none} forcing=$forcing"
+    "$python" -I examples/wacomm-sarno-lite/tools/sarno_backend_matrix.py run --root "$matrix_root/$suite" \
         --rate "$rate" --blocks 3 --forcing "$forcing" --prune-snapshots --bind --nodes "${SLURM_JOB_NUM_NODES:-1}" \
         --python "$python" "${arguments[@]}"
 }
