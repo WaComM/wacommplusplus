@@ -324,7 +324,7 @@ Findings:
 
 ## Cross-platform pass at `ed8f731`
 
-This pass repeats the build, test, and benchmark matrix on six machines at revision `ed8f731`, the first revision with persistent CUDA device forcing (C7, `cd2a3bf`). The working tree adds only the Perl-module check described [below](#issues-found-in-this-pass-and-their-fixes) and the job script [`backend_matrix_job.sh`](../examples/wacomm-sarno-lite/tools/backend_matrix_job.sh). Neither changes the model or the timed code. The request labelled 193.205.230.76 as sunbow and 193.205.230.23 as rainbow. The machines report the opposite host names, and this section uses the host names: rainbow has the RTX 4080 SUPER, sunbow the RTX PRO 6000. On rainbow the $10^5$ suite is reported; the $10^6$ rerun (job 1777) waits behind another user's two-day job on the only GPU node and is not reported here.
+This pass repeats the build, test, and benchmark matrix on six machines at revision `ed8f731`, the first revision with persistent CUDA device forcing (C7, `cd2a3bf`). The working tree adds only the Perl-module check described [below](#issues-found-in-this-pass-and-their-fixes) and the job script [`backend_matrix_job.sh`](../examples/wacomm-sarno-lite/tools/backend_matrix_job.sh). Neither changes the model or the timed code. The request labelled 193.205.230.76 as sunbow and 193.205.230.23 as rainbow. The machines report the opposite host names, and this section uses the host names: rainbow has the RTX 4080 SUPER, sunbow the RTX PRO 6000. On rainbow the $10^6$ suite was rerun (job 1777) after a quota failure described below.
 
 ### Test matrix at `ed8f731`
 
@@ -344,7 +344,7 @@ The Mac suite has one test fewer per build than the Linux suites. In the CUDA bu
 1. **sunbow had no CUDA toolkit.** Only the driver was installed; `/opt/share/cuda/cuda-13.2.1` was an empty directory and `nvcc` was absent. The CUDA 12.8 toolkit of the NVIDIA HPC SDK 25.3 from rainbow was copied to a private toolchain directory, without the profiler and debugger. `nvcc` 12.8.93 supports sm_120. Revision `ed8f731` was therefore not compiled with CUDA 13, where `cudaDeviceProp::memoryClockRate`, read in `main.cpp`, no longer exists (computational item 12).
 2. **PurpleJeans compute nodes lack Perl core modules that the login node has.** The private OpenSSL build stopped at configure (`IPC::Cmd`) and then in its generated Makefile (`Time::Piece`). The modules were extracted from the signed Rocky Linux 8.10 RPMs into a user directory passed as `WACOMM_PERL5LIB`. The configure check in `cmake/WacommDependencies.cmake` now also requires `Time::Piece`, so the failure appears at configure instead of minutes into the build, and the [build guide](build.md) names `perl-Time-Piece`.
 3. **Two-node MPI runs on PurpleJeans hung in `MPI_Finalize`.** After an 8×8 run on two nodes completed its simulation in 47 s, one rank spun for three hours. Its stack ended in `hmca_bcol_ucx_p2p_disconnect`, called from `hcoll_context_free` in `ompi_mpi_finalize`. The job script selects the `ob1` PML because the site UCX fails on these nodes, but the Mellanox HCOLL collectives open their own UCX endpoints. The PurpleJeans profile now also sets `OMPI_MCA_coll_hcoll_enable=0`. The rerun suites (`*-nohcoll-*`, jobs 19673 and 19674) completed every tuple. The hung job was cancelled; its two completed samples are archived but not used.
-4. **The rainbow $10^6$ suite failed on the home-directory quota.** Benchmark job 1762 at `ffa9c18` and job 1772 at `ed8f731` failed with `NetCDF: HDF error` while writing snapshots; in job 1772 the serial warm-up passed and 31 of 32 samples failed, with the home at 71,640 MiB of a 71,680 MiB hard quota. It is not a code defect: a $10^6$ suite needs about 8 GiB, and the site directs heavy data to project storage. The failed suite is archived on that storage, and the job script now reads `WACOMM_MATRIX_ROOT`, so suites can be written outside the home directory. The rerun (job 1777) writes there.
+4. **The rainbow $10^6$ suite failed on the home-directory quota.** Benchmark job 1762 at `ffa9c18` and job 1772 at `ed8f731` failed with `NetCDF: HDF error` while writing snapshots; in job 1772 the serial warm-up passed and 31 of 32 samples failed, with the home at 71,640 MiB of a 71,680 MiB hard quota. It is not a code defect: a $10^6$ suite needs about 8 GiB, and the site directs heavy data to project storage. The failed suite is archived on that storage, and the job script now reads `WACOMM_MATRIX_ROOT`, so suites can be written outside the home directory. The rerun (job 1777) wrote there and all 32 samples passed.
 
 ### Comparison across machines
 
@@ -367,6 +367,7 @@ where $T$ is the solver time (s), $A$ the application wall time (s), and $X$ is 
 | | PurpleJeans `low-gn` | OpenMP+CUDA 1×32, 1 GPU | 15.0× | 2.5× |
 | | PurpleJeans `low-wn`, 1 node | OpenMP 1×32 | 5.2× | 1.5× |
 | $10^6$ | sunbow | OpenMP+CUDA 1×12, 1 GPU | 61.8× | **32.1×** |
+| | rainbow | OpenMP+CUDA 1×12, 1 GPU | 37.4× | 23.7× |
 | | PurpleJeans `low-gn` | OpenMP+CUDA 1×32, 1 GPU | **63.3×** | 15.5× |
 | | BlueJeans, 4 nodes | MPI+OpenMP 8×28 | 41.7× | 14.9× |
 | | Mac M4 Max | OpenMP 1×16 | 12.2× | 11.3× |
@@ -377,15 +378,15 @@ where $T$ is the solver time (s), $A$ the application wall time (s), and $X$ is 
 
 Findings:
 
-1. **One RTX PRO 6000 gives the shortest run at $10^6$ particles/hour,** 32× faster than the Mac serial build end to end, twice the V100 and the four BlueJeans nodes.
+1. **One RTX PRO 6000 gives the shortest run at $10^6$ particles/hour,** 32× faster than the Mac serial build end to end, twice the V100 and the four BlueJeans nodes. The RTX 4080 SUPER is second end to end (23.7×), ahead of the V100 although its solver is 1.7× slower, because its forcing is on local disk.
 2. **The two GPUs integrate equally fast, but the V100 run spends 11.6 s outside the solver against 3.6 s on sunbow.** At $10^6$ the V100 solver is 2% faster; end to end it is 2.1× slower. On PurpleJeans the forcing is read from shared storage, and the V100 forcing upload is slower ([C7 on the GPUs](#c7-on-the-gpus)).
 3. **At $10^5$ particles/hour the Mac has the shortest application.** The GPUs integrate 1.2–2.7× faster than the Mac's 16 threads, but the Mac spends 1.2 s outside the solver and the other machines 2.8–11.9 s, so the solver advantage does not reach the application.
-4. **The RTX PRO 6000 integrates 1.34× faster than the RTX 4080 SUPER** at $10^5$ particles/hour (0.713 s and 0.956 s) on the same host CPU; end to end the gap is 1.15×.
+4. **The RTX PRO 6000 integrates 1.34× faster than the RTX 4080 SUPER** at $10^5$ particles/hour (0.713 s and 0.956 s) and 1.65× faster at $10^6$ (3.82 s and 6.31 s) on the same host CPU; end to end the gaps are 1.15× and 1.35×.
 5. **On one node, BlueJeans and the Mac integrate at the same rate** (13.0× and 12.2–12.5×), with 56 Xeon cores against 12 performance and 4 efficiency cores.
 
 ### Results per machine
 
-All figures in this subsection are measured model-execution diagnostics of the real Sarno forcing, without confidence intervals, produced by `sarno_backend_matrix.py collect`. Every one of the 600 samples, warm-ups included, passed the equivalence gate against its suite's serial build: exactly for CPU tuples, within the GPU health tolerance for CUDA tuples, and exactly for every gridded variable. Ranks and threads were bound to physical cores (`--bind`); SMT siblings stayed idle. Factors are speedups $S$ over the machine's own serial build; $E=S/(pn)$ is the CPU efficiency.
+All figures in this subsection are measured model-execution diagnostics of the real Sarno forcing, without confidence intervals, produced by `sarno_backend_matrix.py collect`. Every one of the 632 samples, warm-ups included, passed the equivalence gate against its suite's serial build: exactly for CPU tuples, within the GPU health tolerance for CUDA tuples, and exactly for every gridded variable. Ranks and threads were bound to physical cores (`--bind`); SMT siblings stayed idle. Factors are speedups $S$ over the machine's own serial build; $E=S/(pn)$ is the CPU efficiency.
 
 #### sunbow (RTX PRO 6000 Blackwell)
 
@@ -408,13 +409,17 @@ OpenMP keeps 99% efficiency at 8 threads and 95% at 12; MPI keeps 95% at 8 ranks
 
 #### rainbow (RTX 4080 SUPER)
 
-Suite `rainbow-q1e5` (23 tuples of all eight builds, job 1771) ran on the exclusive Slurm node and holds 92 samples. The serial reference is 35.36 s, 0.6% slower than at `ffa9c18`. CPU tuples matched the serial particle states exactly, and CUDA tuples within the declared GPU tolerances. The companion table is [`results-rainbow.json`](figures/backend-matrix-rainbow-ed8f731/results-rainbow.json).
+Suites `rainbow-q1e5` (23 tuples of all eight builds, job 1771) and `rainbow-q1e6` (8 tuples, job 1777) ran on the exclusive Slurm node and hold 124 samples. The serial references are 35.36 s and 352.9 s, 0.6% and 0.5% slower than at `ffa9c18`. CPU tuples matched the serial particle states exactly, and CUDA tuples within the declared GPU tolerances. The companion table is [`results-rainbow.json`](figures/backend-matrix-rainbow-ed8f731/results-rainbow.json).
 
 ![Bar chart of median solver time for twenty-three rainbow backend tuples, CPU and CUDA, at 100,000 particles per hour at revision ed8f731](figures/backend-matrix-rainbow-ed8f731/solver-time-rainbow-q1e5.svg)
+
+![Bar chart of median solver time for eight rainbow backend tuples, CPU and CUDA, at 1,000,000 particles per hour at revision ed8f731](figures/backend-matrix-rainbow-ed8f731/solver-time-rainbow-q1e6.svg)
 
 ![Line chart of CPU speedup against workers for OpenMP, MPI, and hybrid placements on rainbow at revision ed8f731](figures/backend-matrix-rainbow-ed8f731/cpu-speedup.svg)
 
 ![Stacked bars splitting application time into solver and remaining time for the best rainbow tuple of each build at revision ed8f731](figures/backend-matrix-rainbow-ed8f731/application-breakdown.svg)
+
+At $10^5$ particles/hour:
 
 | Tuple | `ffa9c18` (job 1754) | `ed8f731` | Faster by |
 | --- | ---: | ---: | ---: |
@@ -428,7 +433,18 @@ Suite `rainbow-q1e5` (23 tuples of all eight builds, job 1771) ran on the exclus
 | MPI+CUDA 4×1 | 14.3× | 18.7× | 1.30× |
 | MPI+OpenMP+CUDA 2×6 | 22.1× | 28.2× | 1.27× |
 
-Speedups are over each revision's own serial run (35.15 s and 35.36 s); the last column is the ratio of solver medians. The MPI gain comes from the interleaved decomposition and the reduced collection; the CUDA gain from C7. CUDA 1×1 takes 0.987 s instead of 1.175 s, and its upload per run fell from 0.49 s to 0.32 s ([C7 on the GPUs](#c7-on-the-gpus)), which accounts for 0.17 s of the 0.19 s. Host threads make OpenMP+CUDA 3% faster than CUDA 1×1. As on sunbow, every additional rank on the one GPU slows the solver: 1×1 35.8×, 2×1 26.9×, 4×1 18.7×.
+At $10^6$ particles/hour:
+
+| Tuple | `ffa9c18` (job 1754) | `ed8f731` | Faster by |
+| --- | ---: | ---: | ---: |
+| OpenMP 1×12 | 10.8× | 11.2×, $E$=93% | 1.03× |
+| MPI+OpenMP 2×6 | 9.0× | 10.6×, 88% | 1.17× |
+| CUDA 1×1 | 52.4× | 54.5× | 1.04× |
+| OpenMP+CUDA 1×12 | 50.3× | **55.9×** | 1.11× |
+| MPI+CUDA 2×1 | 44.2× | 46.2× | 1.04× |
+| MPI+OpenMP+CUDA 2×6 | 43.4× | 46.8× | 1.07× |
+
+Speedups are over each revision's own serial run (35.15 s and 35.36 s at $10^5$, 351.1 s and 352.9 s at $10^6$); the last column is the ratio of solver medians. At $10^6$ the upload is a smaller share of the solver (0.29 s of 6.47 s for CUDA 1×1), so C7 gains less; OpenMP+CUDA 1×12 now has the shortest solver and application (6.31 s and 10.05 s) instead of CUDA 1×1. The MPI gain comes from the interleaved decomposition and the reduced collection; the CUDA gain from C7. CUDA 1×1 takes 0.987 s instead of 1.175 s, and its upload per run fell from 0.49 s to 0.32 s ([C7 on the GPUs](#c7-on-the-gpus)), which accounts for 0.17 s of the 0.19 s. Host threads make OpenMP+CUDA 3% faster than CUDA 1×1. As on sunbow, every additional rank on the one GPU slows the solver: 1×1 35.8×, 2×1 26.9×, 4×1 18.7×.
 
 #### PurpleJeans `low-gn` (4 × V100)
 
@@ -542,7 +558,7 @@ The rank-0 log reports `CUDA HOST2DEV sec:` for every window: the host time to a
 | Machine | $10^5$ particles/hour | $10^6$ particles/hour | Without the GPU |
 | --- | --- | --- | --- |
 | sunbow | OpenMP+CUDA 1×4 or 1×12, one rank | OpenMP+CUDA 1×12, one rank | OpenMP 1×12 |
-| rainbow | OpenMP+CUDA 1×12 or 1×4, one rank | not yet measured at `ed8f731`; CUDA 1×1 at `ffa9c18` | OpenMP 1×12 |
+| rainbow | OpenMP+CUDA 1×12 or 1×4, one rank | OpenMP+CUDA 1×12, one rank | OpenMP 1×12 |
 | PurpleJeans `low-gn` | OpenMP+CUDA 1×8 or 1×32, **one GPU** | OpenMP+CUDA 1×32, **one GPU** | OpenMP 1×32 |
 | PurpleJeans `low-wn` | OpenMP 1×32 | MPI+OpenMP 8×16 on 4 nodes (16×8 for the shortest application) | – |
 | BlueJeans `hhcpu` | OpenMP 1×56 | MPI+OpenMP 16×14 (solver) or 8×28 (application) on 4 nodes; OpenMP 1×56 on one | – |
@@ -703,7 +719,7 @@ This command lists four inputs; [`machine-speedup.json`](figures/backend-matrix-
 
 ## Limitations
 
-One workload, three samples per tuple, and no confidence intervals. In the cross-platform pass, sunbow has no scheduler, so its suites did not run in an exclusive allocation; the machine comparison mixes forcing on local disk (Mac, sunbow) with forcing on shared file systems (PurpleJeans, BlueJeans), which accounts for much of the difference in time outside the solver. Its factors compare machines on one workload and are not parallel speedups. The rainbow $10^6$ suite at `ed8f731` is not yet reported (job 1777 is queued), and the serial and OpenMP builds on sunbow were configured before the Perl-module check was added, which affects only configure. The reruns ran on whichever `hhcpu` nodes were free, so a revision-to-revision difference below about 0.5% is not separated from node and job variation. Threads are unpinned on macOS. On `hhcpu`, the forcing is read over NFS from a shared file system that other jobs may load. The 28-rank and 112-rank tuples were measured in a second job on the same nodes after the memory-limit fix, so they lie outside their original rotated blocks. Hardware counters, clocks, and energy were not recorded, so the full-socket efficiency loss is attributed to shared resources by elimination, not by measurement. The rainbow pass predates the MPI and concentration improvements, has one GPU, and therefore cannot measure MPI+CUDA with one rank per device. Its upload and particle terms come from rank-0 log lines with different clocks (host clock and CUDA events), and the small OpenMP+CUDA differences were not attributed to a phase.
+One workload, three samples per tuple, and no confidence intervals. In the cross-platform pass, sunbow has no scheduler, so its suites did not run in an exclusive allocation; the machine comparison mixes forcing on local disk (Mac, sunbow) with forcing on shared file systems (PurpleJeans, BlueJeans), which accounts for much of the difference in time outside the solver. Its factors compare machines on one workload and are not parallel speedups. The serial and OpenMP builds on sunbow were configured before the Perl-module check was added, which affects only configure. The reruns ran on whichever `hhcpu` nodes were free, so a revision-to-revision difference below about 0.5% is not separated from node and job variation. Threads are unpinned on macOS. On `hhcpu`, the forcing is read over NFS from a shared file system that other jobs may load. The 28-rank and 112-rank tuples were measured in a second job on the same nodes after the memory-limit fix, so they lie outside their original rotated blocks. Hardware counters, clocks, and energy were not recorded, so the full-socket efficiency loss is attributed to shared resources by elimination, not by measurement. The rainbow pass predates the MPI and concentration improvements, has one GPU, and therefore cannot measure MPI+CUDA with one rank per device. Its upload and particle terms come from rank-0 log lines with different clocks (host clock and CUDA events), and the small OpenMP+CUDA differences were not attributed to a phase.
 
 ## References
 

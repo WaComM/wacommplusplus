@@ -92,6 +92,17 @@
       "application_factor": 32.05754716981132
     },
     {
+      "machine": "rainbow",
+      "suite": "rainbow-q1e6",
+      "rate": 1000000,
+      "nodes": 1,
+      "tuple": "OpenMP+CUDA 1\u00d712 +1 GPU",
+      "solver_seconds": 6.313428533,
+      "application_seconds": 10.054,
+      "solver_factor": 37.410587108169615,
+      "application_factor": 23.6589417147404
+    },
+    {
       "machine": "PurpleJeans low-gn",
       "suite": "purplejeans-gn-q1e6",
       "rate": 1000000,
