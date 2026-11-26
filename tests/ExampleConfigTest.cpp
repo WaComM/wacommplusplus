@@ -5,8 +5,12 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <log4cplus/initializer.h>
 
 int main(int argc, char **argv) {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     if(argc != 2) return 2;
     unsigned int configurations = 0;
     unsigned int unsupported = 0;

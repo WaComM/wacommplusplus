@@ -339,7 +339,10 @@ function(wacomm_configure_dependencies result)
                 URL https://github.com/log4cplus/log4cplus/releases/download/REL_2_1_1/log4cplus-2.1.1.tar.gz
                 URL_HASH SHA256=42dc435928917fd2f847046c4a0c6086b2af23664d198c7fc1b982c0bfe600c1 ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/log4cplus" BINARY_DIR "${build}/log4cplus"
+                # UNICODE=OFF keeps tchar as char, matching the application, and
+                # the archive name log4cplusS rather than log4cplusSU on Windows.
                 CMAKE_ARGS ${common} -DLOG4CPLUS_BUILD_TESTING:BOOL=OFF -DLOG4CPLUS_BUILD_EXAMPLES:BOOL=OFF
+                    -DUNICODE:BOOL=OFF
                 BUILD_COMMAND ${build_cmd} INSTALL_COMMAND ${install_cmd} BUILD_BYPRODUCTS "${log_library}")
         add_library(wacomm_private_log INTERFACE)
         add_dependencies(wacomm_private_log wacomm_log4cplus)

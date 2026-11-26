@@ -14,6 +14,7 @@
 #include <fstream>
 #include <memory>
 #include <stdexcept>
+#include <log4cplus/initializer.h>
 
 using json = nlohmann::json;
 
@@ -58,6 +59,9 @@ static double depthOf(Sources& sources, shared_ptr<OceanModelAdapter> adapter) {
 }
 
 int main() {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     // Rectilinear 3x3 grid, h=100 m, W levels at 0, 10, 30, 60, 100 m
     auto adapter=std::make_shared<FixtureAdapter>();
     const int nW=5;

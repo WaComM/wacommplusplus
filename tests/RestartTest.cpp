@@ -6,6 +6,7 @@
 #include <fstream>
 #include <memory>
 #include <stdexcept>
+#include <log4cplus/initializer.h>
 
 using namespace netCDF;
 
@@ -36,6 +37,9 @@ void createRestart(const string &fileName, const char *randomKeyScheme=nullptr) 
 }
 
 int main() {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     const string restartFile="restart-test.nc",configFile="restart-config.json",backwardFile="restart-backward-config.json";
     createRestart(restartFile);
     {

@@ -6,8 +6,12 @@
 #include <cstdio>
 #include <fstream>
 #include <stdexcept>
+#include <log4cplus/initializer.h>
 
 int main() {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     Calendar compact("2020010100"),zulu("20200101Z00");
     assert(compact.get(Calendar::YEAR)==2020 && compact.get(Calendar::MONTH)==0);
     assert(zulu.get(Calendar::DAY_OF_MONTH)==1 && zulu.get(Calendar::HOUR_OF_DAY)==0);

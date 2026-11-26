@@ -9,10 +9,14 @@
 #include <stdexcept>
 #include "../OceanModelAdapters/WacommAdapter.hpp"
 #include <vector>
+#include <log4cplus/initializer.h>
 
 using namespace netCDF;
 
 int main() {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     const string fileName="roms-adapter-test.nc";
     {
         NcFile file(fileName,NcFile::replace,NcFile::nc4);

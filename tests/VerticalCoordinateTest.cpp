@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cmath>
 #include <stdexcept>
+#include <log4cplus/initializer.h>
 
 class FixtureAdapter: public OceanModelAdapter {
 public:
@@ -77,6 +78,9 @@ static void curvilinearChecks(int nW, const double* sW) {
 }
 
 int main() {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     // Five W levels with non-uniform, surface-refined stretching
     const int nW=5;
     const double sW[nW]={-1.0,-0.6,-0.3,-0.1,0.0};

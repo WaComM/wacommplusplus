@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <stdexcept>
 #include <vector>
+#include <log4cplus/initializer.h>
 
 using namespace netCDF;
 
@@ -38,6 +39,9 @@ void createFixture(const string &fileName, bool nemo) {
 }
 
 int main() {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     string nemoFile="structured-nemo-test.nc",hycomFile="structured-hycom-test.nc";
     string nextFile="structured-next-test.nc",nextHycomFile="structured-next-hycom-test.nc";
     string olderFile="structured-older-test.nc";

@@ -21,6 +21,7 @@
 #include <vector>
 
 #include <nlohmann/json.hpp>
+#include <log4cplus/initializer.h>
 
 using json = nlohmann::json;
 
@@ -122,6 +123,9 @@ void run(const std::string& direction, const std::vector<Step>& steps) {
 }
 
 int main() {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     int devices=0;
     if (cudaGetDeviceCount(&devices)!=cudaSuccess || devices==0) return 77;
 

@@ -27,8 +27,12 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <log4cplus/initializer.h>
 
 int main(int argc, char **argv) {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     if (argc!=4) {
         std::cerr << "usage: " << argv[0] << " <configuration.json> <polygons.geojson> <YYYYMMDDZhhmm>\n";
         return 2;

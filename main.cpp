@@ -4,6 +4,7 @@
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
 #include "log4cplus/consoleappender.h"
+#include "log4cplus/initializer.h"
 #include "log4cplus/layout.h"
 #include "log4cplus/version.h"
 
@@ -51,6 +52,9 @@ using namespace std;
 log4cplus::Logger logger;
 
 int main(int argc, char **argv) {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     int num_gpus = 0;
     int world_size=1, world_rank=0;
     int ompMaxThreads=1;

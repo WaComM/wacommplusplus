@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <log4cplus/initializer.h>
 
 namespace fs = std::filesystem;
 
@@ -284,6 +285,19 @@ void configuration(const fs::path &root) {
     assert(load(R"({"filesystem":"gpfs"})").Fsync());
     assert(!load(R"({"filesystem":"gpfs","fsync":false})").Fsync());
 
+#ifdef _WIN32
+    // Lustre striping is rejected on Windows (Config::validate)
+    assert(throws([&] { load(R"({"filesystem":"lustre","lustre_stripe_count":-1})"); }, "not available on Windows"));
+    Config parallel=load(R"({"async":true,"async_max_pending":3,"prefetch":true,"filesystem":"lustre",
+                             "staging_dir":"/tmp/stage"})");
+    assert(parallel.AsyncIO() && parallel.AsyncMaxPending()==3 && parallel.Filesystem()=="lustre");
+    assert(parallel.PrefetchForcing());
+    assert(parallel.Fsync() && parallel.StagingDir()=="/tmp/stage");
+    parallel.saveAsJson((root/"saved.json").string());
+    Config saved((root/"saved.json").string());
+    assert(saved.AsyncIO() && saved.AsyncMaxPending()==3 && saved.Filesystem()=="lustre" && saved.Fsync());
+    assert(saved.PrefetchForcing() && saved.StagingDir()=="/tmp/stage");
+#else
     Config parallel=load(R"({"async":true,"async_max_pending":3,"prefetch":true,"filesystem":"lustre",
                              "staging_dir":"/tmp/stage","lustre_stripe_count":-1,"lustre_stripe_size":4194304})");
     assert(parallel.AsyncIO() && parallel.AsyncMaxPending()==3 && parallel.Filesystem()=="lustre");
@@ -297,6 +311,8 @@ void configuration(const fs::path &root) {
     assert(saved.AsyncIO() && saved.AsyncMaxPending()==3 && saved.Filesystem()=="lustre" && saved.Fsync());
     assert(saved.PrefetchForcing());
     assert(saved.StagingDir()=="/tmp/stage" && saved.LustreStripeCount()==-1 && saved.LustreStripeSize()==4194304);
+
+#endif
 
     for (const char *invalid: {R"({"async_max_pending":0})", R"({"async_max_pending":1.5})", R"({"prefetch":1})",
                                R"({"filesystem":"nfs"})", R"({"lustre_stripe_count":2})",
@@ -332,6 +348,9 @@ void configuration(const fs::path &root) {
 }
 
 int main() {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     fs::path root=fs::temp_directory_path()/("wacomm-output-writer-"+std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(root);

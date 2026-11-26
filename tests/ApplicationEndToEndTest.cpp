@@ -48,6 +48,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <log4cplus/initializer.h>
 
 using json = nlohmann::json;
 
@@ -471,6 +472,9 @@ void verify(const std::string& directory, bool collective) {
 }
 
 int main(int argc, char** argv) {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     if (argc!=3 && !(argc==4 && std::string(argv[1])=="verify" && std::string(argv[3])=="collective")) {
         std::cerr << "usage: " << argv[0] << " generate|demo|verify <directory> [collective]\n";
         return 2;

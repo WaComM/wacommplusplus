@@ -2,10 +2,14 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <log4cplus/initializer.h>
 
 using namespace netCDF;
 
 int main() {
+    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
+    // at exit while destroying its thread pool.
+    log4cplus::Initializer initializer;
     NcFile remote("http://test.opendap.org/opendap/data/nc/coads_climatology.nc",NcFile::read);
     NcVar longitude=remote.getVar("COADSX");
     NcVar latitude=remote.getVar("COADSY");
