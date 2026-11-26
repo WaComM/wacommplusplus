@@ -2,7 +2,7 @@
 #include "../WaveModelAdapterFactory.hpp"
 #include <cassert>
 #include <cstdio>
-#include <log4cplus/initializer.h>
+#include "../LogInitializer.hpp"
 
 void createWRF(const std::string& name) {
     NcFile file(name,NcFile::replace,NcFile::nc4);
@@ -62,9 +62,8 @@ void createProjectedWRF(const std::string& name) {
 }
 
 int main() {
-    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
-    // at exit while destroying its thread pool.
-    log4cplus::Initializer initializer;
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     std::string wrfFile="wrf-test.nc",ww3File="ww3-test.nc"; createWRF(wrfFile); createWW3(ww3File);
     auto weather=WeatherModelAdapterFactory::create("WRF",wrfFile); weather->process();
     assert(weather->Time().Nx()==2 && weather->Time()(1)-weather->Time()(0)==60);

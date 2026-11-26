@@ -4,12 +4,11 @@
 
 #include <cassert>
 #include <cstring>
-#include <log4cplus/initializer.h>
+#include "../LogInitializer.hpp"
 
 int main() {
-    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
-    // at exit while destroying its thread pool.
-    log4cplus::Initializer initializer;
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     assert(OpenSSL_version_num()==OPENSSL_VERSION_NUMBER);
     assert(std::strcmp(OPENSSL_VERSION_STR, WACOMM_EXPECTED_OPENSSL)==0);
     assert(std::strcmp(OpenSSL_version(OPENSSL_VERSION_STRING), WACOMM_EXPECTED_OPENSSL)==0);

@@ -25,7 +25,7 @@
 #include <set>
 #include <stdexcept>
 #include <string>
-#include <log4cplus/initializer.h>
+#include "../LogInitializer.hpp"
 
 using json = nlohmann::json;
 
@@ -90,9 +90,8 @@ static bool emitFails(const json& featureCollection, FixtureAdapter& adapter, co
 }
 
 int main(int argc, char** argv) {
-    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
-    // at exit while destroying its thread pool.
-    log4cplus::Initializer initializer;
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     // The checked-in oil-spill release polygons must pass validation
     if (argc==2) {
         for (const std::string name: {"oilspill-demo-01","oilspill-demo-02"}) {

@@ -5,12 +5,11 @@
 #include <cmath>
 #include <limits>
 #include <vector>
-#include <log4cplus/initializer.h>
+#include "../LogInitializer.hpp"
 
 int main() {
-    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
-    // at exit while destroying its thread pool.
-    log4cplus::Initializer initializer;
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     Array1<double> oceanTime(2); oceanTime(0)=0; oceanTime(1)=65;
     Array2<double> mask(2,2),lonRad(2,2),latRad(2,2),h(2,2);
     for (int j=0;j<2;j++) for (int i=0;i<2;i++) {

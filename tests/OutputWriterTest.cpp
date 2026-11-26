@@ -24,7 +24,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
-#include <log4cplus/initializer.h>
+#include "../LogInitializer.hpp"
 
 namespace fs = std::filesystem;
 
@@ -348,9 +348,8 @@ void configuration(const fs::path &root) {
 }
 
 int main() {
-    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
-    // at exit while destroying its thread pool.
-    log4cplus::Initializer initializer;
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     fs::path root=fs::temp_directory_path()/("wacomm-output-writer-"+std::to_string(
             std::chrono::steady_clock::now().time_since_epoch().count()));
     fs::create_directories(root);

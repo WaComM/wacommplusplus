@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <map>
 #include <tuple>
-#include <log4cplus/initializer.h>
+#include "../LogInitializer.hpp"
 
 #ifdef USE_OMP
 #include <omp.h>
@@ -26,9 +26,8 @@ void referenceCount(const Particles &particles, int t, int s_rho, int eta_rho, i
 }
 
 int main() {
-    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
-    // at exit while destroying its thread pool.
-    log4cplus::Initializer initializer;
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     const int particleCount=100000;
     Particles particles;
     for (int i=0;i<particleCount;i++) {

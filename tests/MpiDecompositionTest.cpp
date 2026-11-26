@@ -5,12 +5,11 @@
 #include <cmath>
 #include <limits>
 #include <vector>
-#include <log4cplus/initializer.h>
+#include "../LogInitializer.hpp"
 
 int main(int argc, char **argv) {
-    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
-    // at exit while destroying its thread pool.
-    log4cplus::Initializer initializer;
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     MPI_Init(&argc,&argv);
     int worldSize=1,worldRank=0;
     MPI_Comm_size(MPI_COMM_WORLD,&worldSize);

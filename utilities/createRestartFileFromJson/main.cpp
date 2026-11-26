@@ -27,12 +27,11 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <log4cplus/initializer.h>
+#include "../../LogInitializer.hpp"
 
 int main(int argc, char **argv) {
-    // log4cplus must shut down before main returns; MSVC otherwise deadlocks
-    // at exit while destroying its thread pool.
-    log4cplus::Initializer initializer;
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     if (argc!=4) {
         std::cerr << "usage: " << argv[0] << " <configuration.json> <polygons.geojson> <YYYYMMDDZhhmm>\n";
         return 2;
