@@ -48,9 +48,21 @@ function(wacomm_configure_dependencies result)
         endif()
         find_path(WACOMM_NETCDF_CXX_INCLUDE netcdf)
         find_library(WACOMM_NETCDF_CXX_LIBRARY NAMES netcdf-cxx4 netcdf_c++4)
-        if(TARGET PkgConfig::WACOMM_NETCDF AND WACOMM_NETCDF_CXX_INCLUDE AND WACOMM_NETCDF_CXX_LIBRARY)
+        set(netcdf_includes "${WACOMM_NETCDF_INCLUDE_DIRS}")
+        set(netcdf_cxx_config FALSE)
+        if(NOT (TARGET PkgConfig::WACOMM_NETCDF AND WACOMM_NETCDF_CXX_INCLUDE AND WACOMM_NETCDF_CXX_LIBRARY))
+            # vcpkg and other Windows stacks export CMake packages but no
+            # pkg-config files; netCDFCxx also loads netCDF::netcdf.
+            find_package(netCDFCxx CONFIG QUIET)
+            if(TARGET netCDF::netcdf-cxx4 AND TARGET netCDF::netcdf)
+                get_target_property(netcdf_includes netCDF::netcdf INTERFACE_INCLUDE_DIRECTORIES)
+                set(netcdf_cxx_config TRUE)
+            endif()
+        endif()
+        if((TARGET PkgConfig::WACOMM_NETCDF AND WACOMM_NETCDF_CXX_INCLUDE AND WACOMM_NETCDF_CXX_LIBRARY)
+                OR netcdf_cxx_config)
             include(CheckCXXSourceCompiles)
-            set(CMAKE_REQUIRED_INCLUDES "${WACOMM_NETCDF_INCLUDE_DIRS}")
+            set(CMAKE_REQUIRED_INCLUDES "${netcdf_includes}")
             check_cxx_source_compiles("#include <netcdf_meta.h>
                 #if !NC_HAS_DAP2 || !NC_HAS_DAP4
                 #error DAP2 and DAP4 are required
@@ -98,8 +110,11 @@ function(wacomm_configure_dependencies result)
             # libaec names its static MSVC SZIP library szip-static.lib.
             set(sz "${prefix}/lib/szip-static.lib")
             set(curl "${prefix}/lib/libcurl.lib")
-            set(hdf5 "${prefix}/lib/libhdf5-static.lib")
-            set(hdf5_hl "${prefix}/lib/libhdf5_hl-static.lib")
+            # HDF5 prefixes static MSVC libraries with "lib" and installs its
+            # CMake package under cmake/hdf5 rather than share/cmake/hdf5.
+            set(hdf5 "${prefix}/lib/libhdf5.lib")
+            set(hdf5_hl "${prefix}/lib/libhdf5_hl.lib")
+            set(hdf5_dir "${prefix}/cmake/hdf5")
             set(netcdf "${prefix}/lib/netcdf.lib")
             set(netcdf_cxx "${prefix}/lib/netcdf-cxx4.lib")
         else()
@@ -108,6 +123,7 @@ function(wacomm_configure_dependencies result)
             set(curl "${prefix}/lib/libcurl.a")
             set(hdf5 "${prefix}/lib/libhdf5.a")
             set(hdf5_hl "${prefix}/lib/libhdf5_hl.a")
+            set(hdf5_dir "${prefix}/share/cmake/hdf5")
             set(netcdf "${prefix}/lib/libnetcdf.a")
             set(netcdf_cxx "${prefix}/lib/libnetcdf-cxx4.a")
         endif()
@@ -239,7 +255,9 @@ function(wacomm_configure_dependencies result)
                 CMAKE_ARGS ${common} ${netcdf_parallel} -DENABLE_NETCDF_4:BOOL=ON -DENABLE_DAP:BOOL=ON
                     -DENABLE_BYTERANGE:BOOL=ON -DENABLE_NCZARR:BOOL=OFF
                     -DENABLE_TESTS:BOOL=OFF -DBUILD_UTILITIES:BOOL=OFF
-                    -DHDF5_ROOT:PATH=${prefix} -DCURL_ROOT:PATH=${prefix}
+                    # MSVC netCDF-C finds HDF5 in CONFIG mode, where its
+                    # pre-CMP0074 policy setting ignores HDF5_ROOT.
+                    -DHDF5_ROOT:PATH=${prefix} -DHDF5_DIR:PATH=${hdf5_dir} -DCURL_ROOT:PATH=${prefix}
                     -DCURL_LIBRARY:FILEPATH=${curl} -DCURL_INCLUDE_DIR:PATH=${prefix}/include
                     -DZLIB_ROOT:PATH=${prefix} -DZLIB_LIBRARY:FILEPATH=${zlib}
                     -DZLIB_INCLUDE_DIR:PATH=${prefix}/include -DSZIP_LIBRARY:FILEPATH=${sz}
@@ -252,7 +270,7 @@ function(wacomm_configure_dependencies result)
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/netcdf-cxx" BINARY_DIR "${build}/netcdf-cxx"
                 CMAKE_ARGS ${common} -DCMAKE_PREFIX_PATH:PATH=${prefix}
                     -DnetCDF_LIBRARIES:FILEPATH=${netcdf} -DnetCDF_INCLUDE_DIR:PATH=${prefix}/include
-                    -DHDF5_DIR:PATH=${prefix}/share/cmake/hdf5
+                    -DHDF5_DIR:PATH=${hdf5_dir}
                     -DHDF5_C_LIBRARY_hdf5:FILEPATH=${hdf5}
                     -DHDF5_C_LIBRARY_hdf5_hl:FILEPATH=${hdf5_hl}
                     -DNCXX_ENABLE_TESTS:BOOL=OFF -DENABLE_DOXYGEN:BOOL=OFF
@@ -269,6 +287,8 @@ function(wacomm_configure_dependencies result)
             target_link_libraries(wacomm_private_io INTERFACE MPI::MPI_C MPI::MPI_CXX)
         endif()
         set(io_targets wacomm_private_io)
+    elseif(netcdf_cxx_config)
+        set(io_targets netCDF::netcdf-cxx4 netCDF::netcdf)
     else()
         add_library(WaComMNetCDFCxx4 UNKNOWN IMPORTED)
         set_target_properties(WaComMNetCDFCxx4 PROPERTIES IMPORTED_LOCATION "${WACOMM_NETCDF_CXX_LIBRARY}"
@@ -319,7 +339,10 @@ function(wacomm_configure_dependencies result)
                 URL https://github.com/log4cplus/log4cplus/releases/download/REL_2_1_1/log4cplus-2.1.1.tar.gz
                 URL_HASH SHA256=42dc435928917fd2f847046c4a0c6086b2af23664d198c7fc1b982c0bfe600c1 ${download}
                 DOWNLOAD_EXTRACT_TIMESTAMP TRUE SOURCE_DIR "${source}/log4cplus" BINARY_DIR "${build}/log4cplus"
+                # UNICODE=OFF keeps tchar as char, matching the application, and
+                # the archive name log4cplusS rather than log4cplusSU on Windows.
                 CMAKE_ARGS ${common} -DLOG4CPLUS_BUILD_TESTING:BOOL=OFF -DLOG4CPLUS_BUILD_EXAMPLES:BOOL=OFF
+                    -DUNICODE:BOOL=OFF
                 BUILD_COMMAND ${build_cmd} INSTALL_COMMAND ${install_cmd} BUILD_BYPRODUCTS "${log_library}")
         add_library(wacomm_private_log INTERFACE)
         add_dependencies(wacomm_private_log wacomm_log4cplus)

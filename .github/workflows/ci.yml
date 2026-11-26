@@ -168,22 +168,86 @@ jobs:
 
   windows-application:
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        # vcpkg is the documented installed stack (bootstrap OFF); ON builds
+        # the private HDF5/NetCDF chain with MSVC.
+        dependencies: [vcpkg, bootstrap]
+    name: windows-application (${{ matrix.dependencies }})
+    env:
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}\vcpkg-binary-cache,readwrite
+      WACOMM_DEPENDENCY_DOWNLOAD_DIR: ${{ github.workspace }}\dependency-downloads
     steps:
       - uses: actions/checkout@v5
-      - run: vcpkg install --triplet x64-windows
-      - run: >-
+      - name: Identify the vcpkg registry revision
+        if: matrix.dependencies == 'vcpkg'
+        id: vcpkg
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force vcpkg-binary-cache | Out-Null
+          "revision=$(git -C "$env:VCPKG_INSTALLATION_ROOT" rev-parse HEAD)" >> $env:GITHUB_OUTPUT
+      # Binary packages are keyed by vcpkg's ABI hash, so a stale restore only
+      # misses; it cannot substitute a different build.
+      - name: Restore vcpkg binary packages
+        if: matrix.dependencies == 'vcpkg'
+        id: vcpkg-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: vcpkg-binary-cache
+          key: vcpkg-x64-windows-${{ steps.vcpkg.outputs.revision }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: vcpkg-x64-windows-${{ steps.vcpkg.outputs.revision }}-
+      # Port patches are fetched from GitHub, which intermittently answers 503.
+      - name: Install vcpkg dependencies
+        if: matrix.dependencies == 'vcpkg'
+        shell: pwsh
+        run: |
+          for ($attempt = 1; $attempt -le 3; $attempt++) {
+            vcpkg install --triplet x64-windows
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            Write-Warning "vcpkg install attempt $attempt failed"
+            Start-Sleep -Seconds (60 * $attempt)
+          }
+          exit 1
+      # Saved before the build so a later test failure keeps the packages.
+      - name: Save vcpkg binary packages
+        if: matrix.dependencies == 'vcpkg' && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: vcpkg-binary-cache
+          key: vcpkg-x64-windows-${{ steps.vcpkg.outputs.revision }}-${{ hashFiles('vcpkg.json') }}
+      - name: Configure with installed vcpkg dependencies
+        if: matrix.dependencies == 'vcpkg'
+        run: >-
           cmake -S . -B build -A x64
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DWACOMM_BOOTSTRAP_DEPENDENCIES=OFF
+      # Archives are SHA-256 pinned in cmake/WacommDependencies.cmake and are
+      # verified again on every reuse.
+      - name: Restore verified dependency archives
+        if: matrix.dependencies == 'bootstrap'
+        uses: actions/cache@v4
+        with:
+          path: dependency-downloads
+          key: dependency-archives-${{ hashFiles('cmake/WacommDependencies.cmake') }}
+          restore-keys: dependency-archives-
+      - name: Configure with the private dependency bootstrap
+        if: matrix.dependencies == 'bootstrap'
+        run: >-
+          cmake -S . -B build -A x64
+          -DWACOMM_BOOTSTRAP_DEPENDENCIES=ON
+          -DWACOMM_DEPENDENCY_DOWNLOAD_DIR="$env:WACOMM_DEPENDENCY_DOWNLOAD_DIR"
       - run: cmake --build build --config Release
       - run: ctest --test-dir build -C Release --output-on-failure
       - if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: ctest-windows-application
+          name: ctest-windows-application-${{ matrix.dependencies }}
           path: |
             build/Testing/Temporary/LastTest*.log
             build/external/build/*/CMakeFiles/CMakeConfigureLog.yaml
+            build/external/build/*/CMakeCache.txt
           if-no-files-found: ignore
       - run: cmake --install build --config Release --prefix install
       - shell: pwsh

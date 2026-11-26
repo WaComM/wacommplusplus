@@ -27,8 +27,11 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include "../../LogInitializer.hpp"
 
 int main(int argc, char **argv) {
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     if (argc!=4) {
         std::cerr << "usage: " << argv[0] << " <configuration.json> <polygons.geojson> <YYYYMMDDZhhmm>\n";
         return 2;

@@ -6,8 +6,11 @@
 #include <cstdio>
 #include <fstream>
 #include <stdexcept>
+#include "../LogInitializer.hpp"
 
 int main() {
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     Calendar compact("2020010100"),zulu("20200101Z00");
     assert(compact.get(Calendar::YEAR)==2020 && compact.get(Calendar::MONTH)==0);
     assert(zulu.get(Calendar::DAY_OF_MONTH)==1 && zulu.get(Calendar::HOUR_OF_DAY)==0);

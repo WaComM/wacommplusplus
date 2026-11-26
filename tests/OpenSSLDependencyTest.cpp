@@ -4,8 +4,11 @@
 
 #include <cassert>
 #include <cstring>
+#include "../LogInitializer.hpp"
 
 int main() {
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     assert(OpenSSL_version_num()==OPENSSL_VERSION_NUMBER);
     assert(std::strcmp(OPENSSL_VERSION_STR, WACOMM_EXPECTED_OPENSSL)==0);
     assert(std::strcmp(OpenSSL_version(OPENSSL_VERSION_STRING), WACOMM_EXPECTED_OPENSSL)==0);

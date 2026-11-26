@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <map>
 #include <tuple>
+#include "../LogInitializer.hpp"
 
 #ifdef USE_OMP
 #include <omp.h>
@@ -25,6 +26,8 @@ void referenceCount(const Particles &particles, int t, int s_rho, int eta_rho, i
 }
 
 int main() {
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     const int particleCount=100000;
     Particles particles;
     for (int i=0;i<particleCount;i++) {

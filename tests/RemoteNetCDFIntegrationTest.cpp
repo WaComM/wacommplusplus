@@ -2,10 +2,13 @@
 
 #include <cmath>
 #include <stdexcept>
+#include "../LogInitializer.hpp"
 
 using namespace netCDF;
 
 int main() {
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     NcFile remote("http://test.opendap.org/opendap/data/nc/coads_climatology.nc",NcFile::read);
     NcVar longitude=remote.getVar("COADSX");
     NcVar latitude=remote.getVar("COADSY");

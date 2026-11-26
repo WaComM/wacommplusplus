@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <stdexcept>
 #include <vector>
+#include "../LogInitializer.hpp"
 
 using namespace netCDF;
 
@@ -38,6 +39,8 @@ void createFixture(const string &fileName, bool nemo) {
 }
 
 int main() {
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     string nemoFile="structured-nemo-test.nc",hycomFile="structured-hycom-test.nc";
     string nextFile="structured-next-test.nc",nextHycomFile="structured-next-hycom-test.nc";
     string olderFile="structured-older-test.nc";

@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <fstream>
 #include <stdexcept>
+#include "../LogInitializer.hpp"
 
 class FixtureAdapter: public OceanModelAdapter {
 public:
@@ -13,6 +14,8 @@ public:
 };
 
 int main() {
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     const string fileName="native-adapter-test.nc";
     FixtureAdapter fixture;
     fixture.OceanTime().Allocate(2); fixture.OceanTime()(0)=0; fixture.OceanTime()(1)=3600;

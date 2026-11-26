@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "../LogInitializer.hpp"
 
 namespace {
 class FixtureAdapter: public OceanModelAdapter {
@@ -89,6 +90,8 @@ void assertUnchanged(OceanModelAdapter &window, FixtureAdapter &original, int sR
 }
 
 int main() {
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     const int sRho=3, sW=4, eta=5, xi=7;
 
     // Forward: the adjacent window's first record follows the last one

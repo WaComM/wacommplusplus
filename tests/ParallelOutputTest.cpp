@@ -21,6 +21,7 @@
 #include <iostream>
 #include <iterator>
 #include <sstream>
+#include "../LogInitializer.hpp"
 
 namespace fs = std::filesystem;
 
@@ -171,6 +172,8 @@ void failure(const std::string &dir, int rank) {
 }
 
 int main(int argc, char **argv) {
+    // Shut log4cplus down before main returns (LogInitializer.hpp)
+    LogInitializer logInitializer;
     MPI_Init(&argc, &argv);
     int rank=0, size=1;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
