@@ -1,6 +1,7 @@
 #include "EnvironmentalRegridder.hpp"
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -26,6 +27,24 @@ Bracket bracket(const std::vector<double>& axis,double value,const char *name) {
     }
     throw std::runtime_error(std::string("Unable to bracket environmental ") + name + " coordinate");
 }
+
+#ifdef WACOMM_USE_PROJ
+Array::Array3<float> bilinearRectilinearCartesian(const std::vector<double>& xAxis,const std::vector<double>& yAxis,
+                                                  const Array::Array3<float>& source,const Array::Array2<double>& targetX,
+                                                  const Array::Array2<double>& targetY) {
+    Array::Array3<float> result(source.Nx(),targetX.Nx(),targetX.Ny());
+    for (int j=0;j<targetX.Nx();j++) for (int i=0;i<targetX.Ny();i++) {
+        Bracket x=bracket(xAxis,targetX(j,i),"projected x");
+        Bracket y=bracket(yAxis,targetY(j,i),"projected y");
+        for (int t=0;t<source.Nx();t++) {
+            double lower=source(t,y.lower,x.lower)*(1-x.weight)+source(t,y.lower,x.lower+1)*x.weight;
+            double upper=source(t,y.lower+1,x.lower)*(1-x.weight)+source(t,y.lower+1,x.lower+1)*x.weight;
+            result(t,j,i)=static_cast<float>(lower*(1-y.weight)+upper*y.weight);
+        }
+    }
+    return result;
+}
+#endif
 
 void unwrapLongitude(std::vector<double>& longitude) {
     for (size_t i=1;i<longitude.size();i++) {
@@ -534,53 +553,26 @@ Array::Array3<float> EnvironmentalRegridder::bilinearProjected(
     }
     for (int t=0;t<source.Nx();t++) for (int j=0;j<eta;j++) for (int i=0;i<xi;i++)
         if (!std::isfinite(source(t,j,i))) throw std::runtime_error("Environmental source field must be finite before regridding");
-    PJ_CONTEXT *context=proj_context_create();
-    PJ *raw=context ? proj_create_crs_to_crs(context,"EPSG:4326",sourceCrs.c_str(),nullptr) : nullptr;
-    PJ *transform=raw ? proj_normalize_for_visualization(context,raw) : nullptr;
-    if (raw) proj_destroy(raw);
-    if (!context || !transform) {
-        if (transform) proj_destroy(transform);
-        if (context) proj_context_destroy(context);
+    // Array3 copies are shallow and the destructor of a copied local releases its
+    // storage, so both paths return a prvalue (guaranteed elision in C++17) and the
+    // PROJ objects are released by their owners on every exit.
+    std::unique_ptr<PJ_CONTEXT,PJ_CONTEXT *(*)(PJ_CONTEXT *)> context(proj_context_create(),proj_context_destroy);
+    std::unique_ptr<PJ,PJ *(*)(PJ *)> raw(context ? proj_create_crs_to_crs(context.get(),"EPSG:4326",sourceCrs.c_str(),nullptr) : nullptr,
+                                          proj_destroy);
+    std::unique_ptr<PJ,PJ *(*)(PJ *)> transform(raw ? proj_normalize_for_visualization(context.get(),raw.get()) : nullptr,
+                                                proj_destroy);
+    if (!context || !transform)
         throw std::runtime_error("Unable to create the declared environmental CRS transformation: " + sourceCrs);
+    Array::Array2<double> projectedX(targetLon.Nx(),targetLon.Ny()),projectedY(targetLon.Nx(),targetLon.Ny());
+    for (int j=0;j<targetLon.Nx();j++) for (int i=0;i<targetLon.Ny();i++) {
+        if (!std::isfinite(targetLon(j,i)) || !std::isfinite(targetLat(j,i)))
+            throw std::runtime_error("Environmental target coordinates must be finite");
+        PJ_COORD projected=proj_trans(transform.get(),PJ_FWD,proj_coord(targetLon(j,i),targetLat(j,i),0,0));
+        if (!std::isfinite(projected.xy.x) || !std::isfinite(projected.xy.y))
+            throw std::runtime_error("Environmental CRS transformation produced a non-finite coordinate");
+        projectedX(j,i)=projected.xy.x; projectedY(j,i)=projected.xy.y;
     }
-    if (!rectilinear) {
-        Array::Array2<double> projectedX(targetLon.Nx(),targetLon.Ny()),projectedY(targetLon.Nx(),targetLon.Ny());
-        try {
-            for (int j=0;j<targetLon.Nx();j++) for (int i=0;i<targetLon.Ny();i++) {
-                if (!std::isfinite(targetLon(j,i)) || !std::isfinite(targetLat(j,i)))
-                    throw std::runtime_error("Environmental target coordinates must be finite");
-                PJ_COORD projected=proj_trans(transform,PJ_FWD,proj_coord(targetLon(j,i),targetLat(j,i),0,0));
-                if (!std::isfinite(projected.xy.x) || !std::isfinite(projected.xy.y))
-                    throw std::runtime_error("Environmental CRS transformation produced a non-finite coordinate");
-                projectedX(j,i)=projected.xy.x; projectedY(j,i)=projected.xy.y;
-            }
-            Array::Array3<float> result=bilinearCurvilinearCartesian(sourceX,sourceY,source,projectedX,projectedY);
-            proj_destroy(transform); proj_context_destroy(context); return result;
-        } catch (...) {
-            proj_destroy(transform); proj_context_destroy(context); throw;
-        }
-    }
-    Array::Array3<float> result(source.Nx(),targetLon.Nx(),targetLon.Ny());
-    try {
-        for (int j=0;j<targetLon.Nx();j++) for (int i=0;i<targetLon.Ny();i++) {
-            double longitude=targetLon(j,i),latitude=targetLat(j,i);
-            if (!std::isfinite(longitude) || !std::isfinite(latitude))
-                throw std::runtime_error("Environmental target coordinates must be finite");
-            PJ_COORD projected=proj_trans(transform,PJ_FWD,proj_coord(longitude,latitude,0,0));
-            if (!std::isfinite(projected.xy.x) || !std::isfinite(projected.xy.y))
-                throw std::runtime_error("Environmental CRS transformation produced a non-finite coordinate");
-            Bracket x=bracket(xAxis,projected.xy.x,"projected x");
-            Bracket y=bracket(yAxis,projected.xy.y,"projected y");
-            for (int t=0;t<source.Nx();t++) {
-                double lower=source(t,y.lower,x.lower)*(1-x.weight)+source(t,y.lower,x.lower+1)*x.weight;
-                double upper=source(t,y.lower+1,x.lower)*(1-x.weight)+source(t,y.lower+1,x.lower+1)*x.weight;
-                result(t,j,i)=static_cast<float>(lower*(1-y.weight)+upper*y.weight);
-            }
-        }
-    } catch (...) {
-        proj_destroy(transform); proj_context_destroy(context); throw;
-    }
-    proj_destroy(transform); proj_context_destroy(context);
-    return result;
+    if (!rectilinear) return bilinearCurvilinearCartesian(sourceX,sourceY,source,projectedX,projectedY);
+    return bilinearRectilinearCartesian(xAxis,yAxis,source,projectedX,projectedY);
 #endif
 }
