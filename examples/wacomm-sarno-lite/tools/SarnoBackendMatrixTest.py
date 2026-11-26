@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sarno_backend_matrix import INTERVALS, best, launch_command, parse_config, prepare, suite
-from backend_matrix_compare import compare, load, tuple_label
+from backend_matrix_compare import compare, load, split_specification, tuple_label
 
 
 def sample(root, build, p, n, g, label, seconds, application=None, reference=None, runtime=None):
@@ -66,6 +66,11 @@ def machine_comparison(directory):
     assert rejected(lambda: compare(entries + load(f"Lone={lone}"), "Ref")), "rate without reference accepted"
     assert rejected(lambda: compare(entries, "Missing")), "missing reference machine accepted"
     assert rejected(lambda: load(f"Ref={reference}:absent")), "absent suite accepted"
+    # A Windows drive colon belongs to the path, not to the suite list
+    assert split_specification("W=C:\\r\\x.json") == ("W", "C:\\r\\x.json", "")
+    assert split_specification("W=C:\\r\\x.json:a,b") == ("W", "C:\\r\\x.json", "a,b")
+    assert split_specification("W=/r/x.json:a") == ("W", "/r/x.json", "a")
+    assert split_specification("W=/r/x.json") == ("W", "/r/x.json", "")
 
 
 def main():

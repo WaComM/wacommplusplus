@@ -25,9 +25,17 @@ def tuple_label(row):
     return text + (f" +{row['gpus']} GPU" if row["gpus"] else "")
 
 
-def load(specification):
+def split_specification(specification):
+    # The suite list follows the last colon; a colon inside a path, as in a Windows drive, is kept.
     machine, _, rest = specification.partition("=")
-    path, _, names = rest.partition(":")
+    path, colon, names = rest.rpartition(":")
+    if not colon or not path or len(path) == 1 or "/" in names or "\\" in names:
+        path, names = rest, ""
+    return machine, path, names
+
+
+def load(specification):
+    machine, path, names = split_specification(specification)
     if not machine or not path:
         raise ValueError(f"expected MACHINE=RESULTS.json[:SUITE,...], got {specification}")
     suites = json.loads(Path(path).read_text())["suites"]
