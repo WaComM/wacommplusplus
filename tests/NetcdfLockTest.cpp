@@ -39,15 +39,17 @@ int main() {
     std::this_thread::sleep_for(std::chrono::milliseconds(120));
     auto start=Clock::now();
     int doneWhenLocked;
+    Clock::duration waited;
     {
         NetcdfLock::Priority lock(netcdf);
+        // Only the wait for the lock is timed; sleep overshoot on a loaded host is not
+        waited=Clock::now()-start;
         doneWhenLocked=done;
         assert(NetcdfLock::priorityWaiting()==0);
         // The reader cannot read while the priority thread holds the lock
         std::this_thread::sleep_for(std::chrono::milliseconds(150));
         assert(done==doneWhenLocked);
     }
-    auto waited=Clock::now()-start-std::chrono::milliseconds(150);
     reader.join();
     assert(doneWhenLocked<reads);
     assert(waited<4*readTime);
